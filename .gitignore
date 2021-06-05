@@ -1,0 +1,12 @@
+Gemfile.lock
+
+# Jekyll
+_site
+
+# OSX
+.DS_Store
+
+# Icon must ends with two \r.
+Icon
+# Thumbnails
+._*
