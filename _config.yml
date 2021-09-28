@@ -1,10 +1,10 @@
-url: "https://schachnerdesigns.com" # the base hostname & protocol for your site, e.g. https://example.com
+url: "https://brightdesigns.band" # the base hostname & protocol for your site, e.g. https://example.com
 baseurl: ""
 
 # Site settings
-title: Schachner Designs
+title: Bright Designs 
 email: FIRSTNAME LASTNAME [at] gmail [dot] com
-description: "Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description."
+description: "Marching band shows that will make your students shine!"
 
 
 # Team names, titles and social links
@@ -13,50 +13,50 @@ people:
   pic: 1
   position: Arranger and Designer
   social:
-    - title: twitter
-      url: #
-    - title: facebook
-      url: #
-    - title: stack-overflow
-      url: #
+    - title:
+      url: 
+    - title:
+      url: 
+    - title:
+      url: 
 
 - name: Trevor Schachner
   pic: 2
   position: Arranger and Designer
   social:
-    - title: twitter
-      url: #
-    - title: facebook
-      url: #
-    - title: linkedin
-      url: #
+    - title:
+      url: 
+    - title: 
+      url: 
+    - title: 
+      url: 
 
 - name: Ryan Wilhite
   pic: 3
   position: Program Coordinator and Designer
   social:
-    - title: twitter
-      url: #
-    - title: facebook
-      url: #
+    - title: 
+      url: 
+    - title: 
+      url: 
 
 # Social networks usernames (many more available: google-plus, flickr, dribbble, pinterest, instagram, tumblr, linkedin, etc.)
 social:
   - title: twitter
-    url: http://twitter.com/jekyllrb
+    url: 
   - title: facebook
     url:
   - title: stack-overflow
-    url: http://stackoverflow.com/questions/tagged/jekyll
+    url: 
   - title: bitbucket 
-    url: http://bitbucket.org/jekyll
+    url: 
   - title: github
-    url: http://github.com/jekyll
+    url: 
 
 # Postal address (add as many lines as necessary)
 address:
-  - line: 3481 Melrose Place
-  - line: Beverly Hills, CA 90210
+  - line: 
+  - line: 
 
 # Build settings
 markdown: kramdown

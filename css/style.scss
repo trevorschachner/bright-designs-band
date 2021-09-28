@@ -9,8 +9,9 @@
 
 /* colors */
 // https://www.color-hex.com/color-palette/78534
-$primary-color:         #6ccad2;
-$secondary-color:       #61b5bd;
+$primary-color:         #F5DF4D;
+$secondary-color:       #939597;
+$third-color:           #6ccad2;
 $secondary-dark-color:  #333;
 $muted-color:           #777;
 /* fonts */
@@ -97,7 +98,7 @@ h6 {
 .btn-primary:active,
 .btn-primary.active,
 .open .dropdown-toggle.btn-primary {
-    border-color: $primary-color;
+    border-color: $secondary-color;
     color: #fff;
     background-color: $secondary-color;
 }
@@ -186,7 +187,7 @@ fieldset[disabled] .btn-xl.active {
 
 .navbar-default {
     border-color: transparent;
-    background-color: #222;
+    background-color: $secondary-color;
 }
 
 .navbar-default .navbar-brand {
@@ -272,7 +273,7 @@ fieldset[disabled] .btn-xl.active {
 
     .navbar-default.navbar-shrink {
         padding: 10px 0;
-        background-color: #222;
+        background-color: $secondary-color;
     }
 
     .navbar-default.navbar-shrink .navbar-brand {
