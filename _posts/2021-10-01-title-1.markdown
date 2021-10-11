@@ -10,5 +10,5 @@ alt: image-alt
 project-date: Fall 2021
 client: White Oak High School - Jacksonville, NC
 category: Marching Band
-description: "On Greater Shores" is a tribute to nordic heritage and their conquests across the seas. Music selections including "Come Sail Away" by Styx, "Test Drive" by John Powell, and traditional folk selections. Program design by Ryan Wilhite, Winds arranged by Brighton Barrineau and Trevor Schachner, Percussion by Justin Bui and Theo Richardson, Sound design by Danny Gutierrez.
+description: '"On Greater Shores" is a tribute to nordic heritage and their conquests across the seas. Music selections including "Come Sail Away" by Styx, "Test Drive" by John Powell, and traditional folk selections. Program design by Ryan Wilhite, Winds arranged by Brighton Barrineau and Trevor Schachner, Percussion by Justin Bui and Theo Richardson, Sound design by Danny Gutierrez.'
 ---
