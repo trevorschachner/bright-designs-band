@@ -85,12 +85,17 @@ h6 {
 }
 
 .btn-primary {
+    padding: 20px 20px;
     border-color: $primary-color;
+    border-style: solid;
+    border-radius: 5px;
     text-transform: uppercase;
     font-family: $primary-font;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 500;
     color: #fff;
     background-color: $primary-color;
+    transition: all 0.25s linear;
 }
 
 .btn-primary:hover,
@@ -143,6 +148,7 @@ fieldset[disabled] .btn-primary.active {
     font-weight: 700;
     color: #fff;
     background-color: $primary-color;
+    transition: all 0.25s linear;
 }
 
 .btn-xl:hover,
@@ -150,7 +156,7 @@ fieldset[disabled] .btn-primary.active {
 .btn-xl:active,
 .btn-xl.active,
 .open .dropdown-toggle.btn-xl {
-    border-color: $primary-color;
+    border-color: $secondary-color;
     color: #fff;
     background-color: $secondary-color;
 }
@@ -883,6 +889,8 @@ img::-moz-selection {
 body {
     webkit-tap-highlight-color: $primary-color;
 }
+
+
 
 @import
     "bootstrap.min.css"
