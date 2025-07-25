@@ -1,9 +1,19 @@
-import { ArrowRight, Filter, Play, Music, Users, Star, Search } from "lucide-react"
+import {
+  ArrowRight,
+  Play,
+  Music,
+  Users,
+  Star,
+  ChevronDown,
+  Monitor,
+  Sparkles,
+  Target,
+  MessageCircle,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import MarchingFormation from "./components/marching-formation"
 
@@ -94,31 +104,90 @@ export default function HomePage() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 relative">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-bright-primary rounded-lg flex items-center justify-center">
                 <Music className="w-5 h-5 text-bright-dark" />
               </div>
               <span className="text-xl font-bold text-bright-dark font-primary">Bright Designs</span>
-            </div>
+            </Link>
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#shows" className="text-gray-600 hover:text-bright-third transition-colors">
+              <Link href="/shows" className="text-gray-600 hover:text-bright-third transition-colors">
                 Shows
               </Link>
-              <Link href="#about" className="text-gray-600 hover:text-bright-third transition-colors">
+              <Link href="/about" className="text-gray-600 hover:text-bright-third transition-colors">
                 About
               </Link>
-              <Link href="#process" className="text-gray-600 hover:text-bright-third transition-colors">
+              <Link href="/process" className="text-gray-600 hover:text-bright-third transition-colors">
                 Process
               </Link>
-              <Button
-                variant="outline"
-                className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 bg-transparent"
-              >
-                Contact Us
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center text-gray-600 hover:text-bright-third transition-colors">
+                  Resources
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 p-4">
+                  <div className="space-y-4">
+                    <Link
+                      href="/arrangements"
+                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <Monitor className="w-4 h-4 text-bright-third" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-1">All Arrangements</h4>
+                        <p className="text-sm text-gray-600">
+                          Full catalogue of all our individual arrangements for sale!
+                        </p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/faqs"
+                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <Sparkles className="w-4 h-4 text-bright-third" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-1">FAQs</h4>
+                        <p className="text-sm text-gray-600">Answers to the most common questions from our clients.</p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/guide"
+                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <Target className="w-4 h-4 text-bright-third" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-1">Free Visual Technique Guide!</h4>
+                        <p className="text-sm text-gray-600">Grab a free visual technique guide made by our team!</p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/contact"
+                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                        <MessageCircle className="w-4 h-4 text-bright-third" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-1">Contact Us</h4>
+                        <p className="text-sm text-gray-600">Get in touch with us! A REAL person will reach out!</p>
+                      </div>
+                    </Link>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button className="btn-outline" asChild>
+                <Link href="/contact">Contact Us</Link>
               </Button>
-              <Button className="bg-bright-primary hover:bg-bright-primary/90 text-bright-dark font-medium">
-                Build Your Show
-                <ArrowRight className="ml-2 w-4 h-4" />
+              <Button className="btn-primary" asChild>
+                <Link href="/build">
+                  Build Your Show
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
               </Button>
             </nav>
           </div>
@@ -130,29 +199,27 @@ export default function HomePage() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-bright-dark font-primary leading-tight">
-              Craft Extraordinary
+              Student
               <br />
-              Marching Band Shows
+              <span className="text-bright-third">centered</span>
+              <br />
+              design.
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              From concept to competition, we create innovative arrangements and complete show designs that captivate
-              audiences and elevate performances.
+              Bringing best in class design to best in class bands.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button
-                size="lg"
-                className="bg-bright-primary hover:bg-bright-primary/90 text-bright-dark text-lg px-8 py-6 font-medium"
-              >
-                Build Your Show
-                <ArrowRight className="ml-2 w-5 h-5" />
+              <Button size="lg" className="btn-primary btn-lg" asChild>
+                <Link href="/contact">
+                  Let's Talk
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 text-lg px-8 py-6 bg-transparent"
-              >
-                View Our Work
-                <Play className="ml-2 w-5 h-5" />
+              <Button size="lg" className="btn-secondary btn-lg" asChild>
+                <Link href="/shows">
+                  View Our Work
+                  <Play className="ml-2 w-5 h-5" />
+                </Link>
               </Button>
             </div>
           </div>
@@ -164,92 +231,38 @@ export default function HomePage() {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">150+</div>
-              <div className="text-gray-600">Shows Created</div>
+              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">25+</div>
+              <div className="text-gray-600">Years Experience</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-bright-primary mb-2 font-primary">500+</div>
-              <div className="text-gray-600">Arrangements</div>
+              <div className="text-4xl font-bold text-bright-primary mb-2 font-primary">200+</div>
+              <div className="text-gray-600">Custom Shows</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-bright-dark mb-2 font-primary">50+</div>
+              <div className="text-4xl font-bold text-bright-dark mb-2 font-primary">100+</div>
               <div className="text-gray-600">Schools Served</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">98%</div>
-              <div className="text-gray-600">Satisfaction Rate</div>
+              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">1000+</div>
+              <div className="text-gray-600">Arrangements</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Show Catalog */}
+      {/* Show Catalog Preview */}
       <section id="shows" className="py-20 px-4 relative">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-bright-dark font-primary">Our Show Catalog</h2>
+            <h2 className="text-4xl font-bold mb-4 text-bright-dark font-primary">Featured Shows</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Explore our collection of award-winning shows, each crafted with precision and creativity.
             </p>
           </div>
 
-          {/* Filters */}
-          <div className="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input placeholder="Search shows..." className="pl-10 w-64" />
-              </div>
-              <Select>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Difficulty Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Years</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2023">2023</SelectItem>
-                  <SelectItem value="2022">2022</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              variant="outline"
-              className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 bg-transparent"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              More Filters
-            </Button>
-          </div>
-
-          {/* Tags */}
-          <div className="mb-8">
-            <div className="flex flex-wrap gap-2">
-              {allTags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-bright-primary/10 hover:text-bright-third transition-colors"
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Show Grid */}
+          {/* Show Grid - Featured Shows Only */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {shows.map((show) => (
+            {shows.slice(0, 6).map((show) => (
               <Card
                 key={show.id}
                 className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white/80 backdrop-blur-sm"
@@ -305,12 +318,21 @@ export default function HomePage() {
                       </Badge>
                     )}
                   </div>
-                  <Button className="w-full bg-bright-primary hover:bg-bright-primary/90 text-bright-dark font-medium">
-                    View Details
+                  <Button className="btn-primary w-full" asChild>
+                    <Link href={`/shows/${show.id}`}>View Details</Link>
                   </Button>
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button size="lg" className="btn-outline btn-lg" asChild>
+              <Link href="/shows">
+                View All Shows
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -325,20 +347,14 @@ export default function HomePage() {
               here to help your band shine.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-bright-dark hover:bg-gray-100 text-lg px-8 py-6 font-medium"
-              >
-                Start Your Project
-                <ArrowRight className="ml-2 w-5 h-5" />
+              <Button size="lg" className="btn-secondary btn-lg" asChild>
+                <Link href="/build">
+                  Start Your Project
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white/10 text-lg px-8 py-6 bg-transparent"
-              >
-                Schedule Consultation
+              <Button size="lg" className="btn-outline btn-lg" asChild>
+                <Link href="/contact">Schedule Consultation</Link>
               </Button>
             </div>
           </div>
@@ -364,22 +380,22 @@ export default function HomePage() {
               <h3 className="font-semibold mb-4 font-primary">Services</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/shows" className="hover:text-white transition-colors">
                     Custom Shows
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/arrangements" className="hover:text-white transition-colors">
                     Arrangements
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/contact" className="hover:text-white transition-colors">
                     Consultation
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/about" className="hover:text-white transition-colors">
                     Music Licensing
                   </Link>
                 </li>
@@ -389,29 +405,29 @@ export default function HomePage() {
               <h3 className="font-semibold mb-4 font-primary">Resources</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/shows" className="hover:text-white transition-colors">
                     Show Catalog
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/arrangements" className="hover:text-white transition-colors">
                     Sample Audio
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/about" className="hover:text-white transition-colors">
                     Testimonials
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/faqs" className="hover:text-white transition-colors">
                     FAQ
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibbold mb-4 font-primary">Contact</h3>
+              <h3 className="font-semibold mb-4 font-primary">Contact</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>hello@brightdesigns.band</li>
                 <li>(555) 123-4567</li>

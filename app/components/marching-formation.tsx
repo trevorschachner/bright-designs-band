@@ -14,29 +14,29 @@ interface Dot {
 
 const formations = {
   block: (index: number, cols: number) => ({
-    x: (index % cols) * 60 + 100,
-    y: Math.floor(index / cols) * 60 + 100,
+    x: (index % cols) * 80 + 150,
+    y: Math.floor(index / cols) * 80 + 150,
   }),
   circle: (index: number, total: number) => {
     const angle = (index / total) * 2 * Math.PI
-    const radius = 150
+    const radius = 180
     return {
-      x: Math.cos(angle) * radius + 400,
-      y: Math.sin(angle) * radius + 300,
+      x: Math.cos(angle) * radius + 500,
+      y: Math.sin(angle) * radius + 350,
     }
   },
   wave: (index: number, cols: number) => ({
-    x: (index % cols) * 60 + 100,
-    y: Math.sin((index % cols) * 0.5) * 80 + Math.floor(index / cols) * 60 + 200,
+    x: (index % cols) * 80 + 150,
+    y: Math.sin((index % cols) * 0.4) * 60 + Math.floor(index / cols) * 80 + 250,
   }),
   arrow: (index: number, cols: number) => {
     const row = Math.floor(index / cols)
     const col = index % cols
     const centerCol = Math.floor(cols / 2)
-    const offset = Math.abs(col - centerCol) * 20
+    const offset = Math.abs(col - centerCol) * 15
     return {
-      x: col * 60 + 100,
-      y: row * 60 + 100 + offset,
+      x: col * 80 + 150,
+      y: row * 80 + 150 + offset,
     }
   },
 }
@@ -46,8 +46,8 @@ export default function MarchingFormation() {
   const [currentFormation, setCurrentFormation] = useState<keyof typeof formations>("block")
 
   useEffect(() => {
-    const cols = 12
-    const rows = 6
+    const cols = 10
+    const rows = 5
     const totalDots = cols * rows
 
     const initialDots: Dot[] = Array.from({ length: totalDots }, (_, index) => {
@@ -72,7 +72,7 @@ export default function MarchingFormation() {
       const currentIndex = formationKeys.indexOf(currentFormation)
       const nextIndex = (currentIndex + 1) % formationKeys.length
       setCurrentFormation(formationKeys[nextIndex])
-    }, 4000)
+    }, 5000)
 
     return () => clearInterval(interval)
   }, [currentFormation])
@@ -80,7 +80,7 @@ export default function MarchingFormation() {
   useEffect(() => {
     if (dots.length === 0) return
 
-    const cols = 12
+    const cols = 10
     setDots((prevDots) =>
       prevDots.map((dot, index) => {
         const newPos = formations[currentFormation](index, cols)
@@ -94,14 +94,14 @@ export default function MarchingFormation() {
   }, [currentFormation, dots.length])
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-20">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-15">
       <svg width="100%" height="100%" className="absolute inset-0">
         {dots.map((dot) => (
           <circle
             key={dot.id}
-            r="3"
+            r="4"
             fill="#F5DF4D"
-            className="transition-all duration-2000 ease-in-out"
+            className="transition-all duration-3000 ease-in-out"
             style={{
               transform: `translate(${dot.targetX}px, ${dot.targetY}px)`,
             }}
