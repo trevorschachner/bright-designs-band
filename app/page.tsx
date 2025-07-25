@@ -101,25 +101,29 @@ export default function HomePage() {
               <span className="text-xl font-bold text-bright-dark font-primary">Bright Designs</span>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#shows" className="text-gray-600 hover:text-bright-third transition-colors">
+              <Link href="/shows" className="text-gray-600 hover:text-bright-third transition-colors">
                 Shows
               </Link>
-              <Link href="#about" className="text-gray-600 hover:text-bright-third transition-colors">
+              <Link href="/about" className="text-gray-600 hover:text-bright-third transition-colors">
                 About
               </Link>
-              <Link href="#process" className="text-gray-600 hover:text-bright-third transition-colors">
-                Process
+              <Link href="/arrangements" className="text-gray-600 hover:text-bright-third transition-colors">
+                Arrangements
               </Link>
-              <Button
-                variant="outline"
-                className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 bg-transparent"
-              >
-                Contact Us
-              </Button>
-              <Button className="bg-bright-primary hover:bg-bright-primary/90 text-bright-dark font-medium">
-                Build Your Show
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+              <Link href="/contact">
+                <Button
+                  variant="outline"
+                  className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 bg-transparent"
+                >
+                  Contact Us
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button className="bg-bright-primary hover:bg-bright-primary/90 text-bright-dark font-medium">
+                  Build Your Show
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
             </nav>
           </div>
         </div>
@@ -139,21 +143,25 @@ export default function HomePage() {
               audiences and elevate performances.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button
-                size="lg"
-                className="bg-bright-primary hover:bg-bright-primary/90 text-bright-dark text-lg px-8 py-6 font-medium"
-              >
-                Build Your Show
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 text-lg px-8 py-6 bg-transparent"
-              >
-                View Our Work
-                <Play className="ml-2 w-5 h-5" />
-              </Button>
+              <Link href="/contact">
+                <Button
+                  size="lg"
+                  className="bg-bright-primary hover:bg-bright-primary/90 text-bright-dark text-lg px-8 py-6 font-medium"
+                >
+                  Build Your Show
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/shows">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 text-lg px-8 py-6 bg-transparent"
+                >
+                  View Our Work
+                  <Play className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -178,6 +186,96 @@ export default function HomePage() {
             <div>
               <div className="text-4xl font-bold text-bright-third mb-2 font-primary">98%</div>
               <div className="text-gray-600">Satisfaction Rate</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-20 px-4 bg-white/50 relative">
+        <div className="container mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-8 text-bright-dark font-primary">About Bright Designs</h2>
+          <div className="max-w-4xl mx-auto">
+            <p className="text-xl text-gray-600 mb-12">
+              We are passionate creators dedicated to transforming marching band performances through innovative design, 
+              exceptional arrangements, and comprehensive show development.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-bright-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-8 h-8 text-bright-dark" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-primary">Excellence</h3>
+                <p className="text-gray-600">We strive for perfection in every arrangement and show design we create.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-bright-third rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-primary">Collaboration</h3>
+                <p className="text-gray-600">We work closely with directors to ensure every show reflects their vision.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-bright-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Music className="w-8 h-8 text-bright-dark" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-primary">Innovation</h3>
+                <p className="text-gray-600">We push boundaries to create truly unique and memorable performances.</p>
+              </div>
+            </div>
+            <Link href="/about">
+              <Button 
+                size="lg"
+                variant="outline"
+                className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10"
+              >
+                Learn More About Us
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Process Section */}
+      <section id="process" className="py-20 px-4 relative">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6 text-bright-dark font-primary">Our Creative Process</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              From initial concept to final performance, we guide you through every step of creating an extraordinary marching band show.
+            </p>
+          </div>
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-bright-primary rounded-full flex items-center justify-center mx-auto mb-6 text-bright-dark font-bold text-2xl">
+                  1
+                </div>
+                <h3 className="text-xl font-bold mb-4 font-primary">Discovery</h3>
+                <p className="text-gray-600">We learn about your band, goals, and vision for the perfect show.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-bright-third rounded-full flex items-center justify-center mx-auto mb-6 text-white font-bold text-2xl">
+                  2
+                </div>
+                <h3 className="text-xl font-bold mb-4 font-primary">Concept</h3>
+                <p className="text-gray-600">Together, we develop a compelling theme and musical direction.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-bright-secondary rounded-full flex items-center justify-center mx-auto mb-6 text-bright-dark font-bold text-2xl">
+                  3
+                </div>
+                <h3 className="text-xl font-bold mb-4 font-primary">Creation</h3>
+                <p className="text-gray-600">Our experts craft arrangements and design visual elements.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-bright-primary rounded-full flex items-center justify-center mx-auto mb-6 text-bright-dark font-bold text-2xl">
+                  4
+                </div>
+                <h3 className="text-xl font-bold mb-4 font-primary">Delivery</h3>
+                <p className="text-gray-600">We deliver your complete show package and provide ongoing support.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -305,9 +403,11 @@ export default function HomePage() {
                       </Badge>
                     )}
                   </div>
-                  <Button className="w-full bg-bright-primary hover:bg-bright-primary/90 text-bright-dark font-medium">
-                    View Details
-                  </Button>
+                  <Link href={`/shows/${show.id}`}>
+                    <Button className="w-full bg-bright-primary hover:bg-bright-primary/90 text-bright-dark font-medium">
+                      View Details
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -325,21 +425,25 @@ export default function HomePage() {
               here to help your band shine.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-bright-dark hover:bg-gray-100 text-lg px-8 py-6 font-medium"
-              >
-                Start Your Project
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white/10 text-lg px-8 py-6 bg-transparent"
-              >
-                Schedule Consultation
-              </Button>
+              <Link href="/contact">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="bg-white text-bright-dark hover:bg-gray-100 text-lg px-8 py-6 font-medium"
+                >
+                  Start Your Project
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/10 text-lg px-8 py-6 bg-transparent"
+                >
+                  Schedule Consultation
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -364,22 +468,22 @@ export default function HomePage() {
               <h3 className="font-semibold mb-4 font-primary">Services</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/shows" className="hover:text-white transition-colors">
                     Custom Shows
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/arrangements" className="hover:text-white transition-colors">
                     Arrangements
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/contact" className="hover:text-white transition-colors">
                     Consultation
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/contact" className="hover:text-white transition-colors">
                     Music Licensing
                   </Link>
                 </li>
@@ -389,22 +493,22 @@ export default function HomePage() {
               <h3 className="font-semibold mb-4 font-primary">Resources</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/shows" className="hover:text-white transition-colors">
                     Show Catalog
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/arrangements" className="hover:text-white transition-colors">
                     Sample Audio
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
-                    Testimonials
+                  <Link href="/about" className="hover:text-white transition-colors">
+                    About Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/contact" className="hover:text-white transition-colors">
                     FAQ
                   </Link>
                 </li>
