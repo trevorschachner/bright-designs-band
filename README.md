@@ -1,30 +1,24 @@
-# New marching band website
+# Bright Designs
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+This is the official website for Bright Designs, a marching band show design company. This project is built with Next.js and Tailwind CSS.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/trevorschachners-projects/v0-new-marching-band-website)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/AP8p7XNfV7A)
+## Features
 
-## Overview
+- Show catalog
+- Custom show builder
+- Arrangements
+- Blog
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Getting Started
 
-## Deployment
+First, run the development server:
 
-Your project is live at:
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
 
-**[https://vercel.com/trevorschachners-projects/v0-new-marching-band-website](https://vercel.com/trevorschachners-projects/v0-new-marching-band-website)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/AP8p7XNfV7A](https://v0.dev/chat/projects/AP8p7XNfV7A)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

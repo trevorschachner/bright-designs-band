@@ -394,11 +394,6 @@ export default function HomePage() {
                     Consultation
                   </Link>
                 </li>
-                <li>
-                  <Link href="/about" className="hover:text-white transition-colors">
-                    Music Licensing
-                  </Link>
-                </li>
               </ul>
             </div>
             <div>
