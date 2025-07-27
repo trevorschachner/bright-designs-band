@@ -16,86 +16,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import MarchingFormation from "./components/marching-formation"
+import { db } from "@/lib/db"
 
-const shows = [
-  {
-    id: 1,
-    title: "Cosmic Journey",
-    year: "2024",
-    difficulty: "Advanced",
-    duration: "11:30",
-    tags: ["Space", "Electronic", "Modern", "Competition"],
-    thumbnail: "/placeholder.svg?height=200&width=300",
-    description:
-      "An otherworldly experience combining electronic soundscapes with traditional marching band arrangements.",
-    arrangements: 4,
-    rating: 4.9,
-  },
-  {
-    id: 2,
-    title: "Urban Legends",
-    year: "2024",
-    difficulty: "Intermediate",
-    duration: "9:45",
-    tags: ["Hip-Hop", "Urban", "Contemporary", "Street"],
-    thumbnail: "/placeholder.svg?height=200&width=300",
-    description: "Street-inspired rhythms meet classical marching band in this urban masterpiece.",
-    arrangements: 3,
-    rating: 4.7,
-  },
-  {
-    id: 3,
-    title: "Renaissance Revival",
-    year: "2023",
-    difficulty: "Advanced",
-    duration: "12:15",
-    tags: ["Classical", "Historical", "Orchestral", "Traditional"],
-    thumbnail: "/placeholder.svg?height=200&width=300",
-    description: "A journey through the Renaissance period with modern marching band interpretation.",
-    arrangements: 5,
-    rating: 4.8,
-  },
-  {
-    id: 4,
-    title: "Digital Dreams",
-    year: "2023",
-    difficulty: "Beginner",
-    duration: "8:20",
-    tags: ["Electronic", "Futuristic", "Synth", "Modern"],
-    thumbnail: "/placeholder.svg?height=200&width=300",
-    description: "Perfect for younger bands exploring electronic and synthesized sounds.",
-    arrangements: 3,
-    rating: 4.6,
-  },
-  {
-    id: 5,
-    title: "Folk Fusion",
-    year: "2023",
-    difficulty: "Intermediate",
-    duration: "10:30",
-    tags: ["Folk", "World", "Cultural", "Traditional"],
-    thumbnail: "/placeholder.svg?height=200&width=300",
-    description: "Celebrating global folk traditions through innovative marching band arrangements.",
-    arrangements: 4,
-    rating: 4.5,
-  },
-  {
-    id: 6,
-    title: "Neon Nights",
-    year: "2022",
-    difficulty: "Advanced",
-    duration: "11:00",
-    tags: ["80s", "Retro", "Synthwave", "Pop"],
-    thumbnail: "/placeholder.svg?height=200&width=300",
-    description: "A nostalgic trip through the neon-soaked sounds of the 1980s.",
-    arrangements: 4,
-    rating: 4.9,
-  },
-]
+export default async function HomePage() {
+  const shows = await db.query.shows.findMany({
+    limit: 6,
+    with: {
+      showsToTags: {
+        with: {
+          tag: true,
+        },
+      },
+    },
+  });
 
-const allTags = Array.from(new Set(shows.flatMap((show) => show.tags)))
-
-export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 relative">
       <MarchingFormation />
@@ -262,14 +196,14 @@ export default function HomePage() {
 
           {/* Show Grid - Featured Shows Only */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {shows.slice(0, 6).map((show) => (
+            {shows.map((show) => (
               <Card
                 key={show.id}
                 className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white/80 backdrop-blur-sm"
               >
                 <div className="relative overflow-hidden rounded-t-lg">
                   <img
-                    src={show.thumbnail || "/placeholder.svg"}
+                    src={show.thumbnailUrl || "/placeholder.svg"}
                     alt={show.title}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -281,10 +215,6 @@ export default function HomePage() {
                     <Play className="w-4 h-4 mr-2" />
                     Preview
                   </Button>
-                  <div className="absolute top-4 right-4 flex items-center space-x-1 bg-white/90 rounded-full px-2 py-1">
-                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                    <span className="text-xs font-medium">{show.rating}</span>
-                  </div>
                 </div>
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
@@ -304,19 +234,13 @@ export default function HomePage() {
                       {show.difficulty}
                     </span>
                     <span>{show.duration}</span>
-                    <span>{show.arrangements} arrangements</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {show.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
+                    {show.showsToTags.map((st) => (
+                      <Badge key={st.tag.id} variant="secondary" className="text-xs">
+                        {st.tag.name}
                       </Badge>
                     ))}
-                    {show.tags.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{show.tags.length - 3}
-                      </Badge>
-                    )}
                   </div>
                   <Button className="btn-primary w-full" asChild>
                     <Link href={`/shows/${show.id}`}>View Details</Link>
@@ -436,5 +360,5 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
