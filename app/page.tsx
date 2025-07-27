@@ -34,100 +34,6 @@ export default async function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 relative">
       <MarchingFormation />
 
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 relative">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-bright-primary rounded-lg flex items-center justify-center">
-                <Music className="w-5 h-5 text-bright-dark" />
-              </div>
-              <span className="text-xl font-bold text-bright-dark font-primary">Bright Designs</span>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/shows" className="text-gray-600 hover:text-bright-third transition-colors">
-                Shows
-              </Link>
-              <Link href="/about" className="text-gray-600 hover:text-bright-third transition-colors">
-                About
-              </Link>
-              <Link href="/process" className="text-gray-600 hover:text-bright-third transition-colors">
-                Process
-              </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center text-gray-600 hover:text-bright-third transition-colors">
-                  Resources
-                  <ChevronDown className="ml-1 w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 p-4">
-                  <div className="space-y-4">
-                    <Link
-                      href="/arrangements"
-                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                        <Monitor className="w-4 h-4 text-bright-third" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-1">All Arrangements</h4>
-                        <p className="text-sm text-gray-600">
-                          Full catalogue of all our individual arrangements for sale!
-                        </p>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/faqs"
-                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                        <Sparkles className="w-4 h-4 text-bright-third" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-1">FAQs</h4>
-                        <p className="text-sm text-gray-600">Answers to the most common questions from our clients.</p>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/guide"
-                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                        <Target className="w-4 h-4 text-bright-third" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-1">Free Visual Technique Guide!</h4>
-                        <p className="text-sm text-gray-600">Grab a free visual technique guide made by our team!</p>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/contact"
-                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 bg-bright-third/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                        <MessageCircle className="w-4 h-4 text-bright-third" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-1">Contact Us</h4>
-                        <p className="text-sm text-gray-600">Get in touch with us! A REAL person will reach out!</p>
-                      </div>
-                    </Link>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button className="btn-outline" asChild>
-                <Link href="/contact">Contact Us</Link>
-              </Button>
-              <Button className="btn-primary" asChild>
-                <Link href="/build">
-                  Build Your Show
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className="py-20 px-4 relative">
         <div className="container mx-auto text-center">
@@ -144,12 +50,18 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button size="lg" className="btn-primary btn-lg" asChild>
+                <Link href="/build">
+                  Build Your Show
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </Button>
+              <Button size="lg" className="btn-secondary btn-lg" asChild>
                 <Link href="/contact">
                   Let's Talk
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button size="lg" className="btn-secondary btn-lg" asChild>
+              <Button size="lg" className="btn-outline btn-lg" asChild>
                 <Link href="/shows">
                   View Our Work
                   <Play className="ml-2 w-5 h-5" />

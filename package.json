@@ -57,6 +57,7 @@
     "react": "^19",
     "react-day-picker": "latest",
     "react-dom": "^19",
+    "react-h5-audio-player": "^3.10.0",
     "react-hook-form": "latest",
     "react-resizable-panels": "latest",
     "recharts": "latest",

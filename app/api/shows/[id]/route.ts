@@ -2,12 +2,12 @@ import { db } from '@/lib/db';
 import { shows, showsToTags } from '@/lib/db/schema';
 import { createClient } from '@/utils/supabase/server';
 import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const show = await db.query.shows.findFirst({
-    where: eq(shows.id, parseInt(params.id, 10)),
+    where: eq(shows.id, parseInt(id, 10)),
     with: {
       showsToTags: {
         with: {
@@ -20,9 +20,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
   return NextResponse.json(show);
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
@@ -33,7 +33,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const { tags: tagIds, ...showData } = body;
 
   const updatedShow = await db.transaction(async (tx) => {
-    const [updated] = await tx.update(shows).set(showData).where(eq(shows.id, parseInt(params.id, 10))).returning();
+    const [updated] = await tx.update(shows).set(showData).where(eq(shows.id, parseInt(id, 10))).returning();
     
     await tx.delete(showsToTags).where(eq(showsToTags.showId, updated.id));
 
@@ -52,15 +52,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   return NextResponse.json(updatedShow);
 }
 
-export async function DELETE(request: Request, { params }: { params: { id:string } }) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const deletedShow = await db.delete(shows).where(eq(shows.id, parseInt(params.id, 10))).returning();
+  const deletedShow = await db.delete(shows).where(eq(shows.id, parseInt(id, 10))).returning();
   return NextResponse.json(deletedShow);
 } 

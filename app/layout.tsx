@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
+import { MainNav } from "./components/main-nav"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,7 +30,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} font-secondary`}>{children}</body>
+      <body className={`${inter.variable} ${playfair.variable} font-secondary`}>
+        <MainNav>{children}</MainNav>
+      </body>
     </html>
   )
 }

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
+import { AudioPlayerComponent, audioPlayerStyles } from "@/app/components/audio-player"
 
 // Mock data for a specific arrangement
 const arrangementData = {
@@ -25,6 +26,41 @@ const arrangementData = {
   showTitle: "Cosmic Journey",
   showId: 1,
   instruments: ["Brass", "Woodwinds", "Percussion", "Electronics"],
+  // Mock audio tracks for the arrangement
+  audioTracks: [
+    {
+      id: "1",
+      title: "Full Arrangement - Studio Recording",
+      duration: "2:45",
+      description: "Complete studio recording with all parts",
+      type: "Full Track",
+      url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" // Replace with actual audio URLs
+    },
+    {
+      id: "2", 
+      title: "Brass Section Only",
+      duration: "2:45",
+      description: "Isolated brass parts for learning",
+      type: "Section Excerpt",
+      url: "https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3"
+    },
+    {
+      id: "3",
+      title: "Woodwind Section Only", 
+      duration: "2:45",
+      description: "Isolated woodwind parts for learning",
+      type: "Section Excerpt",
+      url: "https://www.soundjay.com/misc/sounds/bell-ringing-03.mp3"
+    },
+    {
+      id: "4",
+      title: "Percussion & Electronics",
+      duration: "2:45", 
+      description: "Rhythm section and electronic elements",
+      type: "Section Excerpt",
+      url: "https://www.soundjay.com/misc/sounds/bell-ringing-02.mp3"
+    }
+  ],
   detailedInstrumentation: {
     brass: ["Trumpet (4 parts)", "Horn (2 parts)", "Trombone (3 parts)", "Euphonium", "Tuba"],
     woodwinds: [
@@ -61,38 +97,9 @@ const arrangementData = {
 export default function ArrangementDetailPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-bright-primary rounded-lg flex items-center justify-center">
-                <Music2 className="w-5 h-5 text-bright-dark" />
-              </div>
-              <span className="text-xl font-bold text-bright-dark font-primary">Bright Designs</span>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/shows" className="text-gray-600 hover:text-bright-third transition-colors">
-                Shows
-              </Link>
-              <Link href="/arrangements" className="text-bright-third font-medium">
-                Arrangements
-              </Link>
-              <Link href="/about" className="text-gray-600 hover:text-bright-third transition-colors">
-                About
-              </Link>
-              <Button
-                variant="outline"
-                className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 bg-transparent"
-                asChild
-              >
-                <Link href="/contact">Contact Us</Link>
-              </Button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
+      {/* Include custom audio player styles */}
+      <style dangerouslySetInnerHTML={{ __html: audioPlayerStyles }} />
+      
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center mb-6">
@@ -106,32 +113,40 @@ export default function ArrangementDetailPage() {
 
         {/* Arrangement Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Left side - Image */}
           <div className="relative">
-            <img
-              src={arrangementData.thumbnail || "/placeholder.svg"}
-              alt={arrangementData.title}
-              className="w-full h-80 object-cover rounded-lg shadow-lg"
-            />
+            <div className="w-full h-80 bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
+              <div className="text-gray-400">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+              </div>
+            </div>
             <Button
               size="lg"
-              className="btn-secondary btn-lg absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 text-gray-900 hover:bg-white shadow-lg"
             >
-              <Play className="w-6 h-6 mr-2" />
+              <Play className="w-5 h-5 mr-2" />
               Play Preview
             </Button>
           </div>
+
+          {/* Right side - Content */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Badge variant="outline">{arrangementData.year}</Badge>
-              <Badge variant="secondary">{arrangementData.difficulty}</Badge>
+            <div className="flex items-center gap-3 mb-4">
+              <Badge variant="outline" className="text-sm">{arrangementData.year}</Badge>
+              <Badge variant="secondary" className="text-sm">{arrangementData.difficulty}</Badge>
               <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
                 <span className="text-sm font-medium">{arrangementData.rating}</span>
                 <span className="text-sm text-gray-500 ml-1">({arrangementData.reviews} reviews)</span>
               </div>
             </div>
-            <h1 className="text-4xl font-bold mb-2 text-bright-dark font-primary">{arrangementData.title}</h1>
-            <p className="text-lg text-bright-third mb-4">
+
+            <h1 className="text-4xl font-bold mb-4 text-gray-900 font-primary">{arrangementData.title}</h1>
+            <p className="text-lg text-bright-primary mb-4">
               From:{" "}
               <Link href={`/shows/${arrangementData.showId}`} className="hover:underline">
                 {arrangementData.showTitle}
@@ -141,47 +156,49 @@ export default function ArrangementDetailPage() {
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="flex items-center">
-                <Clock className="w-5 h-5 text-gray-400 mr-2" />
-                <span>{arrangementData.duration}</span>
+                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                <span className="text-sm">{arrangementData.duration}</span>
               </div>
               <div className="flex items-center">
-                <Music2 className="w-5 h-5 text-gray-400 mr-2" />
-                <span>{arrangementData.key}</span>
+                <Music2 className="w-4 h-4 text-gray-400 mr-2" />
+                <span className="text-sm">{arrangementData.key}</span>
               </div>
               <div className="flex items-center">
-                <Users className="w-5 h-5 text-gray-400 mr-2" />
-                <span>{arrangementData.tempo}</span>
+                <Users className="w-4 h-4 text-gray-400 mr-2" />
+                <span className="text-sm">{arrangementData.tempo}</span>
               </div>
               <div className="flex items-center">
-                <FileText className="w-5 h-5 text-gray-400 mr-2" />
-                <span>{arrangementData.composer}</span>
+                <FileText className="w-4 h-4 text-gray-400 mr-2" />
+                <span className="text-sm">{arrangementData.composer}</span>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-6">
               {arrangementData.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
+                <Badge key={tag} variant="outline" className="text-xs">
                   {tag}
                 </Badge>
               ))}
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-bright-primary/10 rounded-lg mb-6">
-              <div>
-                <div className="text-2xl font-bold text-bright-dark">{arrangementData.price}</div>
-                <div className="text-sm text-gray-600">Individual Arrangement</div>
+            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{arrangementData.price}</div>
+                  <div className="text-sm text-gray-600">Individual Arrangement</div>
+                </div>
+                <Button size="lg" className="bg-bright-primary hover:bg-yellow-400 text-gray-900 font-medium px-6">
+                  Purchase Arrangement
+                </Button>
               </div>
-              <Button size="lg" className="btn-primary btn-lg">
-                Purchase Arrangement
-              </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <Button className="btn-outline">
+              <Button variant="outline">
                 <Download className="w-4 h-4 mr-2" />
                 Sample Score
               </Button>
-              <Button className="btn-outline">
+              <Button variant="outline">
                 <Play className="w-4 h-4 mr-2" />
                 Audio Preview
               </Button>
@@ -189,16 +206,17 @@ export default function ArrangementDetailPage() {
           </div>
         </div>
 
-        {/* Detailed Information */}
+        {/* Tabs Section */}
         <Tabs defaultValue="instrumentation" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="instrumentation">Instrumentation</TabsTrigger>
+            <TabsTrigger value="audio">Audio Preview</TabsTrigger>
             <TabsTrigger value="analysis">Musical Analysis</TabsTrigger>
             <TabsTrigger value="requirements">Requirements</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="instrumentation" className="mt-6">
+          <TabsContent value="instrumentation" className="mt-8">
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="font-primary">Complete Instrumentation</CardTitle>
@@ -206,7 +224,7 @@ export default function ArrangementDetailPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <h4 className="font-semibold text-bright-dark mb-3">Brass Section</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">Brass Section</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.brass.map((instrument, index) => (
                       <div key={index} className="flex items-center">
@@ -217,7 +235,7 @@ export default function ArrangementDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-bright-dark mb-3">Woodwind Section</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">Woodwind Section</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.woodwinds.map((instrument, index) => (
                       <div key={index} className="flex items-center">
@@ -228,18 +246,18 @@ export default function ArrangementDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-bright-dark mb-3">Percussion Section</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">Percussion Section</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.percussion.map((instrument, index) => (
                       <div key={index} className="flex items-center">
-                        <div className="w-2 h-2 bg-bright-secondary rounded-full mr-2"></div>
+                        <div className="w-2 h-2 bg-gray-600 rounded-full mr-2"></div>
                         {instrument}
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-bright-dark mb-3">Electronics</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">Electronics</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.electronics.map((instrument, index) => (
                       <div key={index} className="flex items-center">
@@ -253,7 +271,15 @@ export default function ArrangementDetailPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="analysis" className="mt-6">
+          <TabsContent value="audio" className="mt-8">
+            <AudioPlayerComponent 
+              tracks={arrangementData.audioTracks}
+              title="Arrangement Audio Preview"
+              className="bg-white/80 backdrop-blur-sm"
+            />
+          </TabsContent>
+
+          <TabsContent value="analysis" className="mt-8">
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="font-primary">Musical Analysis</CardTitle>
@@ -292,7 +318,7 @@ export default function ArrangementDetailPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="requirements" className="mt-6">
+          <TabsContent value="requirements" className="mt-8">
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="font-primary">Performance Requirements</CardTitle>
@@ -328,14 +354,17 @@ export default function ArrangementDetailPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="reviews" className="mt-6">
+          <TabsContent value="reviews" className="mt-8">
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="font-primary">Customer Reviews</CardTitle>
                 <CardDescription>What directors are saying about this arrangement</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-gray-500">Reviews coming soon...</div>
+                <div className="text-center py-8 text-gray-500">
+                  <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Reviews coming soon...</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

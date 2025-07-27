@@ -5,7 +5,53 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Play, Star, Users } from "lucide-react";
 
+const mockShows = [
+  {
+    id: "1",
+    title: "The Galactic Symphony",
+    year: "2023",
+    description: "A journey through the stars with a powerful and moving soundtrack.",
+    thumbnailUrl: "/placeholder.svg",
+    difficulty: "Medium",
+    duration: "7:30",
+    showsToTags: [
+      { tag: { id: "1", name: "Space" } },
+      { tag: { id: "2", name: "Orchestral" } },
+      { tag: { id: "3", name: "Modern" } },
+    ],
+  },
+  {
+    id: "2",
+    title: "Echoes of the Canyon",
+    year: "2022",
+    description: "A tribute to the majestic beauty of the American Southwest.",
+    thumbnailUrl: "/placeholder.svg",
+    difficulty: "Easy",
+    duration: "6:45",
+    showsToTags: [
+      { tag: { id: "4", name: "Nature" } },
+      { tag: { id: "5", name: "Band" } },
+      { tag: { id: "6", name: "Lyrical" } },
+    ],
+  },
+  {
+    id: "3",
+    title: "Metropolis Future",
+    year: "2024",
+    description: "An energetic and futuristic show inspired by the worlds of tomorrow.",
+    thumbnailUrl: "/placeholder.svg",
+    difficulty: "Hard",
+    duration: "8:15",
+    showsToTags: [
+      { tag: { id: "7", name: "Electronic" } },
+      { tag: { id: "8", name: "Sci-Fi" } },
+      { tag: { id: "3", name: "Modern" } },
+    ],
+  },
+];
+
 export default async function ShowsPage() {
+  /*
   const shows = await db.query.shows.findMany({
     with: {
       showsToTags: {
@@ -15,6 +61,8 @@ export default async function ShowsPage() {
       },
     },
   });
+  */
+  const shows = mockShows;
 
   return (
     <div className="container mx-auto py-20">

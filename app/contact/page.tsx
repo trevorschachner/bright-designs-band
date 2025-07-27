@@ -11,38 +11,6 @@ import Link from "next/link"
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-bright-primary rounded-lg flex items-center justify-center">
-                <Music className="w-5 h-5 text-bright-dark" />
-              </div>
-              <span className="text-xl font-bold text-bright-dark font-primary">Bright Designs</span>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/shows" className="text-gray-600 hover:text-bright-third transition-colors">
-                Shows
-              </Link>
-              <Link href="/about" className="text-gray-600 hover:text-bright-third transition-colors">
-                About
-              </Link>
-              <Link href="/process" className="text-gray-600 hover:text-bright-third transition-colors">
-                Process
-              </Link>
-              <Button
-                variant="outline"
-                className="border-bright-secondary text-bright-dark hover:bg-bright-primary/10 bg-transparent"
-                asChild
-              >
-                <Link href="/contact">Contact Us</Link>
-              </Button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center mb-6">

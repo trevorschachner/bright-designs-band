@@ -1,1 +1,24 @@
-{}
+{
+  "app/components/audio-player.tsx -> react-h5-audio-player": {
+    "id": "app/components/audio-player.tsx -> react-h5-audio-player",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_react-h5-audio-player_es_index_js.js"
+    ]
+  },
+  "node_modules/@supabase/auth-js/dist/module/lib/helpers.js -> @supabase/node-fetch": {
+    "id": "node_modules/@supabase/auth-js/dist/module/lib/helpers.js -> @supabase/node-fetch",
+    "files": []
+  },
+  "node_modules/@supabase/functions-js/dist/module/helper.js -> @supabase/node-fetch": {
+    "id": "node_modules/@supabase/functions-js/dist/module/helper.js -> @supabase/node-fetch",
+    "files": []
+  },
+  "node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js -> @supabase/node-fetch": {
+    "id": "node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js -> @supabase/node-fetch",
+    "files": []
+  },
+  "node_modules/@supabase/storage-js/dist/module/lib/helpers.js -> @supabase/node-fetch": {
+    "id": "node_modules/@supabase/storage-js/dist/module/lib/helpers.js -> @supabase/node-fetch",
+    "files": []
+  }
+}

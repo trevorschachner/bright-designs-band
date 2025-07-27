@@ -1,7 +1,6 @@
 import { db } from '@/lib/db';
 import { tags } from '@/lib/db/schema';
 import { createClient } from '@/utils/supabase/server';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
@@ -10,8 +9,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
