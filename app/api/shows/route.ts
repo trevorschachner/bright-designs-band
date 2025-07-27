@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { shows } from '@/lib/db/schema';
+import { shows, showsToTags } from '@/lib/db/schema';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -19,6 +19,22 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const newShow = await db.insert(shows).values(body).returning();
+  const { tags: tagIds, ...showData } = body;
+
+  const newShow = await db.transaction(async (tx) => {
+    const [inserted] = await tx.insert(shows).values(showData).returning();
+
+    if (tagIds && tagIds.length > 0) {
+      await tx.insert(showsToTags).values(
+        tagIds.map((tagId: number) => ({
+          showId: inserted.id,
+          tagId,
+        }))
+      );
+    }
+
+    return inserted;
+  });
+
   return NextResponse.json(newShow);
 } 
