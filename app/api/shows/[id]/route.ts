@@ -14,6 +14,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
           tag: true,
         },
       },
+      arrangements: true,
     },
   });
   return NextResponse.json(show);
