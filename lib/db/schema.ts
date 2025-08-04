@@ -1,7 +1,8 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const difficultyEnum = pgEnum('difficulty', ['Beginner', 'Intermediate', 'Advanced']);
+export const fileTypeEnum = pgEnum('file_type', ['image', 'audio', 'youtube', 'pdf', 'score', 'other']);
 
 export const shows = pgTable('shows', {
   id: serial('id').primaryKey(),
@@ -23,6 +24,24 @@ export const arrangements = pgTable('arrangements', {
   showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
 });
 
+export const files = pgTable('files', {
+  id: serial('id').primaryKey(),
+  fileName: text('file_name').notNull(),
+  originalName: text('original_name').notNull(),
+  fileType: fileTypeEnum('file_type').notNull(),
+  fileSize: integer('file_size').notNull(), // in bytes
+  mimeType: text('mime_type').notNull(),
+  url: text('url').notNull(), // Supabase Storage URL
+  storagePath: text('storage_path').notNull(), // Path in Supabase Storage
+  showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }),
+  arrangementId: integer('arrangement_id').references(() => arrangements.id, { onDelete: 'cascade' }),
+  isPublic: boolean('is_public').default(false).notNull(),
+  description: text('description'),
+  displayOrder: integer('display_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
@@ -38,12 +57,25 @@ export const showsToTags = pgTable('shows_to_tags', {
 export const showsRelations = relations(shows, ({ many }) => ({
   arrangements: many(arrangements),
   showsToTags: many(showsToTags),
+  files: many(files),
 }));
 
-export const arrangementsRelations = relations(arrangements, ({ one }) => ({
+export const arrangementsRelations = relations(arrangements, ({ one, many }) => ({
   show: one(shows, {
     fields: [arrangements.showId],
     references: [shows.id],
+  }),
+  files: many(files),
+}));
+
+export const filesRelations = relations(files, ({ one }) => ({
+  show: one(shows, {
+    fields: [files.showId],
+    references: [shows.id],
+  }),
+  arrangement: one(arrangements, {
+    fields: [files.arrangementId],
+    references: [arrangements.id],
   }),
 }));
 
