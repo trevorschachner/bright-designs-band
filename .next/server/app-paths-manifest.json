@@ -1,0 +1,8 @@
+{
+  "/auth/signout/route": "app/auth/signout/route.js",
+  "/admin/page": "app/admin/page.js",
+  "/login/page": "app/login/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/admin/tags/page": "app/admin/tags/page.js",
+  "/admin/shows/new/page": "app/admin/shows/new/page.js"
+}

@@ -88,6 +88,11 @@ const config: Config = {
       },
       transitionDuration: {
         "2000": "2000ms",
+        "3000": "3000ms",
+      },
+      boxShadow: {
+        button: "0 2px 4px 0 rgba(0, 0, 0, 0.1)",
+        "button-hover": "0 4px 8px 0 rgba(0, 0, 0, 0.15)",
       },
     },
   },

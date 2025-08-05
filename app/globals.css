@@ -1,3 +1,5 @@
+@import 'react-h5-audio-player/lib/styles.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -81,4 +83,30 @@
 
 .march-dot {
   animation: marchTransition 0.3s ease-in-out;
+}
+
+/* Custom button improvements */
+.btn-primary {
+  @apply bg-bright-primary hover:bg-yellow-400 text-bright-dark font-medium px-6 py-3 rounded-lg shadow-button hover:shadow-button-hover transition-all duration-200 border-0;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-bright-dark font-medium px-6 py-3 rounded-lg shadow-button hover:shadow-button-hover transition-all duration-200 border border-gray-200;
+}
+
+.btn-outline {
+  @apply bg-transparent hover:bg-bright-primary/10 text-bright-dark font-medium px-6 py-3 rounded-lg border-2 border-bright-secondary hover:border-bright-primary transition-all duration-200;
+}
+
+.btn-ghost {
+  @apply bg-transparent hover:bg-gray-100 text-gray-600 hover:text-bright-dark font-medium px-4 py-2 rounded-lg transition-all duration-200;
+}
+
+/* Fix button sizing consistency */
+.btn-sm {
+  @apply px-4 py-2 text-sm;
+}
+
+.btn-lg {
+  @apply px-8 py-4 text-lg;
 }
