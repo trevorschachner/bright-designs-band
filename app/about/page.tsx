@@ -2,6 +2,10 @@
 import { ArrowLeft, Music, Users, Award, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+
+export default function AboutPage() {
+  return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
