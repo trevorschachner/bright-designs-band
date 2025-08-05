@@ -173,6 +173,64 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* About Section */}
+      <section id="about" className="py-20 px-4 bg-white relative">
+        <div className="container mx-auto text-center max-w-3xl">
+          <h2 className="text-4xl font-bold mb-4 text-bright-dark font-primary">About Bright Designs</h2>
+          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            Bright Designs is dedicated to crafting innovative marching band shows that inspire performers and
+            captivate audiences. With years of experience and a passion for musical excellence, we collaborate
+            with directors to bring unique visions to life, from initial concept through on-field execution.
+          </p>
+        </div>
+      </section>
+
+      {/* Process Section */}
+      <section id="process" className="py-20 px-4 bg-gradient-to-br from-white to-slate-50 relative">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="text-4xl font-bold text-center mb-12 text-bright-dark font-primary">Our Design Process</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h3 className="text-2xl font-semibold mb-2 font-primary">1. Consultation</h3>
+              <p className="text-gray-600">We start by understanding your goals, ensemble strengths, and creative vision.</p>
+            </div>
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h3 className="text-2xl font-semibold mb-2 font-primary">2. Composition & Arrangement</h3>
+              <p className="text-gray-600">Our team crafts engaging music and drill tailored to your ensemble’s needs.</p>
+            </div>
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h3 className="text-2xl font-semibold mb-2 font-primary">3. Delivery & Support</h3>
+              <p className="text-gray-600">We provide rehearsal resources and remain available for feedback throughout the season.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="py-20 px-4 bg-white relative">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="text-4xl font-bold text-center mb-12 text-bright-dark font-primary">Our Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h3 className="text-xl font-semibold mb-2 font-primary">Custom Shows</h3>
+              <p className="text-gray-600">Complete show design built from the ground up to match your band’s personality.</p>
+            </div>
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h3 className="text-xl font-semibold mb-2 font-primary">Arrangements</h3>
+              <p className="text-gray-600">Professional music arrangements that highlight your ensemble’s unique sound.</p>
+            </div>
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h3 className="text-xl font-semibold mb-2 font-primary">Consultation</h3>
+              <p className="text-gray-600">Expert advice on show concepts, rehearsal strategies, and adjudication preparedness.</p>
+            </div>
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h3 className="text-xl font-semibold mb-2 font-primary">Music Licensing</h3>
+              <p className="text-gray-600">Hassle-free licensing assistance to keep your performances compliant.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 bg-bright-third relative">
         <div className="container mx-auto text-center">
@@ -216,11 +274,13 @@ export default async function HomePage() {
               <h3 className="font-semibold mb-4 font-primary">Services</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
+
                   <Link href="/shows" className="hover:text-white transition-colors">
                     Custom Shows
                   </Link>
                 </li>
                 <li>
+
                   <Link href="/arrangements" className="hover:text-white transition-colors">
                     Arrangements
                   </Link>
@@ -237,6 +297,7 @@ export default async function HomePage() {
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <Link href="/shows" className="hover:text-white transition-colors">
+
                     Show Catalog
                   </Link>
                 </li>
