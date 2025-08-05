@@ -1,0 +1,58 @@
+{
+  "version": 3,
+  "middleware": {
+    "/": {
+      "files": [
+        "server/edge/chunks/ssr/_1451f5._.js",
+        "server/edge/chunks/ssr/[root of the server]__536bc5._.js",
+        "server/edge/chunks/ssr/edge-wrapper_f20620.js"
+      ],
+      "name": "middleware",
+      "page": "/",
+      "matchers": [
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico).*))(.json)?[\\/#\\?]?$",
+          "originalSource": "/((?!_next/static|_next/image|favicon.ico).*)"
+        }
+      ],
+      "wasm": [],
+      "assets": [
+        {
+          "name": "server/edge/chunks/ssr/_1451f5._.js.map",
+          "filePath": "server/edge/chunks/ssr/_1451f5._.js.map"
+        },
+        {
+          "name": "server/edge/chunks/ssr/_1451f5._.js",
+          "filePath": "server/edge/chunks/ssr/_1451f5._.js"
+        },
+        {
+          "name": "server/edge/chunks/ssr/[root of the server]__536bc5._.js.map",
+          "filePath": "server/edge/chunks/ssr/[root of the server]__536bc5._.js.map"
+        },
+        {
+          "name": "server/edge/chunks/ssr/[root of the server]__536bc5._.js",
+          "filePath": "server/edge/chunks/ssr/[root of the server]__536bc5._.js"
+        },
+        {
+          "name": "server/edge/chunks/ssr/edge-wrapper_f20620.js.map",
+          "filePath": "server/edge/chunks/ssr/edge-wrapper_f20620.js.map"
+        },
+        {
+          "name": "server/edge/chunks/ssr/edge-wrapper_f20620.js",
+          "filePath": "server/edge/chunks/ssr/edge-wrapper_f20620.js"
+        }
+      ],
+      "env": {
+        "__NEXT_BUILD_ID": "development",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "7lyto53Doct7pA2xcfBWBgS0nehLWAv+QiMxUcDKfJk=",
+        "__NEXT_PREVIEW_MODE_ID": "e85621e81b2634d40d4124e5f0776136",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "deb8af815cf8a62c2b2e3a942ef3bb105176cb6eeb98b5625d8eb2d83183b6e4",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "58d718a51e9846f299b3967e397d9f6ea6afc23a37487983b1532419ed3488c1"
+      }
+    }
+  },
+  "sortedMiddleware": [
+    "/"
+  ],
+  "functions": {}
+}
