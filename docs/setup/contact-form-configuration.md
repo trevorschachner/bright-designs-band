@@ -12,31 +12,8 @@
 
 ```bash
 # Add to your .env.local file
-EMAIL_SERVICE="resend"
-RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-EMAIL_FROM="hello@brightdesigns.band"
-ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band,admin@brightdesigns.band"
+
 ```
-
-### 📧 Option 2: Gmail (Easy Setup)
-**Perfect for small businesses - uses your existing Gmail**
-
-1. **Enable 2FA**: Turn on 2-factor authentication in your Google account
-2. **Generate App Password**: 
-   - Go to [Google Account Settings](https://myaccount.google.com/apppasswords)
-   - Select "Mail" and your device
-   - Copy the 16-character password
-3. **Configure environment**:
-
-```bash
-# Add to your .env.local file
-EMAIL_SERVICE="gmail"
-GMAIL_USER="your-email@gmail.com"
-GMAIL_APP_PASSWORD="abcd efgh ijkl mnop"
-ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band,admin@brightdesigns.band"
-```
-
-### ⚙️ Option 3: Custom SMTP
 **For advanced users with existing email providers**
 
 ```bash

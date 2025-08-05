@@ -135,7 +135,7 @@ function Calendar({
             />
           )
         },
-        Chevron: ({ className, orientation, ...props }: { className?: string; orientation?: 'left' | 'right'; [key: string]: any }) => {
+        Chevron: ({ className, orientation, ...props }: { className?: string; orientation?: 'left' | 'right' | 'up' | 'down'; [key: string]: any }) => {
           if (orientation === 'left') {
             return (
               <ChevronLeftIcon className={cn('size-4', className)} {...props} />
