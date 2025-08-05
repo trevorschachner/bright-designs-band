@@ -1,11 +1,18 @@
-import { db } from '@/lib/db';
-import { arrangements } from '@/lib/db/schema';
-import { createClient } from '@/utils/supabase/server';
+import { db } from '@/lib/database';
+import { arrangements } from '@/lib/database/schema';
+import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
-import { count } from 'drizzle-orm';
+import { count } from 'drizzle-orm/sql';
 
 export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const filterState = FilterUrlManager.fromUrlParams(searchParams);
@@ -15,9 +22,9 @@ export async function GET(request: Request) {
     const limit = filterState.limit || 20;
     const offset = (page - 1) * limit;
 
-    // Build base query
-    let query = db.select().from(arrangements);
-    let countQuery = db.select({ count: count() }).from(arrangements);
+    // Build base query with conditional chaining
+    let queryBuilder = db.select().from(arrangements);
+    let countQueryBuilder = db.select({ count: count() }).from(arrangements);
 
     // Add WHERE conditions
     const whereConditions = [];
@@ -49,22 +56,23 @@ export async function GET(request: Request) {
         : QueryBuilder.buildWhereClause(arrangements, filterState.conditions);
       
       if (finalWhereClause) {
-        query = query.where(finalWhereClause);
-        countQuery = countQuery.where(finalWhereClause);
+        queryBuilder = queryBuilder.where(finalWhereClause) as typeof queryBuilder;
+        countQueryBuilder = countQueryBuilder.where(finalWhereClause) as typeof countQueryBuilder;
       }
     }
 
     // Add ORDER BY
     if (filterState.sort.length > 0) {
       const orderByClause = QueryBuilder.buildOrderByClause(arrangements, filterState.sort);
-      query = query.orderBy(...orderByClause);
+      queryBuilder = queryBuilder.orderBy(...orderByClause) as typeof queryBuilder;
     } else {
       // Default sort by title
-      query = query.orderBy(arrangements.title);
+      queryBuilder = queryBuilder.orderBy(arrangements.title) as typeof queryBuilder;
     }
 
     // Add pagination
-    query = query.limit(limit).offset(offset);
+    const query = queryBuilder.limit(limit).offset(offset);
+    const countQuery = countQueryBuilder;
 
     // Execute queries
     const [arrangementsData, totalResult] = await Promise.all([
@@ -114,4 +122,4 @@ export async function POST(request: Request) {
   const body = await request.json();
   const newArrangement = await db.insert(arrangements).values(body).returning();
   return NextResponse.json(newArrangement);
-} 
+}

@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Play, Users, Loader } from "lucide-react";
-import { FilterBar } from "@/components/filters/filter-bar";
-import { Pagination } from "@/components/filters/pagination";
-import { useFilterState } from "@/hooks/use-filter-state";
+import { FilterBar } from "@/components/features/filters/filter-bar";
+import { Pagination } from "@/components/features/filters/pagination";
+import { useFilterState } from "@/lib/hooks/use-filter-state";
 import { SHOWS_FILTER_FIELDS } from "@/lib/filters/schema-analyzer";
 import { SHOWS_PRESETS } from "@/lib/filters/presets";
 import { FilteredResponse } from "@/lib/filters/types";
@@ -168,7 +168,6 @@ export default function ShowsPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <Button
-                    size="sm"
                     className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-gray-900 hover:bg-white"
                   >
                     <Play className="w-4 h-4 mr-2" />
@@ -180,7 +179,7 @@ export default function ShowsPage() {
                     <CardTitle className="text-xl group-hover:text-bright-third transition-colors font-primary">
                       {show.title}
                     </CardTitle>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge className="text-xs">
                       {show.year}
                     </Badge>
                   </div>
@@ -210,12 +209,12 @@ export default function ShowsPage() {
                   {show.showsToTags && show.showsToTags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-4">
                       {show.showsToTags.slice(0, 3).map((st) => (
-                        <Badge key={st.tag.id} variant="secondary" className="text-xs">
+                        <Badge key={st.tag.id} className="text-xs">
                           {st.tag.name}
                         </Badge>
                       ))}
                       {show.showsToTags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="text-xs">
                           +{show.showsToTags.length - 3} more
                         </Badge>
                       )}
@@ -246,7 +245,6 @@ export default function ShowsPage() {
                 <p>Try adjusting your filters or search terms.</p>
               </div>
               <Button 
-                variant="outline" 
                 onClick={() => setFilterState({
                   search: undefined,
                   conditions: [],

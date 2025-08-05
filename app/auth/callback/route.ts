@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/utils/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserRole } from '@/lib/auth/roles'
 

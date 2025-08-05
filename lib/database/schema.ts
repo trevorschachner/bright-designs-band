@@ -92,4 +92,29 @@ export const showsToTagsRelations = relations(showsToTags, ({ one }) => ({
     fields: [showsToTags.tagId],
     references: [tags.id],
   }),
+}));
+
+// Contact form submissions table
+export const contactSubmissions = pgTable('contact_submissions', {
+  id: serial('id').primaryKey(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  service: text('service').notNull(), // existing-show, choreography, etc.
+  message: text('message').notNull(),
+  privacyAgreed: boolean('privacy_agreed').notNull().default(false),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  emailSent: boolean('email_sent').notNull().default(false),
+  emailSentAt: timestamp('email_sent_at'),
+  emailError: text('email_error'),
+  status: text('status').notNull().default('new'), // new, contacted, resolved, spam
+  adminNotes: text('admin_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const contactSubmissionsRelations = relations(contactSubmissions, ({ many }) => ({
+  // Add relations here if needed in the future
 })); 

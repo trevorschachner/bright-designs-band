@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
-import { db } from '@/lib/db'
-import { files } from '@/lib/db/schema'
+import { createClient } from '@/lib/utils/supabase/server'
+import { db } from '@/lib/database'
+import { files } from '@/lib/database/schema'
 import { getUserPermissions } from '@/lib/auth/roles'
-import { isValidYouTubeUrl } from '@/app/components/youtube-player'
+import { isValidYouTubeUrl } from '@/components/features/youtube-player'
 
 export async function POST(request: NextRequest) {
   try {

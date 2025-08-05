@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/client'
+import { createClient } from '@/lib/utils/supabase/client'
 
 export interface FileUploadResult {
   success: boolean

@@ -3,23 +3,23 @@ import {
   Play,
   Music,
   Users,
-  Star,
-  ChevronDown,
-  Monitor,
-  Sparkles,
-  Target,
-  MessageCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 import Link from "next/link"
-import MarchingFormation from "./components/marching-formation"
-import { db } from "@/lib/db"
+import MarchingFormation from "@/components/features/marching-formation"
+import { db } from "@/lib/database"
+import { shows, showsToTags, tags } from "@/lib/database/schema"
+
+
+import { JsonLd } from "@/components/features/seo/JsonLd"
+import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
 
 export default async function HomePage() {
-  const shows = await db.query.shows.findMany({
+  // Use relational query syntax to avoid problematic imports
+  const featuredShows = await db.query.shows.findMany({
     limit: 6,
     with: {
       showsToTags: {
@@ -39,29 +39,29 @@ export default async function HomePage() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-bright-dark font-primary leading-tight">
-              Student
+              Custom Marching Band
               <br />
-              <span className="text-bright-third">centered</span>
+              <span className="text-bright-third">Show Design</span>
               <br />
-              design.
+              & Arrangements
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Bringing best in class design to best in class bands.
+              Award-winning marching band show design services. Professional arrangements, innovative drill design, and complete show packages that captivate audiences and elevate your band&apos;s performance.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="btn-primary btn-lg" asChild>
+              <Button className="btn-primary btn-lg" asChild>
                 <Link href="/build">
                   Build Your Show
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button size="lg" className="btn-secondary btn-lg" asChild>
+              <Button className="btn-secondary btn-lg" asChild>
                 <Link href="/contact">
-                  Let's Talk
+                  Let&apos;s Talk
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button size="lg" className="btn-outline btn-lg" asChild>
+              <Button className="btn-outline btn-lg" asChild>
                 <Link href="/shows">
                   View Our Work
                   <Play className="ml-2 w-5 h-5" />
@@ -108,7 +108,7 @@ export default async function HomePage() {
 
           {/* Show Grid - Featured Shows Only */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {shows.map((show) => (
+            {featuredShows.map((show) => (
               <Card
                 key={show.id}
                 className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white/80 backdrop-blur-sm"
@@ -121,7 +121,6 @@ export default async function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <Button
-                    size="sm"
                     className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-gray-900 hover:bg-white"
                   >
                     <Play className="w-4 h-4 mr-2" />
@@ -133,7 +132,7 @@ export default async function HomePage() {
                     <CardTitle className="text-xl group-hover:text-bright-third transition-colors font-primary">
                       {show.title}
                     </CardTitle>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge className="text-xs">
                       {show.year}
                     </Badge>
                   </div>
@@ -148,8 +147,8 @@ export default async function HomePage() {
                     <span>{show.duration}</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {show.showsToTags.map((st) => (
-                      <Badge key={st.tag.id} variant="secondary" className="text-xs">
+                    {show.showsToTags.map((st: any) => (
+                      <Badge key={st.tag.id} className="text-xs">
                         {st.tag.name}
                       </Badge>
                     ))}
@@ -163,7 +162,7 @@ export default async function HomePage() {
           </div>
 
           <div className="text-center mt-12">
-            <Button size="lg" className="btn-outline btn-lg" asChild>
+            <Button className="btn-outline btn-lg" asChild>
               <Link href="/shows">
                 View All Shows
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -183,13 +182,13 @@ export default async function HomePage() {
               here to help your band shine.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="btn-secondary btn-lg" asChild>
+              <Button className="btn-secondary btn-lg" asChild>
                 <Link href="/build">
                   Start Your Project
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button size="lg" className="btn-outline btn-lg" asChild>
+              <Button className="btn-outline btn-lg" asChild>
                 <Link href="/contact">Schedule Consultation</Link>
               </Button>
             </div>
@@ -271,6 +270,31 @@ export default async function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Structured Data for SEO */}
+      <JsonLd data={marchingBandSchemas.showDesignService} />
+      <JsonLd data={marchingBandSchemas.arrangementService} />
+      <JsonLd data={marchingBandSchemas.drillService} />
+      
+      {/* FAQ Schema for common questions */}
+      <JsonLd data={createFAQSchema([
+        {
+          question: "What services does Bright Designs offer for marching bands?",
+          answer: "Bright Designs offers complete marching band show design services including custom music arrangements, drill writing, choreography design, and full show packages for competitive and exhibition programs."
+        },
+        {
+          question: "How long does it take to create a custom marching band show?",
+          answer: "Custom marching band show creation typically takes 6-12 weeks depending on the complexity of the arrangement, drill design requirements, and show length. We work closely with directors to meet performance deadlines."
+        },
+        {
+          question: "Do you work with high school and college marching bands?",
+          answer: "Yes, Bright Designs works with marching bands at all levels including high school, college, and competitive independent ensembles. We tailor our designs to match the skill level and goals of each group."
+        },
+        {
+          question: "Can you arrange existing songs for marching band?",
+          answer: "Absolutely! We specialize in creating custom marching band arrangements of popular songs, classical pieces, and original compositions. All arrangements are optimized for marching band instrumentation and field performance."
+        }
+      ])} />
     </div>
   );
 }

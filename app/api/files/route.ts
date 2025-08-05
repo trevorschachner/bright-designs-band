@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
-import { db } from '@/lib/db'
-import { files } from '@/lib/db/schema'
+import { createClient } from '@/lib/utils/supabase/server'
+import { db } from '@/lib/database'
+import { files } from '@/lib/database/schema'
 import { fileStorage } from '@/lib/storage'
 import { getUserRole, getUserPermissions } from '@/lib/auth/roles'
 
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     const arrangementId = searchParams.get('arrangementId')
     const fileType = searchParams.get('fileType')
 
-    let query = db.select().from(files)
+    const query = db.select().from(files)
 
     // Apply filters
     const conditions: any[] = []

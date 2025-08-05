@@ -1,6 +1,6 @@
-import { db } from '@/lib/db';
-import { tags } from '@/lib/db/schema';
-import { createClient } from '@/utils/supabase/server';
+import { db } from '@/lib/database';
+import { tags } from '@/lib/database/schema';
+import { createClient } from '@/lib/utils/supabase/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 

@@ -1,12 +1,19 @@
-import { db } from '@/lib/db';
-import { shows, showsToTags, tags } from '@/lib/db/schema';
-import { createClient } from '@/utils/supabase/server';
+import { db } from '@/lib/database';
+import { shows, showsToTags, tags } from '@/lib/database/schema';
+import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { SHOWS_FILTER_FIELDS } from '@/lib/filters/schema-analyzer';
 import { count } from 'drizzle-orm';
 
 export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const filterState = FilterUrlManager.fromUrlParams(searchParams);
@@ -16,9 +23,9 @@ export async function GET(request: Request) {
     const limit = filterState.limit || 20;
     const offset = (page - 1) * limit;
 
-    // Build base query
-    let query = db.select().from(shows);
-    let countQuery = db.select({ count: count() }).from(shows);
+    // Build base query with conditional chaining
+    let queryBuilder = db.select().from(shows);
+    let countQueryBuilder = db.select({ count: count() }).from(shows);
 
     // Add WHERE conditions
     const whereConditions = [];
@@ -50,22 +57,23 @@ export async function GET(request: Request) {
         : QueryBuilder.buildWhereClause(shows, filterState.conditions);
       
       if (finalWhereClause) {
-        query = query.where(finalWhereClause);
-        countQuery = countQuery.where(finalWhereClause);
+        queryBuilder = queryBuilder.where(finalWhereClause) as typeof queryBuilder;
+        countQueryBuilder = countQueryBuilder.where(finalWhereClause) as typeof countQueryBuilder;
       }
     }
 
     // Add ORDER BY
     if (filterState.sort.length > 0) {
       const orderByClause = QueryBuilder.buildOrderByClause(shows, filterState.sort);
-      query = query.orderBy(...orderByClause);
+      queryBuilder = queryBuilder.orderBy(...orderByClause) as typeof queryBuilder;
     } else {
       // Default sort by createdAt desc
-      query = query.orderBy(shows.createdAt);
+      queryBuilder = queryBuilder.orderBy(shows.createdAt) as typeof queryBuilder;
     }
 
     // Add pagination
-    query = query.limit(limit).offset(offset);
+    const query = queryBuilder.limit(limit).offset(offset);
+    const countQuery = countQueryBuilder;
 
     // Execute queries
     const [showsData, totalResult] = await Promise.all([

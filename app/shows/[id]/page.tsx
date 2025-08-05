@@ -1,7 +1,7 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/utils/supabase/server'
 import { eq } from 'drizzle-orm'
-import { shows } from '@/lib/db/schema'
-import { db } from '@/lib/db'
+import { shows } from '@/lib/database/schema'
+import { db } from '@/lib/database'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Star, Clock, Users, Download, Play, Calendar, Music, Target, ArrowLeft, FileText } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { AudioPlayerComponent } from '@/app/components/audio-player'
+import { AudioPlayerComponent } from '@/components/features/audio-player'
 
 export default async function ShowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

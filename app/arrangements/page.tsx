@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Music, DollarSign, Users, Loader } from "lucide-react";
-import { FilterBar } from "@/components/filters/filter-bar";
-import { Pagination } from "@/components/filters/pagination";
-import { useFilterState } from "@/hooks/use-filter-state";
+import { FilterBar } from "@/components/features/filters/filter-bar";
+import { Pagination } from "@/components/features/filters/pagination";
+import { useFilterState } from "@/lib/hooks/use-filter-state";
 import { ARRANGEMENTS_FILTER_FIELDS } from "@/lib/filters/schema-analyzer";
 import { ARRANGEMENTS_PRESETS } from "@/lib/filters/presets";
 import { FilteredResponse } from "@/lib/filters/types";
@@ -157,7 +157,7 @@ export default function ArrangementsPage() {
                       {arrangement.title}
                     </CardTitle>
                     {arrangement.type && (
-                      <Badge variant="outline" className="text-xs ml-2">
+                      <Badge className="text-xs ml-2">
                         {arrangement.type}
                       </Badge>
                     )}
@@ -170,7 +170,7 @@ export default function ArrangementsPage() {
                         <Music className="w-4 h-4" />
                         <span>From: {arrangement.show.title}</span>
                         {arrangement.show.year && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge className="text-xs">
                             {arrangement.show.year}
                           </Badge>
                         )}
@@ -206,7 +206,7 @@ export default function ArrangementsPage() {
                     </Button>
                     
                     {arrangement.show && (
-                      <Button variant="outline" className="w-full" asChild>
+                      <Button className="w-full" asChild>
                         <Link href={`/shows/${arrangement.show.id}`}>
                           View Show
                         </Link>
@@ -227,7 +227,6 @@ export default function ArrangementsPage() {
                 <p>Try adjusting your filters or search terms.</p>
               </div>
               <Button 
-                variant="outline" 
                 onClick={() => setFilterState({
                   search: undefined,
                   conditions: [],

@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/lib/utils/supabase/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ export default async function AdminPage() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect('/login');
+    return redirect('/login');
   }
 
   const userRole = getUserRole(session.user.email || '');
@@ -60,12 +60,12 @@ export default async function AdminPage() {
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <Badge variant="secondary" className="flex items-center space-x-1">
+          <Badge className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span>Online</span>
           </Badge>
           <form action="/auth/signout" method="post">
-            <Button variant="outline" size="sm" type="submit">
+            <Button type="submit">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </Button>
@@ -84,7 +84,7 @@ export default async function AdminPage() {
               <div className="text-2xl font-bold">12</div>
               <p className="text-xs text-muted-foreground">Active shows</p>
               <Link href="/admin/shows" className="mt-4 inline-block">
-                <Button size="sm" className="w-full">
+                <Button className="w-full">
                   View Shows
                 </Button>
               </Link>
@@ -102,7 +102,7 @@ export default async function AdminPage() {
               <div className="text-2xl font-bold">24</div>
               <p className="text-xs text-muted-foreground">Total tags</p>
               <Link href="/admin/tags" className="mt-4 inline-block">
-                <Button size="sm" className="w-full">
+                <Button className="w-full">
                   View Tags
                 </Button>
               </Link>
@@ -119,7 +119,7 @@ export default async function AdminPage() {
             <CardContent>
               <div className="text-2xl font-bold">2.4k</div>
               <p className="text-xs text-muted-foreground">Page views this month</p>
-              <Button size="sm" className="w-full mt-4" variant="outline">
+              <Button className="w-full mt-4">
                 View Analytics
               </Button>
             </CardContent>
@@ -135,7 +135,7 @@ export default async function AdminPage() {
             <CardContent>
               <div className="text-2xl font-bold">156</div>
               <p className="text-xs text-muted-foreground">Registered users</p>
-              <Button size="sm" className="w-full mt-4" variant="outline">
+              <Button className="w-full mt-4">
                 Manage Users
               </Button>
             </CardContent>
@@ -155,7 +155,7 @@ export default async function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {permissions.canCreateArrangements && (
                 <Link href="/admin/shows/new">
-                  <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+                  <Button className="w-full h-20 flex flex-col space-y-2">
                     <Music className="w-6 h-6" />
                     <span>Add New Show</span>
                   </Button>
@@ -163,20 +163,20 @@ export default async function AdminPage() {
               )}
               
               {permissions.canManageTags && (
-                <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+                <Button className="w-full h-20 flex flex-col space-y-2">
                   <Tags className="w-6 h-6" />
                   <span>Manage Categories</span>
                 </Button>
               )}
               
               {permissions.canViewAnalytics && (
-                <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+                <Button className="w-full h-20 flex flex-col space-y-2">
                   <BarChart3 className="w-6 h-6" />
                   <span>View Reports</span>
                 </Button>
               )}
               
-              <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+              <Button className="w-full h-20 flex flex-col space-y-2">
                 <Settings className="w-6 h-6" />
                 <span>Site Settings</span>
               </Button>

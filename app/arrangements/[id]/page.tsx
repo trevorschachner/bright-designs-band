@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import { AudioPlayerComponent, audioPlayerStyles } from "@/app/components/audio-player"
+import { AudioPlayerComponent, audioPlayerStyles } from "@/components/features/audio-player"
 
 // Mock data for a specific arrangement
 const arrangementData = {
