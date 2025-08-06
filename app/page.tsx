@@ -195,7 +195,7 @@ export default async function HomePage() {
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md text-center">
               <h3 className="text-2xl font-semibold mb-2 font-primary">2. Composition & Arrangement</h3>
-              <p className="text-gray-600">Our team crafts engaging music and drill tailored to your ensemble’s needs.</p>
+              <p className="text-gray-600">Our team crafts engaging music and drill tailored to your ensemble's needs.</p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md text-center">
               <h3 className="text-2xl font-semibold mb-2 font-primary">3. Delivery & Support</h3>
@@ -212,11 +212,11 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="p-6 bg-white rounded-lg shadow-md text-center">
               <h3 className="text-xl font-semibold mb-2 font-primary">Custom Shows</h3>
-              <p className="text-gray-600">Complete show design built from the ground up to match your band’s personality.</p>
+              <p className="text-gray-600">Complete show design built from the ground up to match your band's personality.</p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md text-center">
               <h3 className="text-xl font-semibold mb-2 font-primary">Arrangements</h3>
-              <p className="text-gray-600">Professional music arrangements that highlight your ensemble’s unique sound.</p>
+              <p className="text-gray-600">Professional music arrangements that highlight your ensemble's unique sound.</p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md text-center">
               <h3 className="text-xl font-semibold mb-2 font-primary">Consultation</h3>

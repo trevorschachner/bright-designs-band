@@ -3,9 +3,19 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-export default function EditShowPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function EditShowPage({ params }: PageProps) {
   const router = useRouter();
-  const { id } = params;
+  const [id, setId] = useState<string>('');
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setId(resolvedParams.id);
+    });
+  }, [params]);
   const [show, setShow] = useState<any>(null);
   const [tags, setTags] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);

@@ -44,7 +44,11 @@ export class QueryBuilder {
         return notInArray(column, values || [value]);
       case 'between':
         if (values && values.length >= 2) {
-          return and(gte(column, values[0]), lte(column, values[1]));
+          const condition = and(gte(column, values[0]), lte(column, values[1]));
+          if (!condition) {
+            throw new Error('Failed to build "between" condition');
+          }
+          return condition;
         }
         throw new Error('Between operator requires exactly 2 values');
       case 'isNull':

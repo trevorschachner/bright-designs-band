@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
     const showId = formData.get('showId') ? parseInt(formData.get('showId') as string) : undefined
     const arrangementId = formData.get('arrangementId') ? parseInt(formData.get('arrangementId') as string) : undefined
-    const fileType = formData.get('fileType') as 'image' | 'audio' | 'video' | 'pdf' | 'score' | 'other'
+    const fileType = formData.get('fileType') as 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other'
     const isPublic = formData.get('isPublic') === 'true'
     const description = formData.get('description') as string || undefined
     const displayOrder = formData.get('displayOrder') ? parseInt(formData.get('displayOrder') as string) : 0

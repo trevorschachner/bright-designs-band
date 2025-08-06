@@ -11,10 +11,10 @@ import { headers } from 'next/headers';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, email, phone, service, message, privacyAgreed } = body as ContactFormData;
+    const { firstName, lastName, email, phone, services, message, privacyAgreed } = body as ContactFormData;
 
     // Validation
-    if (!firstName || !lastName || !email || !service || !message) {
+    if (!firstName || !lastName || !email || !services || services.length === 0 || !message) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -37,23 +37,139 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, just log the submission and return success
-    // TODO: Re-enable database storage once table is created
-    console.log('Contact form submission:', {
-      firstName,
-      lastName,
-      email,
-      phone,
-      service,
-      message,
-      privacyAgreed,
-      timestamp: new Date().toISOString()
-    });
+    // Check rate limiting
+    if (!checkRateLimit(email)) {
+      return NextResponse.json(
+        { error: 'Too many submissions. Please try again in a few minutes.' },
+        { status: 429 }
+      );
+    }
+
+    // Get IP address and user agent for tracking
+    const headersList = await headers();
+    const ipAddress = headersList.get('x-forwarded-for') || 
+                     headersList.get('x-real-ip') || 
+                     'unknown';
+    const userAgent = headersList.get('user-agent') || 'unknown';
+
+    let submissionId: number | null = null;
+    let emailResult: any = null;
+
+    try {
+      // Store in database
+      const submission = await db.insert(contactSubmissions).values({
+        firstName,
+        lastName,
+        email,
+        phone,
+        service: services.join(', '), // Store as comma-separated string for now
+        message,
+        privacyAgreed,
+        ipAddress,
+        userAgent,
+        status: 'new',
+      }).returning({ id: contactSubmissions.id });
+
+      submissionId = submission[0].id;
+
+      // Send email notifications
+      const adminEmails = process.env.ADMIN_EMAIL_ADDRESSES?.split(',').map(e => e.trim()) || [];
+      
+      if (adminEmails.length > 0) {
+        // Send admin notification
+        const adminEmailData = generateContactEmailTemplate({
+          firstName,
+          lastName,
+          email,
+          phone,
+          services,
+          message,
+          privacyAgreed,
+        });
+
+        emailResult = await sendEmail({
+          to: adminEmails,
+          subject: `🎵 New Contact Form Submission from ${firstName} ${lastName}`,
+          html: adminEmailData.html,
+          text: adminEmailData.text,
+          replyTo: email,
+        });
+
+        // Send customer confirmation
+        const customerEmailData = generateCustomerConfirmationTemplate({
+          firstName,
+          lastName,
+          email,
+          phone,
+          services,
+          message,
+          privacyAgreed,
+        });
+
+        await sendEmail({
+          to: email,
+          subject: 'Thank you for contacting Bright Designs Band!',
+          html: customerEmailData.html,
+          text: customerEmailData.text,
+        });
+      }
+
+      // Update database with email status
+      await db.update(contactSubmissions)
+        .set({
+          emailSent: emailResult?.success || false,
+          emailSentAt: emailResult?.success ? new Date() : null,
+          emailError: emailResult?.error || null,
+          updatedAt: new Date(),
+        })
+        .where(sql`${contactSubmissions.id} = ${submissionId}`);
+
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      
+      // If database fails, still try to send email and return success
+      if (submissionId === null) {
+        console.log('Contact form submission (DB failed):', {
+          firstName,
+          lastName,
+          email,
+          phone,
+          services,
+          message,
+          privacyAgreed,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Try to send email anyway
+        const adminEmails = process.env.ADMIN_EMAIL_ADDRESSES?.split(',').map(e => e.trim()) || [];
+        
+        if (adminEmails.length > 0) {
+          const adminEmailData = generateContactEmailTemplate({
+            firstName,
+            lastName,
+            email,
+            phone,
+            services,
+            message,
+            privacyAgreed,
+          });
+
+          await sendEmail({
+            to: adminEmails,
+            subject: `🎵 New Contact Form Submission from ${firstName} ${lastName} (DB Issue)`,
+            html: adminEmailData.html,
+            text: adminEmailData.text,
+            replyTo: email,
+          });
+        }
+      }
+    }
 
     // Return success response
     return NextResponse.json({
       success: true,
-      message: 'Thank you! Your message has been received. We will respond within 24 hours.'
+      message: 'Thank you! Your message has been received. We will respond within 24 hours.',
+      submissionId: submissionId?.toString() || 'pending'
     });
 
   } catch (error) {

@@ -66,7 +66,7 @@ async function sendWithNodemailer(data: EmailNotificationData): Promise<EmailSer
     // Dynamic import to avoid bundling if not used
     const nodemailer = await import('nodemailer');
     
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',
@@ -102,7 +102,7 @@ async function sendWithGmail(data: EmailNotificationData): Promise<EmailServiceR
   try {
     const nodemailer = await import('nodemailer');
     
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,

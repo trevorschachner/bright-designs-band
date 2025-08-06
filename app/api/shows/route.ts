@@ -7,13 +7,6 @@ import { SHOWS_FILTER_FIELDS } from '@/lib/filters/schema-analyzer';
 import { count } from 'drizzle-orm';
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const { searchParams } = new URL(request.url);
     const filterState = FilterUrlManager.fromUrlParams(searchParams);

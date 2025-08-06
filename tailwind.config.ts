@@ -85,6 +85,11 @@ const config: Config = {
         primary: ["var(--font-playfair)", "Georgia", "serif"],
         secondary: ["var(--font-inter)", '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
         sans: ["var(--font-inter)", '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
+        display: ["var(--font-oswald)", "Impact", "sans-serif"],
+      },
+      letterSpacing: {
+        'march': '0.1em',
+        'fanfare': '0.15em',
       },
       transitionDuration: {
         "2000": "2000ms",

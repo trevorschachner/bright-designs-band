@@ -1,12 +1,20 @@
 import { ContactFormData } from './types';
 
 export function generateContactEmailTemplate(data: ContactFormData): { html: string; text: string } {
-  const serviceLabels = {
-    'existing-show': 'Purchase Existing Show',
-    'choreography': 'Choreography',
-    'custom-arranging': 'Custom Music Arranging',
-    'show-promotion': 'Show Promotion',
+  const serviceLabels: Record<string, string> = {
+    'existing-show-purchase': 'Purchase Existing Show',
+    'custom-show-creation': 'Custom Show Creation',
+    'music-arranging': 'Music Arranging',
+    'music-licensing': 'Music Licensing',
     'drill-design': 'Drill Design',
+    'choreography': 'Choreography',
+    'visual-design': 'Visual Design',
+    'costume-consultation': 'Costume Consultation',
+    'show-consultation': 'Show Consultation',
+    'rehearsal-support': 'Rehearsal Support',
+    'audio-production': 'Audio Production',
+    'video-production': 'Video Production',
+    'collaboration': 'Collaboration',
     'other': 'Other'
   };
 
@@ -123,9 +131,9 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
         ` : ''}
 
         <div class="field">
-            <span class="field-label">Service Requested:</span>
+            <span class="field-label">Services Requested:</span>
             <div class="field-value">
-                <span class="service-badge">${serviceLabels[data.service]}</span>
+                ${data.services.map(service => `<span class="service-badge">${serviceLabels[service] || service}</span>`).join(' ')}
             </div>
         </div>
 
@@ -163,7 +171,7 @@ NEW CONTACT FORM SUBMISSION - Bright Designs Band
 Name: ${data.firstName} ${data.lastName}
 Email: ${data.email}
 ${data.phone ? `Phone: ${data.phone}` : ''}
-Service: ${serviceLabels[data.service]}
+Services: ${data.services.map(service => serviceLabels[service] || service).join(', ')}
 
 Message:
 ${data.message}

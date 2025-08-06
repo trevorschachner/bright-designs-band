@@ -1,9 +1,10 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Playfair_Display } from "next/font/google"
+import { Inter, Playfair_Display, Oswald } from "next/font/google"
 import Script from "next/script"
 import "./globals.css"
 import { MainNav } from "@/components/features/main-nav"
+import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import { GoogleAnalytics } from "@/components/features/seo/GoogleAnalytics"
@@ -24,6 +25,13 @@ const playfair = Playfair_Display({
   preload: true,
 })
 
+const oswald = Oswald({
+  subsets: ["latin"],
+  variable: "--font-oswald",
+  display: "swap",
+  preload: true,
+})
+
 // Enhanced SEO metadata using our new system
 export const metadata: Metadata = generateMetadata({
   ...defaultSEOConfig,
@@ -38,7 +46,7 @@ export default function RootLayout({
   const resourceHints = generateResourceHints()
   
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Resource hints for performance */}
         {resourceHints.map((hint, index) => (
@@ -56,7 +64,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className={`${inter.variable} ${playfair.variable} font-secondary`}>
+      <body className={`${inter.variable} ${playfair.variable} ${oswald.variable} font-secondary`}>
         {/* Organization structured data */}
         <JsonLd data={organizationSchema} />
         
@@ -65,8 +73,14 @@ export default function RootLayout({
         
         {/* Performance monitoring */}
         
-        
-        <MainNav>{children}</MainNav>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <MainNav>{children}</MainNav>
+        </ThemeProvider>
       </body>
     </html>
   )
