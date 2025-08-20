@@ -1,5 +1,5 @@
 import { db } from '@/lib/database';
-import { shows, showsToTags, tags } from '@/lib/database/schema';
+import { shows, showsToTags, tags, arrangements, files } from '@/lib/database/schema';
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
@@ -43,9 +43,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // Apply WHERE clause if we have conditions
+    // Build final WHERE clause
+    let finalWhereClause;
     if (whereConditions.length > 0) {
-      const finalWhereClause = whereConditions.length === 1 
+      finalWhereClause = whereConditions.length === 1 
         ? whereConditions[0] 
         : QueryBuilder.buildWhereClause(shows, filterState.conditions);
       
@@ -68,31 +69,34 @@ export async function GET(request: Request) {
     const query = queryBuilder.limit(limit).offset(offset);
     const countQuery = countQueryBuilder;
 
-    // Execute queries
-    const [showsData, totalResult] = await Promise.all([
-      query,
-      countQuery
+    // Execute count query and optimized single query with relations (fixes N+1 problem)
+    const [totalResult, showsWithRelations] = await Promise.all([
+      countQuery,
+      db.query.shows.findMany({
+        limit,
+        offset,
+        where: finalWhereClause,
+        orderBy: filterState.sort?.length > 0
+          ? QueryBuilder.buildOrderByClause(shows, filterState.sort)
+          : [shows.createdAt],
+        with: {
+          showsToTags: {
+            with: {
+              tag: true,
+            },
+          },
+          arrangements: {
+            orderBy: [arrangements.title], // Order arrangements by title
+          },
+          files: {
+            where: (files, { eq }) => eq(files.isPublic, true),
+            orderBy: [files.displayOrder, files.createdAt],
+          },
+        },
+      })
     ]);
 
     const total = totalResult[0]?.count || 0;
-
-    // If we need relations, fetch them separately for the returned shows
-    const showsWithRelations = await Promise.all(
-      showsData.map(async (show) => {
-        const showWithTags = await db.query.shows.findFirst({
-          where: (shows, { eq }) => eq(shows.id, show.id),
-          with: {
-            showsToTags: {
-              with: {
-                tag: true,
-              },
-            },
-            arrangements: true,
-          },
-        });
-        return showWithTags || show;
-      })
-    );
 
     const response = QueryBuilder.buildFilteredResponse(
       showsWithRelations,
@@ -103,8 +107,13 @@ export async function GET(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching shows:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
-      { error: 'Failed to fetch shows' },
+      { 
+        error: 'Failed to fetch shows',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : 'No stack') : undefined
+      },
       { status: 500 }
     );
   }

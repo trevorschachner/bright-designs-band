@@ -203,7 +203,7 @@ export function MainNav({ children }: { children: React.ReactNode }) {
               </Link>
             </Button>
             
-            {/* User Menu */}
+            {/* User Menu - Only show auth controls on admin pages */}
             {!loading && (
               user ? (
                 <DropdownMenu>
@@ -270,12 +270,15 @@ export function MainNav({ children }: { children: React.ReactNode }) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login">
-                    <LogIn className="mr-2 w-4 h-4" />
-                    Sign In
-                  </Link>
-                </Button>
+                // Only show sign in button on admin pages
+                pathname.startsWith('/admin') && (
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/login">
+                      <LogIn className="mr-2 w-4 h-4" />
+                      Sign In
+                    </Link>
+                  </Button>
+                )
               )
             )}
           </div>
@@ -388,12 +391,15 @@ export function MainNav({ children }: { children: React.ReactNode }) {
                         </Button>
                       </div>
                     ) : (
-                      <Button variant="ghost" className="w-full justify-start" asChild>
-                        <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                          <LogIn className="mr-2 w-4 h-4" />
-                          Sign In
-                        </Link>
-                      </Button>
+                      // Only show sign in button on admin pages in mobile menu
+                      pathname.startsWith('/admin') && (
+                        <Button variant="ghost" className="w-full justify-start" asChild>
+                          <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                            <LogIn className="mr-2 w-4 h-4" />
+                            Sign In
+                          </Link>
+                        </Button>
+                      )
                     )
                   )}
                   <Button className="btn-outline w-full" asChild>

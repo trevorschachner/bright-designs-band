@@ -13,6 +13,8 @@ export const shows = pgTable('shows', {
   description: text('description'),
   price: numeric('price', { precision: 10, scale: 2 }),
   thumbnailUrl: text('thumbnail_url'),
+  composer: text('composer'), // For enhanced search capabilities
+  songTitle: text('song_title'), // Original song title for search
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -111,10 +113,19 @@ export const contactSubmissions = pgTable('contact_submissions', {
   emailError: text('email_error'),
   status: text('status').notNull().default('new'), // new, contacted, resolved, spam
   adminNotes: text('admin_notes'),
+  interestedShowId: integer('interested_show_id').references(() => shows.id, { onDelete: 'set null' }),
+  interestedArrangementId: integer('interested_arrangement_id').references(() => arrangements.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const contactSubmissionsRelations = relations(contactSubmissions, ({ many }) => ({
-  // Add relations here if needed in the future
+export const contactSubmissionsRelations = relations(contactSubmissions, ({ one }) => ({
+  interestedShow: one(shows, {
+    fields: [contactSubmissions.interestedShowId],
+    references: [shows.id],
+  }),
+  interestedArrangement: one(arrangements, {
+    fields: [contactSubmissions.interestedArrangementId],
+    references: [arrangements.id],
+  }),
 })); 

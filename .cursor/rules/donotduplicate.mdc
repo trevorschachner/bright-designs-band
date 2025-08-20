@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Do not ever create a file with a -2 beside it. Never duplicate a file that already exists unless explicitly told to do so.

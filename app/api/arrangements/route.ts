@@ -1,5 +1,5 @@
 import { db } from '@/lib/database';
-import { arrangements } from '@/lib/database/schema';
+import { arrangements, files } from '@/lib/database/schema';
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
@@ -42,9 +42,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // Apply WHERE clause if we have conditions
+    // Build final WHERE clause
+    let finalWhereClause;
     if (whereConditions.length > 0) {
-      const finalWhereClause = whereConditions.length === 1 
+      finalWhereClause = whereConditions.length === 1 
         ? whereConditions[0] 
         : QueryBuilder.buildWhereClause(arrangements, filterState.conditions);
       
@@ -67,26 +68,27 @@ export async function GET(request: Request) {
     const query = queryBuilder.limit(limit).offset(offset);
     const countQuery = countQueryBuilder;
 
-    // Execute queries
-    const [arrangementsData, totalResult] = await Promise.all([
-      query,
-      countQuery
+    // Execute count query and optimized single query with relations (fixes N+1 problem)
+    const [totalResult, arrangementsWithRelations] = await Promise.all([
+      countQuery,
+      db.query.arrangements.findMany({
+        limit,
+        offset,
+        where: finalWhereClause,
+        orderBy: filterState.sort?.length > 0
+          ? QueryBuilder.buildOrderByClause(arrangements, filterState.sort)
+          : [arrangements.title],
+        with: {
+          show: true,
+          files: {
+            where: (files, { eq }) => eq(files.isPublic, true),
+            orderBy: [files.displayOrder, files.createdAt],
+          },
+        },
+      })
     ]);
 
     const total = totalResult[0]?.count || 0;
-
-    // Fetch arrangements with show relations
-    const arrangementsWithRelations = await Promise.all(
-      arrangementsData.map(async (arrangement) => {
-        const arrangementWithShow = await db.query.arrangements.findFirst({
-          where: (arrangements, { eq }) => eq(arrangements.id, arrangement.id),
-          with: {
-            show: true,
-          },
-        });
-        return arrangementWithShow || arrangement;
-      })
-    );
 
     const response = QueryBuilder.buildFilteredResponse(
       arrangementsWithRelations,

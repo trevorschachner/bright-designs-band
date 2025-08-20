@@ -8,7 +8,6 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider 
       {...props}
-      suppressColorSchemeWarning
     >
       {children}
     </NextThemesProvider>

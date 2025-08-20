@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import Link from "next/link"
 import MarchingFormation from "@/components/features/marching-formation"
+import Testimonials from "@/components/features/testimonials"
 import { db } from "@/lib/database"
 import { shows, showsToTags, tags } from "@/lib/database/schema"
 
@@ -172,17 +173,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="py-20 px-4 bg-white relative">
-        <div className="container mx-auto text-center max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4 text-bright-dark font-primary">About Bright Designs</h2>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-            Bright Designs is dedicated to crafting innovative marching band shows that inspire performers and
-            captivate audiences. With years of experience and a passion for musical excellence, we collaborate
-            with directors to bring unique visions to life, from initial concept through on-field execution.
-          </p>
-        </div>
-      </section>
+      {/* Testimonials Section */}
+      <Testimonials />
 
       {/* Process Section */}
       <section id="process" className="py-20 px-4 bg-gradient-to-br from-white to-slate-50 relative">

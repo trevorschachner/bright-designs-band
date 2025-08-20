@@ -6,10 +6,26 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const createClient = async () => {
   const cookieStore = await cookies();
-  
+
+  if (!supabaseUrl || !supabaseKey) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "Supabase env vars are not set (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY). Using a mock client that returns no session."
+      );
+    }
+
+    const supabaseMock = {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+      },
+    } as unknown as ReturnType<typeof createServerClient>;
+
+    return supabaseMock;
+  }
+
   return createServerClient(
-    supabaseUrl!,
-    supabaseKey!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {

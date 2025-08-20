@@ -3,6 +3,7 @@ import { ArrowLeft, Music, Users, Award, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import Testimonials from "@/components/features/testimonials"
 
 export default function AboutPage() {
   return (
@@ -143,6 +144,9 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
+
+        {/* Testimonials */}
+        <Testimonials />
       </div>
     </div>
   )

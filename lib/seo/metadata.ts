@@ -31,7 +31,11 @@ export const defaultSEOConfig: SEOConfig = {
 export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
   const config = { ...defaultSEOConfig, ...seoConfig }
   
+  // Set metadataBase to resolve social open graph and twitter images
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || config.canonical || 'https://www.brightdesigns.band'
+  
   const metadata: Metadata = {
+    metadataBase: new URL(baseUrl),
     title: config.title,
     description: config.description,
     keywords: config.keywords?.join(', '),

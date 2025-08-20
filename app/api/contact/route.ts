@@ -1,8 +1,6 @@
-import { QueryBuilder } from '@/lib/filters/query-builder';
-import { count, sql } from 'drizzle-orm/sql';
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/database';
-import { contactSubmissions } from '@/lib/database/schema';
+import { createClient } from '@/lib/utils/supabase/server';
+import { createContactSubmission } from '@/lib/database/supabase-queries';
 import { sendEmail, checkRateLimit } from '@/lib/email/service';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '@/lib/email/templates';
 import { ContactFormData } from '@/lib/email/types';

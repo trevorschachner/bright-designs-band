@@ -325,7 +325,7 @@ export default function MarchingFormation() {
               key={dot.id}
               r={dotSize}
               fill="#374151"
-              className="transition-all duration-[5000ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+              className="transition-all duration-&lsqb;5000ms&rsqb; ease-&lsqb;cubic-bezier(0.25,0.46,0.45,0.94)&rsqb;"
               style={{
                 transform: `translate(${currentX}px, ${currentY}px)`,
               }}
