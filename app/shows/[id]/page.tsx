@@ -10,6 +10,9 @@ import { Star, Clock, Users, Download, Play, Calendar, Music, Target, ArrowLeft,
 import Image from 'next/image'
 import Link from 'next/link'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
+import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
+import { YouTubePlayer } from '@/components/features/youtube-player'
+import { WhatIsIncluded } from '@/components/features/what-is-included'
 
 export default async function ShowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -142,24 +145,21 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
 
         {/* Show Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Left side - Image */}
+          {/* Left side - Video or Image */}
           <div className="relative">
-            <div className="w-full h-80 bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
-              <div className="text-gray-400">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <path d="M21 15l-5-5L5 21"/>
-                </svg>
+            {show.videoUrl ? (
+              <YouTubePlayer youtubeUrl={show.videoUrl} />
+            ) : (
+              <div className="w-full h-80 bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
+                <div className="text-gray-400">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="M21 15l-5-5L5 21"/>
+                  </svg>
+                </div>
               </div>
-            </div>
-            <Button
-              size="lg"
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 text-gray-900 hover:bg-white shadow-lg"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Play Preview
-            </Button>
+            )}
           </div>
 
           {/* Right side - Content */}
@@ -196,15 +196,13 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
               ))}
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="bg-card p-4 rounded-lg mb-6 border">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">${show.price || '2,500'}</div>
-                  <div className="text-sm text-gray-600">Complete Show Package</div>
+                  <div className="text-2xl font-bold text-foreground">${show.price || 'Contact for Quote'}</div>
+                  <div className="text-sm text-muted-foreground">Complete Show Package</div>
                 </div>
-                <Button size="lg" className="bg-bright-primary hover:bg-yellow-400 text-gray-900 font-medium px-6">
-                  Purchase Show
-                </Button>
+                <CheckAvailabilityModal showTitle={show.title} />
               </div>
             </div>
 
@@ -359,6 +357,11 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* What's Included Section */}
+        <div className="mt-12">
+          <WhatIsIncluded />
+        </div>
       </div>
     </div>
   )

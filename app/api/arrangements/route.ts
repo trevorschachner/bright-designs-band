@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     // Add WHERE conditions
     const whereConditions = [];
     
-    // Add search condition
+    // Add search condition (support title/type and related show title/year)
     if (filterState.search) {
       const searchCondition = QueryBuilder.buildSearchCondition(
         arrangements,

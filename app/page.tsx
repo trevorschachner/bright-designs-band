@@ -62,7 +62,7 @@ export default async function HomePage() {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button className="btn-outline btn-lg" asChild>
+              <Button className="btn-secondary btn-lg" asChild>
                 <Link href="/shows">
                   View Our Work
                   <Play className="ml-2 w-5 h-5" />
@@ -238,91 +238,13 @@ export default async function HomePage() {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button className="btn-outline btn-lg" asChild>
+              <Button className="btn-secondary btn-lg" asChild>
                 <Link href="/contact">Schedule Consultation</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 relative">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-bright-primary rounded-lg flex items-center justify-center">
-                  <Music className="w-5 h-5 text-bright-dark" />
-                </div>
-                <span className="text-xl font-bold font-primary">Bright Designs</span>
-              </div>
-              <p className="text-gray-400">
-                Crafting extraordinary marching band experiences through innovative design and arrangement.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4 font-primary">Services</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-
-                  <Link href="/shows" className="hover:text-white transition-colors">
-                    Custom Shows
-                  </Link>
-                </li>
-                <li>
-
-                  <Link href="/arrangements" className="hover:text-white transition-colors">
-                    Arrangements
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-white transition-colors">
-                    Consultation
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4 font-primary">Resources</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="/shows" className="hover:text-white transition-colors">
-
-                    Show Catalog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/arrangements" className="hover:text-white transition-colors">
-                    Sample Audio
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="hover:text-white transition-colors">
-                    Testimonials
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/faqs" className="hover:text-white transition-colors">
-                    FAQ
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4 font-primary">Contact</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>hello@brightdesigns.band</li>
-                <li>(555) 123-4567</li>
-                <li>Austin, TX</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Bright Designs. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
 
       {/* Structured Data for SEO */}
       <JsonLd data={marchingBandSchemas.showDesignService} />

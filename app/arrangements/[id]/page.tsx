@@ -1,3 +1,4 @@
+"use client"
 import { ArrowLeft, Play, Download, Star, Clock, Music2, FileText, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -5,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { AudioPlayerComponent, audioPlayerStyles } from "@/components/features/audio-player"
+import { useShowPlan } from "@/lib/hooks/use-show-plan"
 
 // Mock data for a specific arrangement
 const arrangementData = {
@@ -95,6 +97,16 @@ const arrangementData = {
 }
 
 export default function ArrangementDetailPage() {
+  const { addToPlan } = useShowPlan();
+
+  const handleAddToPlan = () => {
+    addToPlan({
+      id: arrangementData.id,
+      title: arrangementData.title,
+      type: 'arrangement',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
       {/* Include custom audio player styles */}
@@ -181,14 +193,14 @@ export default function ArrangementDetailPage() {
               ))}
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="bg-card p-4 rounded-lg mb-6 border">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">{arrangementData.price}</div>
-                  <div className="text-sm text-gray-600">Individual Arrangement</div>
+                  <div className="text-2xl font-bold text-foreground">{arrangementData.price}</div>
+                  <div className="text-sm text-muted-foreground">Individual Arrangement</div>
                 </div>
-                <Button size="lg" className="bg-bright-primary hover:bg-yellow-400 text-gray-900 font-medium px-6">
-                  Purchase Arrangement
+                <Button size="lg" className="btn-primary px-6" onClick={handleAddToPlan}>
+                  Add to Show Plan
                 </Button>
               </div>
             </div>

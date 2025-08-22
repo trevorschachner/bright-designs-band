@@ -4,6 +4,7 @@ import { db } from '@/lib/database'
 import { files } from '@/lib/database/schema'
 import { fileStorage } from '@/lib/storage'
 import { getUserRole, getUserPermissions } from '@/lib/auth/roles'
+import { sql, and } from 'drizzle-orm'
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,25 +85,18 @@ export async function GET(request: NextRequest) {
     const arrangementId = searchParams.get('arrangementId')
     const fileType = searchParams.get('fileType')
 
-    const query = db.select().from(files)
+    // Build server-side filtered query
+    let q = db.select().from(files)
+    const whereParts: any[] = []
+    if (showId) whereParts.push(sql`show_id = ${parseInt(showId)}`)
+    if (arrangementId) whereParts.push(sql`arrangement_id = ${parseInt(arrangementId)}`)
+    if (fileType) whereParts.push(sql`file_type = ${fileType}`)
 
-    // Apply filters
-    const conditions: any[] = []
-    
-    if (showId) {
-      conditions.push(`show_id = ${parseInt(showId)}`)
-    }
-    
-    if (arrangementId) {
-      conditions.push(`arrangement_id = ${parseInt(arrangementId)}`)
-    }
-    
-    if (fileType) {
-      conditions.push(`file_type = '${fileType}'`)
+    if (whereParts.length > 0) {
+      q = q.where(and(...whereParts as any)) as typeof q
     }
 
-    // For now, return all files (you might want to add authentication for private files)
-    const fileList = await db.select().from(files)
+    const fileList = await q
 
     return NextResponse.json({
       success: true,

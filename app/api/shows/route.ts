@@ -23,12 +23,12 @@ export async function GET(request: Request) {
     // Add WHERE conditions
     const whereConditions = [];
     
-    // Add search condition
+    // Add search condition (include composer and songTitle)
     if (filterState.search) {
       const searchCondition = QueryBuilder.buildSearchCondition(
         shows,
         filterState.search,
-        ['title', 'description', 'year']
+        ['title', 'description', 'year', 'composer', 'songTitle']
       );
       if (searchCondition) {
         whereConditions.push(searchCondition);

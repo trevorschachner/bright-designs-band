@@ -1,4 +1,10 @@
 import { EmailNotificationData } from './types';
+import {
+  ContactConfirmation,
+  ContactNotification,
+  ShowInquiryAdminAlert,
+} from "./templates";
+import { EmailParams, EmailTemplate } from "./types";
 
 /**
  * Email service using Resend (recommended) or Nodemailer as fallback

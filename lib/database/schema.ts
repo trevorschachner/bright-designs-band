@@ -13,9 +13,11 @@ export const shows = pgTable('shows', {
   description: text('description'),
   price: numeric('price', { precision: 10, scale: 2 }),
   thumbnailUrl: text('thumbnail_url'),
+  videoUrl: text('video_url'),
   composer: text('composer'), // For enhanced search capabilities
   songTitle: text('song_title'), // Original song title for search
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const arrangements = pgTable('arrangements', {

@@ -125,6 +125,8 @@ export const SHOWS_SCHEMA: TableSchema = {
     description: { key: 'description', type: 'text', nullable: true },
     price: { key: 'price', type: 'numeric' },
     thumbnailUrl: { key: 'thumbnailUrl', type: 'text', nullable: true },
+    composer: { key: 'composer', type: 'text', nullable: true },
+    songTitle: { key: 'songTitle', type: 'text', nullable: true },
     createdAt: { key: 'createdAt', type: 'timestamp' }
   },
   relations: {

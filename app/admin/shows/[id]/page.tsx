@@ -2,6 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { FileUpload } from '@/components/features/file-upload';
+import { FileGallery } from '@/components/features/file-gallery';
+import { YouTubeUpload } from '@/components/features/youtube-upload';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -10,6 +13,7 @@ interface PageProps {
 export default function EditShowPage({ params }: PageProps) {
   const router = useRouter();
   const [id, setId] = useState<string>('');
+  const [filesVersion, setFilesVersion] = useState<number>(0);
 
   useEffect(() => {
     params.then(resolvedParams => {
@@ -168,6 +172,37 @@ export default function EditShowPage({ params }: PageProps) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Files section */}
+      <div className="max-w-3xl mx-auto mt-12">
+        <h2 className="text-2xl font-bold mb-4">Files</h2>
+        <div className="grid grid-cols-1 gap-8">
+          {/* Upload files for this show */}
+          <FileUpload 
+            showId={id ? Number(id) : undefined}
+            onUploadSuccess={() => setFilesVersion(v => v + 1)}
+            onUploadError={(err) => console.error('Upload error:', err)}
+          />
+
+        {/* Add YouTube link for this show */}
+          <YouTubeUpload 
+            showId={id ? Number(id) : undefined}
+            onUploadSuccess={() => setFilesVersion(v => v + 1)}
+            onUploadError={(err) => console.error('YouTube upload error:', err)}
+          />
+
+          {/* Gallery of all files for this show */}
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Gallery</h3>
+            <FileGallery 
+              key={filesVersion}
+              showId={id ? Number(id) : undefined}
+              editable
+              onFileDelete={() => setFilesVersion(v => v + 1)}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

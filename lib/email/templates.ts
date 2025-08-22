@@ -320,3 +320,54 @@ If you have any immediate questions, don't hesitate to reply to this email!
 
   return { html, text };
 }
+
+export const ShowInquiryAdminAlert = (formData: any) => (
+  <table style={main}>
+    <tbody>
+      <tr>
+        <td>
+          <table style={container}>
+            <tbody>
+              <tr>
+                <td>
+                  <h1 style={h1}>New Show Inquiry: {formData.showInterest}</h1>
+                  <p style={paragraph}>A new inquiry has been submitted for one of the shows.</p>
+
+                  <h2 style={h2}>Contact Details</h2>
+                  <ul style={list}>
+                    <li><strong>Name:</strong> {formData.name}</li>
+                    <li><strong>Email:</strong> <a href={`mailto:${formData.email}`}>{formData.email}</a></li>
+                    <li><strong>School/Organization:</strong> {formData.school}</li>
+                  </ul>
+
+                  <h2 style={h2}>Ensemble Details</h2>
+                  <ul style={list}>
+                    <li><strong>Band Size:</strong> {formData.bandSize}</li>
+                    <li><strong>Ability Level:</strong> {formData.abilityLevel}</li>
+                    <li><strong>Instrumentation Notes:</strong> {formData.instrumentation || 'N/A'}</li>
+                  </ul>
+
+                  <h2 style={h2}>Requested Services</h2>
+                  <ul style={list}>
+                    {formData.services.map((service: string) => <li key={service}>{service}</li>)}
+                  </ul>
+
+                  {formData.message && (
+                    <>
+                      <h2 style={h2}>Additional Message</h2>
+                      <p style={paragraph}>{formData.message}</p>
+                    </>
+                  )}
+
+                  <p style={{ ...paragraph, marginTop: '20px' }}>
+                    You can follow up with them directly at their provided email address.
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+);

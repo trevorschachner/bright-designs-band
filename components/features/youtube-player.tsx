@@ -1,113 +1,48 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Play, ExternalLink, AlertCircle } from 'lucide-react'
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface YouTubePlayerProps {
-  url: string
-  title?: string
-  className?: string
-  autoplay?: boolean
-  showControls?: boolean
+  youtubeUrl: string;
+  className?: string;
 }
 
-export function YouTubePlayer({ 
-  url, 
-  title, 
-  className = '',
-  autoplay = false,
-  showControls = true 
-}: YouTubePlayerProps) {
-  const [hasError, setHasError] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
+// Helper function to extract YouTube video ID from various URL formats
+const getYouTubeId = (url: string): string | null => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
 
-  // Extract YouTube video ID from various URL formats
-  const getYouTubeVideoId = (url: string): string | null => {
-    const regexes = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-      /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
-      /youtube\.com\/v\/([^&\n?#]+)/,
-      /youtube\.com\/embed\/([^&\n?#]+)/,
-      /youtu\.be\/([^&\n?#]+)/
-    ]
-
-    for (const regex of regexes) {
-      const match = url.match(regex)
-      if (match && match[1]) {
-        return match[1]
-      }
-    }
-    return null
-  }
-
-  const videoId = getYouTubeVideoId(url)
+export function YouTubePlayer({ youtubeUrl, className }: YouTubePlayerProps) {
+  const videoId = getYouTubeId(youtubeUrl);
 
   if (!videoId) {
     return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Invalid YouTube URL. Please check the link and try again.
-        </AlertDescription>
-      </Alert>
-    )
+      <div className={cn("w-full aspect-video bg-muted rounded-lg flex items-center justify-center", className)}>
+        <p className="text-muted-foreground">Invalid YouTube URL</p>
+      </div>
+    );
   }
 
-  if (hasError) {
-    return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Unable to load YouTube video. 
-          <Button variant="link" className="p-0 h-auto ml-2" asChild>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-3 h-3 mr-1" />
-              Watch on YouTube
-            </a>
-          </Button>
-        </AlertDescription>
-      </Alert>
-    )
-  }
-
-  // Build embed URL with parameters
-  const embedUrl = new URL(`https://www.youtube.com/embed/${videoId}`)
-  embedUrl.searchParams.set('rel', '0') // Don't show related videos
-  embedUrl.searchParams.set('modestbranding', '1') // Modest branding
-  if (autoplay) embedUrl.searchParams.set('autoplay', '1')
-  if (!showControls) embedUrl.searchParams.set('controls', '0')
+  // Use the privacy-enhanced "no-cookie" domain
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
 
   return (
-    <div className={`youtube-player ${className}`}>
-      <AspectRatio ratio={16 / 9}>
-        <iframe
-          src={embedUrl.toString()}
-          title={title || 'YouTube video'}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="w-full h-full rounded-lg"
-          onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
-        />
-      </AspectRatio>
-      
-      {/* Fallback link */}
-      <div className="mt-2 flex items-center justify-between">
-        <Button variant="link" className="p-0 h-auto text-sm" asChild>
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="w-3 h-3 mr-1" />
-            Watch on YouTube
-          </a>
-        </Button>
-        {title && (
-          <span className="text-sm text-gray-600 truncate ml-2">{title}</span>
-        )}
-      </div>
+    <div className={cn("w-full aspect-video bg-black rounded-lg overflow-hidden shadow-lg", className)}>
+      <iframe
+        width="100%"
+        height="100%"
+        src={embedUrl}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+      ></iframe>
     </div>
-  )
+  );
 }
 
 // Utility function to validate YouTube URLs
@@ -137,7 +72,7 @@ export function YouTubeUrlInput({
   placeholder = "Enter YouTube URL (e.g., https://youtu.be/dQw4w9WgXcQ)",
   className = ""
 }: YouTubeUrlInputProps) {
-  const [isValid, setIsValid] = useState(true)
+  const [isValid, setIsValid] = React.useState(true)
 
   const handleChange = (newValue: string) => {
     onChange(newValue)
@@ -169,7 +104,7 @@ export function YouTubeUrlInput({
       {value && isValid && (
         <div className="mt-2">
           <p className="text-sm text-gray-600 mb-2">Preview:</p>
-          <YouTubePlayer url={value} />
+          <YouTubePlayer youtubeUrl={value} />
         </div>
       )}
     </div>

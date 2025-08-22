@@ -1,15 +1,16 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Playfair_Display, Oswald } from "next/font/google"
-import Script from "next/script"
+import { Inter } from "next/font/google"
 import "./globals.css"
-import { MainNav } from "@/components/features/main-nav"
+import { SiteHeader } from "@/components/layout/site-header"
+import { SiteFooter } from "@/components/layout/site-footer"
 import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import { GoogleAnalytics } from "@/components/features/seo/GoogleAnalytics"
 import { organizationSchema } from "@/lib/seo/structured-data"
 import { generateResourceHints } from "@/lib/seo/performance"
+import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,19 +19,7 @@ const inter = Inter({
   preload: true,
 })
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  display: "swap",
-  preload: true,
-})
-
-const oswald = Oswald({
-  subsets: ["latin"],
-  variable: "--font-oswald",
-  display: "swap",
-  preload: true,
-})
+// Remove display/serif fonts for cleaner startup feel
 
 // Enhanced SEO metadata using our new system
 export const metadata: Metadata = generateMetadata({
@@ -64,7 +53,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className={`${inter.variable} ${playfair.variable} ${oswald.variable} font-secondary`}>
+      <body className={`${inter.variable} font-sans`}>
         {/* Organization structured data */}
         <JsonLd data={organizationSchema} />
         
@@ -73,13 +62,12 @@ export default function RootLayout({
         
         {/* Performance monitoring */}
         
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <MainNav>{children}</MainNav>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ShowPlanProvider>
+            <SiteHeader />
+            <main>{children}</main>
+            <SiteFooter />
+          </ShowPlanProvider>
         </ThemeProvider>
       </body>
     </html>
