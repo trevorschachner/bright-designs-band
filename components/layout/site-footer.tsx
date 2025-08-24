@@ -1,12 +1,17 @@
 import Link from "next/link"
-import { startupTheme } from "@/config/theme.config"
+import type { NavigationItem, FooterGroup } from "@/config/site"
 
-export function SiteFooter() {
+type SiteFooterProps = {
+  footer?: { groups: FooterGroup[]; copyright?: string }
+  social?: NavigationItem[]
+}
+
+export function SiteFooter({ footer, social }: SiteFooterProps) {
 	return (
 		<footer className="border-t bg-background">
 			<div className="container mx-auto px-4 py-10">
 				<div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-					{startupTheme.footer?.groups.map(group => (
+					{footer?.groups.map(group => (
 						<div key={group.title}>
 							<h4 className="text-sm font-semibold text-foreground mb-3">{group.title}</h4>
 							<ul className="space-y-2">
@@ -22,10 +27,10 @@ export function SiteFooter() {
 					))}
 				</div>
 				<div className="mt-8 flex items-center justify-between">
-					<p className="text-xs text-muted-foreground">{startupTheme.footer?.copyright}</p>
-					{startupTheme.social?.length ? (
+					<p className="text-xs text-muted-foreground">{footer?.copyright}</p>
+					{social?.length ? (
 						<div className="flex items-center gap-4">
-							{startupTheme.social.map(s => (
+							{social.map(s => (
 								<Link key={s.label} href={s.href} className="text-sm text-muted-foreground hover:text-foreground">
 									{s.label}
 								</Link>

@@ -1,13 +1,21 @@
 "use client"
 
-import React, { useState } from 'react';
-import { InquiryForm } from '@/components/forms/inquiry-form';
-import { toast } from '@/components/ui/use-toast';
+import React, { useState } from 'react'
+import { InquiryForm } from '@/components/forms/inquiry-form'
+import { toast } from '@/components/ui/use-toast'
+
+interface ContactPayload {
+  type: 'inquiry' | 'contact';
+  name: string;
+  email: string;
+  message?: string;
+  [key: string]: unknown;
+}
 
 export default function ContactPage() {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ContactPayload) => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/contact', {
@@ -15,7 +23,7 @@ export default function ContactPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...data, type: 'inquiry' }), // We can reuse the 'inquiry' type
+        body: JSON.stringify({ ...data, type: 'inquiry' }),
       });
 
       if (!response.ok) {
@@ -45,12 +53,12 @@ export default function ContactPage() {
             Contact Us
           </h1>
           <p className="mt-4 text-lg leading-8 text-gray-600 dark:text-gray-300">
-            Have a question or a project in mind? We'd love to hear from you.
+            Have a question or a project in mind? We&apos;d love to hear from you.
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="frame-card p-8">
           <InquiryForm
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit as any}
             isLoading={isLoading}
             isGeneralInquiry={true}
           />

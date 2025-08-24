@@ -75,7 +75,7 @@ export default async function AdminPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {permissions.canManageShows && (
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="frame-card cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Manage Shows</CardTitle>
               <Music className="h-4 w-4 text-muted-foreground" />
@@ -93,7 +93,7 @@ export default async function AdminPage() {
         )}
 
         {permissions.canManageTags && (
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="frame-card cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Manage Tags</CardTitle>
               <Tags className="h-4 w-4 text-muted-foreground" />
@@ -111,7 +111,7 @@ export default async function AdminPage() {
         )}
 
         {permissions.canViewAnalytics && (
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="frame-card cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Analytics</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -127,7 +127,7 @@ export default async function AdminPage() {
         )}
 
         {permissions.canManageUsers && (
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="frame-card cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">User Management</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -144,7 +144,7 @@ export default async function AdminPage() {
       </div>
 
       <div className="mt-8">
-        <Card>
+        <Card className="frame-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Settings className="w-5 h-5" />
@@ -161,21 +161,18 @@ export default async function AdminPage() {
                   </Button>
                 </Link>
               )}
-              
               {permissions.canManageTags && (
                 <Button className="w-full h-20 flex flex-col space-y-2">
                   <Tags className="w-6 h-6" />
                   <span>Manage Categories</span>
                 </Button>
               )}
-              
               {permissions.canViewAnalytics && (
                 <Button className="w-full h-20 flex flex-col space-y-2">
                   <BarChart3 className="w-6 h-6" />
                   <span>View Reports</span>
                 </Button>
               )}
-              
               <Button className="w-full h-20 flex flex-col space-y-2">
                 <Settings className="w-6 h-6" />
                 <span>Site Settings</span>
@@ -187,7 +184,7 @@ export default async function AdminPage() {
 
       {/* Role-specific information */}
       <div className="mt-8">
-        <Card>
+        <Card className="frame-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Shield className="w-5 h-5" />

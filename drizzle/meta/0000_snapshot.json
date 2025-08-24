@@ -1,5 +1,5 @@
 {
-  "id": "eec5ae58-699f-48af-a592-111afbebd19e",
+  "id": "38312409-fb08-40ac-8144-54a508b3a44c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -39,7 +39,23 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "arrangements_show_id_idx": {
+          "name": "arrangements_show_id_idx",
+          "columns": [
+            {
+              "expression": "show_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "arrangements_show_id_shows_id_fk": {
           "name": "arrangements_show_id_shows_id_fk",
@@ -314,7 +330,38 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "files_show_id_idx": {
+          "name": "files_show_id_idx",
+          "columns": [
+            {
+              "expression": "show_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "files_arrangement_id_idx": {
+          "name": "files_arrangement_id_idx",
+          "columns": [
+            {
+              "expression": "arrangement_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "files_show_id_shows_id_fk": {
           "name": "files_show_id_shows_id_fk",
@@ -364,7 +411,7 @@
         },
         "year": {
           "name": "year",
-          "type": "text",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -399,6 +446,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "video_url": {
+          "name": "video_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "composer": {
           "name": "composer",
           "type": "text",
@@ -413,6 +466,13 @@
         },
         "created_at": {
           "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -470,7 +530,15 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "shows_to_tags_show_id_tag_id_pk": {
+          "name": "shows_to_tags_show_id_tag_id_pk",
+          "columns": [
+            "show_id",
+            "tag_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "public.tags": {

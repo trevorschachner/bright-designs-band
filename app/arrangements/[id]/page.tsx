@@ -229,7 +229,7 @@ export default function ArrangementDetailPage() {
           </TabsList>
 
           <TabsContent value="instrumentation" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="frame-card">
               <CardHeader>
                 <CardTitle className="font-primary">Complete Instrumentation</CardTitle>
                 <CardDescription>All parts included in this arrangement</CardDescription>
@@ -292,7 +292,7 @@ export default function ArrangementDetailPage() {
           </TabsContent>
 
           <TabsContent value="analysis" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="frame-card">
               <CardHeader>
                 <CardTitle className="font-primary">Musical Analysis</CardTitle>
                 <CardDescription>Detailed breakdown of the musical structure</CardDescription>
@@ -304,7 +304,7 @@ export default function ArrangementDetailPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">Key Changes</h4>
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-better">
                     {arrangementData.musicalAnalysis.keyChanges.map((key, index) => (
                       <li key={index}>{key}</li>
                     ))}
@@ -312,7 +312,7 @@ export default function ArrangementDetailPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">Tempo Changes</h4>
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-better">
                     {arrangementData.musicalAnalysis.tempoChanges.map((tempo, index) => (
                       <li key={index}>{tempo}</li>
                     ))}
@@ -331,7 +331,7 @@ export default function ArrangementDetailPage() {
           </TabsContent>
 
           <TabsContent value="requirements" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="frame-card">
               <CardHeader>
                 <CardTitle className="font-primary">Performance Requirements</CardTitle>
                 <CardDescription>Technical requirements for this arrangement</CardDescription>
@@ -348,7 +348,7 @@ export default function ArrangementDetailPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">Equipment Needed</h4>
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-better">
                     {arrangementData.technicalRequirements.equipment.map((item, index) => (
                       <li key={index}>{item}</li>
                     ))}
@@ -356,7 +356,7 @@ export default function ArrangementDetailPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">Special Notes</h4>
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-better">
                     {arrangementData.technicalRequirements.specialNotes.map((note, index) => (
                       <li key={index}>{note}</li>
                     ))}
@@ -367,7 +367,7 @@ export default function ArrangementDetailPage() {
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="frame-card">
               <CardHeader>
                 <CardTitle className="font-primary">Customer Reviews</CardTitle>
                 <CardDescription>What directors are saying about this arrangement</CardDescription>

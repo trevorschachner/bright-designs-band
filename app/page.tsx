@@ -112,17 +112,17 @@ export default async function HomePage() {
             {featuredShows.map((show) => (
               <Card
                 key={show.id}
-                className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white/80 backdrop-blur-sm"
+                className="frame-card group"
               >
-                <div className="relative overflow-hidden rounded-t-lg">
+                <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient">
                   <img
                     src={show.thumbnailUrl || "/placeholder.svg"}
                     alt={show.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <Button
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-gray-900 hover:bg-white"
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-gray-900 hover:bg-white hover-lift"
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Preview
@@ -130,7 +130,7 @@ export default async function HomePage() {
                 </div>
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-xl group-hover:text-bright-third transition-colors font-primary">
+                    <CardTitle className="text-xl transition-colors font-primary">
                       {show.title}
                     </CardTitle>
                     <Badge className="text-xs">
@@ -181,15 +181,15 @@ export default async function HomePage() {
         <div className="container mx-auto max-w-5xl">
           <h2 className="text-4xl font-bold text-center mb-12 text-bright-dark font-primary">Our Design Process</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+            <div className="p-6 frame-card text-center">
               <h3 className="text-2xl font-semibold mb-2 font-primary">1. Consultation</h3>
               <p className="text-gray-600">We start by understanding your goals, ensemble strengths, and creative vision.</p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md text-center">
-              <h3 className="text-2xl font-semibold mb-2 font-primary">2. Composition & Arrangement</h3>
-              <p className="text-gray-600">Our team crafts engaging music and drill tailored to your ensemble's needs.</p>
+            <div className="p-6 frame-card text-center">
+              <h3 className="text-2xl font-semibold mb-2 font-primary">2. Composition &amp; Arrangement</h3>
+              <p className="text-gray-600">Our team crafts engaging music and drill tailored to your ensemble&apos;s needs.</p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+            <div className="p-6 frame-card text-center">
               <h3 className="text-2xl font-semibold mb-2 font-primary">3. Delivery & Support</h3>
               <p className="text-gray-600">We provide rehearsal resources and remain available for feedback throughout the season.</p>
             </div>
@@ -202,19 +202,19 @@ export default async function HomePage() {
         <div className="container mx-auto max-w-5xl">
           <h2 className="text-4xl font-bold text-center mb-12 text-bright-dark font-primary">Our Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+            <div className="p-6 frame-card text-center">
               <h3 className="text-xl font-semibold mb-2 font-primary">Custom Shows</h3>
-              <p className="text-gray-600">Complete show design built from the ground up to match your band's personality.</p>
+              <p className="text-gray-600">Complete show design built from the ground up to match your band&apos;s personality.</p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+            <div className="p-6 frame-card text-center">
               <h3 className="text-xl font-semibold mb-2 font-primary">Arrangements</h3>
-              <p className="text-gray-600">Professional music arrangements that highlight your ensemble's unique sound.</p>
+              <p className="text-gray-600">Professional music arrangements that highlight your ensemble&apos;s unique sound.</p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+            <div className="p-6 frame-card text-center">
               <h3 className="text-xl font-semibold mb-2 font-primary">Consultation</h3>
               <p className="text-gray-600">Expert advice on show concepts, rehearsal strategies, and adjudication preparedness.</p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+            <div className="p-6 frame-card text-center">
               <h3 className="text-xl font-semibold mb-2 font-primary">Music Licensing</h3>
               <p className="text-gray-600">Hassle-free licensing assistance to keep your performances compliant.</p>
             </div>
@@ -228,7 +228,7 @@ export default async function HomePage() {
           <div className="max-w-3xl mx-auto text-white">
             <h2 className="text-4xl font-bold mb-6 font-primary">Ready to Create Something Amazing?</h2>
             <p className="text-xl mb-8 opacity-90">
-              Let's collaborate to bring your vision to life. From custom arrangements to complete show design, we're
+              Let&apos;s collaborate to bring your vision to life. From custom arrangements to complete show design, we&apos;re
               here to help your band shine.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -265,7 +265,7 @@ export function FilterBar({
           {/* Search Badge */}
           {filterState.search && (
             <Badge variant="secondary" className="flex items-center gap-1">
-              Search: "{filterState.search}"
+              Search: &quot;{filterState.search}&quot;
               <X 
                 className="w-3 h-3 cursor-pointer hover:bg-gray-200 rounded" 
                 onClick={clearSearch}

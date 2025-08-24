@@ -38,8 +38,8 @@ export interface FilterField {
 export interface FilterCondition {
   field: string;
   operator: FilterOperator;
-  value: any;
-  values?: any[]; // For 'in', 'notIn', 'between' operators
+  value: unknown;
+  values?: unknown[]; // For 'in', 'notIn', 'between' operators
 }
 
 export interface SortCondition {

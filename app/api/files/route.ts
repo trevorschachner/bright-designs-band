@@ -1,110 +1,91 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/utils/supabase/server'
-import { db } from '@/lib/database'
-import { files } from '@/lib/database/schema'
-import { fileStorage } from '@/lib/storage'
-import { getUserRole, getUserPermissions } from '@/lib/auth/roles'
-import { sql, and } from 'drizzle-orm'
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/utils/supabase/server';
+import { db } from '@/lib/database';
+import { files, fileTypeEnum } from '@/lib/database/schema';
+import { fileStorage } from '@/lib/storage';
+import { requirePermission } from '@/lib/auth/roles';
+import { and, eq } from 'drizzle-orm';
+import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
+import { fileUploadSchema } from '@/lib/validation/files';
+
+type FileType = typeof fileTypeEnum.enumValues[number];
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return UnauthorizedResponse();
     }
 
-    const userPermissions = getUserPermissions(session.user.email || '')
-    if (!userPermissions.canCreateArrangements) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    if (!requirePermission(session.user.email, 'canUploadFiles')) {
+      return ForbiddenResponse();
     }
 
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const showId = formData.get('showId') ? parseInt(formData.get('showId') as string) : undefined
-    const arrangementId = formData.get('arrangementId') ? parseInt(formData.get('arrangementId') as string) : undefined
-    const fileType = formData.get('fileType') as 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other'
-    const isPublic = formData.get('isPublic') === 'true'
-    const description = formData.get('description') as string || undefined
-    const displayOrder = formData.get('displayOrder') ? parseInt(formData.get('displayOrder') as string) : 0
+    const formData = await request.formData();
+    const rawData = Object.fromEntries(formData.entries());
+    
+    const parsedData = fileUploadSchema.safeParse(rawData);
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    if (!parsedData.success) {
+      return BadRequestResponse(parsedData.error.errors);
     }
+    
+    const { file, ...metadata } = parsedData.data;
 
-    if (!fileType) {
-      return NextResponse.json({ error: 'File type is required' }, { status: 400 })
-    }
-
-    // Upload file to Supabase Storage
-    const uploadResult = await fileStorage.uploadFile(file, {
-      showId,
-      arrangementId,
-      fileType,
-      isPublic,
-      description,
-      displayOrder
-    })
+    const uploadResult = await fileStorage.uploadFile(file, metadata);
 
     if (!uploadResult.success) {
-      return NextResponse.json({ error: uploadResult.error }, { status: 400 })
+      return BadRequestResponse(uploadResult.error);
     }
 
-    // Save file metadata to database
     const fileRecord = await db.insert(files).values({
+      ...metadata,
       fileName: uploadResult.data!.fileName,
       originalName: file.name,
-      fileType,
       fileSize: uploadResult.data!.fileSize,
       mimeType: uploadResult.data!.mimeType,
       url: uploadResult.data!.url,
       storagePath: uploadResult.data!.storagePath,
-      showId,
-      arrangementId,
-      isPublic,
-      description,
-      displayOrder,
-    }).returning()
+    }).returning();
 
-    return NextResponse.json({ 
-      success: true,
-      file: fileRecord[0]
-    })
+    return SuccessResponse(fileRecord[0], 201);
 
   } catch (error) {
-    console.error('File upload error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('File upload error:', error);
+    return ErrorResponse('Internal server error');
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const showId = searchParams.get('showId')
-    const arrangementId = searchParams.get('arrangementId')
-    const fileType = searchParams.get('fileType')
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
 
-    // Build server-side filtered query
-    let q = db.select().from(files)
-    const whereParts: any[] = []
-    if (showId) whereParts.push(sql`show_id = ${parseInt(showId)}`)
-    if (arrangementId) whereParts.push(sql`arrangement_id = ${parseInt(arrangementId)}`)
-    if (fileType) whereParts.push(sql`file_type = ${fileType}`)
+    const { searchParams } = new URL(request.url);
+    const showId = searchParams.get('showId');
+    const arrangementId = searchParams.get('arrangementId');
+    const fileType = searchParams.get('fileType');
 
-    if (whereParts.length > 0) {
-      q = q.where(and(...whereParts as any)) as typeof q
+    let conditions = [];
+    if (showId) conditions.push(eq(files.showId, parseInt(showId)));
+    if (arrangementId) conditions.push(eq(files.arrangementId, parseInt(arrangementId)));
+    if (fileType && fileTypeEnum.enumValues.includes(fileType as FileType)) {
+      conditions.push(eq(files.fileType, fileType as FileType));
     }
 
-    const fileList = await q
+    // Public files are always visible. Private files are only visible to authenticated users.
+    if (!session) {
+      conditions.push(eq(files.isPublic, true));
+    }
 
-    return NextResponse.json({
-      success: true,
-      files: fileList
-    })
+    const fileList = await db.select().from(files).where(and(...conditions));
+
+    return SuccessResponse(fileList);
 
   } catch (error) {
-    console.error('File fetch error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('File fetch error:', error);
+    return ErrorResponse('Internal server error');
   }
 } 

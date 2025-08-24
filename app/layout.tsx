@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
+import { brand, navigation, resources, ctas, footer, social } from "@/config/site"
 import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
@@ -64,9 +65,9 @@ export default function RootLayout({
         
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ShowPlanProvider>
-            <SiteHeader />
+            <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
             <main>{children}</main>
-            <SiteFooter />
+            <SiteFooter footer={footer} social={social} />
           </ShowPlanProvider>
         </ThemeProvider>
       </body>

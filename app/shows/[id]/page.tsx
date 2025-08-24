@@ -13,6 +13,7 @@ import { AudioPlayerComponent } from '@/components/features/audio-player'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
 import { YouTubePlayer } from '@/components/features/youtube-player'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
+import { AddToPlanButton } from '@/components/features/shows/AddToPlanButton'
 
 export default async function ShowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -202,7 +203,10 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                   <div className="text-2xl font-bold text-foreground">${show.price || 'Contact for Quote'}</div>
                   <div className="text-sm text-muted-foreground">Complete Show Package</div>
                 </div>
-                <CheckAvailabilityModal showTitle={show.title} />
+                <div className="flex items-center gap-2">
+                  <AddToPlanButton id={show.id} title={show.title} type="show" />
+                  <CheckAvailabilityModal showTitle={show.title} />
+                </div>
               </div>
             </div>
 
@@ -228,7 +232,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
               <h2 className="text-2xl font-bold text-gray-900 font-primary">Show Arrangements</h2>
               
               {mockData.arrangements.map((arrangement, index) => (
-                <Card key={arrangement.id} className="bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+                <Card key={arrangement.id} className="frame-card">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -267,10 +271,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                           View Details
                         </Link>
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <Play className="w-4 h-4 mr-2" />
-                        Preview
-                      </Button>
+                      <AddToPlanButton id={arrangement.id} title={arrangement.title} type="arrangement" size="sm" />
                     </div>
                   </CardContent>
                 </Card>
@@ -287,7 +288,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
           </TabsContent>
 
           <TabsContent value="features" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="frame-card">
               <CardHeader>
                 <CardTitle>Show Features</CardTitle>
                 <CardDescription>What makes this show special</CardDescription>
@@ -312,7 +313,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
           </TabsContent>
 
           <TabsContent value="requirements" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="frame-card">
               <CardHeader>
                 <CardTitle>Performance Requirements</CardTitle>
                 <CardDescription>Technical requirements for this show</CardDescription>
@@ -330,7 +331,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Equipment Needed</h4>
-                    <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <ul className="list-better">
                       <li>Sound system for electronic elements</li>
                       <li>Synthesizer or keyboard</li>
                       <li>Extended percussion setup</li>
@@ -343,7 +344,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="frame-card">
               <CardHeader>
                 <CardTitle>Customer Reviews</CardTitle>
                 <CardDescription>What directors are saying about this show</CardDescription>

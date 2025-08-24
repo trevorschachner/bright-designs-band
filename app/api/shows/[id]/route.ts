@@ -14,7 +14,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           tag: true,
         },
       },
-      arrangements: true,
+      arrangements: {
+        orderBy: [
+          { asc: (arrangements) => arrangements.displayOrder },
+          { asc: (arrangements) => arrangements.title },
+        ] as any
+      },
     },
   });
   return NextResponse.json(show);

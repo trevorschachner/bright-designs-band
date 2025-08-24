@@ -44,13 +44,13 @@ export default function Testimonials() {
           {testimonials.map((testimonial, index) => (
             <Card 
               key={index}
-              className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white/80 backdrop-blur-sm h-full"
+              className="frame-card h-full"
             >
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex-grow">
                   <Quote className="w-8 h-8 text-bright-third mb-4 opacity-60" />
                   <blockquote className="text-gray-700 mb-6 leading-relaxed italic">
-                    "{testimonial.content}"
+                    &quot;{testimonial.content}&quot;
                   </blockquote>
                 </div>
                 <div className="border-t pt-4">

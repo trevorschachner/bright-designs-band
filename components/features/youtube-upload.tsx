@@ -88,7 +88,7 @@ export function YouTubeUpload({
   const isValidUrl = url.trim() === '' || isValidYouTubeUrl(url)
 
   return (
-    <Card className="w-full">
+    <Card className="w-full frame-card">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Video className="w-5 h-5" />

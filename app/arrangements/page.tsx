@@ -147,13 +147,13 @@ export default function ArrangementsPage() {
             {arrangementsResponse.data.map((arrangement) => (
               <Card
                 key={arrangement.id}
-                className={`group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 bg-white/80 backdrop-blur-sm ${
+                className={`frame-card ${
                   isLoading ? 'opacity-50' : ''
                 }`}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
-                    <CardTitle className="text-xl group-hover:text-bright-third transition-colors font-primary flex-1">
+                    <CardTitle className="text-xl font-primary flex-1">
                       {arrangement.title}
                     </CardTitle>
                     {arrangement.type && (
@@ -162,8 +162,6 @@ export default function ArrangementsPage() {
                       </Badge>
                     )}
                   </div>
-                  
-                  {/* Show Information */}
                   {arrangement.show && (
                     <CardDescription className="text-sm">
                       <div className="flex items-center gap-2">
@@ -186,9 +184,7 @@ export default function ArrangementsPage() {
                     </CardDescription>
                   )}
                 </CardHeader>
-                
                 <CardContent>
-                  {/* Price */}
                   {arrangement.price && (
                     <div className="mb-4 flex items-center gap-2">
                       <DollarSign className="w-4 h-4 text-green-600" />
@@ -197,14 +193,12 @@ export default function ArrangementsPage() {
                       </span>
                     </div>
                   )}
-                  
                   <div className="space-y-2">
                     <Button className="btn-primary w-full" asChild>
                       <Link href={`/arrangements/${arrangement.id}`}>
                         View Details
                       </Link>
                     </Button>
-                    
                     {arrangement.show && (
                       <Button className="w-full" asChild>
                         <Link href={`/shows/${arrangement.show.id}`}>

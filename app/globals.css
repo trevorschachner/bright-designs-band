@@ -6,6 +6,67 @@
   .text-balance {
     text-wrap: balance;
   }
+  /* Layered elevation shadows */
+  .shadow-card {
+    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.04), 0 4px 12px hsl(0 0% 0% / 0.06);
+  }
+  .shadow-card-lg {
+    box-shadow: 0 8px 20px hsl(0 0% 0% / 0.08), 0 2px 6px hsl(0 0% 0% / 0.06);
+  }
+  .shadow-soft {
+    box-shadow: 0 2px 10px hsl(0 0% 0% / 0.05);
+  }
+
+  /* Hover lift and smooth transitions */
+  .hover-lift {
+    transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    filter: saturate(1.05);
+  }
+
+  /* Gradient helpers */
+  .bg-card-gradient {
+    background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.92) 100%);
+  }
+  .bg-accent-gradient {
+    background: linear-gradient(135deg, hsl(var(--accent) / 0.15), hsl(var(--primary) / 0.18));
+  }
+
+  /* Better list styles */
+  .list-better {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .list-better li {
+    display: grid;
+    grid-template-columns: 1rem 1fr;
+    align-items: start;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+  }
+  .list-better li::before {
+    content: "";
+    margin-top: 0.45rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    box-shadow: 0 1px 3px hsl(0 0% 0% / 0.15);
+  }
+
+  /* Subtle press effect */
+  .active-press:active {
+    transform: translateY(1px);
+  }
+
+  /* Focus ring utility */
+  .focus-ring {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.35);
+  }
 }
 
 @layer base {
@@ -102,5 +163,18 @@
   }
   .btn-lg {
     @apply h-11 rounded-md px-8;
+  }
+  /* Enhance primary/outline buttons with motion */
+  .btn-primary {
+    @apply hover-lift active-press;
+  }
+  .btn-outline {
+    @apply hover-lift active-press;
+  }
+
+  /* Card frame utility */
+  .frame-card {
+    @apply rounded-xl bg-card-gradient shadow-card hover:shadow-card-lg hover-lift transition-all;
+    border: 1px solid hsl(var(--border));
   }
 }

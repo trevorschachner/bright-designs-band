@@ -3,82 +3,32 @@ import { shows, showsToTags, tags, arrangements, files } from '@/lib/database/sc
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
-import { SHOWS_FILTER_FIELDS } from '@/lib/filters/schema-analyzer';
 import { count } from 'drizzle-orm';
+import { requirePermission } from '@/lib/auth/roles';
+import { showSchema } from '@/lib/validation/shows';
+import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const filterState = FilterUrlManager.fromUrlParams(searchParams);
     
-    // Default pagination
     const page = filterState.page || 1;
     const limit = filterState.limit || 20;
     const offset = (page - 1) * limit;
 
-    // Build base query with conditional chaining
-    let queryBuilder = db.select().from(shows);
-    let countQueryBuilder = db.select({ count: count() }).from(shows);
+    const whereClause = QueryBuilder.buildWhereClause(shows, filterState.conditions);
+    const orderByClause = filterState.sort.length > 0 
+      ? QueryBuilder.buildOrderByClause(shows, filterState.sort)
+      : [shows.createdAt];
 
-    // Add WHERE conditions
-    const whereConditions = [];
-    
-    // Add search condition (include composer and songTitle)
-    if (filterState.search) {
-      const searchCondition = QueryBuilder.buildSearchCondition(
-        shows,
-        filterState.search,
-        ['title', 'description', 'year', 'composer', 'songTitle']
-      );
-      if (searchCondition) {
-        whereConditions.push(searchCondition);
-      }
-    }
-
-    // Add filter conditions
-    if (filterState.conditions.length > 0) {
-      const filterCondition = QueryBuilder.buildWhereClause(shows, filterState.conditions);
-      if (filterCondition) {
-        whereConditions.push(filterCondition);
-      }
-    }
-
-    // Build final WHERE clause
-    let finalWhereClause;
-    if (whereConditions.length > 0) {
-      finalWhereClause = whereConditions.length === 1 
-        ? whereConditions[0] 
-        : QueryBuilder.buildWhereClause(shows, filterState.conditions);
-      
-      if (finalWhereClause) {
-        queryBuilder = queryBuilder.where(finalWhereClause) as typeof queryBuilder;
-        countQueryBuilder = countQueryBuilder.where(finalWhereClause) as typeof countQueryBuilder;
-      }
-    }
-
-    // Add ORDER BY
-    if (filterState.sort.length > 0) {
-      const orderByClause = QueryBuilder.buildOrderByClause(shows, filterState.sort);
-      queryBuilder = queryBuilder.orderBy(...orderByClause) as typeof queryBuilder;
-    } else {
-      // Default sort by createdAt desc
-      queryBuilder = queryBuilder.orderBy(shows.createdAt) as typeof queryBuilder;
-    }
-
-    // Add pagination
-    const query = queryBuilder.limit(limit).offset(offset);
-    const countQuery = countQueryBuilder;
-
-    // Execute count query and optimized single query with relations (fixes N+1 problem)
     const [totalResult, showsWithRelations] = await Promise.all([
-      countQuery,
+      db.select({ count: count() }).from(shows).where(whereClause),
       db.query.shows.findMany({
         limit,
         offset,
-        where: finalWhereClause,
-        orderBy: filterState.sort?.length > 0
-          ? QueryBuilder.buildOrderByClause(shows, filterState.sort)
-          : [shows.createdAt],
+        where: whereClause,
+        orderBy: orderByClause,
         with: {
           showsToTags: {
             with: {
@@ -86,7 +36,7 @@ export async function GET(request: Request) {
             },
           },
           arrangements: {
-            orderBy: [arrangements.title], // Order arrangements by title
+            orderBy: [arrangements.displayOrder, arrangements.title],
           },
           files: {
             where: (files, { eq }) => eq(files.isPublic, true),
@@ -104,18 +54,14 @@ export async function GET(request: Request) {
       filterState
     );
 
-    return NextResponse.json(response);
+    return SuccessResponse(response);
   } catch (error) {
     console.error('Error fetching shows:', error);
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch shows',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : 'No stack') : undefined
-      },
-      { status: 500 }
-    );
+    const errorDetails = process.env.NODE_ENV === 'development' 
+      ? { message: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : 'No stack' }
+      : undefined;
+    return ErrorResponse('Failed to fetch shows', 500, errorDetails);
   }
 }
 
@@ -124,26 +70,43 @@ export async function POST(request: Request) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return UnauthorizedResponse();
   }
 
-  const body = await request.json();
-  const { tags: tagIds, ...showData } = body;
+  if (!requirePermission(session.user.email, 'canManageShows')) {
+    return ForbiddenResponse();
+  }
 
-  const newShow = await db.transaction(async (tx) => {
-    const [inserted] = await tx.insert(shows).values(showData).returning();
+  try {
+    const body = await request.json();
+    const parsedData = showSchema.safeParse(body);
 
-    if (tagIds && tagIds.length > 0) {
-      await tx.insert(showsToTags).values(
-        tagIds.map((tagId: number) => ({
-          showId: inserted.id,
-          tagId,
-        }))
-      );
+    if (!parsedData.success) {
+      return BadRequestResponse(parsedData.error.errors);
     }
 
-    return inserted;
-  });
+    const { tags: tagIds, ...showData } = parsedData.data;
+    const newShow = await db.transaction(async (tx) => {
+      const [inserted] = await tx.insert(shows).values({
+        ...showData,
+        price: showData.price?.toString()
+      }).returning();
 
-  return NextResponse.json(newShow);
+      if (tagIds && tagIds.length > 0) {
+        await tx.insert(showsToTags).values(
+          tagIds.map((tagId: number) => ({
+            showId: inserted.id,
+            tagId,
+          }))
+        );
+      }
+
+      return inserted;
+    });
+
+    return SuccessResponse(newShow, 201);
+  } catch (error) {
+    console.error('Error creating show:', error);
+    return ErrorResponse('Failed to create show');
+  }
 } 

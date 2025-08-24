@@ -18,11 +18,23 @@ interface CheckAvailabilityModalProps {
   triggerButton?: React.ReactNode
 }
 
+interface InquiryPayload {
+  name: string;
+  email: string;
+  school: string;
+  showInterest: string;
+  bandSize: string;
+  abilityLevel: string;
+  instrumentation?: string;
+  services: string[];
+  message?: string;
+}
+
 export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvailabilityModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: InquiryPayload) => {
     setIsLoading(true)
     try {
       const response = await fetch('/api/contact', {
@@ -62,13 +74,13 @@ export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvaila
         <DialogHeader>
           <DialogTitle>Check Availability</DialogTitle>
           <DialogDescription>
-            Complete the form below to inquire about this show. Our team will get back to you shortly to discuss your ensemble's needs.
+            Complete the form below to inquire about this show. Our team will get back to you shortly to discuss your ensemble&apos;s needs.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <InquiryForm 
             showTitle={showTitle}
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit as any}
             isLoading={isLoading}
           />
         </div>

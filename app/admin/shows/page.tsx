@@ -1,14 +1,9 @@
 import { createClient } from '@/lib/utils/supabase/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-
-async function getShows() {
-  const response = await fetch('http://localhost:3000/api/shows');
-  if (!response.ok) {
-    throw new Error('Failed to fetch shows');
-  }
-  return response.json();
-}
+import { requirePermission } from '@/lib/auth/roles';
+import { Suspense } from 'react';
+import ShowsTable from './ShowsTable';
 
 export default async function ManageShowsPage() {
   const supabase = await createClient();
@@ -18,7 +13,9 @@ export default async function ManageShowsPage() {
     redirect('/login');
   }
 
-  const shows = await getShows();
+  if (!requirePermission(session.user.email, 'canManageShows')) {
+    redirect('/'); // Or redirect to an unauthorized page
+  }
 
   return (
     <div className="container mx-auto py-20">
@@ -28,30 +25,9 @@ export default async function ManageShowsPage() {
           Add New Show
         </Link>
       </div>
-      <table className="w-full">
-        <thead>
-          <tr>
-            <th className="text-left">Title</th>
-            <th className="text-left">Year</th>
-            <th className="text-left">Difficulty</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {shows.map((show: any) => (
-            <tr key={show.id}>
-              <td>{show.title}</td>
-              <td>{show.year}</td>
-              <td>{show.difficulty}</td>
-              <td>
-                <Link href={`/admin/shows/${show.id}`} className="text-primary hover:underline">
-                  Edit
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Suspense fallback={<p>Loading shows...</p>}>
+        <ShowsTable />
+      </Suspense>
     </div>
   );
 } 

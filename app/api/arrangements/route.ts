@@ -115,6 +115,19 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const newArrangement = await db.insert(arrangements).values(body).returning();
+  // Default displayOrder to max+1 per show when not provided
+  const { showId, displayOrder, ...rest } = body as any;
+  let finalOrder = displayOrder;
+  if (typeof finalOrder !== 'number') {
+    const existing = await db.query.arrangements.findMany({
+      where: (arrangements, { eq }) => eq(arrangements.showId, Number(showId)),
+      orderBy: [arrangements.displayOrder],
+      columns: { displayOrder: true },
+      limit: 1,
+    });
+    finalOrder = (existing[0]?.displayOrder ?? 0) + 1;
+  }
+
+  const newArrangement = await db.insert(arrangements).values({ showId: Number(showId), displayOrder: finalOrder, ...rest }).returning();
   return NextResponse.json(newArrangement);
 }

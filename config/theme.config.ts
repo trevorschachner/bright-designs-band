@@ -1,102 +1,86 @@
-export type ThemeNavItem = {
-	label: string
-	href: string
-	external?: boolean
+export type NavigationItem = {
+  label: string
+  href: string
 }
 
-export type ThemeCTA = {
-	label: string
-	href: string
-	style?: 'primary' | 'outline' | 'ghost'
-	iconRight?: boolean
+export type CallToAction = {
+  label: string
+  href: string
+  iconRight?: boolean
 }
 
-export type ThemeSocialLink = {
-	label: string
-	href: string
-	icon: 'x' | 'github' | 'linkedin' | 'youtube' | 'instagram'
+export type FooterGroup = {
+  title: string
+  links: NavigationItem[]
 }
 
-export type ThemeFooterGroup = {
-	title: string
-	links: ThemeNavItem[]
+export interface StartupTheme {
+  brand: {
+    name: string
+  }
+  navigation: NavigationItem[]
+  resources?: NavigationItem[]
+  ctas: {
+    primary?: CallToAction
+    secondary?: CallToAction
+  }
+  footer?: {
+    groups: FooterGroup[]
+    copyright?: string
+  }
+  social?: NavigationItem[]
 }
 
-export interface StartupThemeConfig {
-	brand: {
-		name: string
-		logo?: string
-		subtitle?: string
-	}
-	navigation: ThemeNavItem[]
-	resources?: ThemeNavItem[]
-	ctas: {
-		primary?: ThemeCTA
-		secondary?: ThemeCTA
-	}
-	social?: ThemeSocialLink[]
-	footer?: {
-		groups: ThemeFooterGroup[]
-		copyright?: string
-	}
-	features?: {
-		showAuthInHeaderOnAdmin?: boolean
-	}
+export const startupTheme: StartupTheme = {
+  brand: {
+    name: "Bright Designs Band",
+  },
+  navigation: [
+    { label: "Home", href: "/" },
+    { label: "Shows", href: "/shows" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
+  ],
+  resources: [
+    { label: "Theme Guide", href: "/docs/features/theme-system" },
+    { label: "API Docs", href: "/docs/api" },
+  ],
+  ctas: {
+    primary: { label: "Plan a Show", href: "/plan", iconRight: true },
+    secondary: { label: "Contact Us", href: "/contact" },
+  },
+  footer: {
+    groups: [
+      {
+        title: "Company",
+        links: [
+          { label: "About", href: "/about" },
+          { label: "Contact", href: "/contact" },
+        ],
+      },
+      {
+        title: "Explore",
+        links: [
+          { label: "Upcoming Shows", href: "/shows" },
+          { label: "Home", href: "/" },
+        ],
+      },
+      {
+        title: "Resources",
+        links: [
+          { label: "Theme Guide", href: "/docs/features/theme-system" },
+          { label: "API Docs", href: "/docs/api" },
+        ],
+      },
+    ],
+    copyright: `© ${new Date().getFullYear()} Bright Designs Band. All rights reserved.`,
+  },
+  social: [
+    { label: "Instagram", href: "#" },
+    { label: "Facebook", href: "#" },
+  ],
 }
 
-export const startupTheme: StartupThemeConfig = {
-	brand: {
-		name: 'Bright Designs',
-		subtitle: 'Marching Arts + Music Design',
-	},
-	navigation: [
-		{ label: 'Shows', href: '/shows' },
-		{ label: 'About', href: '/about' },
-		{ label: 'Process', href: '/process' },
-	],
-	resources: [
-		{ label: 'Arrangements', href: '/arrangements' },
-		{ label: 'FAQs', href: '/faqs' },
-		{ label: 'Show Guide', href: '/guide' },
-		{ label: 'Contact', href: '/contact' },
-	],
-	ctas: {
-		primary: { label: 'Build Your Show', href: '/build', style: 'primary', iconRight: true },
-		secondary: { label: 'Contact Us', href: '/contact', style: 'outline' },
-	},
-	social: [
-		{ label: 'GitHub', href: 'https://github.com', icon: 'github' },
-		{ label: 'YouTube', href: 'https://youtube.com', icon: 'youtube' },
-	],
-	footer: {
-		groups: [
-			{
-				title: 'Company',
-				links: [
-					{ label: 'About', href: '/about' },
-					{ label: 'Process', href: '/process' },
-					{ label: 'Contact', href: '/contact' },
-				],
-			},
-			{
-				title: 'Resources',
-				links: [
-					{ label: 'Arrangements', href: '/arrangements' },
-					{ label: 'FAQs', href: '/faqs' },
-					{ label: 'Show Guide', href: '/guide' },
-				],
-			},
-			{
-				title: 'Legal',
-				links: [
-					{ label: 'Privacy Policy', href: '/privacy' },
-					{ label: 'Terms of Service', href: '/terms' },
-				],
-			},
-		],
-		copyright: `© ${new Date().getFullYear()} Bright Designs. All rights reserved.`,
-	},
-	features: {
-		showAuthInHeaderOnAdmin: true,
-	},
-}
+export default startupTheme
+
+

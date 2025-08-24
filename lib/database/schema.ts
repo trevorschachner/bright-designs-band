@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const difficultyEnum = pgEnum('difficulty', ['Beginner', 'Intermediate', 'Advanced']);
@@ -7,7 +7,7 @@ export const fileTypeEnum = pgEnum('file_type', ['image', 'audio', 'youtube', 'p
 export const shows = pgTable('shows', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
-  year: text('year'),
+  year: integer('year'),
   difficulty: difficultyEnum('difficulty'),
   duration: text('duration'),
   description: text('description'),
@@ -25,8 +25,11 @@ export const arrangements = pgTable('arrangements', {
   title: text('title').notNull(),
   type: text('type'),
   price: numeric('price', { precision: 10, scale: 2 }),
+  displayOrder: integer('display_order').default(0).notNull(),
   showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
-});
+}, (table) => ({
+  showIdIdx: index('arrangements_show_id_idx').on(table.showId),
+}));
 
 export const files = pgTable('files', {
   id: serial('id').primaryKey(),
@@ -44,7 +47,10 @@ export const files = pgTable('files', {
   displayOrder: integer('display_order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  showIdIdx: index('files_show_id_idx').on(table.showId),
+  arrangementIdIdx: index('files_arrangement_id_idx').on(table.arrangementId),
+}));
 
 export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
@@ -54,7 +60,9 @@ export const tags = pgTable('tags', {
 export const showsToTags = pgTable('shows_to_tags', {
   showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
   tagId: integer('tag_id').references(() => tags.id, { onDelete: 'cascade' }).notNull(),
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.showId, table.tagId] }),
+}));
 
 // Relations
 

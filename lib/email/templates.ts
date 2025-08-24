@@ -321,53 +321,71 @@ If you have any immediate questions, don't hesitate to reply to this email!
   return { html, text };
 }
 
-export const ShowInquiryAdminAlert = (formData: any) => (
-  <table style={main}>
-    <tbody>
-      <tr>
-        <td>
-          <table style={container}>
-            <tbody>
-              <tr>
-                <td>
-                  <h1 style={h1}>New Show Inquiry: {formData.showInterest}</h1>
-                  <p style={paragraph}>A new inquiry has been submitted for one of the shows.</p>
+// New: Generate admin alert (HTML/TEXT) instead of exporting JSX in a .ts file
+export interface ShowInquiryAdminData {
+  showInterest: string;
+  name: string;
+  email: string;
+  school: string;
+  bandSize?: string;
+  abilityLevel?: string;
+  instrumentation?: string;
+  services: string[];
+  message?: string;
+}
 
-                  <h2 style={h2}>Contact Details</h2>
-                  <ul style={list}>
-                    <li><strong>Name:</strong> {formData.name}</li>
-                    <li><strong>Email:</strong> <a href={`mailto:${formData.email}`}>{formData.email}</a></li>
-                    <li><strong>School/Organization:</strong> {formData.school}</li>
-                  </ul>
+export function generateShowInquiryAdminAlert(data: ShowInquiryAdminData): { html: string; text: string } {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Show Inquiry</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #111;">
+  <h1>New Show Inquiry: ${data.showInterest}</h1>
+  <p>A new inquiry has been submitted for one of the shows.</p>
+  <h2>Contact Details</h2>
+  <ul>
+    <li><strong>Name:</strong> ${data.name}</li>
+    <li><strong>Email:</strong> <a href="mailto:${data.email}">${data.email}</a></li>
+    <li><strong>School/Organization:</strong> ${data.school}</li>
+  </ul>
+  <h2>Ensemble Details</h2>
+  <ul>
+    <li><strong>Band Size:</strong> ${data.bandSize || 'N/A'}</li>
+    <li><strong>Ability Level:</strong> ${data.abilityLevel || 'N/A'}</li>
+    <li><strong>Instrumentation Notes:</strong> ${data.instrumentation || 'N/A'}</li>
+  </ul>
+  <h2>Requested Services</h2>
+  <ul>
+    ${data.services.map((s) => `<li>${s}</li>`).join('')}
+  </ul>
+  ${data.message ? `<h2>Additional Message</h2><p>${data.message}</p>` : ''}
+  <p style="margin-top: 20px;">You can follow up with them directly at their provided email address.</p>
+</body>
+</html>
+`;
 
-                  <h2 style={h2}>Ensemble Details</h2>
-                  <ul style={list}>
-                    <li><strong>Band Size:</strong> {formData.bandSize}</li>
-                    <li><strong>Ability Level:</strong> {formData.abilityLevel}</li>
-                    <li><strong>Instrumentation Notes:</strong> {formData.instrumentation || 'N/A'}</li>
-                  </ul>
+  const text = `New Show Inquiry: ${data.showInterest}
 
-                  <h2 style={h2}>Requested Services</h2>
-                  <ul style={list}>
-                    {formData.services.map((service: string) => <li key={service}>{service}</li>)}
-                  </ul>
+Contact Details
+- Name: ${data.name}
+- Email: ${data.email}
+- School/Organization: ${data.school}
 
-                  {formData.message && (
-                    <>
-                      <h2 style={h2}>Additional Message</h2>
-                      <p style={paragraph}>{formData.message}</p>
-                    </>
-                  )}
+Ensemble Details
+- Band Size: ${data.bandSize || 'N/A'}
+- Ability Level: ${data.abilityLevel || 'N/A'}
+- Instrumentation: ${data.instrumentation || 'N/A'}
 
-                  <p style={{ ...paragraph, marginTop: '20px' }}>
-                    You can follow up with them directly at their provided email address.
-                  </p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-);
+Requested Services
+${data.services.map((s) => `- ${s}`).join('\n')}
+${data.message ? `
+Additional Message
+${data.message}
+` : ''}`.trim();
+
+  return { html, text };
+}

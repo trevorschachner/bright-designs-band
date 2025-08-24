@@ -223,7 +223,7 @@ export function FileUpload({
   const errorFiles = uploadingFiles.filter(f => f.status === 'error')
 
   return (
-    <Card className="w-full">
+    <Card className="w-full frame-card">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Upload className="w-5 h-5" />
@@ -283,17 +283,16 @@ export function FileUpload({
             </div>
 
             {uploadingFiles.map((uploadingFile) => (
-              <Card key={uploadingFile.id} className="p-4">
+              <Card key={uploadingFile.id} className="p-4 frame-card">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
                     {getFileIcon(uploadingFile.fileType)}
                   </div>
-                  
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-2">
-                                          <p className="text-sm font-medium truncate">
-                      {uploadingFile.file?.name || uploadingFile.youtubeUrl || 'YouTube Video'}
-                    </p>
+                      <p className="text-sm font-medium truncate">
+                        {uploadingFile.file?.name || uploadingFile.youtubeUrl || 'YouTube Video'}
+                      </p>
                       <Badge variant="outline" className="text-xs">
                         {uploadingFile.fileType}
                       </Badge>
@@ -304,7 +303,6 @@ export function FileUpload({
                         <AlertCircle className="w-4 h-4 text-red-500" />
                       )}
                     </div>
-
                     {uploadingFile.status === 'pending' && (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
@@ -327,7 +325,6 @@ export function FileUpload({
                             </SelectContent>
                           </Select>
                         </div>
-
                         <div>
                           <Label htmlFor={`description-${uploadingFile.id}`}>Description</Label>
                           <Input
@@ -339,7 +336,6 @@ export function FileUpload({
                             }
                           />
                         </div>
-
                         <div className="flex items-center space-x-2">
                           <Switch
                             checked={uploadingFile.isPublic}
@@ -351,11 +347,9 @@ export function FileUpload({
                         </div>
                       </div>
                     )}
-
                     {uploadingFile.status === 'uploading' && (
                       <Progress value={uploadingFile.progress} className="mb-2" />
                     )}
-
                     {uploadingFile.status === 'error' && (
                       <Alert className="mb-2">
                         <AlertCircle className="h-4 w-4" />
@@ -364,12 +358,10 @@ export function FileUpload({
                         </AlertDescription>
                       </Alert>
                     )}
-
                     <p className="text-xs text-gray-500">
                       {uploadingFile.file ? (uploadingFile.file.size / 1024 / 1024).toFixed(2) + ' MB' : 'YouTube Link'}
                     </p>
                   </div>
-
                   <div className="flex-shrink-0">
                     {uploadingFile.status === 'pending' && (
                       <div className="flex space-x-2">
@@ -419,7 +411,6 @@ export function FileUpload({
               </Card>
             ))}
 
-            {/* Summary */}
             {(successFiles.length > 0 || errorFiles.length > 0) && (
               <div className="flex space-x-4 text-sm">
                 {successFiles.length > 0 && (

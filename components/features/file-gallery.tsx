@@ -231,7 +231,7 @@ export function FileGallery({
 
   if (loading) {
     return (
-      <Card>
+      <Card className="frame-card">
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin mr-2" />
           <span>Loading files...</span>
@@ -250,7 +250,7 @@ export function FileGallery({
 
   if (files.length === 0) {
     return (
-      <Card>
+      <Card className="frame-card">
         <CardContent className="text-center py-8">
           <File className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <p className="text-gray-500">No files found</p>
@@ -268,7 +268,7 @@ export function FileGallery({
         // Grid layout for images
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {files.map((file) => (
-            <Card key={file.id}>
+            <Card key={file.id} className="frame-card">
               <CardContent className="p-4">
                 {renderFilePreview(file)}
                 <div className="mt-4">
@@ -303,7 +303,7 @@ export function FileGallery({
         // List layout for other file types
         <div className="space-y-4">
           {files.map((file) => (
-            <Card key={file.id}>
+            <Card key={file.id} className="frame-card">
               <CardContent className="p-6">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0 mt-1">

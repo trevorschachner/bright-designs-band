@@ -1,5 +1,5 @@
 
-import { ArrowLeft, Music, Users, Award, Target } from "lucide-react"
+import { ArrowLeft, Users, Award, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
@@ -23,7 +23,7 @@ export default function AboutPage() {
         <section className="py-16 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 text-bright-dark font-primary">About Bright Designs</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            For over 25 years, we've been crafting extraordinary marching band experiences through innovative design,
+            For over 25 years, we&apos;ve been crafting extraordinary marching band experiences through innovative design,
             custom arrangements, and student-centered approach to musical education.
           </p>
         </section>
@@ -31,7 +31,7 @@ export default function AboutPage() {
         {/* Mission & Values */}
         <section className="py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="frame-card">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-bright-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Target className="w-8 h-8 text-bright-primary" />
@@ -46,7 +46,7 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="frame-card">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-bright-third/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-bright-third" />
@@ -61,7 +61,7 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="frame-card">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-bright-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Award className="w-8 h-8 text-bright-secondary" />
@@ -94,7 +94,7 @@ export default function AboutPage() {
                 both educationally valuable and competitively successful.
               </p>
               <p>
-                Today, we continue to push the boundaries of what's possible in marching band design, incorporating new
+                Today, we continue to push the boundaries of what&apos;s possible in marching band design, incorporating new
                 technologies, musical styles, and pedagogical approaches while maintaining our commitment to
                 student-centered design and educational excellence.
               </p>
@@ -107,11 +107,11 @@ export default function AboutPage() {
           <h2 className="text-3xl font-bold mb-12 text-bright-dark font-primary text-center">Meet Our Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Team members would go here */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg text-center">
+            <Card className="frame-card text-center">
               <CardContent className="p-6">
                 <div className="w-24 h-24 bg-bright-primary/10 rounded-full mx-auto mb-4"></div>
                 <h3 className="text-xl font-bold mb-2 font-primary">Team Member</h3>
-                <p className="text-bright-third mb-2">Founder & Lead Arranger</p>
+                <p className="text-bright-third mb-2">Founder &amp; Lead Arranger</p>
                 <p className="text-gray-600 text-sm">Bio and experience information would go here.</p>
               </CardContent>
             </Card>

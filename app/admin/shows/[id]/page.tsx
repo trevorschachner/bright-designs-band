@@ -24,7 +24,7 @@ export default function EditShowPage({ params }: PageProps) {
   const [tags, setTags] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [arrangements, setArrangements] = useState<any[]>([]);
-  const [newArrangement, setNewArrangement] = useState({ title: '', type: '', price: '' });
+  const [newArrangement, setNewArrangement] = useState({ title: '', type: '', price: '', displayOrder: '' });
 
   useEffect(() => {
     if (id) {
@@ -52,10 +52,10 @@ export default function EditShowPage({ params }: PageProps) {
     const response = await fetch('/api/arrangements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newArrangement, showId: id }),
+      body: JSON.stringify({ ...newArrangement, displayOrder: newArrangement.displayOrder ? Number(newArrangement.displayOrder) : undefined, showId: id }),
     });
     if (response.ok) {
-      setNewArrangement({ title: '', type: '', price: '' });
+      setNewArrangement({ title: '', type: '', price: '', displayOrder: '' });
       fetch(`/api/shows/${id}`)
         .then(res => res.json())
         .then(data => setArrangements(data.arrangements));
@@ -148,6 +148,10 @@ export default function EditShowPage({ params }: PageProps) {
             <label className="block mb-2" htmlFor="arrangementPrice">Price</label>
             <input className="w-full p-2 border rounded" type="text" id="arrangementPrice" value={newArrangement.price} onChange={(e) => setNewArrangement({ ...newArrangement, price: e.target.value })} />
           </div>
+          <div className="mb-4">
+            <label className="block mb-2" htmlFor="arrangementOrder">Order in Show</label>
+            <input className="w-full p-2 border rounded" type="number" id="arrangementOrder" value={newArrangement.displayOrder} onChange={(e) => setNewArrangement({ ...newArrangement, displayOrder: e.target.value })} />
+          </div>
           <button type="submit" className="w-full bg-primary text-primary-foreground p-2 rounded">Add Arrangement</button>
         </form>
         <table className="w-full mt-4">
@@ -156,6 +160,7 @@ export default function EditShowPage({ params }: PageProps) {
               <th>Title</th>
               <th>Type</th>
               <th>Price</th>
+              <th>Order</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -165,6 +170,7 @@ export default function EditShowPage({ params }: PageProps) {
                 <td>{arrangement.title}</td>
                 <td>{arrangement.type}</td>
                 <td>{arrangement.price}</td>
+                <td>{arrangement.displayOrder}</td>
                 <td>
                   <button className="text-red-500 hover:text-red-700">Delete</button>
                 </td>
