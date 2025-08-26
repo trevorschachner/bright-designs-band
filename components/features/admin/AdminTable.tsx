@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface ColumnDef<T> {
   header: string;
@@ -53,7 +54,34 @@ export default function AdminTable<T extends { id: number }>({
   }, [endpoint, resourceName]);
 
   if (loading) {
-    return <p>Loading {resourceName}...</p>;
+    return (
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map((column) => (
+                <TableHead key={String(column.accessorKey)}>{column.header}</TableHead>
+              ))}
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...Array(3)].map((_, i) => (
+              <TableRow key={i}>
+                {columns.map((column) => (
+                  <TableCell key={String(column.accessorKey)}>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                ))}
+                <TableCell>
+                  <Skeleton className="h-8 w-16" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
   }
 
   if (error) {

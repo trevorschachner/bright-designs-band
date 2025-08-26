@@ -5,7 +5,7 @@ import { getArrangementById } from '@/lib/database/supabase-queries';
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase = createClient();
+    const supabase = await createClient();
     
     const { data: arrangement, error } = await supabase
       .from('arrangements')

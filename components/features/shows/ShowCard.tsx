@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
 import { Show } from "@/lib/types/shows";
 
@@ -11,12 +12,12 @@ interface ShowCardProps {
 }
 
 export function ShowCard({ item: show, isLoading }: ShowCardProps) {
+  if (isLoading) {
+    return <ShowCardSkeleton />;
+  }
+
   return (
-    <Card
-      className={`frame-card group ${
-        isLoading ? 'opacity-50' : ''
-      }`}
-    >
+    <Card className="frame-card group">
       <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient">
         <img
           src={show.thumbnailUrl || "/placeholder.svg"}
@@ -76,6 +77,37 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
         <Button className="btn-primary w-full" asChild>
           <Link href={`/shows/${show.id}`}>View Details</Link>
         </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ShowCardSkeleton() {
+  return (
+    <Card className="frame-card">
+      <div className="relative overflow-hidden rounded-t-lg">
+        <Skeleton className="w-full h-48" />
+      </div>
+      <CardHeader>
+        <div className="flex justify-between items-start mb-2">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-5 w-12" />
+        </div>
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between items-center mb-4">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+        <div className="space-y-2 mb-4">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+        <Skeleton className="h-3 w-24 mb-4" />
+        <Skeleton className="h-9 w-full" />
       </CardContent>
     </Card>
   );

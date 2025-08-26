@@ -84,10 +84,10 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-        primary: ["var(--font-playfair)", "Georgia", "serif"],
+        primary: ["var(--font-inter)", "Georgia", "serif"],
         secondary: ["var(--font-inter)", '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
         sans: ["var(--font-inter)", '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
-        display: ["var(--font-oswald)", "Impact", "sans-serif"],
+        display: ["var(--font-inter)", "Impact", "sans-serif"],
       },
       letterSpacing: {
         'march': '0.1em',

@@ -7,6 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle } from 'lucide-react';
 import { getUserRole, getUserPermissions } from '@/lib/auth/roles';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Breadcrumb, 
+  BreadcrumbList, 
+  BreadcrumbItem, 
+  BreadcrumbPage 
+} from '@/components/ui/breadcrumb';
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -48,6 +54,13 @@ export default async function AdminPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>Admin Dashboard</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold text-bright-dark font-primary">Admin Dashboard</h1>

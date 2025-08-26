@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { FileUpload } from '@/components/features/file-upload';
 import { FileGallery } from '@/components/features/file-gallery';
 import { YouTubeUpload } from '@/components/features/youtube-upload';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -154,30 +156,32 @@ export default function EditShowPage({ params }: PageProps) {
           </div>
           <button type="submit" className="w-full bg-primary text-primary-foreground p-2 rounded">Add Arrangement</button>
         </form>
-        <table className="w-full mt-4">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Type</th>
-              <th>Price</th>
-              <th>Order</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {arrangements.map(arrangement => (
-              <tr key={arrangement.id}>
-                <td>{arrangement.title}</td>
-                <td>{arrangement.type}</td>
-                <td>{arrangement.price}</td>
-                <td>{arrangement.displayOrder}</td>
-                <td>
-                  <button className="text-red-500 hover:text-red-700">Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="border rounded-md mt-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Order</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {arrangements.map(arrangement => (
+                <TableRow key={arrangement.id}>
+                  <TableCell>{arrangement.title}</TableCell>
+                  <TableCell>{arrangement.type}</TableCell>
+                  <TableCell>{arrangement.price}</TableCell>
+                  <TableCell>{arrangement.displayOrder}</TableCell>
+                  <TableCell>
+                    <Button variant="destructive" size="sm">Delete</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Files section */}

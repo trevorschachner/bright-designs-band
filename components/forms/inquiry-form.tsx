@@ -19,16 +19,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/components/ui/use-toast"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { HelpCircle } from "lucide-react"
 
 const inquiryFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
   school: z.string().min(2, "School name is required."),
   showInterest: z.string(),
-  bandSize: z.enum(["1-30", "31-60", "61-90", "91-120", "120+"], {
+  bandSize: z.enum(["1-50", "51-100", "101-150", "150+"], {
     required_error: "You need to select a band size.",
   }),
-  abilityLevel: z.enum(["Beginner", "Intermediate", "Advanced", "Professional"], {
+    abilityLevel: z.enum(["Grade 2-3", "Grade 3-4", "Grade 4-5+"], {
     required_error: "You need to select an ability level.",
   }),
   instrumentation: z.string().optional(),
@@ -48,10 +50,11 @@ interface InquiryFormProps {
 }
 
 const serviceItems = [
+  { id: "drill", label: "Drill and Visual Design" },
+  { id: "choreography", label: "Choreography" },
   { id: "copyright", label: "Copyright Acquisition" },
   { id: "percussion", label: "Percussion Writing/Right-Sizing" },
   { id: "solos", label: "Solo Adjustments" },
-  { id: "drill", label: "Drill/Visual Design" },
   { id: "other", label: "Other (please specify in message)" },
 ]
 
@@ -70,8 +73,9 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
   })
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+    <TooltipProvider>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="showInterest"
@@ -92,7 +96,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
               <FormItem>
                 <FormLabel>Your Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input placeholder="Jane Doe" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,7 +109,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="director@school.edu" {...field} />
+                  <Input placeholder="director@school.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -131,7 +135,17 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             name="bandSize"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Approximate Band Size</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormLabel>Approximate Band Size</FormLabel>
+                  <Tooltip>
+                    <TooltipTrigger type="button">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Total number of performers including marching band, color guard, and percussion</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -140,33 +154,27 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
                   >
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="1-30" />
+                        <RadioGroupItem value="1-50" />
                       </FormControl>
-                      <FormLabel className="font-normal">1-30 members</FormLabel>
+                      <FormLabel className="font-normal">1-50 members</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="31-60" />
+                        <RadioGroupItem value="51-100" />
                       </FormControl>
-                      <FormLabel className="font-normal">31-60 members</FormLabel>
+                      <FormLabel className="font-normal">51-100 members</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="61-90" />
+                        <RadioGroupItem value="101-150" />
                       </FormControl>
-                      <FormLabel className="font-normal">61-90 members</FormLabel>
+                      <FormLabel className="font-normal">101-150 members</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="91-120" />
+                        <RadioGroupItem value="150+" />
                       </FormControl>
-                      <FormLabel className="font-normal">91-120 members</FormLabel>
-                    </FormItem>
-                     <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="120+" />
-                      </FormControl>
-                      <FormLabel className="font-normal">120+ members</FormLabel>
+                      <FormLabel className="font-normal">150+ members</FormLabel>
                     </FormItem>
                   </RadioGroup>
                 </FormControl>
@@ -179,7 +187,20 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             name="abilityLevel"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Ensemble Ability Level</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormLabel>Ensemble Ability Level</FormLabel>
+                  <Tooltip>
+                    <TooltipTrigger type="button">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Grade 2-3: Competitive in Local and State Competitions<br/>
+                      Grade 3-4: Competitive in Regional and State Competitions<br/>
+                      Grade 4-5+: Competitive in Regional, State, and BOA Competitions
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -188,27 +209,21 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
                   >
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="Beginner" />
+                        <RadioGroupItem value="Grade 2-3" />
                       </FormControl>
-                      <FormLabel className="font-normal">Beginner / Young Ensemble</FormLabel>
+                      <FormLabel className="font-normal">Grade 2-3</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="Intermediate" />
+                        <RadioGroupItem value="Grade 3-4" />
                       </FormControl>
-                      <FormLabel className="font-normal">Intermediate / High School</FormLabel>
+                      <FormLabel className="font-normal">Grade 3-4</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="Advanced" />
+                          <RadioGroupItem value="Grade 4-5+" />
                       </FormControl>
-                      <FormLabel className="font-normal">Advanced / Competitive</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="Professional" />
-                      </FormControl>
-                      <FormLabel className="font-normal">Professional / University</FormLabel>
+                      <FormLabel className="font-normal">Grade 4-5+</FormLabel>
                     </FormItem>
                   </RadioGroup>
                 </FormControl>
@@ -270,7 +285,17 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
           name="instrumentation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Specific Instrumentation Notes</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormLabel>Specific Instrumentation Notes</FormLabel>
+                <Tooltip>
+                  <TooltipTrigger type="button">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Examples: strong sections, missing instruments, special requirements, or unique ensemble setup</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <FormControl>
                 <Textarea
                   placeholder="e.g., 'We have a strong flute section but only one tuba.' or 'Need parts for 2 synths.'"
@@ -290,5 +315,6 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
         </Button>
       </form>
     </Form>
+    </TooltipProvider>
   )
 }
