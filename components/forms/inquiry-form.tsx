@@ -75,7 +75,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
   return (
     <TooltipProvider>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="wireframe-card space-y-8">
         <FormField
           control={form.control}
           name="showInterest"
@@ -129,7 +129,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 wireframe-border-dashed border-t">
           <FormField
             control={form.control}
             name="bandSize"
@@ -237,9 +237,9 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
           name="services"
           render={() => (
             <FormItem>
-              <div className="mb-4">
-                <FormLabel className="text-base">Additional Services</FormLabel>
-                <FormDescription>
+              <div className="mb-6 pt-6 wireframe-border-dashed border-t">
+                <FormLabel className="text-lg wireframe-heading">Additional Services</FormLabel>
+                <FormDescription className="mt-2 text-muted-foreground">
                   Select any additional services you may be interested in.
                 </FormDescription>
               </div>
@@ -310,9 +310,11 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Submitting..." : "Submit Inquiry"}
-        </Button>
+        <div className="pt-6 wireframe-border-dashed border-t">
+          <Button type="submit" disabled={isLoading} className="btn-wireframe-primary w-full h-12 text-sm uppercase tracking-wide">
+            {isLoading ? "Submitting..." : "Submit Inquiry"}
+          </Button>
+        </div>
       </form>
     </Form>
     </TooltipProvider>

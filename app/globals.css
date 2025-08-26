@@ -6,142 +6,136 @@
   .text-balance {
     text-wrap: balance;
   }
-  /* Layered elevation shadows */
-  .shadow-card {
-    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.04), 0 4px 12px hsl(0 0% 0% / 0.06);
+  .plus-border {
+    @apply border border-border;
   }
-  .shadow-card-lg {
-    box-shadow: 0 8px 20px hsl(0 0% 0% / 0.08), 0 2px 6px hsl(0 0% 0% / 0.06);
+  .plus-border-subtle {
+    @apply border border-border/50;
   }
-  .shadow-soft {
-    box-shadow: 0 2px 10px hsl(0 0% 0% / 0.05);
+  .plus-divider {
+    @apply border-b border-border;
   }
-
-  /* Hover lift and smooth transitions */
-  .hover-lift {
-    transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+  .plus-surface {
+    @apply bg-card border border-border rounded-lg;
   }
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    filter: saturate(1.05);
+  .plus-surface-elevated {
+    @apply bg-card border border-border rounded-lg shadow-sm;
   }
 
-  /* Gradient helpers */
-  .bg-card-gradient {
-    background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.92) 100%);
+  /* Tailwind Plus spacing system */
+  .plus-section {
+    @apply py-24 sm:py-32;
   }
-  .bg-accent-gradient {
-    background: linear-gradient(135deg, hsl(var(--accent) / 0.15), hsl(var(--primary) / 0.18));
+  .plus-container {
+    @apply mx-auto max-w-7xl px-6 lg:px-8;
   }
-
-  /* Better list styles */
-  .list-better {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .list-better li {
-    display: grid;
-    grid-template-columns: 1rem 1fr;
-    align-items: start;
-    gap: 0.5rem;
-    padding: 0.35rem 0;
-  }
-  .list-better li::before {
-    content: "";
-    margin-top: 0.45rem;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 9999px;
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-    box-shadow: 0 1px 3px hsl(0 0% 0% / 0.15);
+  .plus-content {
+    @apply mx-auto max-w-2xl lg:max-w-4xl;
   }
 
-  /* Subtle press effect */
-  .active-press:active {
-    transform: translateY(1px);
+  /* Tailwind Plus typography system - clean and minimal */
+  .plus-h1 {
+    @apply text-4xl font-bold tracking-tight text-foreground sm:text-6xl;
+  }
+  .plus-h2 {
+    @apply text-3xl font-bold tracking-tight text-foreground sm:text-4xl;
+  }
+  .plus-h3 {
+    @apply text-2xl font-semibold text-foreground;
+  }
+  .plus-h4 {
+    @apply text-xl font-semibold text-foreground;
+  }
+  .plus-body-lg {
+    @apply text-lg leading-8 text-muted-foreground;
+  }
+  .plus-body {
+    @apply text-base leading-7 text-foreground;
+  }
+  .plus-body-sm {
+    @apply text-sm leading-6 text-muted-foreground;
+  }
+  .plus-label {
+    @apply text-sm font-medium text-foreground;
+  }
+  .plus-caption {
+    @apply text-xs text-muted-foreground;
   }
 
-  /* Focus ring utility */
-  .focus-ring {
-    outline: none;
-    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.35);
+  /* Grid layouts like Tailwind Plus */
+  .plus-grid {
+    @apply grid gap-6 sm:gap-8;
+  }
+  .plus-grid-2 {
+    @apply grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8;
+  }
+  .plus-grid-3 {
+    @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 sm:gap-8;
+  }
+  .plus-grid-4 {
+    @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 sm:gap-8;
+  }
+
+  /* Focus states - clean and subtle */
+  .plus-focus {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
   }
 }
 
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
+    --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
-    --primary: 52 89% 63%;
-    --primary-foreground: 0 0% 20%;
-    --primary-hover: 52 89% 58%;
-    --secondary: 210 2% 58%;
-    --secondary-foreground: 0 0% 20%;
-    --secondary-hover: 210 2% 53%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 185 53% 62%;
-    --accent-foreground: 0 0% 20%;
-    --destructive: 0 72.2% 50.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 185 53% 50%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 92%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 92%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 92%;
-    --primary: 52 89% 63%;
-    --primary-foreground: 0 0% 15%;
-    --primary-hover: 52 89% 58%;
-    --secondary: 210 3% 28%;
-    --secondary-foreground: 0 0% 96%;
-    --secondary-hover: 210 3% 23%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 185 53% 45%;
+    /* TAILWIND PLUS INSPIRED COLOR SYSTEM - DARK MODE */
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 185 53% 50%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -155,26 +149,63 @@
 }
 
 @layer components {
-  .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-all;
+  /* TAILWIND PLUS INSPIRED COMPONENTS */
+  
+  /* Clean button system like Tailwind Plus */
+  .plus-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
   }
-  .btn-outline {
-    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-sm hover:shadow-md inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-all;
+  .plus-btn-primary {
+    @apply plus-btn bg-primary text-primary-foreground hover:bg-primary/90;
   }
-  .btn-lg {
-    @apply h-11 rounded-md px-8;
+  .plus-btn-secondary {
+    @apply plus-btn bg-secondary text-secondary-foreground hover:bg-secondary/80;
   }
-  /* Enhance primary/outline buttons with motion */
-  .btn-primary {
-    @apply hover-lift active-press;
+  .plus-btn-outline {
+    @apply plus-btn border border-input bg-background hover:bg-accent hover:text-accent-foreground;
   }
-  .btn-outline {
-    @apply hover-lift active-press;
+  .plus-btn-ghost {
+    @apply plus-btn hover:bg-accent hover:text-accent-foreground;
+  }
+  .plus-btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+  .plus-btn-lg {
+    @apply h-11 px-8;
   }
 
-  /* Card frame utility */
-  .frame-card {
-    @apply rounded-xl bg-card-gradient shadow-card hover:shadow-card-lg hover-lift transition-all;
-    border: 1px solid hsl(var(--border));
+  /* Legacy button classes - updated to Tailwind Plus style */
+  .btn-primary, .btn-wireframe-primary, .material-btn-contained {
+    @apply plus-btn-primary;
+  }
+  .btn-secondary, .btn-wireframe-secondary, .material-btn-outlined {
+    @apply plus-btn-secondary;
+  }
+  .btn-outline, .btn-wireframe-outline, .material-btn-text {
+    @apply plus-btn-outline;
+  }
+
+  /* Clean card system like Tailwind Plus */
+  .plus-card {
+    @apply plus-surface-elevated p-6;
+  }
+  .plus-card-simple {
+    @apply plus-surface p-4;
+  }
+  
+  /* Legacy card classes - updated to Tailwind Plus style */
+  .wireframe-card, .frame-card, .material-card {
+    @apply plus-card;
+  }
+  .wireframe-card-simple, .material-surface {
+    @apply plus-card-simple;
+  }
+
+  /* Clean form components like Tailwind Plus */
+  .plus-input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .plus-textarea {
+    @apply flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
   }
 }

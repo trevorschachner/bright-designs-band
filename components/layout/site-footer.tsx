@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Music, Mail, Phone, MapPin } from "lucide-react"
 import type { NavigationItem, FooterGroup } from "@/config/site"
 
 type SiteFooterProps = {
@@ -8,16 +10,46 @@ type SiteFooterProps = {
 
 export function SiteFooter({ footer, social }: SiteFooterProps) {
 	return (
-		<footer className="border-t bg-background">
-			<div className="container mx-auto px-4 py-10">
-				<div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+		<footer className="bg-background border-t border-border">
+			<div className="plus-container py-16">
+				<div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
+					{/* Company/Brand column */}
+					<div className="lg:col-span-2">
+						<div className="flex items-center gap-3 mb-6">
+							<div className="h-10 w-10 plus-surface flex items-center justify-center">
+								<Music className="h-6 w-6 text-primary" />
+							</div>
+							<span className="plus-h4">Bright Designs Band</span>
+						</div>
+						<p className="plus-body-sm text-muted-foreground mb-8 max-w-sm">
+							Custom marching band show design and arrangements. Let's bring your vision to life with expert design and passion.
+						</p>
+						<div className="flex flex-col sm:flex-row gap-3">
+							<Button asChild size="sm" className="plus-btn-primary">
+								<Link href="/contact">
+									<Mail className="h-4 w-4" />
+									Contact Us
+								</Link>
+							</Button>
+							<Button asChild variant="outline" size="sm" className="plus-btn-outline">
+								<Link href="/build">
+									Build Show
+								</Link>
+							</Button>
+						</div>
+					</div>
+
+					{/* Footer links columns */}
 					{footer?.groups.map(group => (
 						<div key={group.title}>
-							<h4 className="text-sm font-semibold text-foreground mb-3">{group.title}</h4>
-							<ul className="space-y-2">
+							<h4 className="plus-h4 mb-6">{group.title}</h4>
+							<ul className="space-y-4">
 								{group.links.map(link => (
 									<li key={link.href}>
-										<Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground">
+										<Link 
+											href={link.href} 
+											className="plus-body-sm text-muted-foreground hover:text-foreground transition-colors"
+										>
 											{link.label}
 										</Link>
 									</li>
@@ -26,17 +58,33 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 						</div>
 					))}
 				</div>
-				<div className="mt-8 flex items-center justify-between">
-					<p className="text-xs text-muted-foreground">{footer?.copyright}</p>
-					{social?.length ? (
-						<div className="flex items-center gap-4">
-							{social.map(s => (
-								<Link key={s.label} href={s.href} className="text-sm text-muted-foreground hover:text-foreground">
-									{s.label}
+
+				{/* Contact info row */}
+				<div className="mt-12 pt-8 border-t border-border">
+					<div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+						<div className="flex flex-col sm:flex-row gap-6">
+							<div className="flex items-center gap-2">
+								<Mail className="h-4 w-4 text-muted-foreground" />
+								<Link href="mailto:hello@brightdesigns.band" className="plus-body-sm text-muted-foreground hover:text-foreground transition-colors">
+									hello@brightdesigns.band
 								</Link>
-							))}
+							</div>
+							<div className="flex items-center gap-2">
+								<MapPin className="h-4 w-4 text-muted-foreground" />
+								<span className="plus-body-sm text-muted-foreground">
+									South Carolina, Georgia, and Virginia
+								</span>
+							</div>
 						</div>
-					) : null}
+						<div className="flex items-center gap-2 text-muted-foreground">
+							<span className="plus-caption">Crafted with</span>
+							<span className="text-red-500 text-sm">♫</span>
+							<span className="plus-caption">and passion in South Carolina</span>
+						</div>
+					</div>
+					<div className="mt-6 pt-6 border-t border-border">
+						<p className="plus-caption text-center text-muted-foreground">{footer?.copyright}</p>
+					</div>
 				</div>
 			</div>
 		</footer>

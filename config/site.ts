@@ -73,12 +73,9 @@ export const siteConfig: SiteConfig = {
         ],
       },
     ],
-    copyright: `© ${new Date().getFullYear()} Bright Designs Band. All rights reserved.`,
+    copyright: `© ${new Date().getFullYear()} Bright Designs LLC. All rights reserved.`,
   },
-  social: [
-    { label: "Instagram", href: "#" },
-    { label: "Facebook", href: "#" },
-  ],
+  social: [],
 }
 
 // Export individual properties for backward compatibility
