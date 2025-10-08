@@ -31,12 +31,12 @@ const testimonials: Testimonial[] = [
 
 export default function Testimonials() {
   return (
-    <section id="testimonials" className="py-20 px-4 bg-white relative">
-      <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4 text-bright-dark font-primary">What Directors Say</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Hear from the band directors who have worked with us to create award-winning shows.
+    <section id="testimonials" className="plus-section bg-muted/30">
+      <div className="plus-container">
+        <div className="text-center mb-16">
+          <h2 className="plus-h2 mb-4">What Directors Say</h2>
+          <p className="plus-body-lg max-w-2xl mx-auto">
+            Hear from directors who have worked with us.
           </p>
         </div>
 
@@ -44,23 +44,23 @@ export default function Testimonials() {
           {testimonials.map((testimonial, index) => (
             <Card 
               key={index}
-              className="frame-card h-full"
+              className="h-full hover:shadow-lg transition-shadow duration-300"
             >
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex-grow">
-                  <Quote className="w-8 h-8 text-bright-third mb-4 opacity-60" />
-                  <blockquote className="text-gray-700 mb-6 leading-relaxed italic">
+                  <Quote className="w-8 h-8 text-primary mb-4 opacity-60" />
+                  <blockquote className="plus-body-sm mb-6 leading-relaxed italic">
                     &quot;{testimonial.content}&quot;
                   </blockquote>
                 </div>
-                <div className="border-t pt-4">
-                  <div className="font-semibold text-bright-dark font-primary">
+                <div className="border-t border-border pt-4">
+                  <div className="font-semibold text-foreground">
                     {testimonial.author}
                   </div>
-                  <div className="text-sm text-bright-third">
+                  <div className="text-sm text-primary">
                     {testimonial.title}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     {testimonial.school}
                   </div>
                 </div>

@@ -36,6 +36,7 @@ import { createClient } from "@/lib/utils/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { getUserRole, getUserPermissions } from "@/lib/auth/roles"
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js"
 
 export function MainNav({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -67,7 +68,7 @@ export function MainNav({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         const currentUser = session?.user || null
         setUser(currentUser)
         
@@ -196,12 +197,13 @@ export function MainNav({ children }: { children: React.ReactNode }) {
             <Button className="btn-outline" size="sm" asChild>
               <Link href="/contact">Contact Us</Link>
             </Button>
-            <Button className="btn-primary" size="sm" asChild>
+            {/* TODO: Uncomment when Build Your Show is production ready */}
+            {/* <Button className="btn-primary" size="sm" asChild>
               <Link href="/build">
                 Build Your Show
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
-            </Button>
+            </Button> */}
             
             {/* User Menu - Only show auth controls on admin pages */}
             {!loading && (
@@ -405,12 +407,13 @@ export function MainNav({ children }: { children: React.ReactNode }) {
                   <Button className="btn-outline w-full" asChild>
                     <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>Contact Us</Link>
                   </Button>
-                  <Button className="btn-primary w-full" asChild>
+                  {/* TODO: Uncomment when Build Your Show is production ready */}
+                  {/* <Button className="btn-primary w-full" asChild>
                     <Link href="/build" onClick={() => setMobileMenuOpen(false)}>
                       Build Your Show
                       <ArrowRight className="ml-2 w-4 h-4" />
                     </Link>
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </SheetContent>

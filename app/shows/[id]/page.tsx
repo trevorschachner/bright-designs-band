@@ -21,7 +21,8 @@ import { AudioPlayerComponent } from '@/components/features/audio-player'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
 import { YouTubePlayer } from '@/components/features/youtube-player'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
-import { AddToPlanButton } from '@/components/features/shows/AddToPlanButton'
+// TODO: Uncomment when Show Plan is production ready
+// import { AddToPlanButton } from '@/components/features/shows/AddToPlanButton'
 
 export default async function ShowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -223,7 +224,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                   <div className="text-sm text-muted-foreground">Complete Show Package</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <AddToPlanButton id={show.id} title={show.title} type="show" />
+                  {/* TODO: Uncomment when Show Plan is production ready */}
+                  {/* <AddToPlanButton id={show.id} title={show.title} type="show" /> */}
                   <CheckAvailabilityModal showTitle={show.title} />
                 </div>
               </div>
@@ -290,7 +292,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                           View Details
                         </Link>
                       </Button>
-                      <AddToPlanButton id={arrangement.id} title={arrangement.title} type="arrangement" size="sm" />
+                      {/* TODO: Uncomment when Show Plan is production ready */}
+                      {/* <AddToPlanButton id={arrangement.id} title={arrangement.title} type="arrangement" size="sm" /> */}
                     </div>
                   </CardContent>
                 </Card>

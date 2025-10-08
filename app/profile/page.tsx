@@ -153,12 +153,13 @@ export default async function ProfilePage() {
                   Browse Shows
                 </Link>
               </Button>
-              <Button variant="outline" asChild className="w-full">
+              {/* TODO: Uncomment when Build Your Show is production ready */}
+              {/* <Button variant="outline" asChild className="w-full">
                 <Link href="/build">
                   <Settings className="w-4 h-4 mr-2" />
                   Build Your Show
                 </Link>
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
 

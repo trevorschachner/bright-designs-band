@@ -7,7 +7,6 @@ import { Menu, Music, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ThemeToggle } from "@/components/ui/theme-toggle"
 import type { NavigationItem, CallToAction } from "@/config/site"
 import { useShowPlan } from "@/lib/hooks/use-show-plan"
  
@@ -55,13 +54,12 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 					</DropdownMenu>
 				</nav>
 
-				<div className="hidden md:flex items-center gap-2">
-					<ThemeToggle />
-					{ctas.secondary && (
-						<Button variant="outline" size="sm" asChild>
-							<Link href={ctas.secondary.href}>{ctas.secondary.label}</Link>
-						</Button>
-					)}
+			<div className="hidden md:flex items-center gap-2">
+				{ctas.secondary && (
+					<Button variant="outline" size="sm" asChild>
+						<Link href={ctas.secondary.href}>{ctas.secondary.label}</Link>
+					</Button>
+				)}
 					{ctas.primary && (
 						<Button variant="default" size="sm" asChild>
 							<Link href={ctas.primary.href}>

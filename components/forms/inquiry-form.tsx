@@ -19,8 +19,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/components/ui/use-toast"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { HelpCircle } from "lucide-react"
 
 const inquiryFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -73,9 +71,8 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
   })
 
   return (
-    <TooltipProvider>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="wireframe-card space-y-8">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="wireframe-card space-y-8">
         <FormField
           control={form.control}
           name="showInterest"
@@ -135,17 +132,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             name="bandSize"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <FormLabel>Approximate Band Size</FormLabel>
-                  <Tooltip>
-                    <TooltipTrigger type="button">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Total number of performers including marching band, color guard, and percussion</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                <FormLabel>Approximate Band Size</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -187,20 +174,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             name="abilityLevel"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <FormLabel>Ensemble Ability Level</FormLabel>
-                  <Tooltip>
-                    <TooltipTrigger type="button">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Grade 2-3: Competitive in Local and State Competitions<br/>
-                      Grade 3-4: Competitive in Regional and State Competitions<br/>
-                      Grade 4-5+: Competitive in Regional, State, and BOA Competitions
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                <FormLabel>Ensemble Ability Level</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -285,17 +259,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
           name="instrumentation"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center gap-2">
-                <FormLabel>Specific Instrumentation Notes</FormLabel>
-                <Tooltip>
-                  <TooltipTrigger type="button">
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Examples: strong sections, missing instruments, special requirements, or unique ensemble setup</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <FormLabel>Specific Instrumentation Notes</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="e.g., 'We have a strong flute section but only one tuba.' or 'Need parts for 2 synths.'"
@@ -317,6 +281,5 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
         </div>
       </form>
     </Form>
-    </TooltipProvider>
   )
 }

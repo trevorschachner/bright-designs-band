@@ -1,6 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Music, Mail, Phone, MapPin } from "lucide-react"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import type { NavigationItem, FooterGroup } from "@/config/site"
 
 type SiteFooterProps = {
@@ -31,11 +34,12 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 									Contact Us
 								</Link>
 							</Button>
-							<Button asChild variant="outline" size="sm" className="plus-btn-outline">
+							{/* TODO: Uncomment when Build Your Show is production ready */}
+							{/* <Button asChild variant="outline" size="sm" className="plus-btn-outline">
 								<Link href="/build">
 									Build Show
 								</Link>
-							</Button>
+							</Button> */}
 						</div>
 					</div>
 
@@ -59,29 +63,32 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 					))}
 				</div>
 
-				{/* Contact info row */}
-				<div className="mt-12 pt-8 border-t border-border">
-					<div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
-						<div className="flex flex-col sm:flex-row gap-6">
-							<div className="flex items-center gap-2">
-								<Mail className="h-4 w-4 text-muted-foreground" />
-								<Link href="mailto:hello@brightdesigns.band" className="plus-body-sm text-muted-foreground hover:text-foreground transition-colors">
-									hello@brightdesigns.band
-								</Link>
-							</div>
-							<div className="flex items-center gap-2">
-								<MapPin className="h-4 w-4 text-muted-foreground" />
-								<span className="plus-body-sm text-muted-foreground">
-									South Carolina, Georgia, and Virginia
-								</span>
-							</div>
+			{/* Contact info row */}
+			<div className="mt-12 pt-8 border-t border-border">
+				<div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+					<div className="flex flex-col sm:flex-row gap-6">
+						<div className="flex items-center gap-2">
+							<Mail className="h-4 w-4 text-muted-foreground" />
+							<Link href="mailto:hello@brightdesigns.band" className="plus-body-sm text-muted-foreground hover:text-foreground transition-colors">
+								hello@brightdesigns.band
+							</Link>
 						</div>
+						<div className="flex items-center gap-2">
+							<MapPin className="h-4 w-4 text-muted-foreground" />
+							<span className="plus-body-sm text-muted-foreground">
+								South Carolina, Georgia, and Virginia
+							</span>
+						</div>
+					</div>
+					<div className="flex items-center gap-4">
 						<div className="flex items-center gap-2 text-muted-foreground">
 							<span className="plus-caption">Crafted with</span>
 							<span className="text-red-500 text-sm">♫</span>
 							<span className="plus-caption">and passion in South Carolina</span>
 						</div>
+						<ThemeToggle />
 					</div>
+				</div>
 					<div className="mt-6 pt-6 border-t border-border">
 						<p className="plus-caption text-center text-muted-foreground">{footer?.copyright}</p>
 					</div>

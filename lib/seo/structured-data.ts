@@ -20,11 +20,11 @@ export const organizationSchema = {
   '@type': 'Organization',
   name: 'Bright Designs',
   alternateName: 'Bright Designs Band',
-  description: 'Professional marching band show design, custom arrangements, and drill writing services for competitive and exhibition programs.',
+  description: 'Championship-caliber marching band show design with 10+ years experience, 100+ custom shows, and 250+ arrangements delivered. Student-centered design specializing in BOA competitive bands and state finalist programs.',
   url: 'https://www.brightdesigns.band',
   logo: 'https://www.brightdesigns.band/logo.png',
   image: 'https://www.brightdesigns.band/og-image.jpg',
-  foundingDate: '2020', // Update with actual founding date
+  foundingDate: '2017',
   founders: [
     {
       '@type': 'Person',
@@ -53,10 +53,24 @@ export const organizationSchema = {
   ],
   serviceType: [
     'Marching Band Show Design',
+    'Custom Show Design',
+    'Professional Music Design & Arrangements',
     'Custom Music Arrangements', 
     'Drill Writing',
+    'Visual Design',
+    'Program Coordination',
+    'Music Design',
+    'Band Design',
+    'Band Consultation',
+    'Band Design Consultation',
+    'Band Design Services',
     'Band Choreography',
-    'Music Education Services'
+    'Music Education Services',
+    'Band Design and Development',
+    'Band Design and Development Services',
+    'Band Design and Development Consultation',
+  
+
   ],
   areaServed: {
     '@type': 'Country',
@@ -211,25 +225,114 @@ export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string, url: s
   }
 }
 
+// Local Business Schema for regional SEO
+export const localBusinessSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: 'Bright Designs',
+  alternateName: 'Bright Designs Band',
+  description: 'Championship-caliber marching band show design with 10+ years experience, 100+ custom shows, 250+ arrangements, and 50+ ensembles served. Student-centered design specializing in BOA competitive bands and state finalist programs across the Southeast.',
+  url: 'https://www.brightdesigns.band',
+  logo: 'https://www.brightdesigns.band/logo.png',
+  image: 'https://www.brightdesigns.band/og-image.jpg',
+  serviceArea: [
+    {
+      '@type': 'State',
+      name: 'South Carolina'
+    },
+    {
+      '@type': 'State', 
+      name: 'Georgia'
+    },
+    {
+      '@type': 'State',
+      name: 'North Carolina'
+    },
+    {
+      '@type': 'State',
+      name: 'Florida'
+    }
+  ],
+  areaServed: {
+    '@type': 'Country',
+    name: 'United States'
+  },
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Marching Band Design Services',
+    itemListElement: [
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Custom Marching Band Show Design',
+          description: 'Complete custom show design specifically crafted for BOA regional and national competition success. Includes music arrangements, drill writing, visual design, wind choreography, and guard choreography.'
+        }
+      },
+      {
+        '@type': 'Offer', 
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Professional Music Design & Arrangements',
+          description: 'Pre-written and custom wind, percussion, and sound design for groups of all skill levels with on-time delivery and clear communication'
+        }
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Visual Design & Drill Writing',
+          description: 'Custom visual design, wind choreography, and guard choreography optimized for BOA competitions and state championship performance'
+        }
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Program Coordination',
+          description: 'One point of contact for all design needs from day one until the end of the season with professional project management'
+        }
+      }
+    ]
+  },
+  priceRange: '$2,500 - $10,000+',
+  telephone: '+1-XXX-XXX-XXXX', // Update with actual phone
+  email: 'trevorschachner@gmail.com',
+  knowsAbout: [
+    'BOA Marching Band Competition',
+    'State Championship Preparation', 
+    'Southeast Regional Circuits',
+    'Competitive Show Design',
+    'Music Education'
+  ]
+}
+
 // Common schemas for the marching band industry
 export const marchingBandSchemas = {
   organization: organizationSchema,
+  localBusiness: localBusinessSchema,
   
   showDesignService: createServiceSchema({
-    name: 'Marching Band Show Design',
-    description: 'Complete marching band show design including music arrangements, drill writing, and choreography for competitive and exhibition programs.',
+    name: 'Custom Marching Band Show Design',
+    description: 'Complete custom show design specifically crafted for BOA regional and national competition success. Includes music arrangements, drill writing, visual design, wind choreography, and guard choreography. Student-centered approach with comprehensive support from concept through finals week.',
     serviceType: 'Creative Design Service'
   }),
 
   arrangementService: createServiceSchema({
-    name: 'Custom Marching Band Arrangements',
-    description: 'Professional music arrangements and orchestrations tailored for marching band ensembles of all skill levels.',
+    name: 'Professional Music Design & Arrangements',
+    description: 'Pre-written and custom wind, percussion, and sound design for groups of all skill levels. Professional music arrangements delivered on time with clear communication and comprehensive support. Over 250 arrangements delivered with proven results.',
     serviceType: 'Music Arrangement Service'
   }),
 
   drillService: createServiceSchema({
-    name: 'Marching Band Drill Design',
-    description: 'Custom drill writing and field choreography design for marching band competitions and performances.',
+    name: 'Visual Design & Drill Writing',
+    description: 'Custom visual design, wind choreography, and guard choreography that makes your band shine. Innovative drill writing optimized for BOA competitions and state championship performance with field designs that captivate audiences and judges.',
     serviceType: 'Choreography Design Service'
+  }),
+  
+  programCoordination: createServiceSchema({
+    name: 'Program Coordination',
+    description: 'Creative programming, comprehensive design elements, and professional project management. One point of contact for all your needs from day one until the end of the season. Clear communication and on-time delivery guaranteed.',
+    serviceType: 'Professional Service'
   })
 }

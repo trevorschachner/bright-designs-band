@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 export interface SEOConfig {
   title: string
   description: string
-  keywords?: string[]
+  keywords?: readonly string[]
   ogImage?: string
   structuredData?: Record<string, unknown>
   canonical?: string
@@ -12,18 +12,21 @@ export interface SEOConfig {
 
 export const defaultSEOConfig: SEOConfig = {
   title: "Bright Designs - Custom Marching Band Show Design & Arrangements",
-  description: "Professional marching band show design, custom arrangements, and drill writing services. Create captivating performances that elevate your band's artistry and competitive edge.",
+  description: "Championship-caliber marching band show design with 10+ years experience and 100+ custom shows delivered. Professional music arrangements, drill design, and visual choreography for competitive bands. Student-centered design that captivates audiences and judges.",
   keywords: [
     "marching band design",
     "custom marching band shows", 
     "marching band arrangements",
     "drill design",
+    "visual design choreography",
     "marching band choreography",
     "band show design",
     "competitive marching band",
+    "BOA marching band",
     "marching band music",
     "custom drill writing",
-    "marching band services"
+    "marching band services",
+    "student centered design"
   ],
   ogImage: "/og-image.jpg"
 }
@@ -90,70 +93,126 @@ export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
 export const pageSEOConfigs = {
   home: {
     title: "Bright Designs - Premier Marching Band Show Design & Custom Arrangements",
-    description: "Award-winning marching band show design services. Custom arrangements, innovative drill design, and complete show packages that captivate audiences and elevate performances.",
+    description: "Championship-caliber marching band show design with 10+ years experience, 100+ custom shows, and 250+ arrangements delivered. Expert music design, innovative drill, and visual choreography for BOA competitive bands and state finalists. Student-centered design that captivates audiences and elevates scores.",
     keywords: [
       "marching band design",
       "custom marching band shows",
+      "BOA marching band design",
+      "competitive marching band shows",
+      "state finalist band design",
       "marching band arrangements", 
       "drill design services",
-      "competitive marching band design",
-      "band show choreography",
-      "marching band music arrangements",
+      "visual design choreography",
+      "wind choreography",
+      "guard choreography",
+      "music design marching band",
+      "percussion design",
+      "sound design marching band",
+      "program coordination",
+      "marching band design without communication issues",
+      "reliable show design services",
+      "3A 4A marching band shows",
+      "Southeast marching band design",
       "custom drill writing",
       "marching band consulting",
-      "show design services"
+      "show design services",
+      "BOA regional competition",
+      "BOA national competition",
+      "student centered band design"
     ]
   },
   
   arrangements: {
-    title: "Custom Marching Band Arrangements - Professional Music Design",
-    description: "Professional marching band arrangements tailored to your ensemble. Custom orchestrations, difficulty levels, and performance requirements for competitive and exhibition programs.",
+    title: "Custom Marching Band Arrangements - Professional Music Design | Bright Designs",
+    description: "Professional marching band arrangements delivered on time. Custom orchestrations tailored for competitive bands, BOA regional preparation, and state finals. No communication issues, guaranteed delivery schedule.",
     keywords: [
       "marching band arrangements",
       "custom band music",
-      "marching band orchestration",
+      "BOA regional arrangements",
       "competitive band arrangements",
-      "marching band transcriptions",
+      "marching band orchestration",
+      "reliable music delivery",
+      "marching band design on time",
+      "state finalist arrangements",
+      "Southeast band arrangements",
       "custom wind ensemble music",
-      "band arrangement services",
+      "professional band arrangement services",
       "marching band scoring"
     ]
   },
   
   shows: {
-    title: "Marching Band Show Catalog - Custom Performance Designs",
-    description: "Browse our catalog of original marching band shows and custom designs. Complete packages including music, drill, and choreography for all skill levels.",
+    title: "Marching Band Show Catalog - Custom Performance Designs | Bright Designs",
+    description: "Browse our catalog of award-winning marching band shows. Complete packages for BOA competition, state finals preparation, and regional circuits. Trusted by competitive bands across the Southeast.",
     keywords: [
       "marching band shows",
-      "custom show design",
-      "marching band repertoire",
+      "BOA marching band shows",
       "competitive show programs",
+      "state finals preparation shows",
+      "custom show design",
       "marching band catalog",
       "drill and music packages",
-      "band performance programs"
+      "Southeast marching band shows",
+      "3A 4A band programs",
+      "regional competition shows",
+      "marching band repertoire"
     ]
   },
 
   about: {
-    title: "About Bright Designs - Expert Marching Band Designers",
-    description: "Meet the team behind Bright Designs. Experienced arrangers, drill writers, and show designers creating innovative marching band programs since [year].",
+    title: "About Bright Designs - Expert Marching Band Designers Serving Southeast BOA Bands",
+    description: "Meet the expert team behind Bright Designs. 25+ years of experience creating innovative marching band programs for state finalists, BOA competitive bands, and championship-level ensembles.",
     keywords: [
       "marching band designers",
+      "BOA marching band experts",
+      "Southeast band designers",
       "drill writers",
       "band arrangers",
-      "show design team",
-      "marching band consultants"
+      "competitive show design team",
+      "state finalist designers",
+      "marching band consultants",
+      "professional band staff"
     ]
   },
 
   contact: {
-    title: "Contact Bright Designs - Marching Band Design Services",
-    description: "Ready to create your next show? Contact Bright Designs for custom marching band arrangements, drill design, and complete show packages.",
+    title: "Contact Bright Designs - Professional Marching Band Design Services",
+    description: "Ready to elevate your competitive success? Contact Bright Designs for custom marching band shows, reliable arrangements with on-time delivery, and comprehensive design packages for BOA and state competition.",
     keywords: [
       "marching band design contact",
-      "custom arrangement inquiry",
-      "drill design services",
-      "band show consultation"
+      "BOA band design inquiry",
+      "custom arrangement consultation",
+      "competitive show design services",
+      "reliable marching band designers",
+      "Southeast band design contact",
+      "state finals preparation inquiry"
+    ]
+  },
+
+  // New pages targeting specific customer segments
+  build: {
+    title: "Build Your Custom Marching Band Show - Professional Design Services",
+    description: "Start building your championship-level marching band show. Professional design packages from Spark to Shine tier, delivered on time with comprehensive support for BOA and state competition.",
+    keywords: [
+      "build custom marching band show",
+      "marching band design packages",
+      "BOA show design services",
+      "competitive band show builder",
+      "custom show consultation",
+      "marching band design tiers"
+    ]
+  },
+
+  services: {
+    title: "Professional Marching Band Services - Design, Arrangements & Consultation",
+    description: "Complete marching band services including custom show design, professional arrangements, drill writing, and consultation. Serving state finalists and BOA competitive bands with reliable, on-time delivery.",
+    keywords: [
+      "marching band services",
+      "professional show design",
+      "marching band consultation",
+      "competitive band services",
+      "BOA preparation services",
+      "state finals coaching"
     ]
   }
 } as const

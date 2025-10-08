@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import { GoogleAnalytics } from "@/components/features/seo/GoogleAnalytics"
-import { organizationSchema } from "@/lib/seo/structured-data"
+import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
 import { generateResourceHints } from "@/lib/seo/performance"
 import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
 
@@ -55,15 +55,16 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={`${inter.variable} font-sans`}>
-        {/* Organization structured data */}
+        {/* Organization and Local Business structured data */}
         <JsonLd data={organizationSchema} />
+        <JsonLd data={localBusinessSchema} />
         
         {/* Google Analytics */}
         <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''} />
         
         {/* Performance monitoring */}
         
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ShowPlanProvider>
             <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
             <main>{children}</main>

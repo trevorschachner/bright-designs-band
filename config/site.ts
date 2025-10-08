@@ -39,14 +39,14 @@ export const siteConfig: SiteConfig = {
     { label: "Home", href: "/" },
     { label: "Shows", href: "/shows" },
     { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
   ],
   resources: [
     { label: "Theme Guide", href: "/docs/features/theme-system" },
     { label: "API Docs", href: "/docs/api" },
   ],
   ctas: {
-    primary: { label: "Build Your Show", href: "/build", iconRight: true },
+    // TODO: Uncomment when Build Your Show is production ready
+    // primary: { label: "Build Your Show", href: "/build", iconRight: true },
     secondary: { label: "Contact Us", href: "/contact" },
   },
   footer: {

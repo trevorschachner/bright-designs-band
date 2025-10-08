@@ -68,11 +68,11 @@ export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvaila
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {triggerButton || <Button size="lg" className="btn-wireframe-primary px-8 h-12 text-xs uppercase tracking-wide">Check Availability</Button>}
+        {triggerButton || <Button size="lg">Check Availability</Button>}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[625px] wireframe-border bg-background">
-        <DialogHeader className="wireframe-border-dashed border-b pb-6">
-          <DialogTitle className="wireframe-heading text-xl">Check Availability</DialogTitle>
+      <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="border-b pb-6">
+          <DialogTitle className="text-xl">Check Availability</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Complete the form below to inquire about this show. Our team will get back to you shortly to discuss your ensemble&apos;s needs.
           </DialogDescription>
