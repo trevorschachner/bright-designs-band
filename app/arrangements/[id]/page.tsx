@@ -1,5 +1,5 @@
 "use client"
-import { ArrowLeft, Play, Download, Star, Clock, Music2, FileText, Users } from "lucide-react"
+import { ArrowLeft, Play, Download, Clock, Music2, FileText, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,8 +23,6 @@ const arrangementData = {
   thumbnail: "/placeholder.svg?height=400&width=600",
   description:
     "A powerful opening that sets the cosmic theme with ethereal soundscapes. This arrangement combines traditional marching band instrumentation with electronic elements to create an otherworldly atmosphere.",
-  rating: 4.8,
-  reviews: 15,
   showTitle: "Cosmic Journey",
   showId: 1,
   instruments: ["Brass", "Woodwinds", "Percussion", "Electronics"],
@@ -150,11 +148,6 @@ export default function ArrangementDetailPage() {
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="outline" className="text-sm">{arrangementData.year}</Badge>
               <Badge variant="secondary" className="text-sm">{arrangementData.difficulty}</Badge>
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-                <span className="text-sm font-medium">{arrangementData.rating}</span>
-                <span className="text-sm text-muted-foreground ml-1">({arrangementData.reviews} reviews)</span>
-              </div>
             </div>
 
             <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{arrangementData.title}</h1>
@@ -220,12 +213,11 @@ export default function ArrangementDetailPage() {
 
         {/* Tabs Section */}
         <Tabs defaultValue="instrumentation" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-card/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm">
             <TabsTrigger value="instrumentation">Instrumentation</TabsTrigger>
             <TabsTrigger value="audio">Audio Preview</TabsTrigger>
             <TabsTrigger value="analysis">Musical Analysis</TabsTrigger>
             <TabsTrigger value="requirements">Requirements</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
 
           <TabsContent value="instrumentation" className="mt-8">
@@ -361,21 +353,6 @@ export default function ArrangementDetailPage() {
                       <li key={index}>{note}</li>
                     ))}
                   </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="reviews" className="mt-8">
-            <Card className="frame-card">
-              <CardHeader>
-                <CardTitle className="font-primary">Customer Reviews</CardTitle>
-                <CardDescription>What directors are saying about this arrangement</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Reviews coming soon...</p>
                 </div>
               </CardContent>
             </Card>

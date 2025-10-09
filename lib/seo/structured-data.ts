@@ -1,6 +1,6 @@
 // Structured Data / Schema.org markup for SEO
 export interface StructuredDataProps {
-  type: 'Organization' | 'Service' | 'CreativeWork' | 'Article' | 'Review' | 'LocalBusiness'
+  type: 'Organization' | 'Service' | 'CreativeWork' | 'Article' | 'LocalBusiness'
   data: Record<string, unknown>
 }
 

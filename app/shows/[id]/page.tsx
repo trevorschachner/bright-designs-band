@@ -5,7 +5,6 @@ import { db } from '@/lib/database'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Breadcrumb,
   BreadcrumbList,
@@ -14,10 +13,9 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
-import { Star, Clock, Users, Download, Play, Calendar, Music, Target, ArrowLeft, FileText } from 'lucide-react'
+import { Clock, Users, Download, Play, Pause, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { AudioPlayerComponent } from '@/components/features/audio-player'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
 import { YouTubePlayer } from '@/components/features/youtube-player'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
@@ -43,10 +41,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
     return <div>Show not found</div>;
   }
 
-  // Mock data to match the screenshot design
+  // Mock data with integrated audio URLs
   const mockData = {
-    rating: 4.9,
-    reviewCount: 23,
     arrangements: [
       {
         id: 1,
@@ -57,7 +53,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
         key: "Bb Major",
         tempo: "120 BPM",
         instrumentation: "Brass, Woodwinds, Percussion, Electronics",
-        price: 450
+        price: 450,
+        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3"
       },
       {
         id: 2,
@@ -68,7 +65,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
         key: "F Major",
         tempo: "140 BPM",
         instrumentation: "Full Band, Synthesizer, Mallet Percussion",
-        price: 520
+        price: 520,
+        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-03.mp3"
       },
       {
         id: 3,
@@ -79,7 +77,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
         key: "D Minor",
         tempo: "90-160 BPM",
         instrumentation: "Low Brass, Timpani, Electronics, Full Ensemble",
-        price: 480
+        price: 480,
+        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-02.mp3"
       },
       {
         id: 4,
@@ -90,50 +89,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
         key: "Bb Major",
         tempo: "150 BPM",
         instrumentation: "Full Band, Auxiliary Percussion, Electronics",
-        price: 550
-      }
-    ],
-    // Mock audio tracks for the show
-    audioTracks: [
-      {
-        id: "1",
-        title: "Complete Show - Studio Recording",
-        duration: "11:30",
-        description: "Full performance recording of all movements",
-        type: "Full Show",
-        url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" // Replace with actual audio URLs
-      },
-      {
-        id: "2", 
-        title: "Stellar Awakening",
-        duration: "2:45",
-        description: "Opening movement preview",
-        type: "Movement Preview",
-        url: "https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3"
-      },
-      {
-        id: "3",
-        title: "Nebula Dance", 
-        duration: "3:20",
-        description: "First movement preview",
-        type: "Movement Preview",
-        url: "https://www.soundjay.com/misc/sounds/bell-ringing-03.mp3"
-      },
-      {
-        id: "4",
-        title: "Black Hole",
-        duration: "2:50", 
-        description: "Second movement preview",
-        type: "Movement Preview",
-        url: "https://www.soundjay.com/misc/sounds/bell-ringing-02.mp3"
-      },
-      {
-        id: "5",
-        title: "Galactic Finale",
-        duration: "2:35",
-        description: "Closer movement preview", 
-        type: "Movement Preview",
-        url: "https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3"
+        price: 550,
+        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3"
       }
     ]
   }
@@ -188,11 +145,6 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="outline" className="text-sm">{show.year}</Badge>
               <Badge variant="secondary" className="text-sm">{show.difficulty}</Badge>
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-                <span className="text-sm font-medium">{mockData.rating}</span>
-                <span className="text-sm text-muted-foreground ml-1">({mockData.reviewCount} reviews)</span>
-              </div>
             </div>
 
             <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{show.title}</h1>
@@ -217,168 +169,119 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
               ))}
             </div>
 
-            <div className="bg-card p-4 rounded-lg mb-6 border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-foreground">${show.price || 'Contact for Quote'}</div>
-                  <div className="text-sm text-muted-foreground">Complete Show Package</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* TODO: Uncomment when Show Plan is production ready */}
-                  {/* <AddToPlanButton id={show.id} title={show.title} type="show" /> */}
-                  <CheckAvailabilityModal showTitle={show.title} />
-                </div>
-              </div>
+            <div className="flex flex-col gap-3">
+              <CheckAvailabilityModal showTitle={show.title} />
+              <Button variant="outline" className="w-full">
+                <Download className="w-4 h-4 mr-2" />
+                Download Sample Materials
+              </Button>
             </div>
-
-            <Button variant="outline" className="w-full">
-              <Download className="w-4 h-4 mr-2" />
-              Download Sample Materials
-            </Button>
           </div>
         </div>
 
-        {/* Tabs Section */}
-        <Tabs defaultValue="arrangements" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="arrangements">Arrangements</TabsTrigger>
-            <TabsTrigger value="audio">Audio Preview</TabsTrigger>
-            <TabsTrigger value="features">Features</TabsTrigger>
-            <TabsTrigger value="requirements">Requirements</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="arrangements" className="mt-8">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground font-primary">Show Arrangements</h2>
-              
-              {mockData.arrangements.map((arrangement, index) => (
-                <Card key={arrangement.id} className="frame-card">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-foreground">{arrangement.title}</h3>
-                        <p className="text-bright-primary font-medium">{arrangement.movement} • {arrangement.duration}</p>
-                        <p className="text-muted-foreground mt-2">{arrangement.description}</p>
-                      </div>
-                      <div className="text-right ml-6">
-                        <div className="text-xl font-bold text-foreground">${arrangement.price}</div>
-                        <div className="text-sm text-muted-foreground">Individual</div>
-                      </div>
+        {/* Show Arrangements Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-foreground font-primary">Show Arrangements</h2>
+            <Badge variant="secondary" className="text-sm">
+              {mockData.arrangements.length} Movements
+            </Badge>
+          </div>
+          
+          {mockData.arrangements.map((arrangement, index) => (
+            <Card key={arrangement.id} className="frame-card overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 border-l-bright-primary/50 hover:border-l-bright-primary">
+              <CardContent className="p-0">
+                {/* Header with gradient accent */}
+                <div className="bg-gradient-to-r from-bright-primary/5 via-transparent to-transparent p-6 pb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-bright-primary/10 text-bright-primary font-bold">
+                      {index + 1}
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground mb-4">
-                      <div>
-                        <span className="font-medium">Key:</span>
-                        <br />
-                        {arrangement.key}
-                      </div>
-                      <div>
-                        <span className="font-medium">Tempo:</span>
-                        <br />
-                        {arrangement.tempo}
-                      </div>
-                      <div>
-                        <span className="font-medium">Instrumentation:</span>
-                        <br />
-                        {arrangement.instrumentation}
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-foreground group-hover:text-bright-primary transition-colors">
+                        {arrangement.title}
+                      </h3>
+                      <p className="text-bright-primary font-medium flex items-center gap-2">
+                        <Music2 className="w-4 h-4" />
+                        {arrangement.movement} • {arrangement.duration}
+                      </p>
                     </div>
-
-                    <div className="flex gap-3">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/arrangements/${arrangement.id}`}>
-                          <FileText className="w-4 h-4 mr-2" />
-                          View Details
-                        </Link>
-                      </Button>
-                      {/* TODO: Uncomment when Show Plan is production ready */}
-                      {/* <AddToPlanButton id={arrangement.id} title={arrangement.title} type="arrangement" size="sm" /> */}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="audio" className="mt-8">
-            <AudioPlayerComponent 
-              tracks={mockData.audioTracks}
-              title="Show Audio Preview"
-            />
-          </TabsContent>
-
-          <TabsContent value="features" className="mt-8">
-            <Card className="frame-card">
-              <CardHeader>
-                <CardTitle>Show Features</CardTitle>
-                <CardDescription>What makes this show special</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Innovative Instrumentation</h4>
-                    <p className="text-muted-foreground">Combines traditional marching band with electronic elements for a modern sound.</p>
                   </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Visual Design Integration</h4>
-                    <p className="text-muted-foreground">Music specifically composed to support dramatic drill movements and formations.</p>
+                  <p className="text-muted-foreground mt-3 leading-relaxed ml-[52px]">
+                    {arrangement.description}
+                  </p>
+                </div>
+
+                {/* Details Grid */}
+                <div className="px-6 py-4 bg-muted/20">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-bright-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Music className="w-4 h-4 text-bright-primary" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground uppercase tracking-wider">Key</div>
+                        <div className="font-semibold text-foreground">{arrangement.key}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-bright-third/10 flex items-center justify-center flex-shrink-0">
+                        <Clock className="w-4 h-4 text-bright-third" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground uppercase tracking-wider">Tempo</div>
+                        <div className="font-semibold text-foreground">{arrangement.tempo}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground uppercase tracking-wider">Instrumentation</div>
+                        <div className="font-semibold text-foreground text-xs leading-tight">{arrangement.instrumentation}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Educational Value</h4>
-                    <p className="text-muted-foreground">Develops advanced musical skills while engaging audiences with compelling themes.</p>
+                </div>
+
+                {/* Audio Player */}
+                <div className="px-6 py-4 bg-card border-t">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Play className="w-4 h-4 text-bright-primary" />
+                    <span className="text-sm font-medium text-muted-foreground">Audio Preview</span>
+                  </div>
+                  <audio 
+                    controls 
+                    className="w-full h-10 rounded-lg"
+                    preload="metadata"
+                  >
+                    <source src={arrangement.audioUrl} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="px-6 py-5 bg-muted/10 border-t">
+                  <div className="flex flex-wrap gap-3">
+                    <Button variant="default" size="default" className="btn-primary flex-1 sm:flex-none" asChild>
+                      <Link href={`/arrangements/${arrangement.id}`}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        View Details
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="default" className="flex-1 sm:flex-none">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Materials
+                    </Button>
+                    {/* TODO: Uncomment when Show Plan is production ready */}
+                    {/* <AddToPlanButton id={arrangement.id} title={arrangement.title} type="arrangement" size="default" /> */}
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="requirements" className="mt-8">
-            <Card className="frame-card">
-              <CardHeader>
-                <CardTitle>Performance Requirements</CardTitle>
-                <CardDescription>Technical requirements for this show</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Ensemble Size</h4>
-                    <p>Minimum: 45 members</p>
-                    <p>Recommended: 65-80 members</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Skill Level</h4>
-                    <p>{show.difficulty} - Suitable for competitive high school and college programs</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Equipment Needed</h4>
-                    <ul className="list-better">
-                      <li>Sound system for electronic elements</li>
-                      <li>Synthesizer or keyboard</li>
-                      <li>Extended percussion setup</li>
-                      <li>Click track capability</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="reviews" className="mt-8">
-            <Card className="frame-card">
-              <CardHeader>
-                <CardTitle>Customer Reviews</CardTitle>
-                <CardDescription>What directors are saying about this show</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Reviews coming soon...</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          ))}
+        </div>
 
         {/* What's Included Section */}
         <div className="mt-12">
