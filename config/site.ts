@@ -54,22 +54,22 @@ export const siteConfig: SiteConfig = {
       {
         title: "Company",
         links: [
+          { label: "Home", href: "/" },
           { label: "About", href: "/about" },
-          { label: "Contact", href: "/contact" },
+          { label: "FAQ", href: "/faqs" },
         ],
       },
       {
         title: "Explore",
         links: [
-          { label: "Upcoming Shows", href: "/shows" },
-          { label: "Home", href: "/" },
+          { label: "Shows", href: "/shows" },
+          { label: "Arrangements", href: "/arrangements" },
         ],
       },
       {
         title: "Resources",
         links: [
-          { label: "Theme Guide", href: "/docs/features/theme-system" },
-          { label: "API Docs", href: "/docs/api" },
+          { label: "Contact Form", href: "/contact" },
         ],
       },
     ],

@@ -132,20 +132,20 @@ export function MainNav({ children }: { children: React.ReactNode }) {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800 border-red-200';
       case 'staff': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-muted text-foreground border-border';
     }
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-bright-primary rounded-lg flex items-center justify-center">
-              <Music className="w-5 h-5 text-bright-dark" />
+              <Music className="w-5 h-5 text-foreground" />
             </div>
-            <span className="text-xl font-bold text-bright-dark font-primary">Bright Designs</span>
+            <span className="text-xl font-bold text-foreground font-primary">Bright Designs</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -176,14 +176,14 @@ export function MainNav({ children }: { children: React.ReactNode }) {
                     <Link
                       key={item.title}
                       href={item.href}
-                      className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/30 transition-colors"
                     >
                       <div className="w-10 h-10 bg-bright-primary/10 rounded-lg flex items-center justify-center">
                         <item.icon className="w-5 h-5 text-bright-primary" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-sm text-gray-900">{item.title}</h4>
-                        <p className="text-xs text-gray-600 mt-1">{item.description}</p>
+                        <h4 className="font-medium text-sm text-foreground">{item.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
                       </div>
                     </Link>
                   ))}
@@ -298,9 +298,9 @@ export function MainNav({ children }: { children: React.ReactNode }) {
                 {/* Mobile Logo */}
                 <div className="flex items-center gap-2 pb-4 border-b">
                   <div className="w-8 h-8 bg-bright-primary rounded-lg flex items-center justify-center">
-                    <Music className="w-5 h-5 text-bright-dark" />
+                    <Music className="w-5 h-5 text-foreground" />
                   </div>
-                  <span className="text-xl font-bold text-bright-dark font-primary">Bright Designs</span>
+                  <span className="text-xl font-bold text-foreground font-primary">Bright Designs</span>
                 </div>
 
                 <nav className="flex flex-col space-y-2">
@@ -311,7 +311,7 @@ export function MainNav({ children }: { children: React.ReactNode }) {
                       className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                         isActive(item.href)
                           ? "bg-bright-primary/10 text-bright-third"
-                          : "text-gray-700 hover:bg-gray-100"
+                          : "text-foreground hover:bg-muted/30"
                       }`}
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -322,12 +322,12 @@ export function MainNav({ children }: { children: React.ReactNode }) {
 
                   {/* Mobile Resources */}
                   <div className="pt-2">
-                    <h4 className="px-3 py-2 text-sm font-semibold text-gray-900">Resources</h4>
+                    <h4 className="px-3 py-2 text-sm font-semibold text-foreground">Resources</h4>
                     {resourceItems.map((item) => (
                       <Link
                         key={item.title}
                         href={item.href}
-                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted/30 transition-colors"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <item.icon className="w-5 h-5" />

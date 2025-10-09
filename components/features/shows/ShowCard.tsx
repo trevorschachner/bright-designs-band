@@ -26,7 +26,7 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <Button
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-gray-900 hover:bg-white hover-lift"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
        >
           <Play className="w-4 h-4 mr-2" />
           Preview
@@ -46,7 +46,7 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between items-center mb-4 text-sm text-gray-600">
+        <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
           <span className="flex items-center">
             <Users className="w-4 h-4 mr-1" />
             {show.difficulty || 'Not specified'}
@@ -70,7 +70,7 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
           </ul>
         )}
         {show.arrangements && show.arrangements.length > 0 && (
-          <div className="text-xs text-gray-500 mb-4">
+          <div className="text-xs text-muted-foreground mb-4">
             {show.arrangements.length} arrangement{show.arrangements.length !== 1 ? 's' : ''} available
           </div>
         )}

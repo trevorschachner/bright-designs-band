@@ -134,7 +134,7 @@ export function FilterBar({
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Search..."
             value={searchValue}
@@ -240,7 +240,7 @@ export function FilterBar({
                     <div>
                       <div className="font-medium">{preset.name}</div>
                       {preset.description && (
-                        <div className="text-xs text-gray-500">{preset.description}</div>
+                        <div className="text-xs text-muted-foreground">{preset.description}</div>
                       )}
                     </div>
                   </DropdownMenuItem>
@@ -267,7 +267,7 @@ export function FilterBar({
             <Badge variant="secondary" className="flex items-center gap-1">
               Search: &quot;{filterState.search}&quot;
               <X 
-                className="w-3 h-3 cursor-pointer hover:bg-gray-200 rounded" 
+                className="w-3 h-3 cursor-pointer hover:bg-muted rounded" 
                 onClick={clearSearch}
               />
             </Badge>
@@ -282,7 +282,7 @@ export function FilterBar({
                   : condition.value
               }
               <X 
-                className="w-3 h-3 cursor-pointer hover:bg-gray-200 rounded" 
+                className="w-3 h-3 cursor-pointer hover:bg-muted rounded" 
                 onClick={() => removeFilter(index)}
               />
             </Badge>
@@ -293,7 +293,7 @@ export function FilterBar({
             <Badge key={index} variant="outline" className="flex items-center gap-1">
               Sort: {getSortFieldLabel(sort.field)} ({sort.direction})
               <X 
-                className="w-3 h-3 cursor-pointer hover:bg-gray-200 rounded" 
+                className="w-3 h-3 cursor-pointer hover:bg-muted rounded" 
                 onClick={() => onFilterStateChange({
                   ...filterState,
                   sort: filterState.sort.filter((_, i) => i !== index),
@@ -307,7 +307,7 @@ export function FilterBar({
 
       {/* Results Summary */}
       {totalResults !== undefined && (
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-muted-foreground">
           {isLoading ? (
             'Loading...'
           ) : (

@@ -108,7 +108,7 @@ export default function ArrangementDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Include custom audio player styles */}
       <style dangerouslySetInnerHTML={{ __html: audioPlayerStyles }} />
       
@@ -127,8 +127,8 @@ export default function ArrangementDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Left side - Image */}
           <div className="relative">
-            <div className="w-full h-80 bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
-              <div className="text-gray-400">
+            <div className="w-full h-80 bg-muted rounded-lg shadow-lg flex items-center justify-center">
+              <div className="text-muted-foreground">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                   <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -138,7 +138,7 @@ export default function ArrangementDetailPage() {
             </div>
             <Button
               size="lg"
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 text-gray-900 hover:bg-white shadow-lg"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background/90 text-foreground hover:bg-background shadow-lg"
             >
               <Play className="w-5 h-5 mr-2" />
               Play Preview
@@ -153,34 +153,34 @@ export default function ArrangementDetailPage() {
               <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
                 <span className="text-sm font-medium">{arrangementData.rating}</span>
-                <span className="text-sm text-gray-500 ml-1">({arrangementData.reviews} reviews)</span>
+                <span className="text-sm text-muted-foreground ml-1">({arrangementData.reviews} reviews)</span>
               </div>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4 text-gray-900 font-primary">{arrangementData.title}</h1>
+            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{arrangementData.title}</h1>
             <p className="text-lg text-bright-primary mb-4">
               From:{" "}
               <Link href={`/shows/${arrangementData.showId}`} className="hover:underline">
                 {arrangementData.showTitle}
               </Link>
             </p>
-            <p className="text-lg text-gray-600 mb-6">{arrangementData.description}</p>
+            <p className="text-lg text-muted-foreground mb-6">{arrangementData.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="flex items-center">
-                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                <Clock className="w-4 h-4 text-muted-foreground mr-2" />
                 <span className="text-sm">{arrangementData.duration}</span>
               </div>
               <div className="flex items-center">
-                <Music2 className="w-4 h-4 text-gray-400 mr-2" />
+                <Music2 className="w-4 h-4 text-muted-foreground mr-2" />
                 <span className="text-sm">{arrangementData.key}</span>
               </div>
               <div className="flex items-center">
-                <Users className="w-4 h-4 text-gray-400 mr-2" />
+                <Users className="w-4 h-4 text-muted-foreground mr-2" />
                 <span className="text-sm">{arrangementData.tempo}</span>
               </div>
               <div className="flex items-center">
-                <FileText className="w-4 h-4 text-gray-400 mr-2" />
+                <FileText className="w-4 h-4 text-muted-foreground mr-2" />
                 <span className="text-sm">{arrangementData.composer}</span>
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function ArrangementDetailPage() {
 
         {/* Tabs Section */}
         <Tabs defaultValue="instrumentation" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-card/80 backdrop-blur-sm">
             <TabsTrigger value="instrumentation">Instrumentation</TabsTrigger>
             <TabsTrigger value="audio">Audio Preview</TabsTrigger>
             <TabsTrigger value="analysis">Musical Analysis</TabsTrigger>
@@ -236,7 +236,7 @@ export default function ArrangementDetailPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Brass Section</h4>
+                  <h4 className="font-semibold text-foreground mb-3">Brass Section</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.brass.map((instrument, index) => (
                       <div key={index} className="flex items-center">
@@ -247,7 +247,7 @@ export default function ArrangementDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Woodwind Section</h4>
+                  <h4 className="font-semibold text-foreground mb-3">Woodwind Section</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.woodwinds.map((instrument, index) => (
                       <div key={index} className="flex items-center">
@@ -258,18 +258,18 @@ export default function ArrangementDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Percussion Section</h4>
+                  <h4 className="font-semibold text-foreground mb-3">Percussion Section</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.percussion.map((instrument, index) => (
                       <div key={index} className="flex items-center">
-                        <div className="w-2 h-2 bg-gray-600 rounded-full mr-2"></div>
+                        <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
                         {instrument}
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Electronics</h4>
+                  <h4 className="font-semibold text-foreground mb-3">Electronics</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {arrangementData.detailedInstrumentation.electronics.map((instrument, index) => (
                       <div key={index} className="flex items-center">
@@ -287,7 +287,7 @@ export default function ArrangementDetailPage() {
             <AudioPlayerComponent 
               tracks={arrangementData.audioTracks}
               title="Arrangement Audio Preview"
-              className="bg-white/80 backdrop-blur-sm"
+              className="bg-card/80 backdrop-blur-sm"
             />
           </TabsContent>
 
@@ -299,11 +299,11 @@ export default function ArrangementDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Form</h4>
+                  <h4 className="font-medium text-foreground mb-2">Form</h4>
                   <p>{arrangementData.musicalAnalysis.form}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Key Changes</h4>
+                  <h4 className="font-medium text-foreground mb-2">Key Changes</h4>
                   <ul className="list-better">
                     {arrangementData.musicalAnalysis.keyChanges.map((key, index) => (
                       <li key={index}>{key}</li>
@@ -311,7 +311,7 @@ export default function ArrangementDetailPage() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Tempo Changes</h4>
+                  <h4 className="font-medium text-foreground mb-2">Tempo Changes</h4>
                   <ul className="list-better">
                     {arrangementData.musicalAnalysis.tempoChanges.map((tempo, index) => (
                       <li key={index}>{tempo}</li>
@@ -319,11 +319,11 @@ export default function ArrangementDetailPage() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Dynamics</h4>
+                  <h4 className="font-medium text-foreground mb-2">Dynamics</h4>
                   <p>{arrangementData.musicalAnalysis.dynamics}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Style</h4>
+                  <h4 className="font-medium text-foreground mb-2">Style</h4>
                   <p>{arrangementData.musicalAnalysis.style}</p>
                 </div>
               </CardContent>
@@ -338,16 +338,16 @@ export default function ArrangementDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Ensemble Size</h4>
+                  <h4 className="font-medium text-foreground mb-2">Ensemble Size</h4>
                   <p>Minimum: {arrangementData.technicalRequirements.minimumSize}</p>
                   <p>Recommended: {arrangementData.technicalRequirements.recommendedSize}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Skill Level</h4>
+                  <h4 className="font-medium text-foreground mb-2">Skill Level</h4>
                   <p>{arrangementData.technicalRequirements.skillLevel}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Equipment Needed</h4>
+                  <h4 className="font-medium text-foreground mb-2">Equipment Needed</h4>
                   <ul className="list-better">
                     {arrangementData.technicalRequirements.equipment.map((item, index) => (
                       <li key={index}>{item}</li>
@@ -355,7 +355,7 @@ export default function ArrangementDetailPage() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Special Notes</h4>
+                  <h4 className="font-medium text-foreground mb-2">Special Notes</h4>
                   <ul className="list-better">
                     {arrangementData.technicalRequirements.specialNotes.map((note, index) => (
                       <li key={index}>{note}</li>
@@ -373,7 +373,7 @@ export default function ArrangementDetailPage() {
                 <CardDescription>What directors are saying about this arrangement</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>Reviews coming soon...</p>
                 </div>

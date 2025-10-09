@@ -232,7 +232,7 @@ export function FilterForm({
         </div>
 
         {formConditions.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             <p>No filters applied.</p>
             <p className="text-sm">Add a condition to start filtering.</p>
           </div>

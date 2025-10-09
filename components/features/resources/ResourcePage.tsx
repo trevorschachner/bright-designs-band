@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ComponentType } from "react";
 import { FilterBar } from "@/components/features/filters/filter-bar";
+import { FilterSidebar } from "@/components/features/filters/filter-sidebar";
 import { Pagination } from "@/components/features/filters/pagination";
 import { useFilterState } from "@/lib/hooks/use-filter-state";
 import { FilteredResponse, FilterField, FilterPreset } from "@/lib/filters/types";
@@ -14,7 +15,10 @@ interface ResourcePageProps<T> {
   filterFields: FilterField[];
   filterPresets: FilterPreset[];
   CardComponent: ComponentType<{ item: T; isLoading?: boolean }>;
+  ListComponent?: ComponentType<{ item: T; isLoading?: boolean }>;
   initialLimit?: number;
+  viewMode?: 'grid' | 'list';
+  useSidebar?: boolean;
 }
 
 // Local API response envelope type
@@ -31,7 +35,10 @@ export default function ResourcePage<T>({
   filterFields,
   filterPresets,
   CardComponent,
+  ListComponent,
   initialLimit = 12,
+  viewMode = 'grid',
+  useSidebar = false,
 }: ResourcePageProps<T>) {
   const { filterState, setFilterState } = useFilterState({
     defaultState: { limit: initialLimit }
@@ -40,6 +47,19 @@ export default function ResourcePage<T>({
   const [response, setResponse] = useState<FilteredResponse<T> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,6 +108,101 @@ export default function ResourcePage<T>({
 
   const items = Array.isArray(response?.data) ? response!.data : [];
 
+  // Render with sidebar layout
+  if (useSidebar) {
+    return (
+      <div className="flex min-h-screen">
+        {/* Sidebar - hidden on mobile, shown on desktop */}
+        {!isMobile && (
+          <FilterSidebar
+            filterState={filterState}
+            onFilterStateChange={setFilterState}
+            filterFields={filterFields}
+            presets={filterPresets}
+            isLoading={isLoading}
+            totalResults={response?.pagination?.total}
+            isMobile={false}
+          />
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          <div className="container mx-auto px-4 py-8">
+            {/* Mobile Filter Button */}
+            {isMobile && (
+              <div className="mb-6">
+                <FilterSidebar
+                  filterState={filterState}
+                  onFilterStateChange={setFilterState}
+                  filterFields={filterFields}
+                  presets={filterPresets}
+                  isLoading={isLoading}
+                  totalResults={response?.pagination?.total}
+                  isMobile={true}
+                />
+              </div>
+            )}
+
+            {isLoading && !response && (
+              <div className="flex items-center justify-center py-20">
+                <Loader className="w-8 h-8 animate-spin" />
+                <span className="ml-2">Loading {resourceName}...</span>
+              </div>
+            )}
+
+            {response && (
+              <>
+                {viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                    {items.map((item: T, index: number) => (
+                      <CardComponent key={index} item={item} isLoading={isLoading} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-6 mb-8">
+                    {items.map((item: T, index: number) => {
+                      const Component = ListComponent || CardComponent;
+                      return <Component key={index} item={item} isLoading={isLoading} />;
+                    })}
+                  </div>
+                )}
+
+                {items.length === 0 && !isLoading && (
+                  <div className="text-center py-20">
+                    <div className="text-muted-foreground mb-4">
+                      <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-xl font-semibold mb-2">No {resourceName} found</h3>
+                      <p>Try adjusting your filters or search terms.</p>
+                    </div>
+                    <Button onClick={() => setFilterState({
+                      search: undefined,
+                      conditions: [],
+                      sort: [],
+                      page: 1,
+                      limit: filterState.limit
+                    })}>
+                      Clear All Filters
+                    </Button>
+                  </div>
+                )}
+
+                {items.length > 0 && response.pagination && (
+                  <Pagination
+                    pagination={response.pagination}
+                    onPageChange={handlePageChange}
+                    onLimitChange={handleLimitChange}
+                    isLoading={isLoading}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original layout without sidebar (for backwards compatibility)
   return (
     <div>
       <div className="mb-8">
@@ -118,7 +233,7 @@ export default function ResourcePage<T>({
 
           {items.length === 0 && !isLoading && (
             <div className="text-center py-20">
-              <div className="text-gray-500 mb-4">
+              <div className="text-muted-foreground mb-4">
                 <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <h3 className="text-xl font-semibold mb-2">No {resourceName} found</h3>
                 <p>Try adjusting your filters or search terms.</p>

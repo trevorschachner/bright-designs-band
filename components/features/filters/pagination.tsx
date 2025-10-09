@@ -92,7 +92,7 @@ export function Pagination({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
       {/* Results Info */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         Showing {startResult} to {endResult} of {total} results
       </div>
 
@@ -100,7 +100,7 @@ export function Pagination({
       <div className="flex items-center gap-2">
         {/* Items per page */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Show:</span>
+          <span className="text-sm text-muted-foreground">Show:</span>
           <Select 
             value={limit.toString()} 
             onValueChange={(value) => onLimitChange(parseInt(value, 10))}
@@ -135,7 +135,7 @@ export function Pagination({
             if (pageNum === 'ellipsis') {
               return (
                 <div key={`ellipsis-${index}`} className="px-2">
-                  <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                  <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                 </div>
               );
             }

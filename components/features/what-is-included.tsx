@@ -36,15 +36,15 @@ const includedItems = [
 
 export function WhatIsIncluded() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-      <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">What&apos;s Included</h2>
+    <div className="bg-card rounded-lg shadow-lg p-8 border">
+      <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">What&apos;s Included</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {includedItems.map((item) => (
           <div key={item.title} className="flex items-start gap-4">
             <div className="flex-shrink-0">{item.icon}</div>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">{item.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{item.description}</p>
+              <h3 className="font-semibold text-foreground">{item.title}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
             </div>
           </div>
         ))}

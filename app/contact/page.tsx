@@ -49,10 +49,10 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             Contact Us
           </h1>
-          <p className="mt-4 text-lg leading-8 text-gray-600 dark:text-gray-300">
+          <p className="mt-4 text-lg leading-8 text-muted-foreground">
             Have a question or a project in mind? We&apos;d love to hear from you.
           </p>
         </div>

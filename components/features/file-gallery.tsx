@@ -161,7 +161,7 @@ export function FileGallery({
       
              case 'audio':
          return (
-           <div className="p-4 bg-gray-50 rounded-lg">
+           <div className="p-4 bg-muted/30 rounded-lg">
              <div className="flex items-center space-x-2 mb-3">
                <Music className="w-5 h-5 text-bright-primary" />
                <span className="font-medium">{file.originalName}</span>
@@ -179,7 +179,7 @@ export function FileGallery({
       
              case 'youtube':
          return (
-           <div className="p-4 bg-gray-50 rounded-lg">
+           <div className="p-4 bg-muted/30 rounded-lg">
              <div className="flex items-center space-x-2 mb-3">
                <Video className="w-5 h-5 text-bright-primary" />
                <span className="font-medium">{file.originalName}</span>
@@ -191,10 +191,10 @@ export function FileGallery({
       case 'pdf':
       case 'score':
         return (
-          <div className="p-8 bg-gray-50 rounded-lg text-center">
-            <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <div className="p-8 bg-muted/30 rounded-lg text-center">
+            <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm font-medium">{file.originalName}</p>
-            <p className="text-xs text-gray-500 mt-1">{formatFileSize(file.fileSize)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatFileSize(file.fileSize)}</p>
             <div className="flex space-x-2 mt-4 justify-center">
               <Button size="sm" variant="outline" asChild>
                 <a href={file.url} target="_blank" rel="noopener noreferrer">
@@ -214,10 +214,10 @@ export function FileGallery({
       
       default:
         return (
-          <div className="p-8 bg-gray-50 rounded-lg text-center">
-            <File className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <div className="p-8 bg-muted/30 rounded-lg text-center">
+            <File className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm font-medium">{file.originalName}</p>
-            <p className="text-xs text-gray-500 mt-1">{formatFileSize(file.fileSize)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatFileSize(file.fileSize)}</p>
             <Button size="sm" variant="outline" className="mt-4" asChild>
               <a href={file.url} download={file.originalName}>
                 <Download className="w-4 h-4 mr-2" />
@@ -252,9 +252,9 @@ export function FileGallery({
     return (
       <Card className="frame-card">
         <CardContent className="text-center py-8">
-          <File className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-500">No files found</p>
-          <p className="text-sm text-gray-400 mt-1">
+          <File className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No files found</p>
+          <p className="text-sm text-muted-foreground mt-1">
             {fileType ? `No ${fileType} files` : 'No files'} have been uploaded yet.
           </p>
         </CardContent>
@@ -279,10 +279,10 @@ export function FileGallery({
                     </Badge>
                   </div>
                   {file.description && (
-                    <p className="text-xs text-gray-600 mb-2">{file.description}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{file.description}</p>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">{formatFileSize(file.fileSize)}</span>
+                    <span className="text-xs text-muted-foreground">{formatFileSize(file.fileSize)}</span>
                     {editable && (
                       <Button
                         size="sm"
@@ -324,13 +324,13 @@ export function FileGallery({
                       </div>
                     </div>
                     {file.description && (
-                      <p className="text-sm text-gray-600 mb-3">{file.description}</p>
+                      <p className="text-sm text-muted-foreground mb-3">{file.description}</p>
                     )}
                     <div className="mb-4">
                       {renderFilePreview(file)}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">{formatFileSize(file.fileSize)}</span>
+                      <span className="text-sm text-muted-foreground">{formatFileSize(file.fileSize)}</span>
                       <div className="flex space-x-2">
                         <Button size="sm" variant="outline" asChild>
                           <a href={file.url} target="_blank" rel="noopener noreferrer">

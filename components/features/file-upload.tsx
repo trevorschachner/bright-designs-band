@@ -242,17 +242,17 @@ export function FileUpload({
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             isDragOver 
               ? 'border-bright-primary bg-bright-primary/5' 
-              : 'border-gray-300 hover:border-bright-primary/50'
+              : 'border-border hover:border-bright-primary/50'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-lg font-medium text-gray-900 mb-2">
+          <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-lg font-medium text-foreground mb-2">
             Drop files here or click to browse
           </p>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Supports: Images, Audio, Video, PDF, and other documents
           </p>
           <Button
@@ -358,7 +358,7 @@ export function FileUpload({
                         </AlertDescription>
                       </Alert>
                     )}
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {uploadingFile.file ? (uploadingFile.file.size / 1024 / 1024).toFixed(2) + ' MB' : 'YouTube Link'}
                     </p>
                   </div>

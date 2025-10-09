@@ -18,12 +18,15 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 				<div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
 					{/* Company/Brand column */}
 					<div className="lg:col-span-2">
-						<div className="flex items-center gap-3 mb-6">
+						<div className="flex items-center gap-3 mb-2">
 							<div className="h-10 w-10 plus-surface flex items-center justify-center">
 								<Music className="h-6 w-6 text-primary" />
 							</div>
 							<span className="plus-h4">Bright Designs Band</span>
 						</div>
+						<p className="plus-caption text-muted-foreground mb-6">
+							© {new Date().getFullYear()} Bright Designs LLC. All rights reserved.
+						</p>
 						<p className="plus-body-sm text-muted-foreground mb-8 max-w-sm">
 							Custom marching band show design and arrangements. Let's bring your vision to life with expert design and passion.
 						</p>
@@ -82,17 +85,14 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 					</div>
 					<div className="flex items-center gap-4">
 						<div className="flex items-center gap-2 text-muted-foreground">
-							<span className="plus-caption">Crafted with</span>
-							<span className="text-red-500 text-sm">♫</span>
-							<span className="plus-caption">and passion in South Carolina</span>
+							<span className="plus-body-sm">Crafted with</span>
+							<span className="text-red-500">♫</span>
+							<span className="plus-body-sm">and passion in South Carolina</span>
 						</div>
 						<ThemeToggle />
 					</div>
 				</div>
-					<div className="mt-6 pt-6 border-t border-border">
-						<p className="plus-caption text-center text-muted-foreground">{footer?.copyright}</p>
-					</div>
-				</div>
+			</div>
 			</div>
 		</footer>
 	)

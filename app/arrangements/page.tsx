@@ -187,8 +187,8 @@ export default function ArrangementsPage() {
                 <CardContent>
                   {arrangement.price && (
                     <div className="mb-4 flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-green-600" />
-                      <span className="text-2xl font-bold text-green-600">
+                      <DollarSign className="w-4 h-4 text-bright-third" />
+                      <span className="text-2xl font-bold text-bright-third">
                         ${arrangement.price}
                       </span>
                     </div>
@@ -215,7 +215,7 @@ export default function ArrangementsPage() {
           {/* Empty State */}
           {arrangementsResponse.data.length === 0 && !isLoading && (
             <div className="text-center py-20">
-              <div className="text-gray-500 mb-4">
+              <div className="text-muted-foreground mb-4">
                 <Music className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <h3 className="text-xl font-semibold mb-2">No arrangements found</h3>
                 <p>Try adjusting your filters or search terms.</p>

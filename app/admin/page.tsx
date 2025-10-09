@@ -48,7 +48,7 @@ export default async function AdminPage() {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800 border-red-200';
       case 'staff': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -63,9 +63,9 @@ export default async function AdminPage() {
       </Breadcrumb>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-bright-dark font-primary">Admin Dashboard</h1>
+          <h1 className="text-4xl font-bold text-foreground font-primary">Admin Dashboard</h1>
           <div className="flex items-center space-x-4 mt-2">
-            <p className="text-gray-600">Welcome back, {session.user.email}</p>
+            <p className="text-muted-foreground">Welcome back, {session.user.email}</p>
             <Badge className={getRoleBadgeColor(userRole)}>
               <Shield className="w-3 h-3 mr-1" />
               {userRole.toUpperCase()}
@@ -206,19 +206,19 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className={`p-3 rounded-lg ${permissions.canAccessAdmin ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-500'}`}>
+              <div className={`p-3 rounded-lg ${permissions.canAccessAdmin ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
                 <div className="font-medium">Admin Access</div>
                 <div className="text-xs">{permissions.canAccessAdmin ? 'Granted' : 'Denied'}</div>
               </div>
-              <div className={`p-3 rounded-lg ${permissions.canManageShows ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-500'}`}>
+              <div className={`p-3 rounded-lg ${permissions.canManageShows ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
                 <div className="font-medium">Manage Shows</div>
                 <div className="text-xs">{permissions.canManageShows ? 'Granted' : 'Denied'}</div>
               </div>
-              <div className={`p-3 rounded-lg ${permissions.canManageUsers ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-500'}`}>
+              <div className={`p-3 rounded-lg ${permissions.canManageUsers ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
                 <div className="font-medium">Manage Users</div>
                 <div className="text-xs">{permissions.canManageUsers ? 'Granted' : 'Denied'}</div>
               </div>
-              <div className={`p-3 rounded-lg ${permissions.canDeleteArrangements ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-500'}`}>
+              <div className={`p-3 rounded-lg ${permissions.canDeleteArrangements ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
                 <div className="font-medium">Delete Content</div>
                 <div className="text-xs">{permissions.canDeleteArrangements ? 'Granted' : 'Denied'}</div>
               </div>

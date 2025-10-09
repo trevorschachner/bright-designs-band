@@ -93,7 +93,7 @@ export function YouTubeUrlInput({
         onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-bright-primary ${
-          !isValid ? 'border-red-500' : 'border-gray-300'
+          !isValid ? 'border-red-500' : 'border-border'
         }`}
       />
       {!isValid && (
@@ -103,7 +103,7 @@ export function YouTubeUrlInput({
       )}
       {value && isValid && (
         <div className="mt-2">
-          <p className="text-sm text-gray-600 mb-2">Preview:</p>
+          <p className="text-sm text-muted-foreground mb-2">Preview:</p>
           <YouTubePlayer youtubeUrl={value} />
         </div>
       )}

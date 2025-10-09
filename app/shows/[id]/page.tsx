@@ -139,7 +139,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Audio player styles are now included in globals.css */}
       
       <div className="container mx-auto px-4 py-8">
@@ -171,8 +171,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
             {show.videoUrl ? (
               <YouTubePlayer youtubeUrl={show.videoUrl} />
             ) : (
-              <div className="w-full h-80 bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
-                <div className="text-gray-400">
+              <div className="w-full h-80 bg-muted rounded-lg shadow-lg flex items-center justify-center">
+                <div className="text-muted-foreground">
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -191,20 +191,20 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
               <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
                 <span className="text-sm font-medium">{mockData.rating}</span>
-                <span className="text-sm text-gray-500 ml-1">({mockData.reviewCount} reviews)</span>
+                <span className="text-sm text-muted-foreground ml-1">({mockData.reviewCount} reviews)</span>
               </div>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4 text-gray-900 font-primary">{show.title}</h1>
-            <p className="text-lg text-gray-600 mb-6">{show.description}</p>
+            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{show.title}</h1>
+            <p className="text-lg text-muted-foreground mb-6">{show.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="flex items-center">
-                <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                <Clock className="w-4 h-4 text-muted-foreground mr-2" />
                 <span className="text-sm">{show.duration}</span>
               </div>
               <div className="flex items-center">
-                <Users className="w-4 h-4 text-gray-400 mr-2" />
+                <Users className="w-4 h-4 text-muted-foreground mr-2" />
                 <span className="text-sm">{mockData.arrangements.length} Arrangements</span>
               </div>
             </div>
@@ -240,7 +240,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
 
         {/* Tabs Section */}
         <Tabs defaultValue="arrangements" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="arrangements">Arrangements</TabsTrigger>
             <TabsTrigger value="audio">Audio Preview</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
@@ -250,24 +250,24 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
 
           <TabsContent value="arrangements" className="mt-8">
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 font-primary">Show Arrangements</h2>
+              <h2 className="text-2xl font-bold text-foreground font-primary">Show Arrangements</h2>
               
               {mockData.arrangements.map((arrangement, index) => (
                 <Card key={arrangement.id} className="frame-card">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900">{arrangement.title}</h3>
+                        <h3 className="text-xl font-bold text-foreground">{arrangement.title}</h3>
                         <p className="text-bright-primary font-medium">{arrangement.movement} • {arrangement.duration}</p>
-                        <p className="text-gray-600 mt-2">{arrangement.description}</p>
+                        <p className="text-muted-foreground mt-2">{arrangement.description}</p>
                       </div>
                       <div className="text-right ml-6">
-                        <div className="text-xl font-bold text-gray-900">${arrangement.price}</div>
-                        <div className="text-sm text-gray-500">Individual</div>
+                        <div className="text-xl font-bold text-foreground">${arrangement.price}</div>
+                        <div className="text-sm text-muted-foreground">Individual</div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground mb-4">
                       <div>
                         <span className="font-medium">Key:</span>
                         <br />
@@ -305,7 +305,6 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
             <AudioPlayerComponent 
               tracks={mockData.audioTracks}
               title="Show Audio Preview"
-              className="bg-white/80 backdrop-blur-sm"
             />
           </TabsContent>
 
@@ -319,15 +318,15 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-semibold mb-2">Innovative Instrumentation</h4>
-                    <p className="text-gray-600">Combines traditional marching band with electronic elements for a modern sound.</p>
+                    <p className="text-muted-foreground">Combines traditional marching band with electronic elements for a modern sound.</p>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Visual Design Integration</h4>
-                    <p className="text-gray-600">Music specifically composed to support dramatic drill movements and formations.</p>
+                    <p className="text-muted-foreground">Music specifically composed to support dramatic drill movements and formations.</p>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Educational Value</h4>
-                    <p className="text-gray-600">Develops advanced musical skills while engaging audiences with compelling themes.</p>
+                    <p className="text-muted-foreground">Develops advanced musical skills while engaging audiences with compelling themes.</p>
                   </div>
                 </div>
               </CardContent>
@@ -372,7 +371,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                 <CardDescription>What directors are saying about this show</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>Reviews coming soon...</p>
                 </div>

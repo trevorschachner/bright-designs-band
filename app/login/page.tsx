@@ -71,13 +71,13 @@ function LoginForm() {
         <Card className="frame-card">
           <CardHeader className="text-center space-y-4 pb-8">
             <div className="mx-auto w-16 h-16 bg-bright-primary rounded-xl flex items-center justify-center">
-              <Shield className="w-8 h-8 text-bright-dark" />
+              <Shield className="w-8 h-8 text-foreground" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold text-bright-dark font-primary">
+              <CardTitle className="text-2xl font-bold text-foreground font-primary">
                 Admin Access
               </CardTitle>
-              <CardDescription className="text-gray-600 mt-2">
+              <CardDescription className="text-muted-foreground mt-2">
                 Enter your email to receive a magic link to sign in.
               </CardDescription>
             </div>
@@ -134,7 +134,7 @@ function LoginForm() {
             </form>
 
             <div className="pt-4 text-center">
-              <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+              <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
                 <span>Secure passwordless authentication</span>
               </div>
@@ -145,7 +145,7 @@ function LoginForm() {
         <div className="mt-6 text-center">
           <Button
             variant="ghost"
-            className="text-gray-500 hover:text-bright-dark transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => router.push('/')}
           >
             ← Back to website

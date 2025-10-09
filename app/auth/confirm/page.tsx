@@ -95,13 +95,13 @@ export default function ConfirmEmailPage() {
         <Card className="frame-card">
           <CardHeader className="text-center space-y-4 pb-8">
             <div className="mx-auto w-16 h-16 bg-bright-primary rounded-xl flex items-center justify-center">
-              <Music className="w-8 h-8 text-bright-dark" />
+              <Music className="w-8 h-8 text-foreground" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold text-bright-dark font-primary">
+              <CardTitle className="text-2xl font-bold text-foreground font-primary">
                 Email Confirmation
               </CardTitle>
-              <CardDescription className="text-gray-600 mt-2">
+              <CardDescription className="text-muted-foreground mt-2">
                 {status === 'loading' && "Verifying your email address..."}
                 {status === 'success' && "Welcome to Bright Designs!"}
                 {status === 'error' && "Confirmation Failed"}
@@ -162,7 +162,7 @@ export default function ConfirmEmailPage() {
 
             {status === 'loading' && (
               <div className="text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   This may take a few moments...
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default function ConfirmEmailPage() {
         <div className="mt-6 text-center">
           <Button
             variant="ghost"
-            className="text-gray-500 hover:text-bright-dark transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => router.push('/')}
           >
             ← Back to website

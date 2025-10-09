@@ -47,7 +47,7 @@ export function AudioPlayerComponent({ tracks, title, className }: AudioPlayerCo
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-500 text-center py-4">No audio files available</p>
+          <p className="text-muted-foreground text-center py-4">No audio files available</p>
         </CardContent>
       </Card>
     )
@@ -70,7 +70,7 @@ export function AudioPlayerComponent({ tracks, title, className }: AudioPlayerCo
         {/* Track List */}
         {tracks.length > 1 && (
           <div className="space-y-2">
-            <h4 className="font-medium text-sm text-gray-700">Available Tracks:</h4>
+            <h4 className="font-medium text-sm text-foreground">Available Tracks:</h4>
             <div className="grid gap-2">
               {tracks.map((track, index) => (
                 <div
@@ -78,7 +78,7 @@ export function AudioPlayerComponent({ tracks, title, className }: AudioPlayerCo
                   className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
                     currentTrack === index
                       ? "bg-bright-primary/10 border-bright-primary"
-                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                      : "bg-muted/30 border-border hover:bg-muted/50"
                   }`}
                   onClick={() => handleTrackChange(index)}
                 >
@@ -92,12 +92,12 @@ export function AudioPlayerComponent({ tracks, title, className }: AudioPlayerCo
                       )}
                     </div>
                     {track.description && (
-                      <p className="text-xs text-gray-600 mt-1">{track.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{track.description}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     {track.duration && (
-                      <span className="text-xs text-gray-500">{track.duration}</span>
+                      <span className="text-xs text-muted-foreground">{track.duration}</span>
                     )}
                     <Button
                       size="sm"
@@ -127,7 +127,7 @@ export function AudioPlayerComponent({ tracks, title, className }: AudioPlayerCo
             <div>
               <h4 className="font-medium">{tracks[currentTrack].title}</h4>
               {tracks[currentTrack].description && (
-                <p className="text-sm text-gray-600">{tracks[currentTrack].description}</p>
+                <p className="text-sm text-muted-foreground">{tracks[currentTrack].description}</p>
               )}
             </div>
             {tracks[currentTrack].type && (
@@ -169,8 +169,8 @@ export function AudioPlayerComponent({ tracks, title, className }: AudioPlayerCo
 
           {/* Loading placeholder for SSR */}
           {!isClient && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-500 text-center">Loading audio player...</p>
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <p className="text-muted-foreground text-center">Loading audio player...</p>
             </div>
           )}
 

@@ -13,6 +13,17 @@ import { PgColumn, PgTable } from 'drizzle-orm/pg-core';
  */
 export class QueryBuilder {
   /**
+   * Normalize value - convert ISO date strings to Date objects
+   */
+  private static normalizeValue(value: any): any {
+    // Check if value is an ISO date string
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+      return new Date(value);
+    }
+    return value;
+  }
+
+  /**
    * Convert filter operator and value to Drizzle condition
    */
   private static buildCondition(
@@ -21,30 +32,34 @@ export class QueryBuilder {
     value: any, 
     values?: any[]
   ): SQL {
+    // Normalize values for date handling
+    const normalizedValue = this.normalizeValue(value);
+    const normalizedValues = values?.map(v => this.normalizeValue(v));
+
     switch (operator) {
       case 'equals':
-        return eq(column, value);
+        return eq(column, normalizedValue);
       case 'contains':
-        return ilike(column, `%${value}%`);
+        return ilike(column, `%${normalizedValue}%`);
       case 'startsWith':
-        return ilike(column, `${value}%`);
+        return ilike(column, `${normalizedValue}%`);
       case 'endsWith':
-        return ilike(column, `%${value}`);
+        return ilike(column, `%${normalizedValue}`);
       case 'gt':
-        return gt(column, value);
+        return gt(column, normalizedValue);
       case 'gte':
-        return gte(column, value);
+        return gte(column, normalizedValue);
       case 'lt':
-        return lt(column, value);
+        return lt(column, normalizedValue);
       case 'lte':
-        return lte(column, value);
+        return lte(column, normalizedValue);
       case 'in':
-        return inArray(column, values || [value]);
+        return inArray(column, normalizedValues || [normalizedValue]);
       case 'notIn':
-        return notInArray(column, values || [value]);
+        return notInArray(column, normalizedValues || [normalizedValue]);
       case 'between':
-        if (values && values.length >= 2) {
-          const condition = and(gte(column, values[0]), lte(column, values[1]));
+        if (normalizedValues && normalizedValues.length >= 2) {
+          const condition = and(gte(column, normalizedValues[0]), lte(column, normalizedValues[1]));
           if (!condition) {
             throw new Error('Failed to build "between" condition');
           }
