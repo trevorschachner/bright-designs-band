@@ -1,6 +1,8 @@
-# API Documentation
+# API Documentation Index
 
-This directory contains documentation for all API endpoints and data models.
+**Complete reference for all API endpoints, data models, and integration patterns.**
+
+[← Back to Documentation Hub](../README.md) | [Systems Overview](../SYSTEMS_OVERVIEW.md)
 
 ## Base URL
 - **Development**: `http://localhost:3000/api`
@@ -99,4 +101,14 @@ GET /api/shows?search=symphony&page=1&limit=20&filters=[{"field":"difficulty","o
 
 ---
 
-**Last Updated**: December 2024
+## Related Documentation
+
+- **[Getting Started](../GETTING_STARTED.md)** - Set up your environment to use the API
+- **[Systems Overview](../SYSTEMS_OVERVIEW.md)** - Understand the technology stack
+- **[Feature Documentation](../features/FEATURE_INDEX.md)** - How features use these APIs
+- **[Database Schema](../setup/database-security.md)** - Database structure and security
+
+---
+
+**Last Updated**: October 2025  
+**Questions?** Check [Documentation Hub](../README.md) for more resources

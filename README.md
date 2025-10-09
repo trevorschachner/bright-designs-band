@@ -79,4 +79,25 @@ The project follows a feature-centric architecture, organized to keep related lo
 
 *   **/supabase**: Contains Supabase-specific database migrations and configuration.
 
-*   **/docs**: Project documentation, including setup guides and feature explanations.
+*   **/docs**: Comprehensive project documentation - **[Start Here](./docs/README.md)**
+    *   **/docs/GETTING_STARTED.md**: Quick start guide for new developers
+    *   **/docs/SYSTEMS_OVERVIEW.md**: Complete technology stack and architecture reference
+    *   **/docs/features**: In-depth feature documentation
+    *   **/docs/setup**: Configuration and deployment guides
+
+## 📚 Documentation
+
+**Complete documentation for the entire project:**
+
+- **[Documentation Hub](./docs/README.md)** - Start here for navigation to all docs
+- **[Getting Started](./docs/GETTING_STARTED.md)** - Set up your development environment (15 min)
+- **[Systems Overview](./docs/SYSTEMS_OVERVIEW.md)** - Understand all technologies and architecture
+- **[Developer Onboarding](./docs/DEVELOPER_ONBOARDING.md)** - Learn coding patterns and standards
+
+**Quick Links:**
+- [API Documentation](./docs/api/API_INDEX.md)
+- [Component Library](./docs/components/COMPONENT_INDEX.md)
+- [Feature Guides](./docs/features/FEATURE_INDEX.md)
+- [Setup & Deployment](./docs/setup/)
+
+All documentation is designed to help team members work independently without the original developer.

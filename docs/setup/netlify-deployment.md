@@ -43,7 +43,7 @@ All deployments require the following environment variables. See `.env.example` 
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | From Supabase dashboard |
 | `EMAIL_SERVICE` | Email service to use | `resend` |
 | `RESEND_API_KEY` | Resend email API key | From Resend dashboard |
-| `EMAIL_FROM` | Email sender address | `noreply@brightdesigns.band` |
+| `EMAIL_FROM` | Email sender address | `hello@transactional.brightdesigns.band` |
 | `ADMIN_EMAIL` | Admin notification email | Your email address |
 
 ### Optional Variables
@@ -88,7 +88,7 @@ NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-key>
 EMAIL_SERVICE=resend
 RESEND_API_KEY=<your-resend-key>
-EMAIL_FROM=noreply@brightdesigns.band
+EMAIL_FROM=hello@transactional.brightdesigns.band
 ADMIN_EMAIL=<your-admin-email>
 NEXT_PUBLIC_GA_MEASUREMENT_ID=<your-ga-id>
 ```
@@ -265,7 +265,7 @@ If the build fails with "Secrets scanning found secrets in build":
 
 1. Verify `RESEND_API_KEY` is set correctly
 2. Check Resend dashboard for logs
-3. Verify `EMAIL_FROM` domain is verified in Resend
+3. Verify `EMAIL_FROM` domain is verified in Resend (should be `transactional.brightdesigns.band`)
 4. Check spam folder for test emails
 
 ### Supabase Connection Issues

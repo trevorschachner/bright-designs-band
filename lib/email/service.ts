@@ -30,7 +30,7 @@ async function sendWithResend(data: EmailNotificationData): Promise<EmailService
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'noreply@brightdesigns.band',
+        from: process.env.EMAIL_FROM || 'hello@transactional.brightdesigns.band',
         to: Array.isArray(data.to) ? data.to : [data.to],
         subject: data.subject,
         html: data.html,
@@ -77,7 +77,7 @@ async function sendWithNodemailer(data: EmailNotificationData): Promise<EmailSer
     });
 
     const result = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || 'noreply@brightdesigns.band',
+      from: process.env.EMAIL_FROM || 'hello@transactional.brightdesigns.band',
       to: Array.isArray(data.to) ? data.to.join(', ') : data.to,
       subject: data.subject,
       html: data.html,

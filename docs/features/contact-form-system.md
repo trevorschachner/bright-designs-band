@@ -48,7 +48,7 @@ pnpm db:migrate
 ```bash
 EMAIL_SERVICE="resend"
 RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-EMAIL_FROM="hello@brightdesigns.band"
+EMAIL_FROM="hello@transactional.brightdesigns.band"
 ```
 
 #### Option B: Gmail SMTP

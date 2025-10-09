@@ -1,6 +1,8 @@
-# Component Documentation
+# Component Documentation Index
 
-This directory contains documentation for all reusable UI components.
+**Complete library of reusable UI components, patterns, and design system guidelines.**
+
+[← Back to Documentation Hub](../README.md) | [Systems Overview](../SYSTEMS_OVERVIEW.md)
 
 ## Component Categories
 
@@ -125,4 +127,35 @@ Following Tailwind's spacing scale (4px base unit).
 
 ---
 
-**Last Updated**: December 2024
+## Import Pattern
+
+**Always use the component index for imports:**
+
+```tsx
+// ✅ Correct - Use component index
+import { Button, Card, ShowCard, InquiryForm } from '@/components'
+
+// ❌ Avoid - Direct imports
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+```
+
+This provides:
+- Single import location
+- Better tree-shaking
+- Easier refactoring
+- Consistent patterns
+
+---
+
+## Related Documentation
+
+- **[Developer Onboarding](../DEVELOPER_ONBOARDING.md)** - Component patterns and best practices
+- **[Systems Overview](../SYSTEMS_OVERVIEW.md)** - UI framework and design system details
+- **[Getting Started](../GETTING_STARTED.md)** - Set up your environment for development
+- **[Theme System](../features/theme-system.md)** - Dark/light mode theming
+
+---
+
+**Last Updated**: October 2025  
+**Questions?** Check [Documentation Hub](../README.md) for more resources

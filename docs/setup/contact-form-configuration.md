@@ -24,7 +24,7 @@ SMTP_PORT="587"
 SMTP_SECURE="false"
 SMTP_USER="your-username"
 SMTP_PASS="your-password"
-EMAIL_FROM="hello@brightdesigns.band"
+EMAIL_FROM="hello@transactional.brightdesigns.band"
 ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band,admin@brightdesigns.band"
 ```
 
@@ -46,7 +46,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 # Option 1: Resend (Recommended)
 EMAIL_SERVICE="resend"
 RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-EMAIL_FROM="hello@brightdesigns.band"
+EMAIL_FROM="hello@transactional.brightdesigns.band"
 
 # Option 2: Gmail
 # EMAIL_SERVICE="gmail"
@@ -60,7 +60,7 @@ EMAIL_FROM="hello@brightdesigns.band"
 # SMTP_SECURE="false"
 # SMTP_USER="your-smtp-username"
 # SMTP_PASS="your-smtp-password"
-# EMAIL_FROM="hello@brightdesigns.band"
+# EMAIL_FROM="hello@transactional.brightdesigns.band"
 
 # ===== CONTACT FORM SETTINGS =====
 # Who receives the contact form notifications (comma-separated)
