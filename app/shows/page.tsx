@@ -45,6 +45,7 @@ export default function ShowsPage() {
         CardComponent={ShowCard}
         ListComponent={ShowListView}
         viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
         useSidebar={true}
       />
     </div>

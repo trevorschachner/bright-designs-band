@@ -1,9 +1,10 @@
 import { db } from '@/lib/database';
-import { arrangements, files } from '@/lib/database/schema';
+import { arrangements, files, showArrangements } from '@/lib/database/schema';
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
@@ -22,12 +23,12 @@ export async function GET(request: Request) {
     // Add WHERE conditions
     const whereConditions = [];
     
-    // Add search condition (support title/type and related show title/year)
+    // Add search condition (support name/title and composer)
     if (filterState.search) {
       const searchCondition = QueryBuilder.buildSearchCondition(
         arrangements,
         filterState.search,
-        ['title', 'type']
+        ['name', 'title', 'composer']
       );
       if (searchCondition) {
         whereConditions.push(searchCondition);
@@ -68,7 +69,7 @@ export async function GET(request: Request) {
     const query = queryBuilder.limit(limit).offset(offset);
     const countQuery = countQueryBuilder;
 
-    // Execute count query and optimized single query with relations (fixes N+1 problem)
+    // Execute count query and optimized single query with public files relation (audio/sample score)
     const [totalResult, arrangementsWithRelations] = await Promise.all([
       countQuery,
       db.query.arrangements.findMany({
@@ -79,7 +80,6 @@ export async function GET(request: Request) {
           ? QueryBuilder.buildOrderByClause(arrangements, filterState.sort)
           : [arrangements.title],
         with: {
-          show: true,
           files: {
             where: (files, { eq }) => eq(files.isPublic, true),
             orderBy: [files.displayOrder, files.createdAt],
@@ -115,19 +115,38 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  // Default displayOrder to max+1 per show when not provided
   const { showId, displayOrder, ...rest } = body as any;
-  let finalOrder = displayOrder;
-  if (typeof finalOrder !== 'number') {
-    const existing = await db.query.arrangements.findMany({
-      where: (arrangements, { eq }) => eq(arrangements.showId, Number(showId)),
-      orderBy: [arrangements.displayOrder],
-      columns: { displayOrder: true },
-      limit: 1,
-    });
-    finalOrder = (existing[0]?.displayOrder ?? 0) + 1;
+  if (!showId) {
+    return NextResponse.json({ error: 'showId is required' }, { status: 400 });
   }
 
-  const newArrangement = await db.insert(arrangements).values({ showId: Number(showId), displayOrder: finalOrder, ...rest }).returning();
-  return NextResponse.json(newArrangement);
+  // Compute order index from join table (max + 1)
+  let finalOrder: number;
+  if (typeof displayOrder === 'number') {
+    finalOrder = displayOrder;
+  } else {
+    const existing = await db
+      .select({ orderIndex: showArrangements.orderIndex })
+      .from(showArrangements)
+      .where(eq(showArrangements.showId, Number(showId)))
+      .orderBy(desc(showArrangements.orderIndex))
+      .limit(1);
+    finalOrder = ((existing[0]?.orderIndex as number | undefined) ?? -1) + 1;
+  }
+
+  // Create arrangement (no direct FK on arrangements table anymore)
+  const inserted = await db.insert(arrangements).values({ ...rest }).returning({ id: arrangements.id });
+  const newId = inserted[0]?.id;
+  if (!newId) {
+    return NextResponse.json({ error: 'Failed to create arrangement' }, { status: 500 });
+  }
+
+  // Link to show via join table with computed order
+  await db.insert(showArrangements).values({
+    showId: Number(showId),
+    arrangementId: newId,
+    orderIndex: finalOrder,
+  });
+
+  return NextResponse.json({ id: newId, showId: Number(showId), orderIndex: finalOrder });
 }

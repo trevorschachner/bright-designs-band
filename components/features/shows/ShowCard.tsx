@@ -16,6 +16,15 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
     return <ShowCardSkeleton />;
   }
 
+  const displayDifficulty = (() => {
+    const value = String(show.difficulty || '').toLowerCase();
+    if (value === '1_2') return 'Beginner';
+    if (value === '3_4') return 'Intermediate';
+    if (value === '5_plus' || value === '5+'){ return 'Advanced'; }
+    if (!value) return 'Not specified';
+    return show.difficulty as unknown as string;
+  })();
+
   return (
     <Card className="frame-card group">
       <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient">
@@ -49,7 +58,7 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
         <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
           <span className="flex items-center">
             <Users className="w-4 h-4 mr-1" />
-            {show.difficulty || 'Not specified'}
+            {displayDifficulty}
           </span>
           <span>{show.duration || 'TBD'}</span>
         </div>

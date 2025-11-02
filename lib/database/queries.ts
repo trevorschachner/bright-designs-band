@@ -1,7 +1,7 @@
 // Database query functions - proper way to use Drizzle
 import { db } from './index';
-import { shows, arrangements, files, tags, contactSubmissions } from './schema';
-import { eq, desc, and, or, ilike, count } from 'drizzle-orm';
+import { shows, arrangements, files, tags, contactSubmissions, showArrangements } from './schema';
+import { eq, desc, and, or, ilike, count, innerJoin } from 'drizzle-orm';
 
 // =======================================
 // SHOWS QUERIES
@@ -44,12 +44,13 @@ export async function getShowsWithFilters(filters: {
     }
 
     if (filters.year) {
-      conditions.push(eq(shows.year, filters.year));
+      conditions.push(eq(shows.year as any, Number(filters.year) as any));
     }
 
     if (filters.searchTerm) {
       conditions.push(
         or(
+          ilike(shows.name, `%${filters.searchTerm}%`),
           ilike(shows.title, `%${filters.searchTerm}%`),
           ilike(shows.description, `%${filters.searchTerm}%`),
           ilike(shows.composer, `%${filters.searchTerm}%`)
@@ -81,10 +82,27 @@ export async function getShowsWithFilters(filters: {
 
 export async function getArrangementsByShowId(showId: number) {
   try {
-    return await db
-      .select()
-      .from(arrangements)
-      .where(eq(arrangements.showId, showId));
+    const result = await db
+      .select({
+        id: arrangements.id,
+        composer: arrangements.composer,
+        grade: arrangements.grade,
+        year: arrangements.year,
+        durationSeconds: arrangements.durationSeconds,
+        description: arrangements.description,
+        percussionArranger: arrangements.percussionArranger,
+        copyrightAmountUsd: arrangements.copyrightAmountUsd,
+        ensembleSize: arrangements.ensembleSize,
+        youtubeUrl: arrangements.youtubeUrl,
+        commissioned: arrangements.commissioned,
+        sampleScoreUrl: arrangements.sampleScoreUrl,
+        orderIndex: showArrangements.orderIndex,
+      })
+      .from(showArrangements)
+      .innerJoin(arrangements, eq(showArrangements.arrangementId, arrangements.id))
+      .where(eq(showArrangements.showId, showId))
+      .orderBy(showArrangements.orderIndex);
+    return result;
   } catch (error) {
     console.error('Error fetching arrangements:', error);
     throw error;

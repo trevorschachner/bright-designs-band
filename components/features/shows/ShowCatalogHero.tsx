@@ -1,8 +1,6 @@
 'use client';
 
-import { Grid, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// View toggle controls have moved into the results table toolbar
 
 interface ShowCatalogHeroProps {
   viewMode: 'grid' | 'list';
@@ -11,9 +9,9 @@ interface ShowCatalogHeroProps {
 }
 
 export function ShowCatalogHero({ 
-  viewMode, 
-  onViewModeChange,
-  totalShows 
+  viewMode: _viewMode, 
+  onViewModeChange: _onViewModeChange,
+  totalShows: _totalShows 
 }: ShowCatalogHeroProps) {
   return (
     <section className="relative bg-gradient-to-br from-primary/10 via-background to-primary/5 border-b border-border">
@@ -29,40 +27,8 @@ export function ShowCatalogHero({
             Explore our collection of championship-caliber marching band shows designed for competitive success
           </p>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-4 justify-center items-center mb-8">
-            <Badge variant="secondary" className="text-sm px-4 py-2">
-              {totalShows ? `${totalShows}+` : '50+'} Championship Shows
-            </Badge>
-            <Badge variant="secondary" className="text-sm px-4 py-2">
-              Multiple Difficulty Levels
-            </Badge>
-            <Badge variant="secondary" className="text-sm px-4 py-2">
-              Award-Winning Designs
-            </Badge>
-          </div>
 
-          {/* View Toggle */}
-          <div className="flex justify-center gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onViewModeChange('grid')}
-              className="flex items-center gap-2"
-            >
-              <Grid className="w-4 h-4" />
-              Grid View
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onViewModeChange('list')}
-              className="flex items-center gap-2"
-            >
-              <List className="w-4 h-4" />
-              List View
-            </Button>
-          </div>
+          {/* View toggle removed from hero; now rendered in table toolbar */}
         </div>
       </div>
     </section>

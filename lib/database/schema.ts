@@ -1,36 +1,59 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-export const difficultyEnum = pgEnum('difficulty', ['Beginner', 'Intermediate', 'Advanced']);
+// Enums
+export const gradeBandEnum = pgEnum('grade_band', ['1_2', '3_4', '5_plus']);
+export const showDifficultyEnum = pgEnum('difficulty', ['Beginner', 'Intermediate', 'Advanced']);
+export const ensembleSizeEnum = pgEnum('ensemble_size', ['small', 'medium', 'large']);
 export const fileTypeEnum = pgEnum('file_type', ['image', 'audio', 'youtube', 'pdf', 'score', 'other']);
 
+// Shows
 export const shows = pgTable('shows', {
   id: serial('id').primaryKey(),
-  title: text('title').notNull(),
-  year: integer('year'),
-  difficulty: difficultyEnum('difficulty'),
-  duration: text('duration'),
+  name: text('name').notNull(),
   description: text('description'),
+  lengthSeconds: integer('length_seconds'),
+  difficulty: showDifficultyEnum('difficulty'),
+  graphicUrl: text('graphic_url'),
+  youtubeUrl: text('youtube_url'),
+  year: smallint('year'),
+  commissioned: text('commissioned'),
+  programCoordinator: text('program_coordinator'),
+  percussionArranger: text('percussion_arranger'),
+  soundDesigner: text('sound_designer'),
+  windArranger: text('wind_arranger'),
+  drillWriter: text('drill_writer'),
+  // Legacy fields retained for backward compatibility/search; consider deprecating
+  title: text('title'),
+  duration: text('duration'),
   price: numeric('price', { precision: 10, scale: 2 }),
   thumbnailUrl: text('thumbnail_url'),
   videoUrl: text('video_url'),
-  composer: text('composer'), // For enhanced search capabilities
-  songTitle: text('song_title'), // Original song title for search
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Arrangements
 export const arrangements = pgTable('arrangements', {
   id: serial('id').primaryKey(),
-  title: text('title').notNull(),
+  composer: text('composer'),
+  grade: gradeBandEnum('grade'),
+  year: smallint('year'),
+  durationSeconds: integer('duration_seconds'),
+  description: text('description'),
+  percussionArranger: text('percussion_arranger'),
+  copyrightAmountUsd: numeric('copyright_amount_usd', { precision: 10, scale: 2 }),
+  ensembleSize: ensembleSizeEnum('ensemble_size'),
+  youtubeUrl: text('youtube_url'),
+  commissioned: text('commissioned'),
+  sampleScoreUrl: text('sample_score_url'),
+  // Legacy fields retained temporarily
+  title: text('title'),
   type: text('type'),
-  price: numeric('price', { precision: 10, scale: 2 }),
   displayOrder: integer('display_order').default(0).notNull(),
-  showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
-}, (table) => ({
-  showIdIdx: index('arrangements_show_id_idx').on(table.showId),
-}));
+});
 
+// Files (unchanged)
 export const files = pgTable('files', {
   id: serial('id').primaryKey(),
   fileName: text('file_name').notNull(),
@@ -64,20 +87,28 @@ export const showsToTags = pgTable('shows_to_tags', {
   pk: primaryKey({ columns: [table.showId, table.tagId] }),
 }));
 
+// Show ↔ Arrangements (ordered join)
+export const showArrangements = pgTable('show_arrangements', {
+  showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
+  arrangementId: integer('arrangement_id').references(() => arrangements.id, { onDelete: 'cascade' }).notNull(),
+  orderIndex: smallint('order_index').notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.showId, table.arrangementId] }),
+  idxShow: index('show_arrangements_show_idx').on(table.showId),
+  idxArrangement: index('show_arrangements_arr_idx').on(table.arrangementId),
+}));
+
 // Relations
 
 export const showsRelations = relations(shows, ({ many }) => ({
-  arrangements: many(arrangements),
   showsToTags: many(showsToTags),
   files: many(files),
+  showArrangements: many(showArrangements),
 }));
 
-export const arrangementsRelations = relations(arrangements, ({ one, many }) => ({
-  show: one(shows, {
-    fields: [arrangements.showId],
-    references: [shows.id],
-  }),
+export const arrangementsRelations = relations(arrangements, ({ many }) => ({
   files: many(files),
+  showArrangements: many(showArrangements),
 }));
 
 export const filesRelations = relations(files, ({ one }) => ({
@@ -103,6 +134,17 @@ export const showsToTagsRelations = relations(showsToTags, ({ one }) => ({
   tag: one(tags, {
     fields: [showsToTags.tagId],
     references: [tags.id],
+  }),
+}));
+
+export const showArrangementsRelations = relations(showArrangements, ({ one }) => ({
+  show: one(shows, {
+    fields: [showArrangements.showId],
+    references: [shows.id],
+  }),
+  arrangement: one(arrangements, {
+    fields: [showArrangements.arrangementId],
+    references: [arrangements.id],
   }),
 }));
 

@@ -7,7 +7,7 @@ import { Pagination } from "@/components/features/filters/pagination";
 import { useFilterState } from "@/lib/hooks/use-filter-state";
 import { FilteredResponse, FilterField, FilterPreset } from "@/lib/filters/types";
 import { Button } from "@/components/ui/button";
-import { Loader, Users } from "lucide-react";
+import { Loader, Users, Grid, List } from "lucide-react";
 
 interface ResourcePageProps<T> {
   resourceName: string;
@@ -18,6 +18,7 @@ interface ResourcePageProps<T> {
   ListComponent?: ComponentType<{ item: T; isLoading?: boolean }>;
   initialLimit?: number;
   viewMode?: 'grid' | 'list';
+  onViewModeChange?: (mode: 'grid' | 'list') => void;
   useSidebar?: boolean;
 }
 
@@ -38,6 +39,7 @@ export default function ResourcePage<T>({
   ListComponent,
   initialLimit = 12,
   viewMode = 'grid',
+  onViewModeChange,
   useSidebar = false,
 }: ResourcePageProps<T>) {
   const { filterState, setFilterState } = useFilterState({
@@ -152,6 +154,28 @@ export default function ResourcePage<T>({
 
             {response && (
               <>
+                {/* Compact view toggle */}
+                <div className="flex items-center justify-end mb-4">
+                  <div className="inline-flex items-center gap-1">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => onViewModeChange && onViewModeChange('grid')}
+                    >
+                      <Grid className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => onViewModeChange && onViewModeChange('list')}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
                     {items.map((item: T, index: number) => (

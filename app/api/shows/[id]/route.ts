@@ -1,5 +1,5 @@
 import { db } from '@/lib/database';
-import { shows, showsToTags } from '@/lib/database/schema';
+import { shows, showsToTags, showArrangements } from '@/lib/database/schema';
 import { createClient } from '@/lib/utils/supabase/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -14,15 +14,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           tag: true,
         },
       },
-      arrangements: {
-        orderBy: [
-          { asc: (arrangements) => arrangements.displayOrder },
-          { asc: (arrangements) => arrangements.title },
-        ] as any
+      showArrangements: {
+        orderBy: [showArrangements.orderIndex],
+        with: {
+          arrangement: true,
+        },
       },
     },
   });
-  return NextResponse.json(show);
+  if (!show) return NextResponse.json(null);
+
+  const { showArrangements: sa = [], ...rest } = show as any;
+  const normalized = {
+    ...rest,
+    arrangements: (sa as any[]).map((item) => item.arrangement).filter(Boolean),
+  };
+  return NextResponse.json(normalized);
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {

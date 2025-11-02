@@ -26,7 +26,7 @@ export default function EditShowPage({ params }: PageProps) {
   const [tags, setTags] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [arrangements, setArrangements] = useState<any[]>([]);
-  const [newArrangement, setNewArrangement] = useState({ title: '', type: '', price: '', displayOrder: '' });
+  const [newArrangement, setNewArrangement] = useState({ title: '', type: '', displayOrder: '' });
 
   useEffect(() => {
     if (id) {
@@ -57,7 +57,7 @@ export default function EditShowPage({ params }: PageProps) {
       body: JSON.stringify({ ...newArrangement, displayOrder: newArrangement.displayOrder ? Number(newArrangement.displayOrder) : undefined, showId: id }),
     });
     if (response.ok) {
-      setNewArrangement({ title: '', type: '', price: '', displayOrder: '' });
+      setNewArrangement({ title: '', type: '', displayOrder: '' });
       fetch(`/api/shows/${id}`)
         .then(res => res.json())
         .then(data => setArrangements(data.arrangements));
@@ -146,10 +146,7 @@ export default function EditShowPage({ params }: PageProps) {
             <label className="block mb-2" htmlFor="arrangementType">Type</label>
             <input className="w-full p-2 border rounded" type="text" id="arrangementType" value={newArrangement.type} onChange={(e) => setNewArrangement({ ...newArrangement, type: e.target.value })} />
           </div>
-          <div className="mb-4">
-            <label className="block mb-2" htmlFor="arrangementPrice">Price</label>
-            <input className="w-full p-2 border rounded" type="text" id="arrangementPrice" value={newArrangement.price} onChange={(e) => setNewArrangement({ ...newArrangement, price: e.target.value })} />
-          </div>
+          
           <div className="mb-4">
             <label className="block mb-2" htmlFor="arrangementOrder">Order in Show</label>
             <input className="w-full p-2 border rounded" type="number" id="arrangementOrder" value={newArrangement.displayOrder} onChange={(e) => setNewArrangement({ ...newArrangement, displayOrder: e.target.value })} />
@@ -162,7 +159,6 @@ export default function EditShowPage({ params }: PageProps) {
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Price</TableHead>
                 <TableHead>Order</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -172,7 +168,6 @@ export default function EditShowPage({ params }: PageProps) {
                 <TableRow key={arrangement.id}>
                   <TableCell>{arrangement.title}</TableCell>
                   <TableCell>{arrangement.type}</TableCell>
-                  <TableCell>{arrangement.price}</TableCell>
                   <TableCell>{arrangement.displayOrder}</TableCell>
                   <TableCell>
                     <Button variant="destructive" size="sm">Delete</Button>

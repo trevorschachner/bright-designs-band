@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, Users, Music, DollarSign } from "lucide-react";
+import { Play, Users, DollarSign } from "lucide-react";
 import { Show } from "@/lib/types/shows";
 
 interface ShowListViewProps {
@@ -15,6 +15,15 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
   if (isLoading) {
     return <ShowListViewSkeleton />;
   }
+
+  const displayDifficulty = (() => {
+    const value = String(show.difficulty || '').toLowerCase();
+    if (value === '1_2') return 'Beginner';
+    if (value === '3_4') return 'Intermediate';
+    if (value === '5_plus' || value === '5+') { return 'Advanced'; }
+    if (!value) return 'Not specified';
+    return show.difficulty as unknown as string;
+  })();
 
   return (
     <Card className="frame-card group overflow-hidden">
@@ -51,7 +60,7 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
                   </Badge>
                   <span className="flex items-center">
                     <Users className="w-3 h-3 mr-1" />
-                    {show.difficulty || 'Not specified'}
+                    {displayDifficulty}
                   </span>
                   <span>•</span>
                   <span>{show.duration || 'TBD'}</span>
@@ -66,24 +75,6 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
 
             {/* Details Grid */}
             <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-              {show.composer && (
-                <div className="flex items-start gap-2">
-                  <Music className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Composer</div>
-                    <div className="font-medium">{show.composer}</div>
-                  </div>
-                </div>
-              )}
-              {show.songTitle && (
-                <div className="flex items-start gap-2">
-                  <Music className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Song Title</div>
-                    <div className="font-medium">{show.songTitle}</div>
-                  </div>
-                </div>
-              )}
               {show.price !== undefined && (
                 <div className="flex items-start gap-2">
                   <DollarSign className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -95,7 +86,6 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
               )}
               {show.arrangements && show.arrangements.length > 0 && (
                 <div className="flex items-start gap-2">
-                  <Music className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="text-xs text-muted-foreground">Arrangements</div>
                     <div className="font-medium">

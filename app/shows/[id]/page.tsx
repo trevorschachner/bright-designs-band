@@ -17,6 +17,7 @@ import { Clock, Users, Download, Play, Pause, Calendar, Music, Music2, Target, A
 import Image from 'next/image'
 import Link from 'next/link'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
+import { getArrangementsByShowId, getFilesByArrangementId } from '@/lib/database/queries'
 import { YouTubePlayer } from '@/components/features/youtube-player'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
 // TODO: Uncomment when Show Plan is production ready
@@ -33,7 +34,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
           tag: true,
         },
       },
-      arrangements: true,
+      // showArrangements available via helper query below
     },
   });
 
@@ -41,58 +42,38 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
     return <div>Show not found</div>;
   }
 
-  // Mock data with integrated audio URLs
-  const mockData = {
-    arrangements: [
-      {
-        id: 1,
-        title: "Stellar Awakening",
-        movement: "Opening",
-        duration: "2:45",
-        description: "A powerful opening that sets the cosmic theme with ethereal soundscapes.",
-        key: "Bb Major",
-        tempo: "120 BPM",
-        instrumentation: "Brass, Woodwinds, Percussion, Electronics",
-        price: 450,
-        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3"
-      },
-      {
-        id: 2,
-        title: "Nebula Dance",
-        movement: "First Movement",
-        duration: "3:20",
-        description: "Energetic and colorful, representing the swirling gases of distant nebulae.",
-        key: "F Major",
-        tempo: "140 BPM",
-        instrumentation: "Full Band, Synthesizer, Mallet Percussion",
-        price: 520,
-        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-03.mp3"
-      },
-      {
-        id: 3,
-        title: "Black Hole",
-        movement: "Second Movement",
-        duration: "2:50",
-        description: "A dramatic piece that builds from mysterious to intense, representing gravitational pull.",
-        key: "D Minor",
-        tempo: "90-160 BPM",
-        instrumentation: "Low Brass, Timpani, Electronics, Full Ensemble",
-        price: 480,
-        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-02.mp3"
-      },
-      {
-        id: 4,
-        title: "Galactic Finale",
-        movement: "Closer",
-        duration: "2:35",
-        description: "An explosive finale that brings all themes together in cosmic harmony.",
-        key: "Bb Major",
-        tempo: "150 BPM",
-        instrumentation: "Full Band, Auxiliary Percussion, Electronics",
-        price: 550,
-        audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3"
+  const displayDifficulty = (() => {
+    const value = String(show.difficulty || '').toLowerCase();
+    if (value === '1_2') return 'Beginner';
+    if (value === '3_4') return 'Intermediate';
+    if (value === '5_plus' || value === '5+') { return 'Advanced'; }
+    return String(show.difficulty || '');
+  })();
+
+  // Load ordered arrangements and attach preview audio where available
+  const rawArrangements = await getArrangementsByShowId(showId)
+  const arrangements = await Promise.all(
+    rawArrangements.map(async (a: any) => {
+      const files = await getFilesByArrangementId(a.id)
+      const audio = Array.isArray(files) ? files.find((f: any) => f.fileType === 'audio' && f.isPublic) : undefined
+      return {
+        id: a.id,
+        title: a.title,
+        description: a.description || '',
+        composer: a.composer || null,
+        durationSeconds: a.durationSeconds || null,
+        orderIndex: a.orderIndex ?? 0,
+        sampleScoreUrl: a.sampleScoreUrl || null,
+        audioUrl: audio?.url || null,
       }
-    ]
+    })
+  )
+
+  const formatSeconds = (total?: number | null) => {
+    if (!total || total < 0) return '—'
+    const m = Math.floor(total / 60)
+    const s = total % 60
+    return `${m}:${String(s).padStart(2, '0')}`
   }
 
   return (
@@ -124,7 +105,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
         {/* Show Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Left side - Video or Image */}
-          <div className="relative">
+          <div className="relative" id="listen">
             {show.videoUrl ? (
               <YouTubePlayer youtubeUrl={show.videoUrl} />
             ) : (
@@ -144,10 +125,10 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
           <div>
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="outline" className="text-sm">{show.year}</Badge>
-              <Badge variant="secondary" className="text-sm">{show.difficulty}</Badge>
+              <Badge variant="secondary" className="text-sm">{displayDifficulty}</Badge>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{show.title}</h1>
+            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{String(show.name || show.title || '')}</h1>
             <p className="text-lg text-muted-foreground mb-6">{show.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -157,12 +138,12 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
               </div>
               <div className="flex items-center">
                 <Users className="w-4 h-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{mockData.arrangements.length} Arrangements</span>
+                <span className="text-sm">{arrangements.length} Arrangements</span>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-6">
-              {show.showsToTags.map((relation) => (
+              {show.showsToTags?.map((relation: any) => (
                 <Badge key={relation.tag.id} variant="outline" className="text-xs">
                   {relation.tag.name}
                 </Badge>
@@ -170,11 +151,17 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             <div className="flex flex-col gap-3">
-              <CheckAvailabilityModal showTitle={show.title} />
+              <Button className="btn-primary w-full" asChild>
+                <Link href="#listen">
+                  <Play className="w-4 h-4 mr-2" />
+                  Listen Now
+                </Link>
+              </Button>
               <Button variant="outline" className="w-full">
                 <Download className="w-4 h-4 mr-2" />
                 Download Sample Materials
               </Button>
+              <CheckAvailabilityModal showTitle={String(show.name || show.title || '')} />
             </div>
           </div>
         </div>
@@ -184,11 +171,11 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-foreground font-primary">Show Arrangements</h2>
             <Badge variant="secondary" className="text-sm">
-              {mockData.arrangements.length} Movements
+              {arrangements.length} Movements
             </Badge>
           </div>
           
-          {mockData.arrangements.map((arrangement, index) => (
+          {arrangements.map((arrangement, index) => (
             <Card key={arrangement.id} className="frame-card overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 border-l-bright-primary/50 hover:border-l-bright-primary">
               <CardContent className="p-0">
                 {/* Header with gradient accent */}
@@ -201,9 +188,14 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                       <h3 className="text-2xl font-bold text-foreground group-hover:text-bright-primary transition-colors">
                         {arrangement.title}
                       </h3>
-                      <p className="text-bright-primary font-medium flex items-center gap-2">
-                        <Music2 className="w-4 h-4" />
-                        {arrangement.movement} • {arrangement.duration}
+                      <p className="text-muted-foreground flex items-center gap-2">
+                        {arrangement.composer ? (
+                          <>
+                            <Music2 className="w-4 h-4" />
+                            <span>Composer: {arrangement.composer}</span>
+                          </>
+                        ) : null}
+                        <span className="ml-2 text-bright-primary">{formatSeconds(arrangement.durationSeconds)}</span>
                       </p>
                     </div>
                   </div>
@@ -212,68 +204,39 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                   </p>
                 </div>
 
-                {/* Details Grid */}
-                <div className="px-6 py-4 bg-muted/20">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-bright-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Music className="w-4 h-4 text-bright-primary" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wider">Key</div>
-                        <div className="font-semibold text-foreground">{arrangement.key}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-bright-third/10 flex items-center justify-center flex-shrink-0">
-                        <Clock className="w-4 h-4 text-bright-third" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wider">Tempo</div>
-                        <div className="font-semibold text-foreground">{arrangement.tempo}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Users className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wider">Instrumentation</div>
-                        <div className="font-semibold text-foreground text-xs leading-tight">{arrangement.instrumentation}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* Meta removed (instrumentation/tempo/key) per spec */}
 
                 {/* Audio Player */}
-                <div className="px-6 py-4 bg-card border-t">
+                <div className="px-6 py-4 bg-card border-t" id={index === 0 ? 'listen' : undefined}>
                   <div className="flex items-center gap-3 mb-2">
                     <Play className="w-4 h-4 text-bright-primary" />
                     <span className="text-sm font-medium text-muted-foreground">Audio Preview</span>
                   </div>
-                  <audio 
-                    controls 
-                    className="w-full h-10 rounded-lg"
-                    preload="metadata"
-                  >
-                    <source src={arrangement.audioUrl} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
+                  {arrangement.audioUrl ? (
+                    <audio 
+                      controls 
+                      className="w-full h-10 rounded-lg"
+                      preload="metadata"
+                    >
+                      <source src={arrangement.audioUrl} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No audio preview available.</div>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
                 <div className="px-6 py-5 bg-muted/10 border-t">
                   <div className="flex flex-wrap gap-3">
-                    <Button variant="default" size="default" className="btn-primary flex-1 sm:flex-none" asChild>
-                      <Link href={`/arrangements/${arrangement.id}`}>
-                        <FileText className="w-4 h-4 mr-2" />
-                        View Details
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="default" className="flex-1 sm:flex-none">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Materials
-                    </Button>
+                    {arrangement.sampleScoreUrl ? (
+                      <Button variant="outline" size="default" asChild>
+                        <Link href={arrangement.sampleScoreUrl} target="_blank" rel="noopener noreferrer">
+                          <FileText className="w-4 h-4 mr-2" />
+                          Sample Score
+                        </Link>
+                      </Button>
+                    ) : null}
                     {/* TODO: Uncomment when Show Plan is production ready */}
                     {/* <AddToPlanButton id={arrangement.id} title={arrangement.title} type="arrangement" size="default" /> */}
                   </div>

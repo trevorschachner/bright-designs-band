@@ -1,5 +1,5 @@
 import { db } from '@/lib/database';
-import { shows, showsToTags, tags, arrangements, files } from '@/lib/database/schema';
+import { shows, showsToTags, files, showArrangements } from '@/lib/database/schema';
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
@@ -35,8 +35,11 @@ export async function GET(request: Request) {
               tag: true,
             },
           },
-          arrangements: {
-            orderBy: [arrangements.displayOrder, arrangements.title],
+          showArrangements: {
+            orderBy: [showArrangements.orderIndex],
+            with: {
+              arrangement: true,
+            },
           },
           files: {
             where: (files, { eq }) => eq(files.isPublic, true),
@@ -48,8 +51,15 @@ export async function GET(request: Request) {
 
     const total = totalResult[0]?.count || 0;
 
+    // Normalize shape: expose `arrangements` array directly for consumers
+    const normalizedShows = (showsWithRelations as any[]).map((s) => {
+      const { showArrangements: sa = [], ...rest } = s as any;
+      const arrangements = (sa as any[]).map((item) => item.arrangement).filter(Boolean);
+      return { ...rest, arrangements };
+    });
+
     const response = QueryBuilder.buildFilteredResponse(
-      showsWithRelations,
+      normalizedShows,
       total,
       filterState
     );

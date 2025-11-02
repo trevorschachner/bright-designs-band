@@ -95,6 +95,7 @@ export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 // ============================================================================
 export { SiteHeader } from './layout/site-header'
 export { SiteFooter } from './layout/site-footer'
+export { PageHero } from './layout/page-hero'
 
 // ============================================================================
 // FEATURE COMPONENTS
@@ -119,15 +120,16 @@ export { FilterForm } from './features/filters/filter-form'
 export { Pagination } from './features/filters/pagination'
 
 // Navigation
-export { MainNav } from './features/main-nav'
+// Consolidated on SiteHeader via config/site.ts
 
 // Content
 export { WhatIsIncluded } from './features/what-is-included'
-export { Testimonials } from './features/testimonials'
-export { MarchingFormation } from './features/marching-formation'
+export { default as Testimonials } from './features/testimonials'
+export { default as MarchingFormation } from './features/marching-formation'
+export { ServicesGrid } from './features/services/services-grid'
 
 // Admin
-export { AdminTable } from './features/admin/AdminTable'
+export { default as AdminTable } from './features/admin/AdminTable'
 
 // SEO
 export { JsonLd } from './features/seo/JsonLd'
@@ -135,7 +137,7 @@ export { GoogleAnalytics } from './features/seo/GoogleAnalytics'
 export { SEOHead } from './features/seo/SEOHead'
 
 // Resource Management
-export { ResourcePage } from './features/resources/ResourcePage'
+export { default as ResourcePage } from './features/resources/ResourcePage'
 
 // ============================================================================
 // FORM COMPONENTS

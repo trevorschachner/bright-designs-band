@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Music, DollarSign, Users, Loader } from "lucide-react";
+import { Music, Users, Loader, Play, FileText } from "lucide-react";
 import { FilterBar } from "@/components/features/filters/filter-bar";
 import { Pagination } from "@/components/features/filters/pagination";
 import { useFilterState } from "@/lib/hooks/use-filter-state";
@@ -13,18 +13,16 @@ import { ARRANGEMENTS_FILTER_FIELDS } from "@/lib/filters/schema-analyzer";
 import { ARRANGEMENTS_PRESETS } from "@/lib/filters/presets";
 import { FilteredResponse } from "@/lib/filters/types";
 
+interface ArrangementFile { id: number; fileType: string; url: string }
 interface Arrangement {
   id: number;
-  title: string;
-  type?: string;
-  price?: string;
-  showId: number;
-  show?: {
-    id: number;
-    title: string;
-    year?: string;
-    difficulty?: string;
-  };
+  title?: string;
+  composer?: string | null;
+  sample_score_url?: string | null; // API may not camelCase
+  sampleScoreUrl?: string | null;
+  duration_seconds?: number | null;
+  durationSeconds?: number | null;
+  files?: ArrangementFile[];
 }
 
 export default function ArrangementsPage() {
@@ -144,7 +142,20 @@ export default function ArrangementsPage() {
       {arrangementsResponse && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-            {arrangementsResponse.data.map((arrangement) => (
+            {arrangementsResponse.data.map((arrangement) => {
+              const title = arrangement.title || 'Arrangement'
+              const composer = arrangement.composer
+              const duration = (arrangement.durationSeconds ?? arrangement.duration_seconds) as number | undefined
+              const files = arrangement.files || []
+              const audio = files.find(f => f.fileType === 'audio')
+              const sampleScore = (arrangement.sampleScoreUrl ?? (arrangement as any).sample_score_url) as string | undefined
+              const formatSeconds = (total?: number) => {
+                if (!total || total < 0) return '—'
+                const m = Math.floor(total / 60)
+                const s = total % 60
+                return `${m}:${String(s).padStart(2, '0')}`
+              }
+              return (
               <Card
                 key={arrangement.id}
                 className={`frame-card ${
@@ -154,62 +165,54 @@ export default function ArrangementsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <CardTitle className="text-xl font-primary flex-1">
-                      {arrangement.title}
+                      {title}
                     </CardTitle>
-                    {arrangement.type && (
-                      <Badge className="text-xs ml-2">
-                        {arrangement.type}
-                      </Badge>
-                    )}
                   </div>
-                  {arrangement.show && (
-                    <CardDescription className="text-sm">
-                      <div className="flex items-center gap-2">
-                        <Music className="w-4 h-4" />
-                        <span>From: {arrangement.show.title}</span>
-                        {arrangement.show.year && (
-                          <Badge className="text-xs">
-                            {arrangement.show.year}
-                          </Badge>
-                        )}
-                      </div>
-                      {arrangement.show.difficulty && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <Users className="w-4 h-4" />
-                          <span className="text-xs">
-                            Difficulty: {arrangement.show.difficulty}
-                          </span>
-                        </div>
-                      )}
-                    </CardDescription>
-                  )}
+                  <CardDescription className="text-sm">
+                    <div className="flex items-center gap-2">
+                      {composer ? (
+                        <>
+                          <Music className="w-4 h-4" />
+                          <span>Composer: {composer}</span>
+                        </>
+                      ) : null}
+                      <span className="ml-2 text-bright-primary">{formatSeconds(duration)}</span>
+                    </div>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {arrangement.price && (
-                    <div className="mb-4 flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-bright-third" />
-                      <span className="text-2xl font-bold text-bright-third">
-                        ${arrangement.price}
-                      </span>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+                        <Play className="w-4 h-4" />
+                        Audio Preview
+                      </div>
+                      {audio ? (
+                        <audio controls className="w-full h-10 rounded-lg" preload="metadata">
+                          <source src={audio.url} />
+                        </audio>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">No audio preview available.</div>
+                      )}
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    <Button className="btn-primary w-full" asChild>
-                      <Link href={`/arrangements/${arrangement.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                    {arrangement.show && (
-                      <Button className="w-full" asChild>
-                        <Link href={`/shows/${arrangement.show.id}`}>
-                          View Show
+                    <div className="flex flex-wrap gap-2">
+                      {sampleScore ? (
+                        <Button variant="outline" className="flex-1 sm:flex-none" asChild>
+                          <Link href={sampleScore} target="_blank" rel="noopener noreferrer">
+                            <FileText className="w-4 h-4 mr-2" /> Sample Score
+                          </Link>
+                        </Button>
+                      ) : null}
+                      <Button className="btn-primary flex-1 sm:flex-none" asChild>
+                        <Link href={`/arrangements/${arrangement.id}`}>
+                          View Details
                         </Link>
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )})}
           </div>
 
           {/* Empty State */}

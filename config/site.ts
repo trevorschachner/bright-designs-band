@@ -38,6 +38,7 @@ export const siteConfig: SiteConfig = {
   navigation: [
     { label: "Home", href: "/" },
     { label: "Shows", href: "/shows" },
+    { label: "Services", href: "/services" },
     { label: "About", href: "/about" },
   ],
   resources: [

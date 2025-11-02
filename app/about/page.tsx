@@ -1,32 +1,21 @@
 
 import { ArrowLeft, Users, Award, Target, ExternalLink } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+import PageHero from "@/components/layout/page-hero"
 import Testimonials from "@/components/features/testimonials"
+import Link from "next/link"
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center mb-6">
-          <Button className="btn-ghost" asChild>
-            <Link href="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Link>
-          </Button>
-        </div>
-
         {/* Page Header */}
-        <section className="py-16 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground font-primary">About Bright Designs</h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            For over 25 years, we&apos;ve been crafting extraordinary marching band experiences through innovative design,
-            custom arrangements, and student-centered approach to musical education.
-          </p>
-        </section>
+        <PageHero
+          title="About Bright Designs"
+          subtitle="For over 25 years, we've been crafting extraordinary marching band experiences through innovative design, custom arrangements, and a student-centered approach to musical education."
+        />
 
         {/* Mission & Values */}
         <section className="py-16">
@@ -376,6 +365,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
+
       </div>
     </div>
   )
