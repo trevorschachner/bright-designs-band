@@ -1,9 +1,9 @@
 import { db } from '@/lib/database';
-import { shows, showsToTags, files, showArrangements } from '@/lib/database/schema';
+import { shows, showsToTags, files, showArrangements, arrangements, tags } from '@/lib/database/schema';
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
-import { count } from 'drizzle-orm';
+import { count, eq, and, inArray } from 'drizzle-orm';
 import { requirePermission } from '@/lib/auth/roles';
 import { showSchema } from '@/lib/validation/shows';
 import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
@@ -17,17 +17,56 @@ export async function GET(request: Request) {
     const limit = filterState.limit || 20;
     const offset = (page - 1) * limit;
 
-    const whereClause = QueryBuilder.buildWhereClause(shows, filterState.conditions);
+    // Split conditions: base (shows table) vs derived (ensembleSize, featured)
+    const derivedFields = new Set(['ensembleSize', 'featured']);
+    const baseConditions = filterState.conditions.filter((c: any) => !derivedFields.has(String(c.field)));
+    const derivedConditions = filterState.conditions.filter((c: any) => derivedFields.has(String(c.field)));
+
+    const whereClause = QueryBuilder.buildWhereClause(shows, baseConditions);
     const orderByClause = filterState.sort.length > 0 
       ? QueryBuilder.buildOrderByClause(shows, filterState.sort)
       : [shows.createdAt];
 
+    // Handle derived filters by precomputing allowed show IDs
+    let showIdFilter: number[] | undefined;
+    for (const cond of derivedConditions) {
+      if (cond.field === 'ensembleSize' && cond.value) {
+        const size = String(cond.value);
+        const rows = await db
+          .select({ showId: showArrangements.showId })
+          .from(showArrangements)
+          .innerJoin(arrangements, eq(showArrangements.arrangementId, arrangements.id))
+          .where(eq(arrangements.ensembleSize, size as any));
+        const ids = Array.from(new Set(rows.map(r => r.showId)));
+        showIdFilter = showIdFilter ? showIdFilter.filter(id => ids.includes(id)) : ids;
+      }
+      if (cond.field === 'featured' && cond.value === true) {
+        const rows = await db
+          .select({ showId: showsToTags.showId })
+          .from(showsToTags)
+          .innerJoin(tags, eq(showsToTags.tagId, tags.id))
+          .where(eq(tags.name, 'featured'));
+        const ids = Array.from(new Set(rows.map(r => r.showId)));
+        showIdFilter = showIdFilter ? showIdFilter.filter(id => ids.includes(id)) : ids;
+      }
+    }
+
+    let computedWhere: any = whereClause as any;
+    if (Array.isArray(showIdFilter)) {
+      if (showIdFilter.length === 0) {
+        computedWhere = eq(shows.id, -1);
+      } else {
+        const idCondition = inArray(shows.id, showIdFilter);
+        computedWhere = computedWhere ? and(computedWhere, idCondition) : idCondition;
+      }
+    }
+
     const [totalResult, showsWithRelations] = await Promise.all([
-      db.select({ count: count() }).from(shows).where(whereClause),
+      db.select({ count: count() }).from(shows).where(computedWhere as any),
       db.query.shows.findMany({
         limit,
         offset,
-        where: whereClause,
+        where: computedWhere as any,
         orderBy: orderByClause,
         with: {
           showsToTags: {
@@ -99,6 +138,7 @@ export async function POST(request: Request) {
     const newShow = await db.transaction(async (tx) => {
       const [inserted] = await tx.insert(shows).values({
         ...showData,
+        name: (showData as any).name ?? (showData as any).title,
         price: showData.price?.toString()
       }).returning();
 

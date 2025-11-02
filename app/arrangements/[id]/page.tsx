@@ -1,4 +1,3 @@
-"use client"
 import { ArrowLeft, Play, Download, Clock, Music2, FileText, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -6,124 +5,69 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { AudioPlayerComponent, audioPlayerStyles } from "@/components/features/audio-player"
-import { useShowPlan } from "@/lib/hooks/use-show-plan"
+import { db } from "@/lib/database"
+import { arrangements, showArrangements, shows } from "@/lib/database/schema"
+import { eq, desc } from "drizzle-orm"
+import { getFilesByArrangementId } from "@/lib/database/queries"
 
-// Mock data for a specific arrangement
-const arrangementData = {
-  id: 1,
-  title: "Stellar Awakening",
-  composer: "Bright Designs",
-  year: "2024",
-  difficulty: "Advanced",
-  duration: "2:45",
-  key: "Bb Major",
-  tempo: "120 BPM",
-  price: "$450",
-  tags: ["Opening", "Electronic", "Space", "Ethereal"],
-  thumbnail: "/placeholder.svg?height=400&width=600",
-  description:
-    "A powerful opening that sets the cosmic theme with ethereal soundscapes. This arrangement combines traditional marching band instrumentation with electronic elements to create an otherworldly atmosphere.",
-  showTitle: "Cosmic Journey",
-  showId: 1,
-  instruments: ["Brass", "Woodwinds", "Percussion", "Electronics"],
-  // Mock audio tracks for the arrangement
-  audioTracks: [
-    {
-      id: "1",
-      title: "Full Arrangement - Studio Recording",
-      duration: "2:45",
-      description: "Complete studio recording with all parts",
-      type: "Full Track",
-      url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" // Replace with actual audio URLs
-    },
-    {
-      id: "2", 
-      title: "Brass Section Only",
-      duration: "2:45",
-      description: "Isolated brass parts for learning",
-      type: "Section Excerpt",
-      url: "https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3"
-    },
-    {
-      id: "3",
-      title: "Woodwind Section Only", 
-      duration: "2:45",
-      description: "Isolated woodwind parts for learning",
-      type: "Section Excerpt",
-      url: "https://www.soundjay.com/misc/sounds/bell-ringing-03.mp3"
-    },
-    {
-      id: "4",
-      title: "Percussion & Electronics",
-      duration: "2:45", 
-      description: "Rhythm section and electronic elements",
-      type: "Section Excerpt",
-      url: "https://www.soundjay.com/misc/sounds/bell-ringing-02.mp3"
-    }
-  ],
-  detailedInstrumentation: {
-    brass: ["Trumpet (4 parts)", "Horn (2 parts)", "Trombone (3 parts)", "Euphonium", "Tuba"],
-    woodwinds: [
-      "Piccolo",
-      "Flute (2 parts)",
-      "Clarinet (3 parts)",
-      "Bass Clarinet",
-      "Alto Sax (2 parts)",
-      "Tenor Sax",
-      "Bari Sax",
-    ],
-    percussion: ["Snare Drum", "Bass Drum", "Cymbals", "Timpani", "Mallet Percussion", "Auxiliary Percussion"],
-    electronics: ["Synthesizer", "Sound Effects", "Backing Track"],
-  },
-  technicalRequirements: {
-    minimumSize: "45 members",
-    recommendedSize: "65-80 members",
-    skillLevel: "Advanced High School / College",
-    equipment: ["Sound system for electronics", "Synthesizer or keyboard"],
-    specialNotes: [
-      "Requires conductor comfortable with click track",
-      "Electronic parts can be simplified for smaller ensembles",
-    ],
-  },
-  musicalAnalysis: {
-    form: "ABA with extended introduction",
-    keyChanges: ["Bb Major (main)", "F Major (bridge)", "Return to Bb Major"],
-    tempoChanges: ["Slow intro (80 BPM)", "Main theme (120 BPM)", "Accelerando to 140 BPM"],
-    dynamics: "Builds from pp to ff with dramatic contrasts",
-    style: "Contemporary with electronic fusion elements",
-  },
-}
+export default async function ArrangementDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const arrangementId = Number(id);
 
-export default function ArrangementDetailPage() {
-  const { addToPlan } = useShowPlan();
+  const [arr] = await db
+    .select()
+    .from(arrangements)
+    .where(eq(arrangements.id, arrangementId))
+    .limit(1);
 
-  const handleAddToPlan = () => {
-    addToPlan({
-      id: arrangementData.id,
-      title: arrangementData.title,
-      type: 'arrangement',
-    });
-  };
+  if (!arr) {
+    return <div className="container mx-auto px-4 py-12">Arrangement not found</div>;
+  }
+
+  const join = await db
+    .select({ showId: showArrangements.showId })
+    .from(showArrangements)
+    .where(eq(showArrangements.arrangementId, arrangementId))
+    .limit(1);
+
+  let parentShow: { id: number; title?: string | null; name?: string | null } | null = null;
+  if (join[0]?.showId) {
+    const [s] = await db
+      .select({ id: shows.id, title: shows.title, name: shows.name })
+      .from(shows)
+      .where(eq(shows.id, join[0].showId))
+      .limit(1);
+    parentShow = s ?? null;
+  }
+
+  const files = await getFilesByArrangementId(arrangementId);
+  const audio = Array.isArray(files) ? files.find((f: any) => f.fileType === 'audio' && f.is_public) : undefined;
+
+  const formatSeconds = (total?: number | null) => {
+    if (!total || total < 0) return '—'
+    const m = Math.floor(total / 60)
+    const s = total % 60
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Include custom audio player styles */}
       <style dangerouslySetInnerHTML={{ __html: audioPlayerStyles }} />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center mb-6">
           <Button variant="ghost" className="mr-4" asChild>
-            <Link href="/arrangements">
+            <Link href={parentShow ? `/shows/${parentShow.id}` : '/shows'}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Arrangements
+              {parentShow ? 'Back to Show' : 'Back to Shows'}
             </Link>
           </Button>
         </div>
 
         {/* Arrangement Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Left side - Image */}
+          {/* Left side - Media */}
           <div className="relative">
             <div className="w-full h-80 bg-muted rounded-lg shadow-lg flex items-center justify-center">
               <div className="text-muted-foreground">
@@ -134,230 +78,67 @@ export default function ArrangementDetailPage() {
                 </svg>
               </div>
             </div>
-            <Button
-              size="lg"
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background/90 text-foreground hover:bg-background shadow-lg"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Play Preview
-            </Button>
           </div>
 
           {/* Right side - Content */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <Badge variant="outline" className="text-sm">{arrangementData.year}</Badge>
-              <Badge variant="secondary" className="text-sm">{arrangementData.difficulty}</Badge>
+              {arr.scene ? (<Badge variant="outline" className="text-sm">{String(arr.scene)}</Badge>) : null}
             </div>
 
-            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{arrangementData.title}</h1>
-            <p className="text-lg text-bright-primary mb-4">
-              From:{" "}
-              <Link href={`/shows/${arrangementData.showId}`} className="hover:underline">
-                {arrangementData.showTitle}
-              </Link>
-            </p>
-            <p className="text-lg text-muted-foreground mb-6">{arrangementData.description}</p>
+            <h1 className="text-4xl font-bold mb-2 text-foreground font-primary">{arr.title}</h1>
+            {parentShow ? (
+              <p className="text-lg text-bright-primary mb-4">
+                From:{" "}
+                <Link href={`/shows/${parentShow.id}`} className="hover:underline">
+                  {String(parentShow.name || parentShow.title || '')}
+                </Link>
+              </p>
+            ) : null}
+            <p className="text-lg text-muted-foreground mb-6">{arr.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="flex items-center">
                 <Clock className="w-4 h-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{arrangementData.duration}</span>
+                <span className="text-sm">{formatSeconds(arr.durationSeconds as any)}</span>
               </div>
-              <div className="flex items-center">
-                <Music2 className="w-4 h-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{arrangementData.key}</span>
-              </div>
-              <div className="flex items-center">
-                <Users className="w-4 h-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{arrangementData.tempo}</span>
-              </div>
-              <div className="flex items-center">
-                <FileText className="w-4 h-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{arrangementData.composer}</span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-6">
-              {arrangementData.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="bg-card p-4 rounded-lg mb-6 border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-foreground">{arrangementData.price}</div>
-                  <div className="text-sm text-muted-foreground">Individual Arrangement</div>
+              {arr.composer ? (
+                <div className="flex items-center">
+                  <Music2 className="w-4 h-4 text-muted-foreground mr-2" />
+                  <span className="text-sm">{arr.composer}</span>
                 </div>
-                <Button size="lg" className="btn-primary px-6" onClick={handleAddToPlan}>
-                  Add to Show Plan
-                </Button>
-              </div>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Sample Score
-              </Button>
-              <Button variant="outline">
-                <Play className="w-4 h-4 mr-2" />
-                Audio Preview
-              </Button>
+              {arr.sampleScoreUrl ? (
+                <Button variant="outline" asChild>
+                  <Link href={arr.sampleScoreUrl} target="_blank" rel="noopener noreferrer">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Sample Score
+                  </Link>
+                </Button>
+              ) : null}
+              {audio?.url ? (
+                <Button variant="outline" asChild>
+                  <Link href={audio.url} target="_blank" rel="noopener noreferrer">
+                    <Play className="w-4 h-4 mr-2" />
+                    Audio Preview
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>
 
-        {/* Tabs Section */}
-        <Tabs defaultValue="instrumentation" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm">
-            <TabsTrigger value="instrumentation">Instrumentation</TabsTrigger>
-            <TabsTrigger value="audio">Audio Preview</TabsTrigger>
-            <TabsTrigger value="analysis">Musical Analysis</TabsTrigger>
-            <TabsTrigger value="requirements">Requirements</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="instrumentation" className="mt-8">
-            <Card className="frame-card">
-              <CardHeader>
-                <CardTitle className="font-primary">Complete Instrumentation</CardTitle>
-                <CardDescription>All parts included in this arrangement</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <h4 className="font-semibold text-foreground mb-3">Brass Section</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {arrangementData.detailedInstrumentation.brass.map((instrument, index) => (
-                      <div key={index} className="flex items-center">
-                        <div className="w-2 h-2 bg-bright-primary rounded-full mr-2"></div>
-                        {instrument}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-3">Woodwind Section</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {arrangementData.detailedInstrumentation.woodwinds.map((instrument, index) => (
-                      <div key={index} className="flex items-center">
-                        <div className="w-2 h-2 bg-bright-third rounded-full mr-2"></div>
-                        {instrument}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-3">Percussion Section</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {arrangementData.detailedInstrumentation.percussion.map((instrument, index) => (
-                      <div key={index} className="flex items-center">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                        {instrument}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-3">Electronics</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {arrangementData.detailedInstrumentation.electronics.map((instrument, index) => (
-                      <div key={index} className="flex items-center">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-                        {instrument}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="audio" className="mt-8">
-            <AudioPlayerComponent 
-              tracks={arrangementData.audioTracks}
-              title="Arrangement Audio Preview"
-              className="bg-card/80 backdrop-blur-sm"
-            />
-          </TabsContent>
-
-          <TabsContent value="analysis" className="mt-8">
-            <Card className="frame-card">
-              <CardHeader>
-                <CardTitle className="font-primary">Musical Analysis</CardTitle>
-                <CardDescription>Detailed breakdown of the musical structure</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Form</h4>
-                  <p>{arrangementData.musicalAnalysis.form}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Key Changes</h4>
-                  <ul className="list-better">
-                    {arrangementData.musicalAnalysis.keyChanges.map((key, index) => (
-                      <li key={index}>{key}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Tempo Changes</h4>
-                  <ul className="list-better">
-                    {arrangementData.musicalAnalysis.tempoChanges.map((tempo, index) => (
-                      <li key={index}>{tempo}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Dynamics</h4>
-                  <p>{arrangementData.musicalAnalysis.dynamics}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Style</h4>
-                  <p>{arrangementData.musicalAnalysis.style}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="requirements" className="mt-8">
-            <Card className="frame-card">
-              <CardHeader>
-                <CardTitle className="font-primary">Performance Requirements</CardTitle>
-                <CardDescription>Technical requirements for this arrangement</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Ensemble Size</h4>
-                  <p>Minimum: {arrangementData.technicalRequirements.minimumSize}</p>
-                  <p>Recommended: {arrangementData.technicalRequirements.recommendedSize}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Skill Level</h4>
-                  <p>{arrangementData.technicalRequirements.skillLevel}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Equipment Needed</h4>
-                  <ul className="list-better">
-                    {arrangementData.technicalRequirements.equipment.map((item, index) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">Special Notes</h4>
-                  <ul className="list-better">
-                    {arrangementData.technicalRequirements.specialNotes.map((note, index) => (
-                      <li key={index}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Audio Player Section */}
+        {audio?.url ? (
+          <AudioPlayerComponent 
+            tracks={[{ id: 'full', title: 'Full Arrangement', duration: '', description: '', type: 'Full Track', url: audio.url }]}
+            title="Arrangement Audio Preview"
+            className="bg-card/80 backdrop-blur-sm"
+          />
+        ) : null}
       </div>
     </div>
   )

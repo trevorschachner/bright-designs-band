@@ -6,6 +6,7 @@ export const gradeBandEnum = pgEnum('grade_band', ['1_2', '3_4', '5_plus']);
 export const showDifficultyEnum = pgEnum('difficulty', ['Beginner', 'Intermediate', 'Advanced']);
 export const ensembleSizeEnum = pgEnum('ensemble_size', ['small', 'medium', 'large']);
 export const fileTypeEnum = pgEnum('file_type', ['image', 'audio', 'youtube', 'pdf', 'score', 'other']);
+export const arrangementSceneEnum = pgEnum('arrangement_scene', ['Opener', 'Ballad', 'Closer']);
 
 // Shows
 export const shows = pgTable('shows', {
@@ -44,6 +45,7 @@ export const arrangements = pgTable('arrangements', {
   percussionArranger: text('percussion_arranger'),
   copyrightAmountUsd: numeric('copyright_amount_usd', { precision: 10, scale: 2 }),
   ensembleSize: ensembleSizeEnum('ensemble_size'),
+  scene: arrangementSceneEnum('scene'),
   youtubeUrl: text('youtube_url'),
   commissioned: text('commissioned'),
   sampleScoreUrl: text('sample_score_url'),

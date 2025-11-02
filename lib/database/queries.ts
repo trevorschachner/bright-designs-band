@@ -85,6 +85,8 @@ export async function getArrangementsByShowId(showId: number) {
     const result = await db
       .select({
         id: arrangements.id,
+        title: arrangements.title,
+        scene: arrangements.scene,
         composer: arrangements.composer,
         grade: arrangements.grade,
         year: arrangements.year,

@@ -123,11 +123,10 @@ export const SHOWS_SCHEMA: TableSchema = {
     difficulty: { key: 'difficulty', type: 'enum', enumValues: ['Beginner', 'Intermediate', 'Advanced'] },
     duration: { key: 'duration', type: 'text' },
     description: { key: 'description', type: 'text', nullable: true },
-    price: { key: 'price', type: 'numeric' },
     thumbnailUrl: { key: 'thumbnailUrl', type: 'text', nullable: true },
-    composer: { key: 'composer', type: 'text', nullable: true },
-    songTitle: { key: 'songTitle', type: 'text', nullable: true },
-    createdAt: { key: 'createdAt', type: 'timestamp' }
+    createdAt: { key: 'createdAt', type: 'timestamp' },
+    // virtual field used by UI; handled specially in API
+    ensembleSize: { key: 'ensembleSize', type: 'enum', enumValues: ['small','medium','large'] }
   },
   relations: {
     tags: {
@@ -164,7 +163,7 @@ export const ARRANGEMENTS_SCHEMA: TableSchema = {
 // Generate filter fields for our tables
 export const SHOWS_FILTER_FIELDS = SchemaAnalyzer.generateFilterFields(
   SHOWS_SCHEMA, 
-  ['id', 'thumbnailUrl'] // Exclude non-user-facing fields
+  ['id', 'thumbnailUrl', 'description', 'duration', 'createdAt'] // keep UI lean; virtual ensembleSize remains
 );
 
 export const ARRANGEMENTS_FILTER_FIELDS = SchemaAnalyzer.generateFilterFields(

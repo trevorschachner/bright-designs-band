@@ -7,90 +7,18 @@ import { FilterPreset, FilterState } from './types';
 // Shows presets
 export const SHOWS_PRESETS: FilterPreset[] = [
   {
-    id: 'recent',
-    name: 'Recent Shows',
-    description: 'Shows created in the last year',
+    id: 'featured',
+    name: 'Featured',
+    description: 'Editor’s picks',
     filters: {
       conditions: [
-        {
-          field: 'createdAt',
-          operator: 'gte',
-          value: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
-        }
+        { field: 'featured', operator: 'equals', value: true }
       ],
       sort: [
         { field: 'createdAt', direction: 'desc' }
       ]
     }
   },
-  {
-    id: 'beginner-friendly',
-    name: 'Beginner Friendly',
-    description: 'Shows suitable for beginning bands',
-    filters: {
-      conditions: [
-        {
-          field: 'difficulty',
-          operator: 'equals',
-          value: 'Beginner'
-        }
-      ],
-      sort: [
-        { field: 'title', direction: 'asc' }
-      ]
-    }
-  },
-  {
-    id: 'advanced',
-    name: 'Advanced Shows',
-    description: 'Challenging shows for experienced bands',
-    filters: {
-      conditions: [
-        {
-          field: 'difficulty',
-          operator: 'equals',
-          value: 'Advanced'
-        }
-      ],
-      sort: [
-        { field: 'createdAt', direction: 'desc' }
-      ]
-    }
-  },
-  {
-    id: 'affordable',
-    name: 'Budget Friendly',
-    description: 'Shows under $500',
-    filters: {
-      conditions: [
-        {
-          field: 'price',
-          operator: 'lte',
-          value: 500
-        }
-      ],
-      sort: [
-        { field: 'price', direction: 'asc' }
-      ]
-    }
-  },
-  {
-    id: 'short-shows',
-    name: 'Short Shows',
-    description: 'Shows under 6 minutes',
-    filters: {
-      conditions: [
-        {
-          field: 'duration',
-          operator: 'contains',
-          value: ':'
-        }
-      ],
-      sort: [
-        { field: 'duration', direction: 'asc' }
-      ]
-    }
-  }
 ];
 
 // Arrangements presets

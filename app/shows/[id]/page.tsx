@@ -59,6 +59,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
       return {
         id: a.id,
         title: a.title,
+        scene: a.scene || null,
         description: a.description || '',
         composer: a.composer || null,
         durationSeconds: a.durationSeconds || null,
@@ -186,8 +187,15 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                     </div>
                     <div className="flex-1">
                       <h3 className="text-2xl font-bold text-foreground group-hover:text-bright-primary transition-colors">
-                        {arrangement.title}
+                        <Link href={`/arrangements/${arrangement.id}`} className="hover:underline">
+                          {arrangement.title}
+                        </Link>
                       </h3>
+                      {arrangement.scene ? (
+                        <Badge variant="outline" className="mt-1 text-xs">
+                          {String(arrangement.scene)}
+                        </Badge>
+                      ) : null}
                       <p className="text-muted-foreground flex items-center gap-2">
                         {arrangement.composer ? (
                           <>

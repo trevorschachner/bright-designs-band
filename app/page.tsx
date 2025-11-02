@@ -9,22 +9,43 @@ import PageHero from "@/components/layout/page-hero"
 import Link from "next/link"
 import { db } from "@/lib/database"
 import { shows, showsToTags, tags } from "@/lib/database/schema"
+import { desc, inArray, eq } from "drizzle-orm"
 
 
 import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
 
 export default async function HomePage() {
-  // Use relational query syntax to avoid problematic imports
-  const featuredShows = await db.query.shows.findMany({
-    limit: 6,
-    with: {
-      showsToTags: {
-        with: {
-          tag: true,
-        },
-      },
-    },
-  });
+  // Simpler, robust fetching without nested lateral joins
+  const baseShows = await db
+    .select()
+    .from(shows)
+    .orderBy(desc(shows.createdAt))
+    .limit(6);
+
+  const showIds = baseShows.map((s: any) => s.id);
+  let tagsByShowId: Record<number, any[]> = {};
+  if (showIds.length > 0) {
+    const tagRows = await db
+      .select({
+        showId: showsToTags.showId,
+        tagId: tags.id,
+        tagName: tags.name,
+      })
+      .from(showsToTags)
+      .innerJoin(tags, eq(showsToTags.tagId, tags.id))
+      .where(inArray(showsToTags.showId, showIds));
+
+    tagsByShowId = tagRows.reduce((acc: Record<number, any[]>, row) => {
+      if (!acc[row.showId]) acc[row.showId] = [];
+      acc[row.showId].push({ tag: { id: row.tagId, name: row.tagName } });
+      return acc;
+    }, {} as Record<number, any[]>);
+  }
+
+  const featuredShows = baseShows.map((s: any) => ({
+    ...s,
+    showsToTags: tagsByShowId[s.id] ?? [],
+  }));
   const homeServices = [
     {
       title: "Custom Show Design",

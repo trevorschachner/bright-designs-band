@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { Menu, Music, ArrowRight } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -27,11 +28,16 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 	return (
 		<header className="sticky top-0 z-50 w-full plus-surface-elevated">
 			<div className="plus-container flex h-16 items-center justify-between">
-				<Link href="/" className="flex items-center gap-3">
-					<div className="h-10 w-10 plus-surface flex items-center justify-center">
-						<Music className="h-6 w-6 text-foreground" />
-					</div>
-					<span className="plus-h4">{brand.name}</span>
+				<Link href="/" className="flex items-center gap-3" aria-label={brand.name}>
+					<Image
+						src="/bright-designs-logo.png"
+						alt={brand.name}
+						width={160}
+						height={84}
+						priority
+						className="h-10 w-auto"
+					/>
+					<span className="sr-only">{brand.name}</span>
 				</Link>
 
 				<nav className="hidden md:flex items-center gap-6">

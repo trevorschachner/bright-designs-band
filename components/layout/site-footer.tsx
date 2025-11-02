@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Music, Mail, Phone, MapPin } from "lucide-react"
+import Image from "next/image"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import type { NavigationItem, FooterGroup } from "@/config/site"
 
@@ -19,10 +20,14 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 					{/* Company/Brand column */}
 					<div className="lg:col-span-2">
 						<div className="flex items-center gap-3 mb-2">
-							<div className="h-10 w-10 plus-surface flex items-center justify-center">
-								<Music className="h-6 w-6 text-primary" />
-							</div>
-							<span className="plus-h4">Bright Designs Band</span>
+							<Image
+								src="/bright-designs-logo.png"
+								alt="Bright Designs"
+								width={200}
+								height={105}
+								className="h-10 w-auto"
+							/>
+							<span className="sr-only">Bright Designs Band</span>
 						</div>
 						<p className="plus-caption text-muted-foreground mb-6">
 							© {new Date().getFullYear()} Bright Designs LLC. All rights reserved.
