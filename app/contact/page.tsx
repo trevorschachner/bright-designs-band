@@ -35,9 +35,13 @@ export default function ContactPage() {
 
       toast({
         title: "Inquiry Submitted!",
-        description: "Thank you for your interest. We will get back to you shortly.",
+        description: "Thank you for contacting us. We will get back to you as soon as possible.",
       });
       setSubmitted(true);
+      // Scroll to top to reveal confirmation
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (error) {
       toast({
         title: "Submission Failed",
@@ -78,7 +82,7 @@ export default function ContactPage() {
                   <li>We will deliver materials or begin the custom design process.</li>
                 </ol>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mt-10">
                 <Button asChild>
                   <a href="mailto:info@brightdesigns.band?subject=Inquiry%20from%20Bright%20Designs%20Website&body=Hi%20Bright%20Designs%2C%0A%0AI'm%20interested%20in%20...%0A%0AThanks!">
                     <Mail className="w-4 h-4 mr-2" /> Email Us

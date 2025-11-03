@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 
 import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -72,7 +73,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="wireframe-card space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="showInterest"
@@ -274,9 +275,15 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             </FormItem>
           )}
         />
-        <div className="pt-6 wireframe-border-dashed border-t">
+        <div className="pt-10 mt-2 wireframe-border-dashed border-t">
           <Button type="submit" disabled={isLoading} className="btn-wireframe-primary w-full h-12 text-sm uppercase tracking-wide">
-            {isLoading ? "Submitting..." : "Submit Inquiry"}
+            {isLoading ? (
+              <span className="inline-flex items-center">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...
+              </span>
+            ) : (
+              "Submit Inquiry"
+            )}
           </Button>
         </div>
       </form>
