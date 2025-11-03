@@ -1,7 +1,7 @@
 import { ArrowRight, Play, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import ServicesGrid from "@/components/features/services/services-grid"
+import ServicesGrid, { ServiceItem } from "@/components/features/services/services-grid"
 import Testimonials from "@/components/features/testimonials"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import PageHero from "@/components/layout/page-hero"
@@ -46,7 +46,7 @@ export default async function HomePage() {
     ...s,
     showsToTags: tagsByShowId[s.id] ?? [],
   }));
-  const homeServices = [
+  const homeServices: ServiceItem[] = [
     {
       title: "Custom Show Design",
       description:
@@ -111,7 +111,7 @@ export default async function HomePage() {
           <div className="text-center mb-12">
             <h2 className="plus-h2 mb-4">Why Bright Designs</h2>
             <p className="plus-body-lg max-w-2xl mx-auto">
-              We’re built for competitive marching band: clear communication, reliable delivery, and designs that elevate performance.
+              We’re bought into your program from day one. Clear communication, reliable delivery, and professional design.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
@@ -277,7 +277,7 @@ export default async function HomePage() {
       <JsonLd data={marchingBandSchemas.drillService} />
       <JsonLd data={marchingBandSchemas.programCoordination} />
       
-              {/* FAQ Schema targeting customer pain points */}
+      {/* FAQ Schema targeting customer pain points */}
       <JsonLd data={createFAQSchema([
         {
           question: "How do you ensure music is delivered on time?",

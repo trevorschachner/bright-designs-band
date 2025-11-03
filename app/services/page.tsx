@@ -49,10 +49,14 @@ export default function ServicesPage() {
     <div className="min-h-screen bg-background">
       {/* Hero */}
       <PageHero
-        title="Services & Process"
-        subtitle="Full-service music and visual design for competitive marching band programs."
+        title="Our Services"
+        subtitle="Comprehensive design solutions tailored to your ensemble's unique needs"
       />
-
+      {/* Services Section */}
+      <ServicesGrid
+        items={servicesItems as ServiceItem[]}
+        cta={{ label: "Schedule a Consultation", href: "/contact" }}
+      />  
       {/* Process Section - Timeline Design */}
       <section id="process" className="plus-section bg-background">
         <div className="plus-container">
@@ -62,7 +66,6 @@ export default function ServicesPage() {
               A proven, collaborative approach to creating championship-caliber shows
             </p>
           </div>
-
           {/* Desktop Timeline - Alternating Layout */}
           <div className="hidden lg:block relative">
             {/* Timeline Line */}
@@ -296,14 +299,6 @@ export default function ServicesPage() {
           </div>
         </div>
       </section>
-
-      {/* Services Section */}
-      <ServicesGrid
-        heading="Our Services"
-        description="Comprehensive design solutions tailored to your ensemble's unique needs"
-        items={servicesItems as ServiceItem[]}
-        cta={{ label: "Schedule a Consultation", href: "/contact" }}
-      />
     </div>
   )
 }

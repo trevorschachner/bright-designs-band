@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, X, SortAsc, SortDesc, RotateCcw } from 'lucide-react';
+import { Search, X, SortAsc, SortDesc, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,16 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetDescription, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from '@/components/ui/sheet';
 import { FilterState, FilterField, SortCondition, FilterPreset } from '@/lib/filters/types';
-import { FilterForm } from './filter-form';
 
 interface FilterBarProps {
   filterState: FilterState;
@@ -42,7 +33,7 @@ export function FilterBar({
   totalResults
 }: FilterBarProps) {
   const [searchValue, setSearchValue] = useState(filterState.search || '');
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  // Advanced Filters removed
 
   // Update local search when filterState changes
   useEffect(() => {
@@ -157,36 +148,6 @@ export function FilterBar({
 
         {/* Filter Controls */}
         <div className="flex gap-2">
-          {/* Advanced Filters */}
-          <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-                {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-              <SheetHeader>
-                <SheetTitle>Advanced Filters</SheetTitle>
-                <SheetDescription>
-                  Create detailed filters to find exactly what you're looking for.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="mt-6">
-                <FilterForm
-                  filterState={filterState}
-                  onFilterStateChange={onFilterStateChange}
-                  filterFields={filterFields}
-                  onClose={() => setIsFilterSheetOpen(false)}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
 
           {/* Sort Dropdown */}
           <DropdownMenu>
@@ -277,9 +238,9 @@ export function FilterBar({
           {filterState.conditions.map((condition, index) => (
             <Badge key={index} variant="secondary" className="flex items-center gap-1">
               {getFilterFieldLabel(condition.field)} {condition.operator} {
-                Array.isArray(condition.values) 
-                  ? condition.values.join(', ')
-                  : condition.value
+                Array.isArray(condition.values)
+                  ? (condition.values as unknown[]).map(String).join(', ')
+                  : String(condition.value ?? '')
               }
               <X 
                 className="w-3 h-3 cursor-pointer hover:bg-muted rounded" 

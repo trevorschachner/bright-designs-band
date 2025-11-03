@@ -29,18 +29,11 @@ const iconMap = {
   play: Play,
 } as const
 
-export function ServicesGrid({ heading = "Our Services", description, items, cta }: ServicesGridProps) {
+export function ServicesGrid({ items, cta }: ServicesGridProps) {
 
   return (
     <section id="services" className="plus-section bg-muted/30">
       <div className="plus-container">
-        <div className="text-center mb-20">
-          <h2 className="plus-h2 mb-4">{heading}</h2>
-          {description ? (
-            <p className="plus-body-lg max-w-2xl mx-auto">{description}</p>
-          ) : null}
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {items.map(({ title, description: itemDescription, icon }, index) => {
             const IconComp = icon ? iconMap[icon] ?? Music : Music

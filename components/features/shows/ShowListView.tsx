@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, Users, DollarSign } from "lucide-react";
+import { Play, Users } from "lucide-react";
 import { Show } from "@/lib/types/shows";
 
 interface ShowListViewProps {
@@ -29,7 +29,7 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
     <Card className="frame-card group overflow-hidden">
       <div className="flex flex-col sm:flex-row">
         {/* Thumbnail */}
-        <div className="relative w-full sm:w-64 h-48 sm:h-auto flex-shrink-0 bg-accent-gradient overflow-hidden">
+        <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 bg-accent-gradient overflow-hidden">
           <img
             src={show.thumbnailUrl || "/placeholder.svg"}
             alt={show.title}
@@ -46,12 +46,12 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4">
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start mb-2">
               <div className="flex-1">
-                <h3 className="text-2xl font-bold transition-colors font-primary mb-1">
+                <h3 className="text-xl font-bold transition-colors font-primary mb-1">
                   {show.title}
                 </h3>
                 <div className="flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
@@ -69,36 +69,16 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
             </div>
 
             {/* Description */}
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
               {show.description}
             </p>
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-              {show.price !== undefined && (
-                <div className="flex items-start gap-2">
-                  <DollarSign className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Price</div>
-                    <div className="font-medium">${show.price}</div>
-                  </div>
-                </div>
-              )}
-              {show.arrangements && show.arrangements.length > 0 && (
-                <div className="flex items-start gap-2">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Arrangements</div>
-                    <div className="font-medium">
-                      {show.arrangements.length} available
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Details (no pricing shown) */}
+            <div className="mb-4" />
 
             {/* Tags */}
             {show.showsToTags && show.showsToTags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {show.showsToTags.slice(0, 5).map((st: { tag: { id: number; name: string } }) => (
                   <Badge key={st.tag.id} variant="secondary" className="text-xs">
                     {st.tag.name}
@@ -113,8 +93,8 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
             )}
 
             {/* Actions */}
-            <div className="mt-auto pt-4">
-              <Button className="btn-primary w-full sm:w-auto" asChild>
+            <div className="mt-auto pt-3">
+              <Button size="sm" className="btn-primary w-full sm:w-auto" asChild>
                 <Link href={`/shows/${show.id}`}>View Details</Link>
               </Button>
             </div>

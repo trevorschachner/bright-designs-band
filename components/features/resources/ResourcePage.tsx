@@ -130,86 +130,78 @@ export default function ResourcePage<T>({
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <div className="container mx-auto px-4 py-8">
-            {/* Inline lightweight filter bar for Shows */}
-            {resourceName === 'shows' && (
-              <div className="mb-6 flex flex-col gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-muted-foreground mr-2">Difficulty:</span>
-                  {['Beginner','Intermediate','Advanced'].map((level) => {
-                    const active = filterState.conditions.some(c => c.field === 'difficulty' && c.value === level);
-                    return (
-                      <Button
-                        key={level}
-                        size="sm"
-                        variant={active ? 'default' : 'outline'}
-                        className="h-8"
-                        onClick={() => {
-                          const others = filterState.conditions.filter(c => c.field !== 'difficulty');
-                          const nextConditions = active 
-                            ? others
-                            : [...others, { field: 'difficulty', operator: 'equals', value: level } as any];
-                          setFilterState({ ...filterState, conditions: nextConditions, page: 1 });
-                        }}
-                      >
-                        {level}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-muted-foreground mr-2">Ensemble Size:</span>
-                  {['small','medium','large'].map((size) => {
-                    const active = filterState.conditions.some(c => c.field === 'ensembleSize' && c.value === size);
-                    return (
-                      <Button
-                        key={size}
-                        size="sm"
-                        variant={active ? 'default' : 'outline'}
-                        className="h-8 capitalize"
-                        onClick={() => {
-                          const others = filterState.conditions.filter(c => c.field !== 'ensembleSize');
-                          const nextConditions = active 
-                            ? others
-                            : [...others, { field: 'ensembleSize', operator: 'equals', value: size } as any];
-                          setFilterState({ ...filterState, conditions: nextConditions, page: 1 });
-                        }}
-                      >
-                        {size}
-                      </Button>
-                    );
-                  })}
-                  {/* Featured toggle */}
-                  <span className="ml-4 text-sm text-muted-foreground mr-2">Featured:</span>
-                  {(() => {
-                    const active = filterState.conditions.some(c => c.field === 'featured' && c.value === true);
-                    return (
-                      <Button
-                        size="sm"
-                        variant={active ? 'default' : 'outline'}
-                        className="h-8"
-                        onClick={() => {
-                          const others = filterState.conditions.filter(c => c.field !== 'featured');
-                          const nextConditions = active 
-                            ? others
-                            : [...others, { field: 'featured', operator: 'equals', value: true } as any];
-                          setFilterState({ ...filterState, conditions: nextConditions, page: 1 });
-                        }}
-                      >
-                        Featured
-                      </Button>
-                    );
-                  })()}
-                  { (filterState.conditions.some(c => ['difficulty','ensembleSize','featured'].includes(String(c.field)))) && (
+            {/* Active Filter Summary Bar */}
+            {(filterState.search || filterState.conditions.length > 0 || filterState.sort.length > 0) && (
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                {/* Search Chip */}
+                {filterState.search && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => setFilterState({ ...filterState, search: undefined, page: 1 })}
+                  >
+                    Search: {filterState.search}
+                    <span className="ml-2">×</span>
+                  </Button>
+                )}
+
+                {/* Condition Chips */}
+                {filterState.conditions.map((condition, index) => {
+                  const displayValue = Array.isArray(condition.values)
+                    ? condition.values.join(', ')
+                    : String(condition.value ?? '');
+                  return (
                     <Button
-                      variant="ghost"
+                      key={`${condition.field}-${index}`}
+                      variant="secondary"
                       size="sm"
-                      className="h-8 ml-2"
-                      onClick={() => setFilterState({ ...filterState, conditions: filterState.conditions.filter(c => !['difficulty','ensembleSize','featured'].includes(String(c.field))), page: 1 })}
+                      className="h-8"
+                      onClick={() => setFilterState({
+                        ...filterState,
+                        conditions: filterState.conditions.filter((_, i) => i !== index),
+                        page: 1
+                      })}
                     >
-                      Clear
+                      {condition.field}: {displayValue}
+                      <span className="ml-2">×</span>
                     </Button>
-                  )}
-                </div>
+                  );
+                })}
+
+                {/* Sort Chips */}
+                {filterState.sort.map((sort, index) => (
+                  <Button
+                    key={`sort-${index}`}
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => setFilterState({
+                      ...filterState,
+                      sort: filterState.sort.filter((_, i) => i !== index),
+                      page: 1
+                    })}
+                  >
+                    Sort: {sort.field} ({sort.direction})
+                    <span className="ml-2">×</span>
+                  </Button>
+                ))}
+
+                {/* Clear All */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setFilterState({
+                    search: undefined,
+                    conditions: [],
+                    sort: [],
+                    page: 1,
+                    limit: filterState.limit
+                  })}
+                >
+                  Clear all
+                </Button>
               </div>
             )}
             {/* Mobile Filter Button */}

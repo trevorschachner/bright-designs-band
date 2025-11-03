@@ -73,19 +73,17 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold mb-8 text-foreground font-primary text-center">Our Story</h2>
             <div className="prose prose-lg mx-auto text-muted-foreground">
               <p className="mb-6">
-                Founded in 1999, Bright Designs began as a passion project to bring innovative musical arrangements to
-                high school marching bands. What started as a small operation has grown into one of the most respected
-                names in marching band design, serving over 100 schools across the country.
+                Founded in 2017, Bright Designs began as a passion project between 3 friends. We fell inlove with marching band during our days of performing and wanted to bring that same passion to the next generation of performers.
+                What started as a small endeavor has grown into a widely trusted name in the marching band community serving over 25 schools each year.
               </p>
               <p className="mb-6">
-                Our team combines decades of experience in music education, performance, and composition. We understand
+                Our team has decades of experience in music education, performance, and composition. We understand
                 the unique challenges facing band directors and work closely with each program to create shows that are
                 both educationally valuable and competitively successful.
               </p>
               <p>
-                Today, we continue to push the boundaries of what&apos;s possible in marching band design, incorporating new
-                technologies, musical styles, and pedagogical approaches while maintaining our commitment to
-                student-centered design and educational excellence.
+                Today, we continue to push the boundaries of what&apos;s possible in marching band design. We are committed to providing the best possible service to our clients and to the marching band community. 
+                We can't wait to work with you and help your program live up to your vision.
               </p>
             </div>
           </div>
@@ -95,16 +93,36 @@ export default function AboutPage() {
         <section className="py-16">
           <h2 className="text-3xl font-bold mb-12 text-foreground font-primary text-center">Meet Our Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Team members would go here */}
             <Card className="frame-card text-center">
               <CardContent className="p-6">
-                <div className="w-24 h-24 bg-bright-primary/10 rounded-full mx-auto mb-4"></div>
-                <h3 className="text-xl font-bold mb-2 font-primary">Team Member</h3>
-                <p className="text-bright-third mb-2">Founder &amp; Lead Arranger</p>
-                <p className="text-muted-foreground text-sm">Bio and experience information would go here.</p>
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-muted">
+                  <img src="/placeholder-user.jpg" alt="Trevor Schachner" className="w-full h-full object-cover" />
+                </div>
+                <h3 className="text-xl font-bold mb-1 font-primary">Trevor Schachner</h3>
+                <p className="text-bright-third mb-3">Owner, Educator, Music + Visual Designer</p>
+                <p className="text-muted-foreground text-sm">Combines educational focus with championship-caliber design across music and visual, guiding programs with clarity and consistency.</p>
               </CardContent>
             </Card>
-            {/* More team members... */}
+            <Card className="frame-card text-center">
+              <CardContent className="p-6">
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-muted">
+                  <img src="/placeholder-user.jpg" alt="Brighton Barrineau" className="w-full h-full object-cover" />
+                </div>
+                <h3 className="text-xl font-bold mb-1 font-primary">Brighton Barrineau</h3>
+                <p className="text-bright-third mb-3">Owner, Educator, Music + Visual Designer</p>
+                <p className="text-muted-foreground text-sm">Designs cohesive productions that put students first and align pacing and effect for competitive success.</p>
+              </CardContent>
+            </Card>
+            <Card className="frame-card text-center">
+              <CardContent className="p-6">
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-muted">
+                  <img src="/placeholder-user.jpg" alt="Ryan Wilhite" className="w-full h-full object-cover" />
+                </div>
+                <h3 className="text-xl font-bold mb-1 font-primary">Ryan Wilhite</h3>
+                <p className="text-bright-third mb-3">Owner, Educator, Program Coordinator</p>
+                <p className="text-muted-foreground text-sm">Leads program coordination with clear timelines and communication, ensuring delivery and alignment across the season.</p>
+              </CardContent>
+            </Card>
           </div>
         </section>
 

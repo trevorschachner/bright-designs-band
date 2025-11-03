@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, X, SortAsc, SortDesc, RotateCcw, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { Search, X, SortAsc, SortDesc, RotateCcw, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,14 +21,11 @@ import {
   SheetTrigger 
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { FilterState, FilterField, SortCondition, FilterPreset } from '@/lib/filters/types';
-import { FilterForm } from './filter-form';
 
 interface FilterSidebarProps {
   filterState: FilterState;
@@ -50,7 +47,7 @@ export function FilterSidebar({
   isMobile = false
 }: FilterSidebarProps) {
   const [searchValue, setSearchValue] = useState(filterState.search || '');
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  // Advanced Filters removed
 
   useEffect(() => {
     setSearchValue(filterState.search || '');
@@ -167,6 +164,124 @@ export function FilterSidebar({
 
           <Separator />
 
+          {/* Common Filters (curated) */}
+          {(() => {
+            const hasDifficulty = filterFields.some(f => f.key === 'difficulty');
+            const hasEnsembleSize = filterFields.some(f => f.key === 'ensembleSize');
+            const hasFeatured = filterFields.some(f => f.key === 'featured');
+            const curatedActive = filterState.conditions.some(c => ['difficulty','ensembleSize','featured'].includes(String(c.field)));
+
+            const difficultySelected = (() => {
+              const cond = filterState.conditions.find(c => c.field === 'difficulty');
+              if (!cond) return [] as string[];
+              if (cond.operator === 'in' && Array.isArray(cond.values)) return cond.values as string[];
+              if (cond.operator === 'equals' && typeof cond.value === 'string') return [cond.value];
+              return [] as string[];
+            })();
+
+            const updateDifficulty = (next: string[]) => {
+              const others = filterState.conditions.filter(c => c.field !== 'difficulty');
+              const nextConditions = next.length > 0
+                ? [...others, { field: 'difficulty', operator: 'in', values: next } as any]
+                : others;
+              onFilterStateChange({ ...filterState, conditions: nextConditions, page: 1 });
+            };
+
+            const ensembleValue = (() => {
+              const cond = filterState.conditions.find(c => c.field === 'ensembleSize');
+              return (cond?.value as string) || '';
+            })();
+
+            const setEnsemble = (value: string) => {
+              const others = filterState.conditions.filter(c => c.field !== 'ensembleSize');
+              const nextConditions = value
+                ? [...others, { field: 'ensembleSize', operator: 'equals', value } as any]
+                : others;
+              onFilterStateChange({ ...filterState, conditions: nextConditions, page: 1 });
+            };
+
+            const isFeatured = filterState.conditions.some(c => c.field === 'featured' && c.value === true);
+
+            return (hasDifficulty || hasEnsembleSize || hasFeatured) ? (
+              <div className="space-y-6">
+                {hasDifficulty && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Difficulty</Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {['Beginner','Intermediate','Advanced'].map((level) => {
+                        const checked = difficultySelected.includes(level);
+                        return (
+                          <label key={level} className="flex items-center gap-3 text-sm">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(v) => {
+                                const next = v ? [...difficultySelected, level] : difficultySelected.filter(l => l !== level);
+                                updateDifficulty(Array.from(new Set(next)));
+                              }}
+                            />
+                            <span>{level}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {hasEnsembleSize && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Ensemble Size</Label>
+                    <RadioGroup value={ensembleValue} onValueChange={setEnsemble}>
+                      {['small','medium','large'].map((size) => (
+                        <label key={size} className="flex items-center gap-3 text-sm capitalize">
+                          <RadioGroupItem value={size} />
+                          <span>{size}</span>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+
+                {hasFeatured && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Featured</Label>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Only show featured</span>
+                      <Switch
+                        checked={isFeatured}
+                        onCheckedChange={(v) => {
+                          const others = filterState.conditions.filter(c => c.field !== 'featured');
+                          const nextConditions = v
+                            ? [...others, { field: 'featured', operator: 'equals', value: true } as any]
+                            : others;
+                          onFilterStateChange({ ...filterState, conditions: nextConditions, page: 1 });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {curatedActive && (
+                  <div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => onFilterStateChange({
+                        ...filterState,
+                        conditions: filterState.conditions.filter(c => !['difficulty','ensembleSize','featured'].includes(String(c.field))),
+                        page: 1
+                      })}
+                    >
+                      Clear curated filters
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : null;
+          })()}
+
+          <Separator />
+
           {/* Search */}
           <div className="space-y-2">
             <Label htmlFor="search" className="text-sm font-medium">
@@ -271,29 +386,7 @@ export function FilterSidebar({
 
           <Separator />
 
-          {/* Advanced Filters */}
-          <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  Advanced Filters
-                </span>
-                {isAdvancedOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4">
-              <FilterForm
-                filterState={filterState}
-                onFilterStateChange={onFilterStateChange}
-                filterFields={filterFields}
-              />
-            </CollapsibleContent>
-          </Collapsible>
+          {/* Advanced Filters removed */}
 
           {/* Active Filters */}
           {(filterState.search || filterState.conditions.length > 0 || filterState.sort.length > 0) && (
