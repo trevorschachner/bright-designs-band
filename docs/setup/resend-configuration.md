@@ -18,7 +18,7 @@ RESEND_API_KEY="YOUR_API_KEY_HERE"
 EMAIL_FROM="hello@transactional.brightdesigns.band"
 
 # Contact Form Settings
-ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band,admin@brightdesigns.band"
+ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band"
 ADMIN_API_KEY="generate-a-secure-random-string"
 ```
 

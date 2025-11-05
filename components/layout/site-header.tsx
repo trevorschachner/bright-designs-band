@@ -3,11 +3,10 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { Menu, Music, ArrowRight } from "lucide-react"
+import { Menu, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { NavigationItem, CallToAction } from "@/config/site"
 import { useShowPlan } from "@/lib/hooks/use-show-plan"
  
@@ -46,18 +45,6 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 							{item.label}
 						</Link>
 					))}
-					<DropdownMenu>
-						<DropdownMenuTrigger className="plus-label text-muted-foreground hover:text-foreground transition-colors">Resources</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-64 plus-surface-elevated">
-							<div className="p-2 grid gap-1">
-								{resources?.map(item => (
-									<Link key={item.href} href={item.href} className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
-										{item.label}
-									</Link>
-								))}
-							</div>
-						</DropdownMenuContent>
-					</DropdownMenu>
 				</nav>
 
 			<div className="hidden md:flex items-center gap-2">
@@ -92,16 +79,6 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 										{item.label}
 									</Link>
 								))}
-								{resources?.length ? (
-									<div className="pt-4 wireframe-border-dashed border-t">
-										<p className="px-4 pb-3 text-xs font-bold wireframe-subheading">RESOURCES</p>
-										{resources.map(item => (
-											<Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className="wireframe-border px-4 py-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-												{item.label}
-											</Link>
-										))}
-									</div>
-								) : null}
 							</nav>
 							<div className="grid gap-3 pt-4 wireframe-border-dashed border-t">
 								{ctas.secondary && (

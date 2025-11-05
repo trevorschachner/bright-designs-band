@@ -29,18 +29,24 @@ const iconMap = {
   play: Play,
 } as const
 
-export function ServicesGrid({ items, cta }: ServicesGridProps) {
+export function ServicesGrid({ items, heading, description, cta }: ServicesGridProps) {
 
   return (
     <section id="services" className="plus-section bg-muted/30">
       <div className="plus-container">
+        {(heading || description) && (
+          <div className="text-center mb-16">
+            {heading && <h2 className="plus-h2 mb-4">{heading}</h2>}
+            {description && <p className="plus-body-lg max-w-2xl mx-auto">{description}</p>}
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {items.map(({ title, description: itemDescription, icon }, index) => {
             const IconComp = icon ? iconMap[icon] ?? Music : Music
             return (
-            <Card key={`${title}-${index}`} className="group hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50">
+            <Card key={`${title}-${index}`} className="border-2">
               <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                   <IconComp className="w-8 h-8 text-primary" />
                 </div>
                 <CardTitle className="plus-h3">{title}</CardTitle>

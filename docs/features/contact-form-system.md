@@ -79,7 +79,7 @@ Set up admin email notifications:
 
 ```bash
 # Comma-separated list of email addresses to receive notifications
-ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band,admin@brightdesigns.band"
+ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band"
 
 # API key for accessing submission data (generate a random string)
 ADMIN_API_KEY="your-secure-random-string"

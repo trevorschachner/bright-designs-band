@@ -49,6 +49,8 @@ interface InquiryFormProps {
 }
 
 const serviceItems = [
+  { id: "wind-arranging", label: "Custom Wind Arranging" },
+  { id: "program-coordination", label: "Full Program Coordination" },
   { id: "drill", label: "Drill and Visual Design" },
   { id: "choreography", label: "Choreography" },
   { id: "copyright", label: "Copyright Acquisition" },
@@ -213,9 +215,9 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
           render={() => (
             <FormItem>
               <div className="mb-6 pt-6 wireframe-border-dashed border-t">
-                <FormLabel className="text-lg wireframe-heading">Additional Services</FormLabel>
+                <FormLabel className="text-lg wireframe-heading">Services</FormLabel>
                 <FormDescription className="mt-2 text-muted-foreground">
-                  Select any additional services you may be interested in.
+                  Select the services you may be interested in.
                 </FormDescription>
               </div>
               {serviceItems.map(item => (

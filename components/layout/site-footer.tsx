@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Music, Mail, Phone, MapPin } from "lucide-react"
+import { Music, Mail, Phone } from "lucide-react"
 import Image from "next/image"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import type { NavigationItem, FooterGroup } from "@/config/site"
@@ -80,12 +80,6 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 							<Link href="mailto:hello@brightdesigns.band" className="plus-body-sm text-muted-foreground hover:text-foreground transition-colors">
 								hello@brightdesigns.band
 							</Link>
-						</div>
-						<div className="flex items-center gap-2">
-							<MapPin className="h-4 w-4 text-muted-foreground" />
-							<span className="plus-body-sm text-muted-foreground">
-								South Carolina, Georgia, and Virginia
-							</span>
 						</div>
 					</div>
 					<div className="flex items-center gap-4">

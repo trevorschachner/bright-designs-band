@@ -8,7 +8,7 @@ import { brand, navigation, resources, ctas, footer, social } from "@/config/sit
 import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
-import { GoogleAnalytics } from "@/components/features/seo/GoogleAnalytics"
+import Script from "next/script"
 import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
 import { generateResourceHints } from "@/lib/seo/performance"
 import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
@@ -34,6 +34,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const resourceHints = generateResourceHints()
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
   
   return (
     <html lang="en" suppressHydrationWarning>
@@ -59,8 +60,19 @@ export default function RootLayout({
         <JsonLd data={organizationSchema} />
         <JsonLd data={localBusinessSchema} />
         
-        {/* Google Analytics */}
-        <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''} />
+        {/* Google Analytics (script injection, only if ID present) */}
+        {gaId ? (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
+            <Script id="ga-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);} gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `}
+            </Script>
+          </>
+        ) : null}
         
         {/* Performance monitoring */}
         

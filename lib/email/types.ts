@@ -30,6 +30,13 @@ export interface ContactFormData {
   services: ServiceCategory[]; // Changed to array for multi-select
   message: string;
   privacyAgreed: boolean;
+  // Additional form fields
+  school?: string;
+  showInterest?: string;
+  bandSize?: string;
+  abilityLevel?: string;
+  instrumentation?: string;
+  showPlan?: string[];
 }
 
 export interface EmailNotificationData {

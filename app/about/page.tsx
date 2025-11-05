@@ -2,7 +2,7 @@
 import { ArrowLeft, Users, Award, Target, ExternalLink } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import PageHero from "@/components/layout/page-hero"
 import Testimonials from "@/components/features/testimonials"
 import Link from "next/link"
@@ -85,6 +85,49 @@ export default function AboutPage() {
                 Today, we continue to push the boundaries of what&apos;s possible in marching band design. We are committed to providing the best possible service to our clients and to the marching band community. 
                 We can't wait to work with you and help your program live up to your vision.
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Why Us / Beliefs */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4 text-foreground font-primary">Why Bright Designs</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Your program deserves a design partner who actually cares. You'll get clear world-class design, realistic timelines, all that work for YOUR band.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-primary">Belief 1</CardTitle>
+                  <CardDescription>A show will never be perfect—great programs iterate, refine, and keep growing.</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-primary">Belief 2</CardTitle>
+                  <CardDescription>Design must serve students first—clarity, pacing, and achievable demand win seasons.</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-primary">Belief 3</CardTitle>
+                  <CardDescription>Communication beats chaos—predictable timelines and drafts reduce rehearsal stress.</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-primary">Belief 4</CardTitle>
+                  <CardDescription>Details create outcomes—sound, staging, and effect work together to score.</CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+            <div className="text-center mt-8">
+              <Button variant="outline" asChild>
+                <Link href="/services#process">See our design process</Link>
+              </Button>
             </div>
           </div>
         </section>

@@ -25,7 +25,7 @@ SMTP_SECURE="false"
 SMTP_USER="your-username"
 SMTP_PASS="your-password"
 EMAIL_FROM="hello@transactional.brightdesigns.band"
-ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band,admin@brightdesigns.band"
+ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band"
 ```
 
 ## Complete Environment Variables
@@ -64,7 +64,7 @@ EMAIL_FROM="hello@transactional.brightdesigns.band"
 
 # ===== CONTACT FORM SETTINGS =====
 # Who receives the contact form notifications (comma-separated)
-ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band,admin@brightdesigns.band"
+ADMIN_EMAIL_ADDRESSES="hello@brightdesigns.band"
 
 # API key for viewing submissions (generate a secure random string)
 ADMIN_API_KEY="your-secure-random-string-here"

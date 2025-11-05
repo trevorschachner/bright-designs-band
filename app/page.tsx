@@ -7,68 +7,59 @@ import { JsonLd } from "@/components/features/seo/JsonLd"
 import PageHero from "@/components/layout/page-hero"
 
 import Link from "next/link"
-import { db } from "@/lib/database"
-import { shows, showsToTags, tags } from "@/lib/database/schema"
-import { desc, inArray, eq } from "drizzle-orm"
+// Using the API envelope shape without importing types to avoid server/type coupling
 
 
 import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
 
+// Force dynamic rendering to prevent build-time database connection issues
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
-  // Simpler, robust fetching without nested lateral joins
-  const baseShows = await db
-    .select()
-    .from(shows)
-    .orderBy(desc(shows.createdAt))
-    .limit(6);
-
-  const showIds = baseShows.map((s: any) => s.id);
-  let tagsByShowId: Record<number, any[]> = {};
-  if (showIds.length > 0) {
-    const tagRows = await db
-      .select({
-        showId: showsToTags.showId,
-        tagId: tags.id,
-        tagName: tags.name,
-      })
-      .from(showsToTags)
-      .innerJoin(tags, eq(showsToTags.tagId, tags.id))
-      .where(inArray(showsToTags.showId, showIds));
-
-    tagsByShowId = tagRows.reduce((acc: Record<number, any[]>, row) => {
-      if (!acc[row.showId]) acc[row.showId] = [];
-      acc[row.showId].push({ tag: { id: row.tagId, name: row.tagName } });
-      return acc;
-    }, {} as Record<number, any[]>);
+  // Trust Supabase-backed API for shape and schema
+  let featuredShows: any[] = [];
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
+    const res = await fetch(`${baseUrl}/api/shows?limit=6`, { cache: 'no-store' });
+    const json = await res.json() as any;
+    const data = json?.data?.data || [];
+    featuredShows = data.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      year: s.year,
+      difficulty: s.difficulty,
+      duration: s.duration,
+      createdAt: s.createdAt || s.created_at,
+      showsToTags: s.showsToTags || [],
+    }));
+  } catch (error) {
+    console.error('Error fetching shows:', error);
+    featuredShows = [];
   }
-
-  const featuredShows = baseShows.map((s: any) => ({
-    ...s,
-    showsToTags: tagsByShowId[s.id] ?? [],
-  }));
   const homeServices: ServiceItem[] = [
     {
       title: "Custom Show Design",
       description:
-        "Complete show design specifically crafted for BOA regional and national competition success. Championship-caliber productions that captivate audiences and judges.",
+        "Complete show design for effective bands in all circuits. From the national BOA stage to elite state competitive regionals, we deliver a full music, visual, and aesthetic production.",
       icon: "music",
     },
     {
       title: "Music Design",
       description:
-        "Pre-written and custom wind, percussion, and sound design for groups of all skill levels. Engaging arrangements that showcase your ensemble's strengths.",
+        "Custom wind, percussion, and sound design for groups of all skill levels. Start from a blank canvas or work from pre-arranged movements to build the show that highlights your ensemble's strengths.",
       icon: "music",
     },
     {
       title: "Visual Design",
       description:
-        "Visual design, wind choreography, and guard choreography that will make your band shine. Dynamic movement that brings your show to life.",
+        "Eye-catching packages that bring the field to life. From dynamic drill to effective and accessible choreography, we'll make sure everything connects from start to finish.",
       icon: "eye",
     },
     {
       title: "Program Coordination",
       description:
-        "Creative programming, comprehensive design elements, and professional project management. One point of contact for all your needs from day one until the end of the season.",
+        "Creative programming, comprehensive design elements, and professional project management. We serve as one point of contact for all your needs from day one until the end of the season.",
       icon: "calendar",
     },
   ]
@@ -77,9 +68,9 @@ export default async function HomePage() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <PageHero
-        title="Student. Centered. Design."
+        title="Student centered marching band design."
         subtitle={
-          "Championship-caliber design that captivates audiences and judges alike.\nOver 100+ shows performed across the country."
+          "We design shows that help students shine. 100+ championship-caliber shows performed nationwide, each one perfectly suited to performer ability."
         }
       >
         <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
@@ -105,49 +96,6 @@ export default async function HomePage() {
         </div>
       </PageHero>
 
-      {/* Why Us / Beliefs */}
-      <section className="plus-section bg-muted/30">
-        <div className="plus-container">
-          <div className="text-center mb-12">
-            <h2 className="plus-h2 mb-4">Why Bright Designs</h2>
-            <p className="plus-body-lg max-w-2xl mx-auto">
-              We’re bought into your program from day one. Clear communication, reliable delivery, and professional design.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle className="plus-h4">Belief 1</CardTitle>
-                <CardDescription>A show will never be perfect—great programs iterate, refine, and keep growing.</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="plus-h4">Belief 2</CardTitle>
-                <CardDescription>Design must serve students first—clarity, pacing, and achievable demand win seasons.</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="plus-h4">Belief 3</CardTitle>
-                <CardDescription>Communication beats chaos—predictable timelines and drafts reduce rehearsal stress.</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="plus-h4">Belief 4</CardTitle>
-                <CardDescription>Details create outcomes—sound, staging, and effect work together to score.</CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-          <div className="text-center mt-8">
-            <Button variant="outline" asChild>
-              <Link href="/services#process">See our design process</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* Stats Section */}
       <section className="py-16 sm:py-20 border-y border-border bg-muted/30">
         <div className="plus-container">
@@ -169,6 +117,11 @@ export default async function HomePage() {
               <div className="text-sm sm:text-base text-muted-foreground font-medium">Arrangements</div>
             </div>
           </div>
+          <div className="text-center mt-8">
+            <Button variant="outline" asChild>
+              <Link href="/services#process">See our design process</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -183,8 +136,9 @@ export default async function HomePage() {
           </div>
 
           {/* Show Grid - Featured Shows Only */}
-          <div className="plus-grid-3">
-            {featuredShows.map((show: any) => (
+          {featuredShows.length > 0 ? (
+            <div className="plus-grid-3">
+              {featuredShows.map((show: any) => (
               <Card key={show.id}>
                 <div className="plus-divider mb-4 pb-4">
                   <div className="h-40 plus-border bg-muted flex items-center justify-center rounded-lg">
@@ -224,6 +178,20 @@ export default async function HomePage() {
               </Card>
             ))}
           </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="plus-body-lg text-muted-foreground mb-6">Featured shows are temporarily unavailable.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="rounded-lg border border-border p-6 animate-pulse">
+                    <div className="h-40 bg-muted rounded mb-4" />
+                    <div className="h-4 bg-muted rounded w-2/3 mb-2" />
+                    <div className="h-4 bg-muted rounded w-1/3" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Button variant="outline" size="lg" asChild>
@@ -238,7 +206,7 @@ export default async function HomePage() {
 
       {/* Services Section (moved above testimonials) */}
       <ServicesGrid
-        heading="Our Services"
+        heading="Design Services"
         description="Comprehensive design solutions tailored to your ensemble's unique needs"
         items={homeServices}
         cta={{ label: "Explore All Services", href: "/services", iconRight: true }}
@@ -251,9 +219,9 @@ export default async function HomePage() {
       <section className="py-20 px-4 bg-bright-third relative">
         <div className="container mx-auto text-center">
           <div className="max-w-3xl mx-auto text-white">
-            <h2 className="text-4xl font-bold mb-6 font-primary">Ready to Elevate Your Competitive Success?</h2>
+            <h2 className="text-4xl font-bold mb-6 font-primary">Give your students a show they deserve to perform.</h2>
             <p className="text-xl mb-8 opacity-90">
-              Join the many bands who trust Bright Designs for on-time delivery, exceptional communication, and championship-level show design. No missed deadlines, no communication gaps.
+              Ready to work with designers who get it? Join the growing family of programs who've discovered what it's like to work with partners who respect your vision, understand your students, and deliver exceptional design on time, every time. Let's talk about what we can create together.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {/* TODO: Uncomment when Build Your Show is production ready */}
