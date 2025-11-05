@@ -1,13 +1,25 @@
 import { ContactFormData } from './types';
 
-// Minimal HTML escaper to prevent XSS in email HTML templates
-function escapeHtml(input: unknown): string {
+// Minimal HTML escapers to prevent XSS in email HTML templates
+// Text nodes: do not escape single quotes to preserve names like O'Brien
+function escapeHtmlText(input: unknown): string {
   const str = String(input ?? '');
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// Attribute values: escape single quotes as well for robustness if ever used in single-quoted attrs
+function escapeHtmlAttr(input: unknown): string {
+  const str = String(input ?? '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 export function generateContactEmailTemplate(data: ContactFormData): { html: string; text: string } {
@@ -292,7 +304,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
             <div class="section">
                 <h2 class="section-title">Show of Interest</h2>
                 <div class="field">
-                    <div class="field-value">${escapeHtml(data.showInterest)}</div>
+                    <div class="field-value">${escapeHtmlText(data.showInterest)}</div>
                 </div>
             </div>
             ` : ''}
@@ -302,26 +314,26 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                 <div class="field-grid">
                     <div class="field">
                         <span class="field-label">Your Name</span>
-                        <div class="field-value">${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}</div>
+                        <div class="field-value">${escapeHtmlText(data.firstName)} ${escapeHtmlText(data.lastName)}</div>
                     </div>
                     <div class="field">
                         <span class="field-label">Email</span>
                         <div class="field-value">
-                            <a href="mailto:${encodeURIComponent(data.email || '')}" style="color: #6ccad2; text-decoration: none; font-weight: 500;">${escapeHtml(data.email)}</a>
+                            <a href="mailto:${encodeURIComponent(data.email || '')}" style="color: #6ccad2; text-decoration: none; font-weight: 500;">${escapeHtmlText(data.email)}</a>
                         </div>
                     </div>
                 </div>
                 ${data.school ? `
                 <div class="field">
                     <span class="field-label">School or Organization</span>
-                    <div class="field-value">${escapeHtml(data.school)}</div>
+                    <div class="field-value">${escapeHtmlText(data.school)}</div>
                 </div>
                 ` : ''}
                 ${data.phone ? `
                 <div class="field">
                     <span class="field-label">Phone</span>
                     <div class="field-value">
-                        <a href="tel:${encodeURIComponent(data.phone || '')}" style="color: #6ccad2; text-decoration: none; font-weight: 500;">${escapeHtml(data.phone)}</a>
+                        <a href="tel:${encodeURIComponent(data.phone || '')}" style="color: #6ccad2; text-decoration: none; font-weight: 500;">${escapeHtmlText(data.phone)}</a>
                     </div>
                 </div>
                 ` : ''}
@@ -351,7 +363,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                             ${['Grade 2-3', 'Grade 3-4', 'Grade 4-5+'].map((level: string) => `
                                 <div class="radio-option ${data.abilityLevel === level ? 'selected' : ''}">
                                     <span class="radio-check ${data.abilityLevel === level ? 'selected' : ''}"></span>
-                                    <span>${escapeHtml(level)}</span>
+                                    <span>${escapeHtmlText(level)}</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -361,7 +373,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                 ${data.instrumentation ? `
                 <div class="field" style="margin-top: 16px;">
                     <span class="field-label">Specific Instrumentation Notes</span>
-                    <div class="field-value message-field">${escapeHtml(data.instrumentation)}</div>
+                    <div class="field-value message-field">${escapeHtmlText(data.instrumentation)}</div>
                 </div>
                 ` : ''}
             </div>
@@ -372,7 +384,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                 <h2 class="section-title">Show Plan</h2>
                 <div class="field">
                     <div class="field-value">
-                        ${data.showPlan.map((item: string) => `<div style="margin-bottom: 8px;">• ${escapeHtml(item)}</div>`).join('')}
+                        ${data.showPlan.map((item: string) => `<div style="margin-bottom: 8px;">• ${escapeHtmlText(item)}</div>`).join('')}
                     </div>
                 </div>
             </div>
@@ -387,7 +399,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                         return `
                             <div class="checkbox-item ${isSelected ? 'selected' : ''}">
                                 <span class="checkbox-check ${isSelected ? 'selected' : ''}"></span>
-                                <span>${escapeHtml(label)}</span>
+                                <span>${escapeHtmlText(label)}</span>
                             </div>
                         `;
                     }).join('')}
@@ -398,7 +410,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
             <div class="section">
                 <h2 class="section-title">Message</h2>
                 <div class="field">
-                    <div class="field-value message-field">${escapeHtml(data.message)}</div>
+                    <div class="field-value message-field">${escapeHtmlText(data.message)}</div>
                 </div>
             </div>
             ` : ''}
@@ -748,7 +760,7 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
         <div class="header">
             <img src="${logoUrl}" alt="Bright Designs Band" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
             <div class="logo-fallback" style="display: none;">Bright Designs Band</div>
-            <h1 class="header-title">Thank You, ${escapeHtml(data.firstName)}!</h1>
+            <h1 class="header-title">Thank You, ${escapeHtmlText(data.firstName)}!</h1>
         </div>
         
         <div class="content">
@@ -762,19 +774,19 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
                 ${data.showInterest ? `
                 <div class="summary-field">
                     <span class="summary-label">Show of Interest:</span>
-                    <span class="summary-value">${escapeHtml(data.showInterest)}</span>
+                    <span class="summary-value">${escapeHtmlText(data.showInterest)}</span>
                 </div>
                 ` : ''}
                 
                 <div class="summary-field">
                     <span class="summary-label">Your Name:</span>
-                    <span class="summary-value">${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}</span>
+                    <span class="summary-value">${escapeHtmlText(data.firstName)} ${escapeHtmlText(data.lastName)}</span>
                 </div>
                 
                 ${data.school ? `
                 <div class="summary-field">
                     <span class="summary-label">School or Organization:</span>
-                    <span class="summary-value">${escapeHtml(data.school)}</span>
+                    <span class="summary-value">${escapeHtmlText(data.school)}</span>
                 </div>
                 ` : ''}
                 
@@ -788,28 +800,28 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
                 ${data.abilityLevel ? `
                 <div class="summary-field">
                     <span class="summary-label">Ensemble Ability Level:</span>
-                    <span class="summary-value">${escapeHtml(data.abilityLevel)}</span>
+                    <span class="summary-value">${escapeHtmlText(data.abilityLevel)}</span>
                 </div>
                 ` : ''}
                 
                 ${data.instrumentation ? `
                 <div class="summary-field">
                     <span class="summary-label">Specific Instrumentation Notes:</span>
-                    <span class="summary-value" style="white-space: pre-wrap;">${escapeHtml(data.instrumentation)}</span>
+                    <span class="summary-value" style="white-space: pre-wrap;">${escapeHtmlText(data.instrumentation)}</span>
                 </div>
                 ` : ''}
                 
                 <div class="summary-field">
                     <span class="summary-label">Services:</span>
                     <div style="margin-top: 8px;">
-                        ${data.services.map(service => `<span class="service-badge">${escapeHtml(serviceLabels[service] || service)}</span>`).join('')}
+                        ${data.services.map(service => `<span class="service-badge">${escapeHtmlText(serviceLabels[service] || service)}</span>`).join('')}
                     </div>
                 </div>
                 
                 ${data.message ? `
                 <div class="summary-field" style="margin-top: 16px;">
                     <div class="summary-label" style="display: block; margin-bottom: 8px;">Message:</div>
-                    <div class="summary-value" style="white-space: pre-wrap; color: #333;">${escapeHtml(data.message)}</div>
+                    <div class="summary-value" style="white-space: pre-wrap; color: #333;">${escapeHtmlText(data.message)}</div>
                 </div>
                 ` : ''}
             </div>
@@ -906,25 +918,25 @@ export function generateShowInquiryAdminAlert(data: ShowInquiryAdminData): { htm
   <title>New Show Inquiry</title>
 </head>
 <body style="font-family: Arial, sans-serif; color: #111;">
-  <h1>New Show Inquiry: ${escapeHtml(data.showInterest)}</h1>
+  <h1>New Show Inquiry: ${escapeHtmlText(data.showInterest)}</h1>
   <p>A new inquiry has been submitted for one of the shows.</p>
   <h2>Contact Details</h2>
   <ul>
-    <li><strong>Name:</strong> ${escapeHtml(data.name)}</li>
-    <li><strong>Email:</strong> <a href="mailto:${encodeURIComponent(data.email || '')}">${escapeHtml(data.email)}</a></li>
-    <li><strong>School/Organization:</strong> ${escapeHtml(data.school)}</li>
+    <li><strong>Name:</strong> ${escapeHtmlText(data.name)}</li>
+    <li><strong>Email:</strong> <a href="mailto:${encodeURIComponent(data.email || '')}">${escapeHtmlText(data.email)}</a></li>
+    <li><strong>School/Organization:</strong> ${escapeHtmlText(data.school)}</li>
   </ul>
   <h2>Ensemble Details</h2>
   <ul>
-    <li><strong>Band Size:</strong> ${escapeHtml(data.bandSize || 'N/A')}</li>
-    <li><strong>Ability Level:</strong> ${escapeHtml(data.abilityLevel || 'N/A')}</li>
-    <li><strong>Instrumentation Notes:</strong> ${escapeHtml(data.instrumentation || 'N/A')}</li>
+    <li><strong>Band Size:</strong> ${escapeHtmlText(data.bandSize || 'N/A')}</li>
+    <li><strong>Ability Level:</strong> ${escapeHtmlText(data.abilityLevel || 'N/A')}</li>
+    <li><strong>Instrumentation Notes:</strong> ${escapeHtmlText(data.instrumentation || 'N/A')}</li>
   </ul>
   <h2>Requested Services</h2>
   <ul>
-    ${data.services.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}
+    ${data.services.map((s) => `<li>${escapeHtmlText(s)}</li>`).join('')}
   </ul>
-  ${data.message ? `<h2>Additional Message</h2><p>${escapeHtml(data.message)}</p>` : ''}
+  ${data.message ? `<h2>Additional Message</h2><p>${escapeHtmlText(data.message)}</p>` : ''}
   <p style="margin-top: 20px;">You can follow up with them directly at their provided email address.</p>
 </body>
 </html>
