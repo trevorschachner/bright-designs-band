@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/utils/supabase/server';
-import { db } from '@/lib/database';
 import { files, fileTypeEnum } from '@/lib/database/schema';
 import { fileStorage } from '@/lib/storage';
 import { requirePermission } from '@/lib/auth/roles';
@@ -12,6 +10,13 @@ type FileType = typeof fileTypeEnum.enumValues[number];
 
 export async function POST(request: NextRequest) {
   try {
+    let createClient: any;
+    try {
+      ({ createClient } = await import('@/lib/utils/supabase/server'));
+    } catch (e) {
+      console.error('Supabase client import failed.', e);
+      return ErrorResponse('Auth provider not configured');
+    }
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -40,6 +45,14 @@ export async function POST(request: NextRequest) {
       return BadRequestResponse(uploadResult.error);
     }
 
+    let db: any;
+    try {
+      ({ db } = await import('@/lib/database'));
+    } catch (e) {
+      console.error('Database import failed (likely no DATABASE_URL).', e);
+      return ErrorResponse('Database not configured');
+    }
+
     const fileRecord = await db.insert(files).values({
       ...metadata,
       fileName: uploadResult.data!.fileName,
@@ -60,6 +73,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    let createClient: any;
+    try {
+      ({ createClient } = await import('@/lib/utils/supabase/server'));
+    } catch (e) {
+      console.error('Supabase client import failed.', e);
+      return ErrorResponse('Auth provider not configured');
+    }
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -80,6 +100,13 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(files.isPublic, true));
     }
 
+    let db: any;
+    try {
+      ({ db } = await import('@/lib/database'));
+    } catch (e) {
+      console.error('Database import failed (likely no DATABASE_URL).', e);
+      return ErrorResponse('Database not configured');
+    }
     const fileList = await db.select().from(files).where(and(...conditions));
 
     return SuccessResponse(fileList);

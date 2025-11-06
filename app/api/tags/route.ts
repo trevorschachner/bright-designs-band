@@ -1,19 +1,44 @@
-import { db } from '@/lib/database';
 import { tags } from '@/lib/database/schema';
-import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const allTags = await db.query.tags.findMany();
-  return NextResponse.json(allTags);
+  try {
+    let db: any;
+    try {
+      ({ db } = await import('@/lib/database'));
+    } catch (e) {
+      console.error('Database import failed (likely no DATABASE_URL).', e);
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+    const allTags = await db.query.tags.findMany();
+    return NextResponse.json(allTags);
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    return NextResponse.json({ error: 'Failed to fetch tags' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
+  let createClient: any;
+  try {
+    ({ createClient } = await import('@/lib/utils/supabase/server'));
+  } catch (e) {
+    console.error('Supabase client import failed.', e);
+    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
+  }
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let db: any;
+  try {
+    ({ db } = await import('@/lib/database'));
+  } catch (e) {
+    console.error('Database import failed (likely no DATABASE_URL).', e);
+    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
   }
 
   const body = await request.json();

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/utils/supabase/server'
-import { db } from '@/lib/database'
 import { files } from '@/lib/database/schema'
 import { eq } from 'drizzle-orm'
 import { fileStorage } from '@/lib/storage'
@@ -18,6 +16,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
     }
 
+    let createClient: any
+    try {
+      ({ createClient } = await import('@/lib/utils/supabase/server'))
+    } catch (e) {
+      console.error('Supabase client import failed.', e)
+      return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 })
+    }
     const supabase = await createClient()
     const { data: { session } } = await supabase.auth.getSession()
 
@@ -31,6 +36,13 @@ export async function DELETE(
     }
 
     // Get file details before deletion
+    let db: any
+    try {
+      ({ db } = await import('@/lib/database'))
+    } catch (e) {
+      console.error('Database import failed (likely no DATABASE_URL).', e)
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
     const fileRecord = await db.select().from(files).where(eq(files.id, fileId)).limit(1)
 
     if (fileRecord.length === 0) {
@@ -72,6 +84,13 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
     }
 
+    let db: any
+    try {
+      ({ db } = await import('@/lib/database'))
+    } catch (e) {
+      console.error('Database import failed (likely no DATABASE_URL).', e)
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
     const fileRecord = await db.select().from(files).where(eq(files.id, fileId)).limit(1)
 
     if (fileRecord.length === 0) {

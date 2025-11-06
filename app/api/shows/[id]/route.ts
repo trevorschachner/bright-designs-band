@@ -1,11 +1,16 @@
-import { db } from '@/lib/database';
 import { shows, showsToTags, showArrangements } from '@/lib/database/schema';
-import { createClient } from '@/lib/utils/supabase/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  let db: any;
+  try {
+    ({ db } = await import('@/lib/database'));
+  } catch (e) {
+    console.error('Database import failed (likely no DATABASE_URL).', e);
+    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+  }
   const show = await db.query.shows.findFirst({
     where: eq(shows.id, parseInt(id, 10)),
     with: {
@@ -34,6 +39,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  let createClient: any;
+  try {
+    ({ createClient } = await import('@/lib/utils/supabase/server'));
+  } catch (e) {
+    console.error('Supabase client import failed.', e);
+    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
+  }
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -43,6 +55,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const body = await request.json();
   const { tags: tagIds, ...showData } = body;
+
+  let db: any;
+  try {
+    ({ db } = await import('@/lib/database'));
+  } catch (e) {
+    console.error('Database import failed (likely no DATABASE_URL).', e);
+    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+  }
 
   const updatedShow = await db.transaction(async (tx) => {
     const [updated] = await tx.update(shows).set(showData).where(eq(shows.id, parseInt(id, 10))).returning();
@@ -66,6 +86,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  let createClient: any;
+  try {
+    ({ createClient } = await import('@/lib/utils/supabase/server'));
+  } catch (e) {
+    console.error('Supabase client import failed.', e);
+    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
+  }
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -73,6 +100,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  let db: any;
+  try {
+    ({ db } = await import('@/lib/database'));
+  } catch (e) {
+    console.error('Database import failed (likely no DATABASE_URL).', e);
+    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+  }
   const deletedShow = await db.delete(shows).where(eq(shows.id, parseInt(id, 10))).returning();
   return NextResponse.json(deletedShow);
 } 

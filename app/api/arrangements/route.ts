@@ -1,6 +1,4 @@
-import { db } from '@/lib/database';
 import { arrangements, files, showArrangements } from '@/lib/database/schema';
-import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
@@ -8,6 +6,15 @@ import { eq, desc } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
+    // Lazy import DB to avoid requiring DATABASE_URL at module-eval time
+    let db: any;
+    try {
+      ({ db } = await import('@/lib/database'));
+    } catch (e) {
+      console.error('Database import failed (likely no DATABASE_URL).', e);
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
     const { searchParams } = new URL(request.url);
     const filterState = FilterUrlManager.fromUrlParams(searchParams);
     
@@ -107,6 +114,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Lazy-import supabase client; it may depend on env vars
+  let createClient: any;
+  try {
+    ({ createClient } = await import('@/lib/utils/supabase/server'));
+  } catch (e) {
+    console.error('Supabase client import failed.', e);
+    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
+  }
+
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -118,6 +134,15 @@ export async function POST(request: Request) {
   const { showId, displayOrder, ...rest } = body as any;
   if (!showId) {
     return NextResponse.json({ error: 'showId is required' }, { status: 400 });
+  }
+
+  // Lazy import DB only when needed
+  let db: any;
+  try {
+    ({ db } = await import('@/lib/database'));
+  } catch (e) {
+    console.error('Database import failed (likely no DATABASE_URL).', e);
+    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
   }
 
   // Compute order index from join table (max + 1)
