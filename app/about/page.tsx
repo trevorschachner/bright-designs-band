@@ -83,7 +83,7 @@ export default function AboutPage() {
               </p>
               <p>
                 Today, we continue to push the boundaries of what&apos;s possible in marching band design. We are committed to providing the best possible service to our clients and to the marching band community. 
-                We can't wait to work with you and help your program live up to your vision.
+                We can&apos;t wait to work with you and help your program live up to your vision.
               </p>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function AboutPage() {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4 text-foreground font-primary">Why Bright Designs</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Your program deserves a design partner who actually cares. You'll get clear world-class design, realistic timelines, all that work for YOUR band.
+                Your program deserves a design partner who actually cares. You&apos;ll get clear world-class design, realistic timelines, all that work for YOUR band.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">

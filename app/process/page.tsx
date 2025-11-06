@@ -59,7 +59,7 @@ export default function ProcessPage() {
                       Design Concepts
                     </h3>
                     <p className="plus-body-sm">
-                      Our team develops multiple creative concepts tailored to your ensemble's unique strengths and competitive goals.
+                      Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
                     </p>
                   </div>
                 </div>
@@ -139,7 +139,7 @@ export default function ProcessPage() {
                       Support
                     </h3>
                     <p className="plus-body-sm">
-                      Ongoing support throughout your season—we're here to help with questions, adjustments, and guidance.
+                      Ongoing support throughout your season—we&apos;re here to help with questions, adjustments, and guidance.
                     </p>
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export default function ProcessPage() {
                     Design Concepts
                   </h3>
                   <p className="plus-body-sm">
-                    Our team develops multiple creative concepts tailored to your ensemble's unique strengths and competitive goals.
+                    Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
                   </p>
                 </div>
               </div>
@@ -244,7 +244,7 @@ export default function ProcessPage() {
                     Support
                   </h3>
                   <p className="plus-body-sm">
-                    Ongoing support throughout your season—we're here to help with questions, adjustments, and guidance.
+                    Ongoing support throughout your season—we&apos;re here to help with questions, adjustments, and guidance.
                   </p>
                 </div>
               </div>

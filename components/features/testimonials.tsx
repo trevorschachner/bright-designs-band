@@ -36,7 +36,7 @@ export default function Testimonials() {
         <div className="text-center mb-16">
           <h2 className="plus-h2 mb-4">What Directors Say</h2>
           <p className="plus-body-lg max-w-2xl mx-auto">
-            Don't take our word for it—listen to directors who've been in your shoes.
+            Don&apos;t take our word for it—listen to directors who&apos;ve been in your shoes.
           </p>
         </div>
 

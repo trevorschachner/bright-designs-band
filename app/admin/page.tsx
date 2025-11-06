@@ -32,7 +32,7 @@ export default async function AdminPage() {
         <Alert className="max-w-md mx-auto">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            You don't have permission to access the admin dashboard. Contact an administrator if you believe this is an error.
+            You don&apos;t have permission to access the admin dashboard. Contact an administrator if you believe this is an error.
           </AlertDescription>
         </Alert>
         <div className="text-center mt-4">

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { InquiryForm } from '@/components/forms/inquiry-form'
 import { toast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
@@ -89,7 +90,7 @@ export default function ContactPage() {
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="/">Back to Home</a>
+                  <Link href="/">Back to Home</Link>
                 </Button>
               </div>
             </div>

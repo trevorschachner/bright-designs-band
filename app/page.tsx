@@ -83,7 +83,7 @@ export default async function HomePage() {
           </Button> */}
           <Button variant="outline" size="lg" asChild>
             <Link href="/contact">
-              Let's Talk
+              Let&apos;s Talk
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
           </Button>
@@ -221,7 +221,7 @@ export default async function HomePage() {
           <div className="max-w-3xl mx-auto text-white">
             <h2 className="text-4xl font-bold mb-6 font-primary">Give your students a show they deserve to perform.</h2>
             <p className="text-xl mb-8 opacity-90">
-              Ready to work with designers who get it? Join the growing family of programs who've discovered what it's like to work with partners who respect your vision, understand your students, and deliver exceptional design on time, every time. Let's talk about what we can create together.
+              Ready to work with designers who get it? Join the growing family of programs who&apos;ve discovered what it&apos;s like to work with partners who respect your vision, understand your students, and deliver exceptional design on time, every time. Let&apos;s talk about what we can create together.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {/* TODO: Uncomment when Build Your Show is production ready */}

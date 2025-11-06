@@ -29,7 +29,7 @@ export default function TermsOfServicePage() {
 
         <h2>5. Disclaimer of Warranties</h2>
         <p>
-          Your use of the site, its content, and any services or items obtained through the website is at your own risk. The site, its content, and any services or items obtained through the website are provided on an "as is" and "as available" basis, without any warranties of any kind, either express or implied.
+          Your use of the site, its content, and any services or items obtained through the website is at your own risk. The site, its content, and any services or items obtained through the website are provided on an &quot;as is&quot; and &quot;as available&quot; basis, without any warranties of any kind, either express or implied.
         </p>
 
         <h2>6. Limitation on Liability</h2>

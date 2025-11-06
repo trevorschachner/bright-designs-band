@@ -32,9 +32,9 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 						<p className="plus-caption text-muted-foreground mb-6">
 							© {new Date().getFullYear()} Bright Designs LLC. All rights reserved.
 						</p>
-						<p className="plus-body-sm text-muted-foreground mb-8 max-w-sm">
-							Custom marching band show design and arrangements. Let's bring your vision to life with expert design and passion.
-						</p>
+					<p className="plus-body-sm text-muted-foreground mb-8 max-w-sm">
+						Custom marching band show design and arrangements. Let&apos;s bring your vision to life with expert design and passion.
+					</p>
 						<div className="flex flex-col sm:flex-row gap-3">
 							<Button asChild size="sm" className="plus-btn-primary">
 								<Link href="/contact">

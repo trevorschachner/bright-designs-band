@@ -98,7 +98,7 @@ export function useFilterState({
     } catch (error) {
       console.warn('Failed to parse filter state from URL params:', error);
     }
-  }, [searchParams, syncWithUrl]);
+  }, [searchParams, syncWithUrl, filterState]);
 
   const setFilterState = useCallback((newState: FilterState) => {
     setInternalFilterState(newState);

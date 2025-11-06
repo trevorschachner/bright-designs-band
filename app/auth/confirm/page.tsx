@@ -125,7 +125,7 @@ export default function ConfirmEmailPage() {
                   <Mail className="w-6 h-6 text-green-600 mx-auto mb-2" />
                   <p className="text-sm text-green-800 font-medium">Account Verified!</p>
                   <p className="text-xs text-green-700 mt-1">
-                    You'll be redirected to the login page in a few seconds.
+                    You&apos;ll be redirected to the login page in a few seconds.
                   </p>
                 </div>
                 <Button className="w-full" asChild>
