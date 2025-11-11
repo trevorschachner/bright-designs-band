@@ -101,27 +101,45 @@ export async function getDynamicRoutes(): Promise<SitemapURL[]> {
   const routes: SitemapURL[] = []
   
   try {
-    // TODO: Fetch from your database
-    // const arrangements = await db.select().from(arrangements)
-    // const shows = await db.select().from(shows)
-    
-    // arrangements.forEach(arrangement => {
-    //   routes.push({
-    //     loc: `/arrangements/${arrangement.id}`,
-    //     lastmod: arrangement.updatedAt?.toISOString().split('T')[0],
-    //     changefreq: 'monthly',
-    //     priority: 0.8
-    //   })
-    // })
-    
-    // shows.forEach(show => {
-    //   routes.push({
-    //     loc: `/shows/${show.id}`,
-    //     lastmod: show.updatedAt?.toISOString().split('T')[0],
-    //     changefreq: 'monthly', 
-    //     priority: 0.8
-    //   })
-    // })
+    // Prefer Supabase to avoid bundling DB client in edge contexts
+    const { createClient } = await import('@/lib/utils/supabase/server')
+    const supabase = await createClient()
+
+    // Shows (use slug)
+    const { data: showRows } = await supabase
+      .from('shows')
+      .select('slug,updated_at')
+      .order('updated_at', { ascending: false })
+    if (Array.isArray(showRows)) {
+      showRows.forEach((row: any) => {
+        if (row?.slug) {
+          routes.push({
+            loc: `/shows/${row.slug}`,
+            lastmod: row?.updated_at ? String(row.updated_at).split('T')[0] : undefined,
+            changefreq: 'monthly',
+            priority: 0.8,
+          })
+        }
+      })
+    }
+
+    // Arrangements (keep id URLs for now)
+    const { data: arrRows } = await supabase
+      .from('arrangements')
+      .select('id,updated_at')
+      .order('updated_at', { ascending: false })
+    if (Array.isArray(arrRows)) {
+      arrRows.forEach((row: any) => {
+        if (typeof row?.id === 'number') {
+          routes.push({
+            loc: `/arrangements/${row.id}`,
+            lastmod: row?.updated_at ? String(row.updated_at).split('T')[0] : undefined,
+            changefreq: 'monthly',
+            priority: 0.8,
+          })
+        }
+      })
+    }
   } catch (error) {
     console.error('Error fetching dynamic routes for sitemap:', error)
   }

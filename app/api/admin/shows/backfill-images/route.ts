@@ -3,6 +3,7 @@ import { requirePermission } from '@/lib/auth/roles';
 import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { files, shows } from '@/lib/database/schema';
 import { eq, inArray } from 'drizzle-orm';
+import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 
 type BackfillMapping = {
   showId?: number;
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
       if (mappingEntry?.files && Array.isArray(mappingEntry.files)) {
         for (const storagePath of mappingEntry.files) {
           const name = storagePath.split('/').pop() || storagePath;
-          const { data: pub } = supabase.storage.from('files').getPublicUrl(storagePath);
+          const { data: pub } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(withRootPrefix(storagePath));
           found.push({ name, url: pub.publicUrl, storagePath });
         }
       } else {
@@ -116,8 +117,8 @@ export async function POST(request: Request) {
         for (const pfx of prefixesToScan) {
           // List files one level under the prefix
           const { data: list, error: listErr } = await supabase.storage
-            .from('files')
-            .list(pfx, {
+            .from(STORAGE_BUCKET)
+            .list(withRootPrefix(pfx), {
               limit: limitPerShow,
               sortBy: { column: 'name', order: 'asc' },
             });
@@ -141,7 +142,7 @@ export async function POST(request: Request) {
             }
 
             const storagePath = `${pfx}/${obj.name}`;
-            const { data: pub } = supabase.storage.from('files').getPublicUrl(storagePath);
+            const { data: pub } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(withRootPrefix(storagePath));
             found.push({ name: obj.name, url: pub.publicUrl, storagePath });
           }
         }

@@ -15,6 +15,14 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+// Prevent accidental migrations in production unless explicitly allowed
+const isProd = process.env.NODE_ENV === 'production';
+const allowMigrate = String(process.env.ALLOW_DB_MIGRATE || '').toLowerCase() === 'true';
+if (isProd && !allowMigrate) {
+  console.error('🛑 Refusing to run migrations with NODE_ENV=production unless ALLOW_DB_MIGRATE=true.');
+  process.exit(1);
+}
+
 console.log('🚀 Running database migration...');
 console.log('📍 Using DATABASE_URL:', process.env.DATABASE_URL.replace(/:[^:]*@/, ':***@')); // Hide password
 

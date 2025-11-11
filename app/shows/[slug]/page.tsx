@@ -12,62 +12,87 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
-import Image from 'next/image'
 import Link from 'next/link'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
 import { getArrangementsByShowId, getFilesByArrangementId } from '@/lib/database/queries'
-import { YouTubePlayer } from '@/components/features/youtube-player'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
-// TODO: Uncomment when Show Plan is production ready
-// import { AddToPlanButton } from '@/components/features/shows/AddToPlanButton'
+import type { Metadata } from 'next'
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { JsonLd } from '@/components/features/seo/JsonLd'
+import { createCreativeWorkSchema } from '@/lib/seo/structured-data'
 
-export default async function ShowDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const showId = parseInt(id, 10);
-  const supabase = await createClient();
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const supabase = await createClient()
+  const { data: showRow } = await supabase
+    .from('shows')
+    .select('id,slug,title,description,year,difficulty,duration,thumbnail_url,created_at')
+    .eq('slug', slug)
+    .single()
 
-  // Fetch show via Supabase (avoid Drizzle relation join issues)
+  if (!showRow) {
+    return buildMetadata({
+      title: 'Show not found | Bright Designs',
+      description: 'The requested show could not be found.',
+      noindex: true,
+    })
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'
+  return buildMetadata({
+    title: `${showRow.title} | Bright Designs`,
+    description: showRow.description || 'Award-winning marching band show from Bright Designs.',
+    ogImage: showRow.thumbnail_url || '/og-image.jpg',
+    canonical: `${baseUrl}/shows/${showRow.slug}`,
+  })
+}
+
+export default async function ShowDetailBySlugPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const supabase = await createClient()
+
+  // Fetch show by slug
   const { data: showRow, error: showErr } = await supabase
     .from('shows')
-    .select('id,title,description,year,difficulty,duration,thumbnail_url,created_at')
-    .eq('id', showId)
-    .single();
+    .select('id,slug,title,description,year,difficulty,duration,thumbnail_url,created_at')
+    .eq('slug', slug)
+    .single()
 
-  if (showErr) {
-    throw new Error(`Failed to load show: ${showErr.message}`);
+  if (showErr || !showRow) {
+    throw new Error(`Failed to load show`)
+  }
+
+  const showId = showRow.id as number
+
+  const show = {
+    id: showRow.id,
+    slug: showRow.slug as string,
+    title: showRow.title as string,
+    description: showRow.description as string | null,
+    year: showRow.year as number | null,
+    difficulty: showRow.difficulty as string | null,
+    duration: showRow.duration as string | null,
+    thumbnailUrl: (showRow as any).thumbnail_url || null,
+    createdAt: showRow.created_at as string,
   }
 
   // Fetch tags
-  const { data: tagRows, error: tagErr } = await supabase
+  const { data: tagRows } = await supabase
     .from('shows_to_tags')
     .select('tags(id,name)')
-    .eq('show_id', showId);
+    .eq('show_id', showId)
 
-  const show = {
-    id: showRow?.id,
-    title: showRow?.title,
-    description: showRow?.description,
-    year: showRow?.year,
-    difficulty: showRow?.difficulty,
-    duration: showRow?.duration,
-    thumbnailUrl: showRow?.thumbnail_url || null,
-    createdAt: showRow?.created_at,
-    showsToTags: Array.isArray(tagRows)
-      ? tagRows.map((r: any) => ({ tag: r.tags })).filter((r: any) => r.tag)
-      : [],
-  };
-
-  if (!show) {
-    return <div>Show not found</div>;
-  }
+  const showsToTags = Array.isArray(tagRows)
+    ? tagRows.map((r: any) => ({ tag: r.tags })).filter((r: any) => r.tag)
+    : []
 
   const displayDifficulty = (() => {
-    const value = String(show.difficulty || '').toLowerCase();
-    if (value === '1_2') return 'Beginner';
-    if (value === '3_4') return 'Intermediate';
-    if (value === '5_plus' || value === '5+') { return 'Advanced'; }
-    return String(show.difficulty || '');
-  })();
+    const value = String(show.difficulty || '').toLowerCase()
+    if (value === '1_2') return 'Beginner'
+    if (value === '3_4') return 'Intermediate'
+    if (value === '5_plus' || value === '5+') { return 'Advanced' }
+    return String(show.difficulty || '')
+  })()
 
   // Load ordered arrangements and attach preview audio where available
   const rawArrangements = await getArrangementsByShowId(showId)
@@ -100,10 +125,19 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
     return `${m}:${String(s).padStart(2, '0')}`
   }
 
+  const creativeWorkSchema = createCreativeWorkSchema({
+    name: show.title,
+    description: show.description || '',
+    creator: 'Bright Designs',
+    year: show.year ? String(show.year) : undefined,
+    difficulty: displayDifficulty || undefined,
+    duration: show.duration || undefined,
+  })
+
   return (
     <div className="min-h-screen bg-background">
       {/* Audio player styles are now included in globals.css */}
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb Navigation */}
         <Breadcrumb className="mb-6">
@@ -128,7 +162,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
 
         {/* Show Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Left side - Video or Image */}
+          {/* Left side - Image */}
           <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video" id="listen">
             {show.thumbnailUrl ? (
               <div className="w-full h-full flex items-center justify-center">
@@ -174,7 +208,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             <div className="flex flex-wrap gap-2 mb-6">
-              {show.showsToTags?.map((relation: any) => (
+              {showsToTags?.map((relation: any) => (
                 <Badge key={relation.tag.id} variant="outline" className="text-xs">
                   {relation.tag.name}
                 </Badge>
@@ -344,6 +378,11 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
           <WhatIsIncluded />
         </div>
       </div>
+
+      {/* Structured Data */}
+      <JsonLd data={creativeWorkSchema} />
     </div>
   )
 }
+
+

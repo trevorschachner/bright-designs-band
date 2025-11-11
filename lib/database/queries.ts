@@ -50,7 +50,6 @@ export async function getShowsWithFilters(filters: {
     if (filters.searchTerm) {
       conditions.push(
         or(
-          ilike(shows.name, `%${filters.searchTerm}%`),
           ilike(shows.title, `%${filters.searchTerm}%`),
           ilike(shows.description, `%${filters.searchTerm}%`)
         )

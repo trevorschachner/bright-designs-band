@@ -122,7 +122,12 @@ export async function GET(request: NextRequest) {
     }
     const fileList = await db.select().from(files).where(and(...conditions));
 
-    return SuccessResponse(fileList);
+    const withUrls = fileList.map((f: any) => ({
+      ...f,
+      url: fileStorage.getFileUrl(f.storagePath, f.isPublic, supabase),
+    }));
+
+    return SuccessResponse(withUrls);
 
   } catch (error) {
     console.error('File fetch error:', error);

@@ -64,8 +64,7 @@ export default function EditShowPage() {
           setShow({
             // core/legacy
             id: data.id,
-            name: data.name ?? data.title ?? '',
-            title: data.title ?? data.name ?? '',
+            title: data.title ?? '',
             description: data.description ?? '',
             year: data.year ?? '',
             difficulty: data.difficulty ?? '',
@@ -120,9 +119,7 @@ export default function EditShowPage() {
     };
 
     const payload: any = {
-      // keep both for compatibility; downstream can rely on `name` primarily
-      name: normalizeString(show.name ?? show.title),
-      title: normalizeString(show.title ?? show.name),
+      title: normalizeString(show.title),
       description: normalizeNullableString(show.description),
       difficulty: normalizeString(show.difficulty || ''),
       duration: normalizeNullableString(show.duration),
@@ -173,7 +170,7 @@ export default function EditShowPage() {
         sampleScoreUrl: newArrangement.sampleScoreUrl || null,
         copyrightAmountUsd: newArrangement.copyrightAmountUsd ? Number(newArrangement.copyrightAmountUsd) : null,
         displayOrder: newArrangement.displayOrder ? Number(newArrangement.displayOrder) : undefined,
-        showId: id ? Number(id) : undefined,
+        showId: show?.id,
       };
 
     const response = await fetch('/api/arrangements', {
@@ -356,8 +353,8 @@ export default function EditShowPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Name</div>
-                <div className="text-base">{show.name || '—'}</div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Title</div>
+                <div className="text-base">{show.title || '—'}</div>
               </div>
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">Year</div>
@@ -457,21 +454,21 @@ export default function EditShowPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Primary naming */}
+            {/* Title */}
             <div>
-              <label className="block mb-2 text-sm font-medium" htmlFor="name">
-                Name <span className="text-destructive">*</span>
+              <label className="block mb-2 text-sm font-medium" htmlFor="title">
+                Title <span className="text-destructive">*</span>
               </label>
               <input 
-                className={`w-full p-2 border rounded ${!show.name ? 'border-destructive' : ''}`} 
+                className={`w-full p-2 border rounded ${!show.title ? 'border-destructive' : ''}`} 
                 type="text" 
-                id="name" 
-                value={show.name} 
-                onChange={(e) => setShow({ ...show, name: e.target.value, title: e.target.value })} 
+                id="title" 
+                value={show.title} 
+                onChange={(e) => setShow({ ...show, title: e.target.value })} 
                 required
               />
-              {!show.name && (
-                <p className="text-sm text-destructive mt-1">Name is required</p>
+              {!show.title && (
+                <p className="text-sm text-destructive mt-1">Title is required</p>
               )}
             </div>
             
@@ -569,7 +566,7 @@ export default function EditShowPage() {
             <div className="flex gap-4 pt-4 border-t">
               <Button 
                 type="submit" 
-                disabled={saving || !show.name}
+                disabled={saving || !show.title}
                 className="flex-1"
               >
                 {saving ? 'Saving…' : 'Save Show Changes'}
@@ -582,8 +579,8 @@ export default function EditShowPage() {
                 Cancel
               </Button>
             </div>
-            {!show.name && (
-              <p className="text-sm text-destructive text-center">Please fill in the required name field before saving</p>
+            {!show.title && (
+              <p className="text-sm text-destructive text-center">Please fill in the required title field before saving</p>
             )}
           </form>
         </CardContent>
@@ -1050,7 +1047,7 @@ export default function EditShowPage() {
                       <h4 className="text-sm font-medium mb-3">Upload Files for this Arrangement</h4>
                       <FileUpload 
                         arrangementId={arrangement.id}
-                        showId={id ? Number(id) : undefined}
+                        showId={show?.id}
                         allowedTypes={['audio', 'image', 'pdf', 'score']}
                         onUploadSuccess={() => setFilesVersion(v => v + 1)}
                         onUploadError={(err) => console.error('Upload error:', err)}
@@ -1080,14 +1077,14 @@ export default function EditShowPage() {
         <div className="grid grid-cols-1 gap-8">
           {/* Upload files for this show */}
           <FileUpload 
-            showId={id ? Number(id) : undefined}
+            showId={show?.id}
             onUploadSuccess={() => setFilesVersion(v => v + 1)}
             onUploadError={(err) => console.error('Upload error:', err)}
           />
 
         {/* Add YouTube link for this show */}
           <YouTubeUpload 
-            showId={id ? Number(id) : undefined}
+            showId={show?.id}
             onUploadSuccess={() => setFilesVersion(v => v + 1)}
             onUploadError={(err) => console.error('YouTube upload error:', err)}
           />
@@ -1097,7 +1094,7 @@ export default function EditShowPage() {
             <h3 className="text-xl font-semibold mb-3">Gallery</h3>
             <FileGallery 
               key={filesVersion}
-              showId={id ? Number(id) : undefined}
+              showId={show?.id}
               editable
               onFileDelete={() => setFilesVersion(v => v + 1)}
             />

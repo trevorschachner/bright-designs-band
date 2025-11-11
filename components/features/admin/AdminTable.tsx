@@ -117,7 +117,7 @@ export default function AdminTable<T extends { id: number }>({
                 </TableCell>
               ))}
               <TableCell>
-                <Link href={`/admin/${resourceName.toLowerCase()}/${row.id}`}>
+                <Link href={`/admin/${resourceName.toLowerCase()}/${(row as any).slug ?? row.id}`}>
                   <Button variant="outline" size="sm">Edit</Button>
                 </Link>
               </TableCell>

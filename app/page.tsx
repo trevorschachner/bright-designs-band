@@ -34,6 +34,23 @@ export default async function HomePage() {
       createdAt: s.createdAt || s.created_at,
       showsToTags: s.showsToTags || [],
     }));
+    // Fallback: if no featured shows are flagged, load latest shows
+    if (featuredShows.length === 0) {
+      const res2 = await fetch(`${baseUrl}/api/shows?limit=6`, { cache: 'no-store' });
+      const json2 = await res2.json() as any;
+      const data2 = json2?.data?.data || [];
+      featuredShows = data2.map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description,
+        year: s.year,
+        difficulty: s.difficulty,
+        duration: s.duration,
+        thumbnailUrl: s.thumbnailUrl || s.thumbnail_url || null,
+        createdAt: s.createdAt || s.created_at,
+        showsToTags: s.showsToTags || [],
+      }));
+    }
   } catch (error) {
     console.error('Error fetching shows:', error);
     featuredShows = [];
@@ -178,7 +195,7 @@ export default async function HomePage() {
                     ))}
                   </div>
                   <Button className="w-full" asChild>
-                    <Link href={`/shows/${show.id}`}>View Details</Link>
+                    <Link href={`/shows/${show.slug ?? show.id}`}>View Details</Link>
                   </Button>
                 </CardContent>
               </Card>

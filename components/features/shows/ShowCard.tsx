@@ -1,3 +1,4 @@
+'use client';
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
 import { Show } from "@/lib/types/shows";
+import { useRouter } from "next/navigation";
 
 interface ShowCardProps {
   item: Show;
@@ -16,6 +18,9 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
     return <ShowCardSkeleton />;
   }
 
+  const router = useRouter();
+  const href = `/shows/${(show as any).slug ?? show.id}`;
+
   const displayDifficulty = (() => {
     const value = String(show.difficulty || '').toLowerCase();
     if (value === '1_2') return 'Beginner';
@@ -26,7 +31,18 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
   })();
 
   return (
-    <Link href={`/shows/${show.id}`} className="block">
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(href)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          router.push(href);
+        }
+      }}
+      className="block"
+    >
       <Card className="frame-card group cursor-pointer hover:shadow-lg transition-shadow">
         <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient">
           <img
@@ -107,7 +123,7 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
         )}
       </CardContent>
     </Card>
-    </Link>
+    </div>
   );
 }
 

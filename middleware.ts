@@ -4,6 +4,27 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function middleware(request: NextRequest) {
   const { supabase, response } = createClient(request)
 
+  // Legacy redirect: /shows/:id -> /shows/:slug
+  const showsMatch = request.nextUrl.pathname.match(/^\/shows\/(\d+)(?:\/)?$/)
+  if (showsMatch) {
+    const id = parseInt(showsMatch[1], 10)
+    if (Number.isFinite(id)) {
+      try {
+        const { data, error } = await supabase
+          .from('shows')
+          .select('slug')
+          .eq('id', id)
+          .single()
+        if (data?.slug) {
+          const target = new URL(`/shows/${data.slug}`, request.url)
+          return NextResponse.redirect(target, 308)
+        }
+      } catch (e) {
+        // fall through to default response on error
+      }
+    }
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession()

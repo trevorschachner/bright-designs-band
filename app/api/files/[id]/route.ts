@@ -97,10 +97,18 @@ export async function GET(
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
 
-    return NextResponse.json({
-      success: true,
-      file: fileRecord[0]
-    })
+    let createClient: any
+    try {
+      ({ createClient } = await import('@/lib/utils/supabase/server'))
+    } catch (e) {
+      console.error('Supabase client import failed.', e)
+      return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 })
+    }
+    const supabase = await createClient()
+    const f = fileRecord[0] as any
+    const computedUrl = fileStorage.getFileUrl(f.storagePath, f.isPublic, supabase)
+
+    return NextResponse.json({ success: true, file: { ...f, url: computedUrl } })
 
   } catch (error) {
     console.error('File fetch error:', error)

@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     // Build base query selecting only needed columns
     let base = supabase
       .from('shows')
-      .select('id,title,description,year,difficulty,duration,thumbnail_url,featured,display_order,created_at', { count: 'exact', head: false });
+      .select('id,slug,title,description,year,difficulty,duration,thumbnail_url,featured,display_order,created_at', { count: 'exact', head: false });
 
     // Search across a few text columns
     if (filterState.search) {
@@ -133,6 +133,7 @@ export async function GET(request: Request) {
     // Map snake_case -> camelCase + attach tags
     const normalized = (rows || []).map((r: any) => ({
       id: r.id,
+      slug: r.slug,
       title: r.title,
       description: r.description,
       year: r.year,
@@ -207,7 +208,7 @@ export async function POST(request: Request) {
     // Map camelCase -> snake_case for Supabase
     const insertPayload: any = {};
     const mapIf = (key: string, value: any) => { if (value !== undefined) insertPayload[key] = value; };
-    mapIf('title', showData.title ?? showData.name);
+    mapIf('title', showData.title);
     mapIf('year', showData.year);
     mapIf('difficulty', showData.difficulty);
     mapIf('duration', showData.duration);

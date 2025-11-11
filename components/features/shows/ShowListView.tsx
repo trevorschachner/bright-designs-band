@@ -26,14 +26,14 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
   })();
 
   return (
-    <Link href={`/shows/${show.id}`} className="block">
+    <Link href={`/shows/${(show as any).slug ?? show.id}`} className="block">
       <Card className="frame-card group overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
         <div className="flex flex-col sm:flex-row">
           {/* Thumbnail */}
           <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 bg-accent-gradient overflow-hidden">
             <img
               src={show.thumbnailUrl || "/placeholder.svg"}
-              alt={show.title || (show as any).name || 'Show thumbnail'}
+              alt={show.title || 'Show thumbnail'}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

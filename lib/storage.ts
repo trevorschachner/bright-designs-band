@@ -22,6 +22,20 @@ export interface FileUploadOptions {
   displayOrder?: number
 }
 
+// Centralized storage configuration
+export const STORAGE_BUCKET =
+  (process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'Bright Designs').trim()
+
+// We keep DB storagePath values WITHOUT this prefix, and only prepend it
+// when interacting with Supabase Storage so we don't have to migrate DB rows.
+export const STORAGE_ROOT_PREFIX =
+  (process.env.NEXT_PUBLIC_STORAGE_ROOT_PREFIX || 'files').replace(/^\/+|\/+$/g, '')
+
+export function withRootPrefix(path: string): string {
+  const trimmed = String(path || '').replace(/^\/+/, '')
+  return `${STORAGE_ROOT_PREFIX}/${trimmed}`
+}
+
 export class FileStorageService {
   private supabase: SupabaseClient | null = null
 
@@ -70,8 +84,8 @@ export class FileStorageService {
 
       // Upload to Supabase Storage
       const { data: storageData, error: storageError } = await supabase.storage
-        .from('files')
-        .upload(storagePath, file, {
+        .from(STORAGE_BUCKET)
+        .upload(withRootPrefix(storagePath), file, {
           cacheControl: '3600',
           upsert: false
         })
@@ -88,8 +102,8 @@ export class FileStorageService {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('files')
-        .getPublicUrl(storagePath)
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(withRootPrefix(storagePath))
 
       return {
         success: true,
@@ -112,8 +126,8 @@ export class FileStorageService {
     try {
       const supabase = supabaseClient || this.getClient()
       const { error } = await supabase.storage
-        .from('files')
-        .remove([storagePath])
+        .from(STORAGE_BUCKET)
+        .remove([withRootPrefix(storagePath)])
 
       if (error) {
         console.error('Storage delete error:', error)
@@ -192,8 +206,8 @@ export class FileStorageService {
     const supabase = supabaseClient || this.getClient()
     if (isPublic) {
       const { data: { publicUrl } } = supabase.storage
-        .from('files')
-        .getPublicUrl(storagePath)
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(withRootPrefix(storagePath))
       return publicUrl
     } else {
       // For private files, you'd need to create a signed URL

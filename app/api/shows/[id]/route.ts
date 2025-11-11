@@ -12,12 +12,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
   }
   try {
+    const idNum = Number.parseInt(id, 10);
+    const isNumeric = Number.isFinite(idNum);
     const show = await db.query.shows.findFirst({
-      where: eq(shows.id, parseInt(id, 10)),
+      where: isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id),
       // Select all columns including extended fields
       columns: {
         id: true,
-        name: true,
+        slug: true,
         title: true,
         description: true,
         year: true,
@@ -84,6 +86,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const body = await request.json();
   const { tags: tagIds, ...showData } = body;
 
+  // Basic validation for required fields on update
+  if ('title' in showData) {
+    const t = typeof showData.title === 'string' ? showData.title.trim() : '';
+    if (!t) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+  }
+
   console.log('PUT /api/shows/' + id, 'Received data:', JSON.stringify(showData, null, 2));
   console.log('PUT /api/shows/' + id, 'Tag IDs:', tagIds);
 
@@ -98,8 +108,42 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     const updatedShow = await db.transaction(async (tx: any) => {
       console.log('PUT /api/shows/' + id, 'Updating show with data:', JSON.stringify(showData, null, 2));
-      
-      const [updated] = await tx.update(shows).set(showData).where(eq(shows.id, parseInt(id, 10))).returning();
+
+      // Compute slug from provided title (server-authoritative)
+      const sourceTitle: string | undefined = showData.title as string | undefined;
+      const slugFrom = (sourceTitle || '').toString();
+      let slug = slugFrom
+        ? slugFrom
+            .toLowerCase()
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+        : undefined;
+
+      const idNum = Number.parseInt(id, 10);
+      const isNumeric = Number.isFinite(idNum);
+
+      // Ensure slug uniqueness if we are updating it
+      if (slug) {
+        const existingWithSlug = await tx
+          .select({ id: shows.id })
+          .from(shows)
+          .where(eq(shows.slug, slug))
+          .limit(1);
+        const conflict = Array.isArray(existingWithSlug) && existingWithSlug[0] && (isNumeric ? existingWithSlug[0].id !== idNum : true);
+        if (conflict) {
+          slug = `${slug}-${isNumeric ? idNum : Date.now()}`;
+        }
+      }
+
+      const payload = { ...showData, ...(slug ? { slug } : {}) };
+
+      const [updated] = await tx
+        .update(shows)
+        .set(payload)
+        .where(isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id))
+        .returning();
       
       console.log('PUT /api/shows/' + id, 'Update result:', updated ? 'Success' : 'No rows updated');
       console.log('PUT /api/shows/' + id, 'Updated show:', JSON.stringify(updated, null, 2));
@@ -159,6 +203,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     console.error('Database import failed (likely no DATABASE_URL).', e);
     return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
   }
-  const deletedShow = await db.delete(shows).where(eq(shows.id, parseInt(id, 10))).returning();
+  const idNum = Number.parseInt(id, 10);
+  const isNumeric = Number.isFinite(idNum);
+  const deletedShow = await db
+    .delete(shows)
+    .where(isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id))
+    .returning();
   return NextResponse.json(deletedShow);
 } 

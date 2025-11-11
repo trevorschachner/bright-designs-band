@@ -15,6 +15,16 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+// Hard safety: block pushes unless explicitly allowed
+const isProd = process.env.NODE_ENV === 'production';
+const allowPush = String(process.env.ALLOW_DB_PUSH || '').toLowerCase() === 'true';
+if (isProd || !allowPush) {
+  console.error('🛑 Refusing to run drizzle-kit push.');
+  console.error('   Reason:', isProd ? 'NODE_ENV=production' : 'ALLOW_DB_PUSH is not true');
+  console.error('   To proceed intentionally in non-production only, set ALLOW_DB_PUSH=true for this command.');
+  process.exit(1);
+}
+
 console.log('🚀 Pushing schema to database...');
 console.log('📍 Using DATABASE_URL:', process.env.DATABASE_URL.replace(/:[^:]*@/, ':***@')); // Hide password
 
@@ -24,6 +34,7 @@ const drizzleBin = isWindows ? 'drizzle-kit.cmd' : 'drizzle-kit';
 const localDrizzlePath = resolve(process.cwd(), 'node_modules', '.bin', drizzleBin);
 
 let command = localDrizzlePath;
+// Never add --force here. Let drizzle prompt interactively (for local dev) or fail in CI.
 let args = ['push'];
 if (!existsSync(localDrizzlePath)) {
   // Fallback to npx if local binary not found

@@ -11,7 +11,9 @@ export const arrangementSceneEnum = pgEnum('arrangement_scene', ['Opener', 'Ball
 // Shows
 export const shows = pgTable('shows', {
   id: serial('id').primaryKey(),
-  name: text('name').notNull(),
+  // title is the canonical show name
+  title: text('title').notNull(),
+  slug: text('slug').notNull(),
   description: text('description'),
   lengthSeconds: integer('length_seconds'),
   difficulty: showDifficultyEnum('difficulty'),
@@ -26,8 +28,6 @@ export const shows = pgTable('shows', {
   soundDesigner: text('sound_designer'),
   windArranger: text('wind_arranger'),
   drillWriter: text('drill_writer'),
-  // Legacy fields retained for backward compatibility/search; consider deprecating
-  title: text('title'),
   duration: text('duration'),
   price: numeric('price', { precision: 10, scale: 2 }),
   thumbnailUrl: text('thumbnail_url'),
