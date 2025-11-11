@@ -163,7 +163,6 @@ export async function POST(request: Request) {
   // Note: 'arranger' field doesn't exist in schema, so we'll skip it
   const arrangementData: any = {};
   if (rest.title !== undefined) arrangementData.title = rest.title;
-  if (rest.type !== undefined) arrangementData.type = rest.type;
   if (rest.composer !== undefined) arrangementData.composer = rest.composer;
   // Skip arranger - not in schema
   if (rest.percussionArranger !== undefined) arrangementData.percussionArranger = rest.percussionArranger;

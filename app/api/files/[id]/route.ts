@@ -35,21 +35,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Get file details before deletion
-    let db: any
-    try {
-      ({ db } = await import('@/lib/database'))
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e)
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
-    const fileRecord = await db.select().from(files).where(eq(files.id, fileId)).limit(1)
-
-    if (fileRecord.length === 0) {
+    // Get file details via Supabase (respect RLS/admin policies)
+    const { data: fileRow, error: fetchErr } = await supabase
+      .from('files')
+      .select('*')
+      .eq('id', fileId)
+      .single()
+    if (fetchErr || !fileRow) {
+      console.error('Supabase fetch error (files):', fetchErr?.message)
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
-
-    const file = fileRecord[0]
+    const file = fileRow as any
 
     // Delete from Supabase Storage
     const storageResult = await fileStorage.deleteFile(file.storagePath)
@@ -58,8 +54,12 @@ export async function DELETE(
       // Continue with database deletion even if storage deletion fails
     }
 
-    // Delete from database
-    await db.delete(files).where(eq(files.id, fileId))
+    // Delete from database via Supabase (RLS-aware)
+    const { error: delErr } = await supabase.from('files').delete().eq('id', fileId)
+    if (delErr) {
+      console.error('Supabase delete error (files):', delErr.message)
+      return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 })
+    }
 
     return NextResponse.json({ 
       success: true,
@@ -84,19 +84,6 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
     }
 
-    let db: any
-    try {
-      ({ db } = await import('@/lib/database'))
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e)
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
-    const fileRecord = await db.select().from(files).where(eq(files.id, fileId)).limit(1)
-
-    if (fileRecord.length === 0) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
-    }
-
     let createClient: any
     try {
       ({ createClient } = await import('@/lib/utils/supabase/server'))
@@ -105,7 +92,18 @@ export async function GET(
       return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 })
     }
     const supabase = await createClient()
-    const f = fileRecord[0] as any
+
+    // Fetch via Supabase to respect RLS
+    const { data: fileRow, error: fetchErr } = await supabase
+      .from('files')
+      .select('*')
+      .eq('id', fileId)
+      .single()
+    if (fetchErr || !fileRow) {
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    }
+
+    const f = fileRow as any
     const computedUrl = fileStorage.getFileUrl(f.storagePath, f.isPublic, supabase)
 
     return NextResponse.json({ success: true, file: { ...f, url: computedUrl } })

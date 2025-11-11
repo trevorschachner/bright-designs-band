@@ -58,25 +58,32 @@ export async function POST(request: NextRequest) {
       return BadRequestResponse(uploadResult.error);
     }
 
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e);
-      return ErrorResponse('Database not configured');
+    // Write via Supabase (respects RLS using the authenticated user)
+    const insertPayload: any = {
+      file_name: uploadResult.data!.fileName,
+      original_name: file.name,
+      file_type: metadata.fileType,
+      file_size: uploadResult.data!.fileSize,
+      mime_type: uploadResult.data!.mimeType,
+      url: uploadResult.data!.url,
+      storage_path: uploadResult.data!.storagePath,
+      show_id: metadata.showId ?? null,
+      arrangement_id: metadata.arrangementId ?? null,
+      is_public: metadata.isPublic ?? true,
+      description: metadata.description ?? null,
+      display_order: typeof metadata.displayOrder === 'number' ? metadata.displayOrder : 0,
+    };
+    const { data: inserted, error: insertErr } = await supabase
+      .from('files')
+      .insert(insertPayload)
+      .select('*')
+      .single();
+    if (insertErr) {
+      console.error('Supabase insert error (files):', insertErr.message, { insertPayload });
+      return ErrorResponse('Failed to persist file record');
     }
 
-    const fileRecord = await db.insert(files).values({
-      ...metadata,
-      fileName: uploadResult.data!.fileName,
-      originalName: file.name,
-      fileSize: uploadResult.data!.fileSize,
-      mimeType: uploadResult.data!.mimeType,
-      url: uploadResult.data!.url,
-      storagePath: uploadResult.data!.storagePath,
-    }).returning();
-
-    return SuccessResponse(fileRecord[0], 201);
+    return SuccessResponse(inserted, 201);
 
   } catch (error) {
     console.error('File upload error:', error);

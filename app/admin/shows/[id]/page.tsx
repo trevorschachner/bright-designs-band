@@ -23,7 +23,6 @@ export default function EditShowPage() {
   const [showAddArrangementForm, setShowAddArrangementForm] = useState(false);
   const [newArrangement, setNewArrangement] = useState({
     title: '',
-    type: '',
     composer: '',
     arranger: '',
     percussionArranger: '',
@@ -155,7 +154,6 @@ export default function EditShowPage() {
       // Convert form data to API format
       const payload: any = {
         title: newArrangement.title,
-        type: newArrangement.type || null,
         composer: newArrangement.composer || null,
         arranger: newArrangement.arranger || null,
         percussionArranger: newArrangement.percussionArranger || null,
@@ -183,7 +181,6 @@ export default function EditShowPage() {
         // Reset form
         setNewArrangement({
           title: '',
-          type: '',
           composer: '',
           arranger: '',
           percussionArranger: '',
@@ -219,7 +216,6 @@ export default function EditShowPage() {
     setEditingArrangement(arrangement.id);
     setEditingArrangementData({
       title: arrangement.title || '',
-      type: arrangement.type || '',
       composer: arrangement.composer || '',
       arranger: arrangement.arranger || '',
       percussionArranger: arrangement.percussionArranger || arrangement.percussion_arranger || '',
@@ -244,7 +240,6 @@ export default function EditShowPage() {
       // Convert camelCase to snake_case for Supabase
       const payload: any = {
         title: editingArrangementData.title || null,
-        type: editingArrangementData.type || null,
         composer: editingArrangementData.composer || null,
         arranger: editingArrangementData.arranger || null,
         percussion_arranger: editingArrangementData.percussionArranger || null,
@@ -624,13 +619,6 @@ export default function EditShowPage() {
                     />
                   </div>
                   <div>
-                    <label className="block mb-2 text-sm font-medium">Type</label>
-                    <input 
-                      className="w-full p-2 border rounded" 
-                      type="text" 
-                      value={newArrangement.type} 
-                      onChange={(e) => setNewArrangement({ ...newArrangement, type: e.target.value })} 
-                    />
                   </div>
                   <div>
                     <label className="block mb-2 text-sm font-medium">Composer</label>
@@ -788,7 +776,6 @@ export default function EditShowPage() {
                       setShowAddArrangementForm(false);
                       setNewArrangement({
                         title: '',
-                        type: '',
                         composer: '',
                         arranger: '',
                         percussionArranger: '',
@@ -864,13 +851,6 @@ export default function EditShowPage() {
                         />
                       </div>
                       <div>
-                        <label className="block mb-2 text-sm font-medium">Type</label>
-                        <input 
-                          className="w-full p-2 border rounded" 
-                          type="text" 
-                          value={editingArrangementData?.type || ''} 
-                          onChange={(e) => setEditingArrangementData({ ...editingArrangementData, type: e.target.value })} 
-                        />
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium">Composer</label>
@@ -1020,7 +1000,6 @@ export default function EditShowPage() {
                       <div>
                         <h3 className="text-lg font-semibold">{arrangement.title || 'Untitled'}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {arrangement.type && <span>Type: {arrangement.type}</span>}
                           {arrangement.displayOrder !== undefined && <span className="ml-2">Order: {arrangement.displayOrder}</span>}
                           {arrangement.scene && <span className="ml-2">Scene: {arrangement.scene}</span>}
                         </p>

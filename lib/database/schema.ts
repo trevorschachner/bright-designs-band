@@ -53,7 +53,6 @@ export const arrangements = pgTable('arrangements', {
   sampleScoreUrl: text('sample_score_url'),
   // Legacy fields retained temporarily
   title: text('title'),
-  type: text('type'),
   displayOrder: integer('display_order').default(0).notNull(),
 });
 

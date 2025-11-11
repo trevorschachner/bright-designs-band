@@ -72,7 +72,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // Convert snake_case to camelCase for Drizzle schema
     const drizzlePayload: any = {};
     if (body.title !== undefined) drizzlePayload.title = body.title;
-    if (body.type !== undefined) drizzlePayload.type = body.type;
     if (body.composer !== undefined) drizzlePayload.composer = body.composer;
     if (body.arranger !== undefined) drizzlePayload.arranger = body.arranger;
     if (body.percussion_arranger !== undefined) drizzlePayload.percussionArranger = body.percussion_arranger;
