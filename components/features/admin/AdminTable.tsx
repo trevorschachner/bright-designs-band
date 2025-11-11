@@ -43,7 +43,12 @@ export default function AdminTable<T extends { id: number }>({
           throw new Error(`Failed to fetch ${resourceName}`);
         }
         const result = await response.json();
-        setData(result.data.shows || result.data); // Adjust based on your API response structure
+        const payload = result?.data;
+        const rows =
+          Array.isArray(payload?.shows) ? payload.shows :
+          Array.isArray(payload?.data) ? payload.data :
+          Array.isArray(payload) ? payload : [];
+        setData(rows as T[]);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'An unknown error occurred');
       } finally {

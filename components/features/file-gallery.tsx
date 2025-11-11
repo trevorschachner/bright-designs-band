@@ -74,13 +74,14 @@ export function FileGallery({
       const response = await fetch(`/api/files?${params}`)
       const result = await response.json()
 
-      if (!response.ok) {
+      if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to fetch files')
       }
 
-      // Filter and sort files
-      let filteredFiles = result.files
+      // Extract files from API response (data is wrapped in SuccessResponse)
+      let filteredFiles = Array.isArray(result.data) ? result.data : []
 
+      // Additional filtering (though API already filters by showId/arrangementId/fileType)
       if (showId) {
         filteredFiles = filteredFiles.filter((f: FileRecord) => f.showId === showId)
       }

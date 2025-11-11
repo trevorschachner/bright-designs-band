@@ -32,7 +32,7 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
         <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 bg-accent-gradient overflow-hidden">
           <img
             src={show.thumbnailUrl || "/placeholder.svg"}
-            alt={show.title}
+            alt={show.title || (show as any).name || 'Show thumbnail'}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -64,6 +64,12 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
                   </span>
                   <span>•</span>
                   <span>{show.duration || 'TBD'}</span>
+                  {show.arrangements && show.arrangements.length > 0 && (
+                    <>
+                      <span>•</span>
+                      <span>{show.arrangements.length} {show.arrangements.length === 1 ? 'arrangement' : 'arrangements'}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

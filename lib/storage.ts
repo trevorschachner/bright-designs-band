@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/utils/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface FileUploadResult {
   success: boolean
@@ -22,11 +23,28 @@ export interface FileUploadOptions {
 }
 
 export class FileStorageService {
-  private supabase = createClient()
+  private supabase: SupabaseClient | null = null
+
+  // Set the Supabase client (should be server-side authenticated client for uploads)
+  setClient(client: SupabaseClient) {
+    this.supabase = client
+  }
+
+  // Get or create a client (fallback to client-side for backward compatibility)
+  private getClient(): SupabaseClient {
+    if (this.supabase) {
+      return this.supabase
+    }
+    // Fallback to client-side client (for backward compatibility)
+    return createClient() as any
+  }
 
   // Upload file to Supabase Storage
-  async uploadFile(file: File, options: FileUploadOptions): Promise<FileUploadResult> {
+  async uploadFile(file: File, options: FileUploadOptions, supabaseClient?: SupabaseClient): Promise<FileUploadResult> {
     try {
+      // Use provided client or fallback to instance client
+      const supabase = supabaseClient || this.getClient()
+
       // Validate file
       const validation = this.validateFile(file, options.fileType)
       if (!validation.valid) {
@@ -42,8 +60,16 @@ export class FileStorageService {
       // Determine storage path based on type and association
       const storagePath = this.generateStoragePath(fileName, options)
 
+      console.log('Uploading file to storage:', {
+        storagePath,
+        fileSize: file.size,
+        fileType: file.type,
+        fileName: file.name,
+        options
+      })
+
       // Upload to Supabase Storage
-      const { data: storageData, error: storageError } = await this.supabase.storage
+      const { data: storageData, error: storageError } = await supabase.storage
         .from('files')
         .upload(storagePath, file, {
           cacheControl: '3600',
@@ -51,12 +77,17 @@ export class FileStorageService {
         })
 
       if (storageError) {
-        console.error('Storage upload error:', storageError)
-        return { success: false, error: 'Failed to upload file to storage' }
+        console.error('Storage upload error:', {
+          message: storageError.message,
+          statusCode: storageError.statusCode,
+          error: storageError,
+          storagePath
+        })
+        return { success: false, error: `Failed to upload file to storage: ${storageError.message}` }
       }
 
       // Get public URL
-      const { data: { publicUrl } } = this.supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('files')
         .getPublicUrl(storagePath)
 
@@ -77,9 +108,10 @@ export class FileStorageService {
   }
 
   // Delete file from Supabase Storage
-  async deleteFile(storagePath: string): Promise<{ success: boolean; error?: string }> {
+  async deleteFile(storagePath: string, supabaseClient?: SupabaseClient): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await this.supabase.storage
+      const supabase = supabaseClient || this.getClient()
+      const { error } = await supabase.storage
         .from('files')
         .remove([storagePath])
 
@@ -98,6 +130,11 @@ export class FileStorageService {
   // Generate storage path based on file type and association
   private generateStoragePath(fileName: string, options: FileUploadOptions): string {
     const { fileType, showId, arrangementId } = options
+    
+    // Special case: audio files for shows go into show_mp3s folder
+    if (showId && !arrangementId && fileType === 'audio') {
+      return `show_mp3s/${fileName}`
+    }
     
     if (showId && arrangementId) {
       return `shows/${showId}/arrangements/${arrangementId}/${fileType}/${fileName}`
@@ -151,9 +188,10 @@ export class FileStorageService {
   }
 
   // Get file URL (handles both public and private files)
-  getFileUrl(storagePath: string, isPublic: boolean = true): string {
+  getFileUrl(storagePath: string, isPublic: boolean = true, supabaseClient?: SupabaseClient): string {
+    const supabase = supabaseClient || this.getClient()
     if (isPublic) {
-      const { data: { publicUrl } } = this.supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('files')
         .getPublicUrl(storagePath)
       return publicUrl

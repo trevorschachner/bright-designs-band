@@ -172,7 +172,13 @@ export function FileUpload({
         const result = await response.json()
 
         if (!response.ok) {
-          throw new Error(result.error || 'Upload failed')
+          // Include validation details if available
+          const errorMsg = result.error || 'Upload failed'
+          const details = result.details
+          const fullError = details 
+            ? `${errorMsg}: ${Array.isArray(details) ? details.map((d: any) => d.message || JSON.stringify(d)).join(', ') : JSON.stringify(details)}`
+            : errorMsg
+          throw new Error(fullError)
         }
 
         updateFile(uploadingFile.id, { 

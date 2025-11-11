@@ -31,17 +31,30 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const rawData = Object.fromEntries(formData.entries());
     
+    console.log('File upload - raw form data:', {
+      fileType: rawData.fileType,
+      showId: rawData.showId,
+      arrangementId: rawData.arrangementId,
+      isPublic: rawData.isPublic,
+      hasFile: !!rawData.file,
+      fileSize: rawData.file instanceof File ? rawData.file.size : 'not a File',
+      fileType: rawData.file instanceof File ? rawData.file.type : 'not a File',
+    });
+    
     const parsedData = fileUploadSchema.safeParse(rawData);
 
     if (!parsedData.success) {
+      console.error('File upload validation failed:', parsedData.error.errors);
       return BadRequestResponse(parsedData.error.errors);
     }
     
     const { file, ...metadata } = parsedData.data;
 
-    const uploadResult = await fileStorage.uploadFile(file, metadata);
+    // Pass the authenticated server-side Supabase client to the storage service
+    const uploadResult = await fileStorage.uploadFile(file, metadata, supabase);
 
     if (!uploadResult.success) {
+      console.error('File upload failed:', uploadResult.error);
       return BadRequestResponse(uploadResult.error);
     }
 

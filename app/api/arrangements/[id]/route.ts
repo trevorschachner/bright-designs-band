@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { getArrangementById } from '@/lib/database/supabase-queries';
+import { arrangements } from '@/lib/database/schema';
+import { eq } from 'drizzle-orm';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -41,6 +43,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const arrangementId = parseInt(id, 10);
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -55,27 +58,72 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const body = await request.json();
+    console.log('PUT /api/arrangements/' + arrangementId, 'Received data:', JSON.stringify(body, null, 2));
     
-    const { data: updatedArrangement, error } = await supabase
-      .from('arrangements')
-      .update(body)
-      .eq('id', parseInt(id, 10))
-      .select()
-      .single();
+    // Use Drizzle to bypass RLS (like shows route does)
+    let db: any;
+    try {
+      ({ db } = await import('@/lib/database'));
+    } catch (e) {
+      console.error('Database import failed (likely no DATABASE_URL).', e);
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
 
-    if (error) {
-      console.error('Error updating arrangement:', error);
+    // Convert snake_case to camelCase for Drizzle schema
+    const drizzlePayload: any = {};
+    if (body.title !== undefined) drizzlePayload.title = body.title;
+    if (body.type !== undefined) drizzlePayload.type = body.type;
+    if (body.composer !== undefined) drizzlePayload.composer = body.composer;
+    if (body.arranger !== undefined) drizzlePayload.arranger = body.arranger;
+    if (body.percussion_arranger !== undefined) drizzlePayload.percussionArranger = body.percussion_arranger;
+    if (body.description !== undefined) drizzlePayload.description = body.description;
+    if (body.grade !== undefined) drizzlePayload.grade = body.grade;
+    if (body.year !== undefined) drizzlePayload.year = body.year;
+    if (body.duration_seconds !== undefined) drizzlePayload.durationSeconds = body.duration_seconds;
+    if (body.scene !== undefined) drizzlePayload.scene = body.scene;
+    if (body.ensemble_size !== undefined) drizzlePayload.ensembleSize = body.ensemble_size;
+    if (body.youtube_url !== undefined) drizzlePayload.youtubeUrl = body.youtube_url;
+    if (body.commissioned !== undefined) drizzlePayload.commissioned = body.commissioned;
+    if (body.sample_score_url !== undefined) drizzlePayload.sampleScoreUrl = body.sample_score_url;
+    if (body.copyright_amount_usd !== undefined) drizzlePayload.copyrightAmountUsd = body.copyright_amount_usd;
+    if (body.display_order !== undefined) drizzlePayload.displayOrder = body.display_order;
+
+    console.log('PUT /api/arrangements/' + arrangementId, 'Drizzle payload:', JSON.stringify(drizzlePayload, null, 2));
+
+    try {
+      const [updatedArrangement] = await db
+        .update(arrangements)
+        .set(drizzlePayload)
+        .where(eq(arrangements.id, arrangementId))
+        .returning();
+
+      if (!updatedArrangement) {
+        console.error('PUT /api/arrangements/' + arrangementId, 'Update returned no rows');
+        return NextResponse.json(
+          { error: 'Arrangement not found or update failed' },
+          { status: 404 }
+        );
+      }
+
+      console.log('PUT /api/arrangements/' + arrangementId, 'Successfully updated');
+      return NextResponse.json(updatedArrangement);
+    } catch (dbError: any) {
+      console.error('PUT /api/arrangements/' + arrangementId, 'Database error:', dbError);
       return NextResponse.json(
-        { error: 'Failed to update arrangement' },
+        { 
+          error: 'Failed to update arrangement',
+          details: dbError?.message || String(dbError)
+        },
         { status: 500 }
       );
     }
-
-    return NextResponse.json(updatedArrangement);
-  } catch (error) {
-    console.error('Error updating arrangement:', error);
+  } catch (error: any) {
+    console.error('PUT /api/arrangements/', 'Error updating arrangement:', error);
     return NextResponse.json(
-      { error: 'Failed to update arrangement' },
+      { 
+        error: 'Failed to update arrangement',
+        details: error?.message || String(error)
+      },
       { status: 500 }
     );
   }

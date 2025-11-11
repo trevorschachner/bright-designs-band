@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { requirePermission } from '@/lib/auth/roles';
 import { Suspense } from 'react';
 import ShowsTable from './ShowsTable';
+import BackfillImagesButton from './BackfillImagesButton';
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -40,9 +41,12 @@ export default async function ManageShowsPage() {
       </Breadcrumb>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Manage Shows</h1>
-        <Link href="/admin/shows/new" className="bg-primary text-primary-foreground px-4 py-2 rounded">
-          Add New Show
-        </Link>
+        <div className="flex items-center gap-3">
+          <BackfillImagesButton />
+          <Link href="/admin/shows/new" className="bg-primary text-primary-foreground px-4 py-2 rounded">
+            Add New Show
+          </Link>
+        </div>
       </div>
       <Suspense fallback={<p>Loading shows...</p>}>
         <ShowsTable />

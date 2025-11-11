@@ -12,6 +12,7 @@ import Script from "next/script"
 import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
 import { generateResourceHints } from "@/lib/seo/performance"
 import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
+import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -79,8 +80,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ShowPlanProvider>
             <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
-            <main>{children}</main>
+            <main className="pb-20">{children}</main>
             <SiteFooter footer={footer} social={social} />
+            <GlobalAudioPlayerBar />
           </ShowPlanProvider>
         </ThemeProvider>
       </body>

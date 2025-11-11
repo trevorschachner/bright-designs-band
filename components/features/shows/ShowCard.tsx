@@ -79,8 +79,25 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
           </ul>
         )}
         {show.arrangements && show.arrangements.length > 0 && (
-          <div className="text-xs text-muted-foreground mb-4">
-            {show.arrangements.length} arrangement{show.arrangements.length !== 1 ? 's' : ''} available
+          <div className="mb-4">
+            <div className="text-xs text-muted-foreground mb-2">
+              {show.arrangements.length} {show.arrangements.length !== 1 ? 'arrangements' : 'arrangement'}:
+            </div>
+            <ul className="space-y-1">
+              {show.arrangements.slice(0, 3).map((a: any) => (
+                <li key={a.id} className="text-sm">
+                  <Link href={`/arrangements/${a.id}`} className="hover:underline">
+                    {a.scene ? <Badge variant="outline" className="mr-2 text-[10px]">{String(a.scene)}</Badge> : null}
+                    <span>{a.title || 'Untitled'}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {show.arrangements.length > 3 && (
+              <div className="text-[12px] text-muted-foreground mt-1">
+                +{show.arrangements.length - 3} more
+              </div>
+            )}
           </div>
         )}
         <Button className="btn-primary w-full" asChild>

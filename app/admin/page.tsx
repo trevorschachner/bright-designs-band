@@ -13,10 +13,26 @@ import {
   BreadcrumbItem, 
   BreadcrumbPage 
 } from '@/components/ui/breadcrumb';
+import { getDashboardStats } from '@/lib/database/queries';
 
 export default async function AdminPage() {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
+  
+  // Fetch actual stats
+  let stats;
+  try {
+    stats = await getDashboardStats();
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    stats = {
+      totalShows: 0,
+      totalArrangements: 0,
+      totalContacts: 0,
+      totalFiles: 0,
+      totalTags: 0,
+    };
+  }
 
   if (!session) {
     return redirect('/login');
@@ -94,7 +110,7 @@ export default async function AdminPage() {
               <Music className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
+              <div className="text-2xl font-bold">{stats.totalShows}</div>
               <p className="text-xs text-muted-foreground">Active shows</p>
               <Link href="/admin/shows" className="mt-4 inline-block">
                 <Button className="w-full">
@@ -112,7 +128,7 @@ export default async function AdminPage() {
               <Tags className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-2xl font-bold">{stats.totalTags}</div>
               <p className="text-xs text-muted-foreground">Total tags</p>
               <Link href="/admin/tags" className="mt-4 inline-block">
                 <Button className="w-full">

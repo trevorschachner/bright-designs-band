@@ -159,8 +159,28 @@ export async function POST(request: Request) {
     finalOrder = ((existing[0]?.orderIndex as number | undefined) ?? -1) + 1;
   }
 
+  // Prepare arrangement data - convert to Drizzle schema format (camelCase)
+  // Note: 'arranger' field doesn't exist in schema, so we'll skip it
+  const arrangementData: any = {};
+  if (rest.title !== undefined) arrangementData.title = rest.title;
+  if (rest.type !== undefined) arrangementData.type = rest.type;
+  if (rest.composer !== undefined) arrangementData.composer = rest.composer;
+  // Skip arranger - not in schema
+  if (rest.percussionArranger !== undefined) arrangementData.percussionArranger = rest.percussionArranger;
+  if (rest.description !== undefined) arrangementData.description = rest.description;
+  if (rest.grade !== undefined) arrangementData.grade = rest.grade;
+  if (rest.year !== undefined) arrangementData.year = rest.year ? Number(rest.year) : null;
+  if (rest.durationSeconds !== undefined) arrangementData.durationSeconds = rest.durationSeconds ? Number(rest.durationSeconds) : null;
+  if (rest.scene !== undefined) arrangementData.scene = rest.scene;
+  if (rest.ensembleSize !== undefined) arrangementData.ensembleSize = rest.ensembleSize;
+  if (rest.youtubeUrl !== undefined) arrangementData.youtubeUrl = rest.youtubeUrl;
+  if (rest.commissioned !== undefined) arrangementData.commissioned = rest.commissioned;
+  if (rest.sampleScoreUrl !== undefined) arrangementData.sampleScoreUrl = rest.sampleScoreUrl;
+  if (rest.copyrightAmountUsd !== undefined) arrangementData.copyrightAmountUsd = rest.copyrightAmountUsd ? Number(rest.copyrightAmountUsd) : null;
+  if (rest.displayOrder !== undefined) arrangementData.displayOrder = rest.displayOrder ? Number(rest.displayOrder) : 0;
+
   // Create arrangement (no direct FK on arrangements table anymore)
-  const inserted = await db.insert(arrangements).values({ ...rest }).returning({ id: arrangements.id });
+  const inserted = await db.insert(arrangements).values(arrangementData).returning({ id: arrangements.id });
   const newId = inserted[0]?.id;
   if (!newId) {
     return NextResponse.json({ error: 'Failed to create arrangement' }, { status: 500 });

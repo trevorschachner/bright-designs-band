@@ -53,6 +53,57 @@ export async function GET(request: Request) {
 
     const showIds = Array.isArray(rows) ? rows.map(r => r.id) : [];
 
+    // Fetch arrangements via join table and group by show
+    // Then hydrate arrangement summaries for display (title/scene/durationSeconds/sampleScoreUrl)
+    let arrangementsByShowId: Record<number, { id: number; title?: string; scene?: string | null; durationSeconds?: number | null; sampleScoreUrl?: string | null }[]> = {};
+    if (showIds.length > 0) {
+      const { data: saRows, error: saErr } = await supabase
+        .from('show_arrangements')
+        .select('show_id,arrangement_id,order_index')
+        .in('show_id', showIds)
+        .order('order_index', { ascending: true });
+      if (saErr) {
+        console.warn('Failed to fetch show arrangements:', saErr.message);
+      } else if (Array.isArray(saRows)) {
+        // Collect unique arrangement ids to hydrate
+        const uniqueArrangementIds = Array.from(
+          new Set(saRows.map((r: any) => r?.arrangement_id).filter((v: any) => typeof v === 'number'))
+        );
+        let arrangementRowsById: Record<number, any> = {};
+        if (uniqueArrangementIds.length > 0) {
+          const { data: arrRows, error: arrErr } = await supabase
+            .from('arrangements')
+            .select('id,title,scene,duration_seconds,sample_score_url')
+            .in('id', uniqueArrangementIds);
+          if (arrErr) {
+            console.warn('Failed to fetch arrangement rows for shows list:', arrErr.message);
+          } else if (Array.isArray(arrRows)) {
+            arrangementRowsById = arrRows.reduce((acc: Record<number, any>, r: any) => {
+              acc[r.id] = r;
+              return acc;
+            }, {} as Record<number, any>);
+          }
+        }
+        // Group by showId keeping order, hydrating minimal fields
+        arrangementsByShowId = saRows.reduce((acc: Record<number, any[]>, row: any) => {
+          const sid = row?.show_id as number;
+          const aid = row?.arrangement_id as number;
+          if (typeof sid === 'number' && typeof aid === 'number') {
+            if (!acc[sid]) acc[sid] = [];
+            const a = arrangementRowsById[aid];
+            acc[sid].push({
+              id: aid,
+              title: a?.title ?? undefined,
+              scene: a?.scene ?? null,
+              durationSeconds: typeof a?.duration_seconds === 'number' ? a.duration_seconds : null,
+              sampleScoreUrl: a?.sample_score_url ?? null,
+            });
+          }
+          return acc;
+        }, {} as Record<number, any[]>);
+      }
+    }
+
     // Fetch tags relation and group by show
     let tagsByShowId: Record<number, any[]> = {};
     if (showIds.length > 0) {
@@ -83,6 +134,7 @@ export async function GET(request: Request) {
       duration: r.duration,
       thumbnailUrl: r.thumbnail_url || null,
       createdAt: r.created_at,
+      arrangements: arrangementsByShowId[r.id] || [],
       showsToTags: tagsByShowId[r.id] || [],
     }));
 

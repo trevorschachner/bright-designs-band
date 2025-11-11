@@ -2,6 +2,7 @@
 const { config } = require('dotenv');
 const { resolve } = require('path');
 const { spawn } = require('child_process');
+const { existsSync } = require('fs');
 
 // Load environment variables from .env.local
 config({ path: resolve(process.cwd(), '.env.local') });
@@ -17,7 +18,20 @@ if (!process.env.DATABASE_URL) {
 console.log('🚀 Running database migration...');
 console.log('📍 Using DATABASE_URL:', process.env.DATABASE_URL.replace(/:[^:]*@/, ':***@')); // Hide password
 
-const child = spawn('drizzle-kit', ['migrate'], {
+// Prefer local CLI from node_modules/.bin to avoid ENOENT when run directly
+const isWindows = process.platform === 'win32';
+const drizzleBin = isWindows ? 'drizzle-kit.cmd' : 'drizzle-kit';
+const localDrizzlePath = resolve(process.cwd(), 'node_modules', '.bin', drizzleBin);
+
+let command = localDrizzlePath;
+let args = ['migrate'];
+if (!existsSync(localDrizzlePath)) {
+  // Fallback to npx if local binary not found
+  command = 'npx';
+  args = ['--yes', 'drizzle-kit', 'migrate'];
+}
+
+const child = spawn(command, args, {
   stdio: 'pipe',
   env: { ...process.env }
 });

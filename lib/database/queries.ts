@@ -1,7 +1,7 @@
 // Database query functions - proper way to use Drizzle
 import { db } from './index';
 import { shows, arrangements, files, tags, contactSubmissions, showArrangements } from './schema';
-import { eq, desc, and, or, ilike, count, innerJoin } from 'drizzle-orm';
+import { eq, desc, and, or, ilike, count, sql } from 'drizzle-orm';
 
 // =======================================
 // SHOWS QUERIES
@@ -52,8 +52,7 @@ export async function getShowsWithFilters(filters: {
         or(
           ilike(shows.name, `%${filters.searchTerm}%`),
           ilike(shows.title, `%${filters.searchTerm}%`),
-          ilike(shows.description, `%${filters.searchTerm}%`),
-          ilike(shows.composer, `%${filters.searchTerm}%`)
+          ilike(shows.description, `%${filters.searchTerm}%`)
         )
       );
     }
@@ -82,6 +81,7 @@ export async function getShowsWithFilters(filters: {
 
 export async function getArrangementsByShowId(showId: number) {
   try {
+    // First try the Drizzle ORM query
     const result = await db
       .select({
         id: arrangements.id,
@@ -104,10 +104,44 @@ export async function getArrangementsByShowId(showId: number) {
       .innerJoin(arrangements, eq(showArrangements.arrangementId, arrangements.id))
       .where(eq(showArrangements.showId, showId))
       .orderBy(showArrangements.orderIndex);
-    return result;
-  } catch (error) {
-    console.error('Error fetching arrangements:', error);
-    throw error;
+    
+    return Array.isArray(result) ? result : [];
+  } catch (error: any) {
+    // If Drizzle ORM fails, fall back to raw SQL using Drizzle's sql template
+    try {
+      const rawResult = await db.execute(sql`
+        SELECT 
+          a.id, 
+          a.title, 
+          a.scene, 
+          a.composer, 
+          a.grade, 
+          a.year, 
+          a.duration_seconds as "durationSeconds", 
+          a.description, 
+          a.percussion_arranger as "percussionArranger", 
+          a.copyright_amount_usd as "copyrightAmountUsd", 
+          a.ensemble_size as "ensembleSize", 
+          a.youtube_url as "youtubeUrl", 
+          a.commissioned, 
+          a.sample_score_url as "sampleScoreUrl", 
+          sa.order_index as "orderIndex"
+        FROM show_arrangements sa
+        INNER JOIN arrangements a ON sa.arrangement_id = a.id
+        WHERE sa.show_id = ${showId}
+        ORDER BY sa.order_index
+      `);
+      
+      if (Array.isArray(rawResult)) {
+        return rawResult;
+      }
+      if (rawResult && typeof rawResult === 'object' && 'rows' in rawResult) {
+        return (rawResult as any).rows;
+      }
+      return [];
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -165,9 +199,16 @@ export async function getFilesByArrangementId(arrangementId: number) {
         eq(files.isPublic, true)
       ))
       .orderBy(files.displayOrder);
-  } catch (error) {
-    console.error('Error fetching arrangement files:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('Error fetching arrangement files:', {
+      arrangementId,
+      error: error?.message || error,
+      stack: error?.stack,
+      code: error?.code,
+      detail: error?.detail,
+    });
+    // Return empty array instead of throwing to prevent page crashes
+    return [];
   }
 }
 
@@ -194,12 +235,14 @@ export async function getDashboardStats() {
     const [arrangementCount] = await db.select({ count: count() }).from(arrangements);
     const [contactCount] = await db.select({ count: count() }).from(contactSubmissions);
     const [fileCount] = await db.select({ count: count() }).from(files);
+    const [tagCount] = await db.select({ count: count() }).from(tags);
 
     return {
       totalShows: showCount.count,
       totalArrangements: arrangementCount.count,
       totalContacts: contactCount.count,
       totalFiles: fileCount.count,
+      totalTags: tagCount.count,
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);

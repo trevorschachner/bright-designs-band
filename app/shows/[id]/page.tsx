@@ -1,7 +1,4 @@
 import { createClient } from '@/lib/utils/supabase/server'
-import { eq } from 'drizzle-orm'
-import { shows } from '@/lib/database/schema'
-import { db } from '@/lib/database'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +10,8 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
-import { Clock, Users, Download, Play, Pause, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
+import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
+import { AudioPlayerComponent } from '@/components/features/audio-player'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
@@ -26,17 +24,38 @@ import { WhatIsIncluded } from '@/components/features/what-is-included'
 export default async function ShowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const showId = parseInt(id, 10);
-  const show = await db.query.shows.findFirst({
-    where: eq(shows.id, showId),
-    with: {
-      showsToTags: {
-        with: {
-          tag: true,
-        },
-      },
-      // showArrangements available via helper query below
-    },
-  });
+  const supabase = await createClient();
+
+  // Fetch show via Supabase (avoid Drizzle relation join issues)
+  const { data: showRow, error: showErr } = await supabase
+    .from('shows')
+    .select('id,title,description,year,difficulty,duration,thumbnail_url,created_at')
+    .eq('id', showId)
+    .single();
+
+  if (showErr) {
+    throw new Error(`Failed to load show: ${showErr.message}`);
+  }
+
+  // Fetch tags
+  const { data: tagRows, error: tagErr } = await supabase
+    .from('shows_to_tags')
+    .select('tags(id,name)')
+    .eq('show_id', showId);
+
+  const show = {
+    id: showRow?.id,
+    title: showRow?.title,
+    description: showRow?.description,
+    year: showRow?.year,
+    difficulty: showRow?.difficulty,
+    duration: showRow?.duration,
+    thumbnailUrl: showRow?.thumbnail_url || null,
+    createdAt: showRow?.created_at,
+    showsToTags: Array.isArray(tagRows)
+      ? tagRows.map((r: any) => ({ tag: r.tags })).filter((r: any) => r.tag)
+      : [],
+  };
 
   if (!show) {
     return <div>Show not found</div>;
@@ -53,7 +72,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
   // Load ordered arrangements and attach preview audio where available
   const rawArrangements = await getArrangementsByShowId(showId)
   const arrangements = await Promise.all(
-    rawArrangements.map(async (a: any) => {
+    (rawArrangements || []).map(async (a: any) => {
       const files = await getFilesByArrangementId(a.id)
       const audio = Array.isArray(files) ? files.find((f: any) => f.fileType === 'audio' && f.isPublic) : undefined
       return {
@@ -62,6 +81,10 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
         scene: a.scene || null,
         description: a.description || '',
         composer: a.composer || null,
+        percussionArranger: a.percussionArranger || null,
+        grade: a.grade || null,
+        year: a.year || null,
+        ensembleSize: a.ensembleSize || null,
         durationSeconds: a.durationSeconds || null,
         orderIndex: a.orderIndex ?? 0,
         sampleScoreUrl: a.sampleScoreUrl || null,
@@ -106,11 +129,18 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
         {/* Show Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Left side - Video or Image */}
-          <div className="relative" id="listen">
-            {show.videoUrl ? (
-              <YouTubePlayer youtubeUrl={show.videoUrl} />
+          <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video" id="listen">
+            {show.thumbnailUrl ? (
+              <div className="w-full h-full flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={show.thumbnailUrl}
+                  alt={show.title}
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              </div>
             ) : (
-              <div className="w-full h-80 bg-muted rounded-lg shadow-lg flex items-center justify-center">
+              <div className="w-full h-full flex items-center justify-center">
                 <div className="text-muted-foreground">
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -129,7 +159,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
               <Badge variant="secondary" className="text-sm">{displayDifficulty}</Badge>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{String(show.name || show.title || '')}</h1>
+            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{show.title}</h1>
             <p className="text-lg text-muted-foreground mb-6">{show.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -162,96 +192,151 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ id:
                 <Download className="w-4 h-4 mr-2" />
                 Download Sample Materials
               </Button>
-              <CheckAvailabilityModal showTitle={String(show.name || show.title || '')} />
+              <CheckAvailabilityModal showTitle={show.title} />
             </div>
           </div>
         </div>
 
         {/* Show Arrangements Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between mb-8">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold text-foreground font-primary">Show Arrangements</h2>
-            <Badge variant="secondary" className="text-sm">
-              {arrangements.length} Movements
+            <Badge variant="secondary" className="text-sm font-medium">
+              {arrangements.length} {arrangements.length === 1 ? 'Movement' : 'Movements'}
             </Badge>
           </div>
           
-          {arrangements.map((arrangement, index) => (
-            <Card key={arrangement.id} className="frame-card overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 border-l-bright-primary/50 hover:border-l-bright-primary">
-              <CardContent className="p-0">
-                {/* Header with gradient accent */}
-                <div className="bg-gradient-to-r from-bright-primary/5 via-transparent to-transparent p-6 pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-bright-primary/10 text-bright-primary font-bold">
+          {arrangements.map((arrangement, index) => {
+            const displayGrade = (() => {
+              const value = String(arrangement.grade || '').toLowerCase();
+              if (value === '1_2') return 'Grade 1-2';
+              if (value === '3_4') return 'Grade 3-4';
+              if (value === '5_plus' || value === '5+') return 'Grade 5+';
+              return null;
+            })();
+
+            const displayEnsembleSize = (() => {
+              const value = String(arrangement.ensembleSize || '').toLowerCase();
+              if (value === 'small') return 'Small Ensemble';
+              if (value === 'medium') return 'Medium Ensemble';
+              if (value === 'large') return 'Large Ensemble';
+              return null;
+            })();
+
+            return (
+              <Card 
+                key={arrangement.id} 
+                className="frame-card overflow-hidden group hover:shadow-lg transition-all duration-200 border border-border hover:border-primary/20"
+                id={index === 0 ? 'listen' : undefined}
+              >
+                <CardContent className="p-6">
+                  {/* Header Row */}
+                  <div className="flex items-start gap-4 mb-4">
+                    {/* Order Number */}
+                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary font-bold text-lg">
                       {index + 1}
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-foreground group-hover:text-bright-primary transition-colors">
-                        <Link href={`/arrangements/${arrangement.id}`} className="hover:underline">
-                          {arrangement.title}
-                        </Link>
-                      </h3>
-                      {arrangement.scene ? (
-                        <Badge variant="outline" className="mt-1 text-xs">
-                          {String(arrangement.scene)}
-                        </Badge>
-                      ) : null}
-                      <p className="text-muted-foreground flex items-center gap-2">
-                        {arrangement.composer ? (
-                          <>
-                            <Music2 className="w-4 h-4" />
-                            <span>Composer: {arrangement.composer}</span>
-                          </>
-                        ) : null}
-                        <span className="ml-2 text-bright-primary">{formatSeconds(arrangement.durationSeconds)}</span>
-                      </p>
+                    
+                    {/* Title and Scene */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                          <Link href={`/arrangements/${arrangement.id}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
+                            {arrangement.title}
+                          </Link>
+                        </h3>
+                        {arrangement.scene && (
+                          <Badge variant="outline" className="text-xs font-medium shrink-0">
+                            {String(arrangement.scene)}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Metadata Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                        {arrangement.composer && (
+                          <div className="flex items-center gap-2">
+                            <Music2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span><span className="font-medium">Composer:</span> {arrangement.composer}</span>
+                          </div>
+                        )}
+                        {arrangement.percussionArranger && (
+                          <div className="flex items-center gap-2">
+                            <Music className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span><span className="font-medium">Percussion:</span> {arrangement.percussionArranger}</span>
+                          </div>
+                        )}
+                        {displayGrade && (
+                          <div className="flex items-center gap-2">
+                            <Target className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span><span className="font-medium">Grade:</span> {displayGrade}</span>
+                          </div>
+                        )}
+                        {arrangement.year && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span><span className="font-medium">Year:</span> {arrangement.year}</span>
+                          </div>
+                        )}
+                        {displayEnsembleSize && (
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span><span className="font-medium">Ensemble:</span> {displayEnsembleSize}</span>
+                          </div>
+                        )}
+                        {arrangement.durationSeconds && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            <span><span className="font-medium">Duration:</span> {formatSeconds(arrangement.durationSeconds)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <p className="text-muted-foreground mt-3 leading-relaxed ml-[52px]">
-                    {arrangement.description}
-                  </p>
-                </div>
 
-                {/* Meta removed (instrumentation/tempo/key) per spec */}
-
-                {/* Audio Player */}
-                <div className="px-6 py-4 bg-card border-t" id={index === 0 ? 'listen' : undefined}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <Play className="w-4 h-4 text-bright-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">Audio Preview</span>
-                  </div>
-                  {arrangement.audioUrl ? (
-                    <audio 
-                      controls 
-                      className="w-full h-10 rounded-lg"
-                      preload="metadata"
-                    >
-                      <source src={arrangement.audioUrl} type="audio/mpeg" />
-                      Your browser does not support the audio element.
-                    </audio>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">No audio preview available.</div>
+                  {/* Description */}
+                  {arrangement.description && (
+                    <p className="text-muted-foreground leading-relaxed mb-4 ml-16">
+                      {arrangement.description}
+                    </p>
                   )}
-                </div>
 
-                {/* Action Buttons */}
-                <div className="px-6 py-5 bg-muted/10 border-t">
-                  <div className="flex flex-wrap gap-3">
-                    {arrangement.sampleScoreUrl ? (
-                      <Button variant="outline" size="default" asChild>
-                        <Link href={arrangement.sampleScoreUrl} target="_blank" rel="noopener noreferrer">
-                          <FileText className="w-4 h-4 mr-2" />
+                  {/* Audio Player */}
+                  {arrangement.audioUrl && (
+                    <div className="ml-16 mb-4">
+                      <AudioPlayerComponent
+                        tracks={[{
+                          id: arrangement.id.toString(),
+                          title: arrangement.title || 'Audio Preview',
+                          description: arrangement.description || undefined,
+                          url: arrangement.audioUrl
+                        }]}
+                        compact
+                      />
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-3 ml-16">
+                    {arrangement.sampleScoreUrl && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={arrangement.sampleScoreUrl} target="_blank" rel="noopener noreferrer" className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                          <FileText className="w-4 h-4 mr-2" aria-hidden="true" />
                           Sample Score
                         </Link>
                       </Button>
-                    ) : null}
-                    {/* TODO: Uncomment when Show Plan is production ready */}
-                    {/* <AddToPlanButton id={arrangement.id} title={arrangement.title} type="arrangement" size="default" /> */}
+                    )}
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/arrangements/${arrangement.id}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        View Details
+                        <ArrowLeft className="w-4 h-4 ml-2 rotate-180" aria-hidden="true" />
+                      </Link>
+                    </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* What's Included Section */}
