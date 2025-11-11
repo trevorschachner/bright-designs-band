@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     // Build base query selecting only needed columns
     let base = supabase
       .from('shows')
-      .select('id,title,description,year,difficulty,duration,thumbnail_url,created_at', { count: 'exact', head: false });
+      .select('id,title,description,year,difficulty,duration,thumbnail_url,featured,display_order,created_at', { count: 'exact', head: false });
 
     // Search across a few text columns
     if (filterState.search) {
@@ -36,13 +36,19 @@ export async function GET(request: Request) {
       if (field === 'difficulty' && value) base = base.eq('difficulty', String(value));
       // Additional fields can be added here as needed
     }
+    // Featured filter via direct param (supports featured=true|1)
+    const featuredParam = searchParams.get('featured');
+    if (featuredParam && ['true', '1'].includes(featuredParam.toLowerCase())) {
+      base = base.eq('featured', true as any);
+    }
 
     // Sorting
     if (filterState.sort && filterState.sort.length > 0) {
       const first = filterState.sort[0];
       base = base.order(first.field, { ascending: first.direction === 'asc' });
     } else {
-      base = base.order('created_at', { ascending: false });
+      // Default: display_order ASC, then created_at DESC
+      base = base.order('display_order', { ascending: true }).order('created_at', { ascending: false });
     }
 
     // Pagination
@@ -133,6 +139,8 @@ export async function GET(request: Request) {
       difficulty: r.difficulty,
       duration: r.duration,
       thumbnailUrl: r.thumbnail_url || null,
+      featured: !!r.featured,
+      displayOrder: typeof r.display_order === 'number' ? r.display_order : 0,
       createdAt: r.created_at,
       arrangements: arrangementsByShowId[r.id] || [],
       showsToTags: tagsByShowId[r.id] || [],

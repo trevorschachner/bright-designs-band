@@ -20,7 +20,7 @@ export default async function HomePage() {
   let featuredShows: any[] = [];
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
-    const res = await fetch(`${baseUrl}/api/shows?limit=6`, { cache: 'no-store' });
+    const res = await fetch(`${baseUrl}/api/shows?featured=true&limit=6`, { cache: 'no-store' });
     const json = await res.json() as any;
     const data = json?.data?.data || [];
     featuredShows = data.map((s: any) => ({
@@ -30,6 +30,7 @@ export default async function HomePage() {
       year: s.year,
       difficulty: s.difficulty,
       duration: s.duration,
+      thumbnailUrl: s.thumbnailUrl || s.thumbnail_url || null,
       createdAt: s.createdAt || s.created_at,
       showsToTags: s.showsToTags || [],
     }));
@@ -141,8 +142,13 @@ export default async function HomePage() {
               {featuredShows.map((show: any) => (
               <Card key={show.id}>
                 <div className="plus-divider mb-4 pb-4">
-                  <div className="h-40 plus-border bg-muted flex items-center justify-center rounded-lg">
-                    <Play className="w-12 h-12 text-muted-foreground" />
+                  <div className="h-40 plus-border rounded-lg overflow-hidden bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={show.thumbnailUrl || "/placeholder.svg"}
+                      alt={show.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
                 <CardHeader>

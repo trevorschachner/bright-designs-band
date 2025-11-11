@@ -9,12 +9,21 @@ const columns: ColumnDef<Show>[] = [
     accessorKey: 'title',
   },
   {
+    header: 'Order',
+    accessorKey: 'displayOrder' as any,
+  },
+  {
     header: 'Year',
     accessorKey: 'year',
   },
   {
     header: 'Difficulty',
     accessorKey: 'difficulty',
+  },
+  {
+    header: 'Featured',
+    accessorKey: 'featured' as any,
+    cell: (row) => (row as any).featured ? 'Yes' : 'No',
   },
 ];
 

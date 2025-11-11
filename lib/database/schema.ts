@@ -18,6 +18,8 @@ export const shows = pgTable('shows', {
   graphicUrl: text('graphic_url'),
   youtubeUrl: text('youtube_url'),
   year: smallint('year'),
+  featured: boolean('featured').default(false).notNull(),
+  displayOrder: integer('display_order').default(0).notNull(),
   commissioned: text('commissioned'),
   programCoordinator: text('program_coordinator'),
   percussionArranger: text('percussion_arranger'),

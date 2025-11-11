@@ -26,21 +26,22 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
   })();
 
   return (
-    <Card className="frame-card group">
-      <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient">
-        <img
-          src={show.thumbnailUrl || "/placeholder.svg"}
-          alt={show.title}
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <Button
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
-       >
-          <Play className="w-4 h-4 mr-2" />
-          Preview
-        </Button>
-      </div>
+    <Link href={`/shows/${show.id}`} className="block">
+      <Card className="frame-card group cursor-pointer hover:shadow-lg transition-shadow">
+        <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient">
+          <img
+            src={show.thumbnailUrl || "/placeholder.svg"}
+            alt={show.title}
+            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <Button
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Preview
+          </Button>
+        </div>
       <CardHeader>
         <div className="flex justify-between items-start mb-2">
           <CardTitle className="text-xl transition-colors font-primary">
@@ -86,7 +87,11 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
             <ul className="space-y-1">
               {show.arrangements.slice(0, 3).map((a: any) => (
                 <li key={a.id} className="text-sm">
-                  <Link href={`/arrangements/${a.id}`} className="hover:underline">
+                  <Link 
+                    href={`/arrangements/${a.id}`} 
+                    className="hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {a.scene ? <Badge variant="outline" className="mr-2 text-[10px]">{String(a.scene)}</Badge> : null}
                     <span>{a.title || 'Untitled'}</span>
                   </Link>
@@ -100,11 +105,9 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
             )}
           </div>
         )}
-        <Button className="btn-primary w-full" asChild>
-          <Link href={`/shows/${show.id}`}>View Details</Link>
-        </Button>
       </CardContent>
     </Card>
+    </Link>
   );
 }
 

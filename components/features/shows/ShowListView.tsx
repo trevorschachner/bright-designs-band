@@ -26,24 +26,25 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
   })();
 
   return (
-    <Card className="frame-card group overflow-hidden">
-      <div className="flex flex-col sm:flex-row">
-        {/* Thumbnail */}
-        <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 bg-accent-gradient overflow-hidden">
-          <img
-            src={show.thumbnailUrl || "/placeholder.svg"}
-            alt={show.title || (show as any).name || 'Show thumbnail'}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <Button
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
-            size="sm"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-        </div>
+    <Link href={`/shows/${show.id}`} className="block">
+      <Card className="frame-card group overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
+        <div className="flex flex-col sm:flex-row">
+          {/* Thumbnail */}
+          <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 bg-accent-gradient overflow-hidden">
+            <img
+              src={show.thumbnailUrl || "/placeholder.svg"}
+              alt={show.title || (show as any).name || 'Show thumbnail'}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Button
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
+              size="sm"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Preview
+            </Button>
+          </div>
 
         {/* Content */}
         <div className="flex-1 p-4">
@@ -98,16 +99,11 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="mt-auto pt-3">
-              <Button size="sm" className="btn-primary w-full sm:w-auto" asChild>
-                <Link href={`/shows/${show.id}`}>View Details</Link>
-              </Button>
-            </div>
           </div>
         </div>
       </div>
     </Card>
+    </Link>
   );
 }
 

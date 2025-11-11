@@ -71,6 +71,8 @@ export default function EditShowPage() {
             difficulty: data.difficulty ?? '',
             duration: data.duration ?? '',
             thumbnailUrl: data.thumbnailUrl ?? '',
+            featured: !!(data.featured ?? data.featured === true),
+            displayOrder: typeof data.displayOrder === 'number' ? data.displayOrder : (typeof data.display_order === 'number' ? data.display_order : 0),
             // extended
             youtubeUrl: data.youtubeUrl ?? '',
             commissioned: data.commissioned ?? '',
@@ -126,6 +128,8 @@ export default function EditShowPage() {
       duration: normalizeNullableString(show.duration),
       year: normalizeNumber(show.year),
       thumbnailUrl: normalizeNullableString(show.thumbnailUrl),
+      featured: !!show.featured,
+      displayOrder: normalizeNumber(show.displayOrder) ?? 0,
       // extended fields
       youtubeUrl: normalizeNullableString(show.youtubeUrl),
       commissioned: normalizeNullableString(show.commissioned),
@@ -497,6 +501,14 @@ export default function EditShowPage() {
               <div>
                 <label className="block mb-2 text-sm font-medium" htmlFor="thumbnailUrl">Thumbnail URL</label>
                 <input className="w-full p-2 border rounded" type="text" id="thumbnailUrl" value={show.thumbnailUrl} onChange={(e) => setShow({ ...show, thumbnailUrl: e.target.value })} />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium" htmlFor="displayOrder">Display Order</label>
+                <input className="w-full p-2 border rounded" type="number" id="displayOrder" value={show.displayOrder || 0} onChange={(e) => setShow({ ...show, displayOrder: Number(e.target.value) })} />
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <input id="featured" type="checkbox" checked={!!show.featured} onChange={(e) => setShow({ ...show, featured: e.target.checked })} />
+                <label className="text-sm font-medium" htmlFor="featured">Featured</label>
               </div>
             </div>
             
