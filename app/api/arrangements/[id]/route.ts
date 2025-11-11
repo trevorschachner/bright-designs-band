@@ -73,7 +73,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const drizzlePayload: any = {};
     if (body.title !== undefined) drizzlePayload.title = body.title;
     if (body.composer !== undefined) drizzlePayload.composer = body.composer;
-    if (body.arranger !== undefined) drizzlePayload.arranger = body.arranger;
     if (body.percussion_arranger !== undefined) drizzlePayload.percussionArranger = body.percussion_arranger;
     if (body.description !== undefined) drizzlePayload.description = body.description;
     if (body.grade !== undefined) drizzlePayload.grade = body.grade;

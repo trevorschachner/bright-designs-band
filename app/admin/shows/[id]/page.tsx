@@ -280,6 +280,28 @@ export default function EditShowPage() {
     }
   };
 
+  const handleDeleteArrangement = async (arrangementId: number) => {
+    setSavingArrangement(arrangementId);
+    setSaveError(null);
+    try {
+      const response = await fetch(`/api/arrangements/${arrangementId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'Failed to delete arrangement');
+      }
+      // Refresh arrangements list
+      const res = await fetch(`/api/shows/${id}`);
+      const data = await res.json();
+      setArrangements(Array.isArray(data.arrangements) ? data.arrangements : []);
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to delete arrangement');
+    } finally {
+      setSavingArrangement(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveError(null);
@@ -1017,7 +1039,14 @@ export default function EditShowPage() {
                         <Button variant="outline" size="sm" onClick={() => handleEditArrangement(arrangement)}>
                           Edit
                         </Button>
-                    <Button variant="destructive" size="sm">Delete</Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleDeleteArrangement(arrangement.id)}
+                      disabled={savingArrangement === arrangement.id}
+                    >
+                      {savingArrangement === arrangement.id ? 'Deleting...' : 'Delete'}
+                    </Button>
                       </div>
                     </div>
                     
