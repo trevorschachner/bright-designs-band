@@ -133,7 +133,6 @@ export { default as AdminTable } from './features/admin/AdminTable'
 
 // SEO
 export { JsonLd } from './features/seo/JsonLd'
-export { GoogleAnalytics } from './features/seo/GoogleAnalytics'
 export { SEOHead } from './features/seo/SEOHead'
 
 // Resource Management

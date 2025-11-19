@@ -2,6 +2,15 @@ import { createClient } from '@/lib/utils/supabase/middleware'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // If Supabase sends users to the site root (or any non-callback path) with a ?code= param,
+  // normalize the request to our callback route so session exchange always works.
+  const incomingUrl = new URL(request.url)
+  if (incomingUrl.searchParams.get('code') && !request.nextUrl.pathname.startsWith('/auth/callback')) {
+    const target = new URL('/auth/callback', request.url)
+    target.search = incomingUrl.search
+    return NextResponse.redirect(target)
+  }
+
   const { supabase, response } = createClient(request)
 
   // Legacy redirect: /shows/:id -> /shows/:slug

@@ -4,15 +4,17 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
+import { CTASection } from "@/components/layout/cta-section"
 import { brand, navigation, resources, ctas, footer, social } from "@/config/site"
 import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
-import Script from "next/script"
 import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
 import { generateResourceHints } from "@/lib/seo/performance"
 import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
 import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
+// TODO(posthog): Re-enable PostHog analytics provider when the PostHog project is ready.
+// import { PostHogProvider } from "@/components/features/analytics/PostHogProvider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,7 +37,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const resourceHints = generateResourceHints()
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+  // TODO(posthog): Restore PostHog environment variables when analytics go live.
+  // const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
+  // const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
   
   return (
     <html lang="en" suppressHydrationWarning>
@@ -61,26 +65,16 @@ export default function RootLayout({
         <JsonLd data={organizationSchema} />
         <JsonLd data={localBusinessSchema} />
         
-        {/* Google Analytics (script injection, only if ID present) */}
-        {gaId ? (
-          <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
-            <Script id="ga-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);} gtag('js', new Date());
-                gtag('config', '${gaId}');
-              `}
-            </Script>
-          </>
-        ) : null}
-        
-        {/* Performance monitoring */}
+        {/* TODO(posthog): Re-enable PostHogProvider for analytics tracking. */}
+        {/*
+        <PostHogProvider apiKey={posthogKey} apiHost={posthogHost} />
+        */}
         
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ShowPlanProvider>
             <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
             <main className="pb-20">{children}</main>
+            <CTASection />
             <SiteFooter footer={footer} social={social} />
             <GlobalAudioPlayerBar />
           </ShowPlanProvider>

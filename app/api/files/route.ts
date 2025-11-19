@@ -37,8 +37,14 @@ export async function POST(request: NextRequest) {
       arrangementId: rawData.arrangementId,
       isPublic: rawData.isPublic,
       hasFile: !!rawData.file,
-      fileSize: rawData.file instanceof File ? rawData.file.size : 'not a File',
-      fileType: rawData.file instanceof File ? rawData.file.type : 'not a File',
+      fileSize:
+        rawData.file && typeof rawData.file === 'object' && 'size' in (rawData.file as any)
+          ? (rawData.file as any).size
+          : 'unknown',
+      mimeType:
+        rawData.file && typeof rawData.file === 'object' && 'type' in (rawData.file as any)
+          ? (rawData.file as any).type
+          : 'unknown',
     });
     
     const parsedData = fileUploadSchema.safeParse(rawData);

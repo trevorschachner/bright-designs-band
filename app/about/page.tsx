@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import PageHero from "@/components/layout/page-hero"
 import Testimonials from "@/components/features/testimonials"
+import ClientsMap from "@/components/features/clients-map"
+import { clients } from "@/lib/data/clients"
 import Link from "next/link"
 
 export default function AboutPage() {
@@ -317,112 +319,44 @@ export default function AboutPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4 text-foreground font-primary">Previous Clients</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Proud to have worked with these exceptional programs across the country
+              We are proud to have worked with these exceptional programs!
             </p>
           </div>
           
-          <div className="max-w-7xl mx-auto">
-            <div className="max-h-[600px] overflow-y-auto border border-border rounded-lg p-8 bg-muted/30">
+          <div className="max-w-7xl mx-auto space-y-8">
+            {/* Clients List */}
+            <div className="border border-border rounded-lg p-8 bg-muted/30">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-4">
-                {/* Sample schools - replace with actual data */}
-                <div>
-                  <h3 className="font-semibold text-foreground">Dreher High School</h3>
-                  <p className="text-sm text-muted-foreground">Columbia, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Alpharetta High School</h3>
-                  <p className="text-sm text-muted-foreground">Alpharetta, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Lexington High School</h3>
-                  <p className="text-sm text-muted-foreground">Lexington, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Byrnes High School</h3>
-                  <p className="text-sm text-muted-foreground">Duncan, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Northside High School</h3>
-                  <p className="text-sm text-muted-foreground">Warner Robins, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Northwest Guilford High School</h3>
-                  <p className="text-sm text-muted-foreground">Greensboro, NC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Mauldin High School</h3>
-                  <p className="text-sm text-muted-foreground">Mauldin, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Hillgrove High School</h3>
-                  <p className="text-sm text-muted-foreground">Powder Springs, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Riverside High School</h3>
-                  <p className="text-sm text-muted-foreground">Greer, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Blythewood High School</h3>
-                  <p className="text-sm text-muted-foreground">Blythewood, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Dorman High School</h3>
-                  <p className="text-sm text-muted-foreground">Roebuck, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">McEachern High School</h3>
-                  <p className="text-sm text-muted-foreground">Powder Springs, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">J.L. Mann High School</h3>
-                  <p className="text-sm text-muted-foreground">Greenville, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Etowah High School</h3>
-                  <p className="text-sm text-muted-foreground">Woodstock, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Spring Valley High School</h3>
-                  <p className="text-sm text-muted-foreground">Columbia, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Grayson High School</h3>
-                  <p className="text-sm text-muted-foreground">Loganville, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Fort Mill High School</h3>
-                  <p className="text-sm text-muted-foreground">Fort Mill, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Denmark High School</h3>
-                  <p className="text-sm text-muted-foreground">Alpharetta, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Westside High School</h3>
-                  <p className="text-sm text-muted-foreground">Anderson, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Carrollton High School</h3>
-                  <p className="text-sm text-muted-foreground">Carrollton, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Eastside High School</h3>
-                  <p className="text-sm text-muted-foreground">Taylors, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Harrison High School</h3>
-                  <p className="text-sm text-muted-foreground">Kennesaw, GA</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Rock Hill High School</h3>
-                  <p className="text-sm text-muted-foreground">Rock Hill, SC</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Lambert High School</h3>
-                  <p className="text-sm text-muted-foreground">Suwanee, GA</p>
-                </div>
-                {/* Add more schools here - this is just sample data */}
+                {(() => {
+                  // Reorganize clients to display alphabetically by column instead of row
+                  // CSS Grid flows row-first, so we need to reorganize the array
+                  const cols = 4; // Use the largest column count for organization
+                  const rows = Math.ceil(clients.length / cols);
+                  const columnFirst: typeof clients = [];
+                  
+                  // Fill column-first: first item of each column, then second item of each column, etc.
+                  for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                      const index = col * rows + row;
+                      if (index < clients.length) {
+                        columnFirst.push(clients[index]);
+                      }
+                    }
+                  }
+                  
+                  return columnFirst.map((client) => (
+                    <div key={`${client.name}-${client.location}`}>
+                      <h3 className="font-semibold text-foreground">{client.name}</h3>
+                      <p className="text-sm text-muted-foreground">{client.location}</p>
+                    </div>
+                  ));
+                })()}
               </div>
+            </div>
+
+            {/* Map Visualization */}
+            <div className="mt-8">
+              <ClientsMap />
             </div>
           </div>
         </section>

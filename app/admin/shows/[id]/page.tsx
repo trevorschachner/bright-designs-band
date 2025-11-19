@@ -362,8 +362,8 @@ export default function EditShowPage() {
       )}
       
       {/* Show Information Section */}
-      <div className="max-w-4xl mx-auto mb-8">
-        <Card className="mb-8">
+      <div className="max-w-4xl mx-auto mb-8 space-y-6">
+        <Card>
           <CardHeader>
             <CardTitle>Show Information</CardTitle>
           </CardHeader>
@@ -462,6 +462,16 @@ export default function EditShowPage() {
             </div>
           </CardContent>
         </Card>
+
+        <FileUpload
+          showId={show?.id}
+          allowedTypes={['image']}
+          maxFiles={1}
+          title="Show Image Upload"
+          description={`Upload the featured image for ${show.title || 'this show'}. Images are automatically linked to this show.`}
+          onUploadSuccess={() => setFilesVersion(v => v + 1)}
+          onUploadError={(err) => console.error('Show image upload error:', err)}
+        />
       </div>
 
       {/* Edit Show Form */}
@@ -1086,6 +1096,8 @@ export default function EditShowPage() {
           {/* Upload files for this show */}
           <FileUpload 
             showId={show?.id}
+            title="Additional File Uploads"
+            description="Upload supporting audio, scores, or documents for this show."
             onUploadSuccess={() => setFilesVersion(v => v + 1)}
             onUploadError={(err) => console.error('Upload error:', err)}
           />

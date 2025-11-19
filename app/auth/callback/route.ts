@@ -5,7 +5,9 @@ import { getUserRole } from '@/lib/auth/roles'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const rawNext = searchParams.get('next') ?? '/'
+  const nextPath = rawNext.startsWith('/') ? rawNext : '/'
+  const isAdminPath = nextPath.startsWith('/admin')
 
   if (code) {
     const supabase = await createClient()
@@ -14,12 +16,13 @@ export async function GET(request: NextRequest) {
     if (!error && data.user) {
       const userRole = getUserRole(data.user.email || '')
 
-      // Redirect based on user role
-      if (userRole === 'staff' || userRole === 'admin') {
-        return NextResponse.redirect(`${origin}/admin`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
-      }
+      // Redirect based on user role and requested next path
+      const isPrivileged = userRole === 'staff' || userRole === 'admin'
+      const targetPath = isPrivileged
+        ? (isAdminPath ? nextPath : '/admin')
+        : (isAdminPath ? '/' : nextPath)
+
+      return NextResponse.redirect(`${origin}${targetPath}`)
     }
   }
 

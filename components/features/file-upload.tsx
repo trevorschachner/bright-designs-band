@@ -31,6 +31,8 @@ interface FileUploadProps {
   onUploadError?: (error: string) => void
   allowedTypes?: ('image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other')[]
   maxFiles?: number
+  title?: string
+  description?: string
 }
 
 interface UploadingFile {
@@ -52,7 +54,9 @@ export function FileUpload({
   onUploadSuccess, 
   onUploadError,
   allowedTypes = ['image', 'audio', 'youtube', 'pdf', 'score', 'other'],
-  maxFiles = 10
+  maxFiles = 10,
+  title,
+  description,
 }: FileUploadProps) {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
@@ -233,12 +237,16 @@ export function FileUpload({
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Upload className="w-5 h-5" />
-          <span>File Upload</span>
+          <span>{title || 'File Upload'}</span>
         </CardTitle>
         <CardDescription>
-          Upload images, audio files, videos, PDFs, and other documents
-          {showId && ` for Show #${showId}`}
-          {arrangementId && ` for Arrangement #${arrangementId}`}
+          {description || (
+            <>
+              Upload images, audio files, videos, PDFs, and other documents
+              {showId && ` for Show #${showId}`}
+              {arrangementId && ` for Arrangement #${arrangementId}`}
+            </>
+          )}
         </CardDescription>
       </CardHeader>
       

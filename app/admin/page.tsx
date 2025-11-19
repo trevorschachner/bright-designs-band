@@ -40,6 +40,8 @@ export default async function AdminPage() {
 
   const userRole = getUserRole(session.user.email || '');
   const permissions = getUserPermissions(session.user.email || '');
+  const analyticsConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY);
+  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
 
   // Check if user has admin access
   if (!permissions.canAccessAdmin) {
@@ -140,16 +142,32 @@ export default async function AdminPage() {
         )}
 
         {permissions.canViewAnalytics && (
-          <Card className="frame-card cursor-pointer">
+          <Card className="frame-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Analytics</CardTitle>
+              <CardTitle className="text-sm font-medium">Web Analytics (PostHog)</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">2.4k</div>
-              <p className="text-xs text-muted-foreground">Page views this month</p>
-              <Button className="w-full mt-4">
-                View Analytics
+            <CardContent className="space-y-3">
+              <div className="text-2xl font-bold">
+                {analyticsConfigured ? 'Connected' : 'Not Connected'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {analyticsConfigured
+                  ? 'PostHog is active and collecting product analytics. Open PostHog to explore funnels, session recordings, and dashboards.'
+                  : 'Set NEXT_PUBLIC_POSTHOG_KEY (and optional NEXT_PUBLIC_POSTHOG_HOST) to enable PostHog analytics tracking.'}
+              </p>
+              <Button className="w-full" asChild variant={analyticsConfigured ? 'default' : 'outline'}>
+                <a
+                  href={
+                    analyticsConfigured
+                      ? posthogHost
+                      : 'https://posthog.com/docs/getting-started/quick-start/web'
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {analyticsConfigured ? 'Open PostHog' : 'PostHog Setup Guide'}
+                </a>
               </Button>
             </CardContent>
           </Card>
@@ -211,37 +229,6 @@ export default async function AdminPage() {
         </Card>
       </div>
 
-      {/* Role-specific information */}
-      <div className="mt-8">
-        <Card className="frame-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="w-5 h-5" />
-              <span>Your Permissions</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className={`p-3 rounded-lg ${permissions.canAccessAdmin ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
-                <div className="font-medium">Admin Access</div>
-                <div className="text-xs">{permissions.canAccessAdmin ? 'Granted' : 'Denied'}</div>
-              </div>
-              <div className={`p-3 rounded-lg ${permissions.canManageShows ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
-                <div className="font-medium">Manage Shows</div>
-                <div className="text-xs">{permissions.canManageShows ? 'Granted' : 'Denied'}</div>
-              </div>
-              <div className={`p-3 rounded-lg ${permissions.canManageUsers ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
-                <div className="font-medium">Manage Users</div>
-                <div className="text-xs">{permissions.canManageUsers ? 'Granted' : 'Denied'}</div>
-              </div>
-              <div className={`p-3 rounded-lg ${permissions.canDeleteArrangements ? 'bg-green-50 text-green-800' : 'bg-muted/30 text-muted-foreground'}`}>
-                <div className="font-medium">Delete Content</div>
-                <div className="text-xs">{permissions.canDeleteArrangements ? 'Granted' : 'Denied'}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 } 

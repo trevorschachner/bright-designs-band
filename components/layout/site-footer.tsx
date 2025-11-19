@@ -88,7 +88,8 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 							<span className="text-red-500">♫</span>
 							<span className="plus-body-sm">and passion in South Carolina</span>
 						</div>
-						<ThemeToggle />
+						{/* Theme toggle temporarily disabled while theme is forced to light */}
+						{/* <ThemeToggle /> */}
 					</div>
 				</div>
 			</div>

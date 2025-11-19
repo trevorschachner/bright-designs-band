@@ -1,8 +1,7 @@
-import { createClient } from '@/lib/utils/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { 
+import {
   Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
@@ -13,53 +12,111 @@ import {
 import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
 import Link from 'next/link'
+import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
-import { getArrangementsByShowId, getFilesByArrangementId } from '@/lib/database/queries'
+import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles } from '@/lib/database/queries'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { createCreativeWorkSchema } from '@/lib/seo/structured-data'
+import { notFound } from 'next/navigation'
+import { db } from '@/lib/database'
+import { shows } from '@/lib/database/schema'
+import { eq } from 'drizzle-orm'
+import { Suspense } from 'react'
+
+interface ShowWithTagsResult {
+  show: any
+  showsToTags: Array<{ tag: any }>
+}
+
+async function getShowByIdentifier(identifier: string): Promise<ShowWithTagsResult | null> {
+  const slugResult = await getShowWithTagsBySlug(identifier)
+  if (slugResult) {
+    return slugResult
+  }
+
+  if (!/^\d+$/.test(identifier)) {
+    return null
+  }
+
+  const numericId = parseInt(identifier, 10)
+  const show = await db.query.shows.findFirst({
+    where: eq(shows.id, numericId),
+    with: {
+      showsToTags: {
+        with: {
+          tag: true,
+        },
+      },
+    },
+  })
+
+  if (!show) {
+    return null
+  }
+
+  const { showsToTags: tagRelations = [], ...rest } = show as any
+  const formattedTags = Array.isArray(tagRelations)
+    ? tagRelations
+        .map((relation: any) => ({
+          tag: relation?.tag ?? null,
+        }))
+        .filter((relation) => relation.tag)
+    : []
+
+  return {
+    show: rest,
+    showsToTags: formattedTags,
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
-  const { data: showRow } = await supabase
-    .from('shows')
-    .select('id,slug,title,description,year,difficulty,duration,thumbnail_url,created_at')
-    .eq('slug', slug)
-    .single()
+  try {
+    // Optimized: Use the same helper function, React 18+ will deduplicate this request
+    const showResult = await getShowByIdentifier(slug)
+    const showRow = showResult?.show
 
-  if (!showRow) {
+    if (!showRow) {
+      return buildMetadata({
+        title: 'Show not found | Bright Designs',
+        description: 'The requested show could not be found.',
+        noindex: true,
+      })
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'
+    const canonicalSlug = showRow.slug || slug
+    return buildMetadata({
+      title: `${showRow.title} | Bright Designs`,
+      description: showRow.description ?? 'Award-winning marching band show from Bright Designs.',
+      ogImage: showRow.thumbnailUrl ?? '/og-image.jpg',
+      canonical: `${baseUrl}/shows/${canonicalSlug}`,
+    })
+  } catch (error) {
+    console.error('Failed to generate metadata for show slug:', slug, error)
     return buildMetadata({
       title: 'Show not found | Bright Designs',
       description: 'The requested show could not be found.',
       noindex: true,
     })
   }
-
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'
-  return buildMetadata({
-    title: `${showRow.title} | Bright Designs`,
-    description: showRow.description || 'Award-winning marching band show from Bright Designs.',
-    ogImage: showRow.thumbnail_url || '/og-image.jpg',
-    canonical: `${baseUrl}/shows/${showRow.slug}`,
-  })
 }
 
 export default async function ShowDetailBySlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const supabase = await createClient()
+  const showResult = await getShowByIdentifier(slug)
 
-  // Fetch show by slug
-  const { data: showRow, error: showErr } = await supabase
-    .from('shows')
-    .select('id,slug,title,description,year,difficulty,duration,thumbnail_url,created_at')
-    .eq('slug', slug)
-    .single()
+  if (!showResult) {
+    notFound()
+  }
 
-  if (showErr || !showRow) {
-    throw new Error(`Failed to load show`)
+  const { show: showRow, showsToTags } = showResult
+
+  if (!showRow?.id) {
+    notFound()
   }
 
   const showId = showRow.id as number
@@ -72,19 +129,9 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     year: showRow.year as number | null,
     difficulty: showRow.difficulty as string | null,
     duration: showRow.duration as string | null,
-    thumbnailUrl: (showRow as any).thumbnail_url || null,
-    createdAt: showRow.created_at as string,
+    thumbnailUrl: showRow.thumbnailUrl ?? null,
+    createdAt: showRow.createdAt instanceof Date ? showRow.createdAt.toISOString() : (showRow as any).createdAt,
   }
-
-  // Fetch tags
-  const { data: tagRows } = await supabase
-    .from('shows_to_tags')
-    .select('tags(id,name)')
-    .eq('show_id', showId)
-
-  const showsToTags = Array.isArray(tagRows)
-    ? tagRows.map((r: any) => ({ tag: r.tags })).filter((r: any) => r.tag)
-    : []
 
   const displayDifficulty = (() => {
     const value = String(show.difficulty || '').toLowerCase()
@@ -94,29 +141,10 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     return String(show.difficulty || '')
   })()
 
-  // Load ordered arrangements and attach preview audio where available
-  const rawArrangements = await getArrangementsByShowId(showId)
-  const arrangements = await Promise.all(
-    (rawArrangements || []).map(async (a: any) => {
-      const files = await getFilesByArrangementId(a.id)
-      const audio = Array.isArray(files) ? files.find((f: any) => f.fileType === 'audio' && f.isPublic) : undefined
-      return {
-        id: a.id,
-        title: a.title,
-        scene: a.scene || null,
-        description: a.description || '',
-        composer: a.composer || null,
-        percussionArranger: a.percussionArranger || null,
-        grade: a.grade || null,
-        year: a.year || null,
-        ensembleSize: a.ensembleSize || null,
-        durationSeconds: a.durationSeconds || null,
-        orderIndex: a.orderIndex ?? 0,
-        sampleScoreUrl: a.sampleScoreUrl || null,
-        audioUrl: audio?.url || null,
-      }
-    })
-  )
+  // Optimized: Fetch all arrangements with their files in a single query
+  // This eliminates N+1 queries - previously was 1 + N queries (N = number of arrangements)
+  // Now it's just 1 query total
+  const arrangements = await getShowWithArrangementsAndFiles(showId)
 
   const formatSeconds = (total?: number | null) => {
     if (!total || total < 0) return '—'
@@ -165,12 +193,14 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           {/* Left side - Image */}
           <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video" id="listen">
             {show.thumbnailUrl ? (
-              <div className="w-full h-full flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="w-full h-full flex items-center justify-center relative">
+                <Image
                   src={show.thumbnailUrl}
                   alt={show.title}
-                  className="w-full h-full object-contain rounded-lg"
+                  fill
+                  className="object-contain rounded-lg"
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               </div>
             ) : (
