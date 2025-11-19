@@ -105,4 +105,5 @@ jobs:
           # Add other required env vars with dummy values for build
           NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
