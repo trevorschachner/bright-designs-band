@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -49,15 +48,41 @@ export function FilterSidebar({
   isMobile = false
 }: FilterSidebarProps) {
   const [searchValue, setSearchValue] = useState(filterState.search || '');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
+  const [isFeaturedOnly, setIsFeaturedOnly] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   // Advanced Filters removed
 
+  // Only sync searchValue with filterState.search when not actively typing
+  // This prevents the input from resetting while the user is typing
   useEffect(() => {
-    setSearchValue(filterState.search || '');
-  }, [filterState.search]);
+    if (!isTyping && filterState.search !== searchValue) {
+      setSearchValue(filterState.search || '');
+    }
+  }, [filterState.search, isTyping]); // Removed searchValue from deps to avoid loops
+
+  useEffect(() => {
+    const difficultyCond = filterState.conditions.find(c => c.field === 'difficulty');
+    if (difficultyCond) {
+      if (difficultyCond.operator === 'in' && Array.isArray(difficultyCond.values)) {
+        setSelectedDifficulty(difficultyCond.values as string[]);
+      } else if (difficultyCond.operator === 'equals' && typeof difficultyCond.value === 'string') {
+        setSelectedDifficulty([difficultyCond.value]);
+      } else {
+        setSelectedDifficulty([]);
+      }
+    } else {
+      setSelectedDifficulty([]);
+    }
+
+    const featuredCond = filterState.conditions.find(c => c.field === 'featured');
+    setIsFeaturedOnly(featuredCond?.value === true);
+  }, [filterState.conditions]);
 
   // Debounced search effect
   useEffect(() => {
     const timeoutId = setTimeout(() => {
+      setIsTyping(false);
       if (searchValue !== filterState.search) {
         onFilterStateChange({
           ...filterState,
@@ -72,6 +97,7 @@ export function FilterSidebar({
   }, [searchValue]); // Only run when searchValue changes
 
   const handleSearchChange = (value: string) => {
+    setIsTyping(true);
     setSearchValue(value);
   };
 
@@ -115,6 +141,53 @@ export function FilterSidebar({
     });
   };
 
+  const applyCuratedConditions = (updates?: {
+    difficulty?: string[];
+    featured?: boolean;
+  }) => {
+    const difficultyValues = updates?.difficulty ?? selectedDifficulty;
+    const featuredValue = updates?.featured ?? isFeaturedOnly;
+
+    const baseConditions = filterState.conditions.filter(
+      c => !['difficulty', 'featured'].includes(String(c.field))
+    );
+
+    const nextConditions = [...baseConditions];
+
+    if (difficultyValues.length > 0) {
+      nextConditions.push({ field: 'difficulty', operator: 'in', values: difficultyValues } as any);
+    }
+
+    if (featuredValue) {
+      nextConditions.push({ field: 'featured', operator: 'equals', value: true } as any);
+    }
+
+    onFilterStateChange({ ...filterState, conditions: nextConditions, page: 1 });
+  };
+
+  const handleDifficultyToggle = (level: string) => {
+    const current = new Set(selectedDifficulty);
+    if (current.has(level)) {
+      current.delete(level);
+    } else {
+      current.add(level);
+    }
+    const updated = Array.from(current);
+    setSelectedDifficulty(updated);
+    applyCuratedConditions({ difficulty: updated });
+  };
+
+  const handleFeaturedToggle = (value: boolean) => {
+    setIsFeaturedOnly(value);
+    applyCuratedConditions({ featured: value });
+  };
+
+  const clearCuratedFilters = () => {
+    setSelectedDifficulty([]);
+    setIsFeaturedOnly(false);
+    applyCuratedConditions({ difficulty: [], featured: false });
+  };
+
   const clearAllFilters = () => {
     onFilterStateChange({
       search: undefined,
@@ -124,6 +197,8 @@ export function FilterSidebar({
       limit: filterState.limit
     });
     setSearchValue('');
+    setSelectedDifficulty([]);
+    setIsFeaturedOnly(false);
   };
 
   const activeFilterCount = filterState.conditions.length + 
@@ -166,158 +241,6 @@ export function FilterSidebar({
 
           <Separator />
 
-          {/* Common Filters (curated) */}
-          {(() => {
-            const hasDifficulty = filterFields.some(f => f.key === 'difficulty');
-            const hasEnsembleSize = filterFields.some(f => f.key === 'ensembleSize');
-            const hasFeatured = filterFields.some(f => f.key === 'featured');
-            const curatedActive = filterState.conditions.some(c => ['difficulty','ensembleSize','featured'].includes(String(c.field)));
-
-            const difficultySelected = (() => {
-              const cond = filterState.conditions.find(c => c.field === 'difficulty');
-              if (!cond) return [] as string[];
-              if (cond.operator === 'in' && Array.isArray(cond.values)) return cond.values as string[];
-              if (cond.operator === 'equals' && typeof cond.value === 'string') return [cond.value];
-              return [] as string[];
-            })();
-
-            const updateDifficulty = (next: string[]) => {
-              const others = filterState.conditions.filter(c => c.field !== 'difficulty');
-              const nextConditions = next.length > 0
-                ? [...others, { field: 'difficulty', operator: 'in', values: next } as any]
-                : others;
-              onFilterStateChange({ ...filterState, conditions: nextConditions, page: 1 });
-            };
-
-            const ensembleValue = (() => {
-              const cond = filterState.conditions.find(c => c.field === 'ensembleSize');
-              return (cond?.value as string) || '';
-            })();
-
-            const setEnsemble = (value: string) => {
-              const others = filterState.conditions.filter(c => c.field !== 'ensembleSize');
-              const nextConditions = value
-                ? [...others, { field: 'ensembleSize', operator: 'equals', value } as any]
-                : others;
-              onFilterStateChange({ ...filterState, conditions: nextConditions, page: 1 });
-            };
-
-            const isFeatured = filterState.conditions.some(c => c.field === 'featured' && c.value === true);
-
-            return (hasDifficulty || hasEnsembleSize || hasFeatured) ? (
-              <div className="space-y-6">
-                {hasDifficulty && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium">Difficulty</Label>
-                      {(() => {
-                        const difficultyField = filterFields.find(f => f.key === 'difficulty');
-                        return difficultyField?.description ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="w-3 h-3 text-muted-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p className="text-xs">{difficultyField.description}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : null;
-                      })()}
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                      {['Beginner','Intermediate','Advanced'].map((level) => {
-                        const checked = difficultySelected.includes(level);
-                        return (
-                          <label key={level} className="flex items-center gap-3 text-sm">
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={(v) => {
-                                const next = v ? [...difficultySelected, level] : difficultySelected.filter(l => l !== level);
-                                updateDifficulty(Array.from(new Set(next)));
-                              }}
-                            />
-                            <span>{level}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {hasEnsembleSize && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium">Ensemble Size</Label>
-                      {(() => {
-                        const ensembleField = filterFields.find(f => f.key === 'ensembleSize');
-                        return ensembleField?.description ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="w-3 h-3 text-muted-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p className="text-xs">{ensembleField.description}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : null;
-                      })()}
-                    </div>
-                    <RadioGroup value={ensembleValue} onValueChange={setEnsemble}>
-                      {['small','medium','large'].map((size) => (
-                        <label key={size} className="flex items-center gap-3 text-sm capitalize">
-                          <RadioGroupItem value={size} />
-                          <span>{size}</span>
-                        </label>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                )}
-
-                {hasFeatured && (
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">Featured</Label>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Only show featured</span>
-                      <Switch
-                        checked={isFeatured}
-                        onCheckedChange={(v) => {
-                          const others = filterState.conditions.filter(c => c.field !== 'featured');
-                          const nextConditions = v
-                            ? [...others, { field: 'featured', operator: 'equals', value: true } as any]
-                            : others;
-                          onFilterStateChange({ ...filterState, conditions: nextConditions, page: 1 });
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {curatedActive && (
-                  <div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8"
-                      onClick={() => onFilterStateChange({
-                        ...filterState,
-                        conditions: filterState.conditions.filter(c => !['difficulty','ensembleSize','featured'].includes(String(c.field))),
-                        page: 1
-                      })}
-                    >
-                      Clear curated filters
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : null;
-          })()}
-
-          <Separator />
-
           {/* Search */}
           <div className="space-y-2">
             <Label htmlFor="search" className="text-sm font-medium">
@@ -345,6 +268,94 @@ export function FilterSidebar({
               )}
             </div>
           </div>
+
+          <Separator />
+
+          {/* Common Filters (curated) */}
+          {(() => {
+            const hasDifficulty = filterFields.some(f => f.key === 'difficulty');
+            const hasFeatured = filterFields.some(f => f.key === 'featured');
+            const curatedActive = filterState.conditions.some(c => ['difficulty','featured'].includes(String(c.field)));
+
+            return (hasDifficulty || hasFeatured) ? (
+              <div className="space-y-6">
+                {hasDifficulty && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Difficulty</Label>
+                      {(() => {
+                        const difficultyField = filterFields.find(f => f.key === 'difficulty');
+                        return difficultyField?.description ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">{difficultyField.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : null;
+                      })()}
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {['Beginner','Intermediate','Advanced'].map((level) => {
+                        const checked = selectedDifficulty.includes(level);
+                        
+                        return (
+                          <div
+                            key={level}
+                            className={`flex items-center gap-3 text-sm rounded-md border px-3 py-2 transition-colors ${
+                              checked ? 'border-primary bg-primary/5 text-primary' : 'border-border'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              id={`difficulty-${level}`}
+                              onCheckedChange={() => handleDifficultyToggle(level)}
+                            />
+                            <label
+                              htmlFor={`difficulty-${level}`}
+                              className="flex-1 select-none cursor-pointer"
+                            >
+                              {level}
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {hasFeatured && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Featured</Label>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Only show featured</span>
+                      <Switch
+                        checked={isFeaturedOnly}
+                        onCheckedChange={handleFeaturedToggle}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {curatedActive && (
+                  <div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8"
+                      onClick={clearCuratedFilters}
+                    >
+                      Clear curated filters
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : null;
+          })()}
 
           {/* Quick Filters (Presets) */}
           {presets.length > 0 && (
@@ -399,23 +410,36 @@ export function FilterSidebar({
               </SelectTrigger>
               <SelectContent>
                 {filterFields
-                  .filter(field => ['text', 'number', 'date'].includes(field.type))
-                  .map(field => (
-                    <div key={field.key}>
-                      <SelectItem value={`${field.key}-asc`}>
-                        <div className="flex items-center gap-2">
-                          <SortAsc className="w-4 h-4" />
-                          {field.label} (A-Z)
-                        </div>
-                      </SelectItem>
-                      <SelectItem value={`${field.key}-desc`}>
-                        <div className="flex items-center gap-2">
-                          <SortDesc className="w-4 h-4" />
-                          {field.label} (Z-A)
-                        </div>
-                      </SelectItem>
-                    </div>
-                  ))}
+                  .filter(field => {
+                    // Only include text, number, and date fields
+                    // Exclude price and displayOrder
+                    return ['text', 'number', 'date'].includes(field.type) && 
+                           !['price', 'displayOrder'].includes(field.key);
+                  })
+                  .map(field => {
+                    // For number and date fields, use "Ascending/Descending"
+                    // For text fields, use "A-Z/Z-A"
+                    const isNumericOrDate = ['number', 'date'].includes(field.type);
+                    const ascLabel = isNumericOrDate ? 'Ascending' : 'A-Z';
+                    const descLabel = isNumericOrDate ? 'Descending' : 'Z-A';
+                    
+                    return (
+                      <div key={field.key}>
+                        <SelectItem value={`${field.key}-asc`}>
+                          <div className="flex items-center gap-2">
+                            <SortAsc className="w-4 h-4" />
+                            {field.label} ({ascLabel})
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={`${field.key}-desc`}>
+                          <div className="flex items-center gap-2">
+                            <SortDesc className="w-4 h-4" />
+                            {field.label} ({descLabel})
+                          </div>
+                        </SelectItem>
+                      </div>
+                    );
+                  })}
               </SelectContent>
             </Select>
           </div>

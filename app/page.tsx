@@ -30,7 +30,8 @@ export default async function HomePage() {
       year: s.year,
       difficulty: s.difficulty,
       duration: s.duration,
-      thumbnailUrl: s.thumbnailUrl || s.thumbnail_url || null,
+      thumbnailUrl: s.thumbnailUrl || null,
+      graphicUrl: s.graphicUrl || null,
       createdAt: s.createdAt || s.created_at,
       showsToTags: s.showsToTags || [],
     }));
@@ -46,7 +47,8 @@ export default async function HomePage() {
         year: s.year,
         difficulty: s.difficulty,
         duration: s.duration,
-        thumbnailUrl: s.thumbnailUrl || s.thumbnail_url || null,
+        thumbnailUrl: s.thumbnailUrl || null,
+        graphicUrl: s.graphicUrl || null,
         createdAt: s.createdAt || s.created_at,
         showsToTags: s.showsToTags || [],
       }));
@@ -159,10 +161,10 @@ export default async function HomePage() {
               {featuredShows.map((show: any) => (
               <Card key={show.id}>
                 <div className="plus-divider mb-4 pb-4">
-                  <div className="h-40 plus-border rounded-lg overflow-hidden bg-muted">
+                  <div className="w-full aspect-video plus-border rounded-lg overflow-hidden bg-muted">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={show.thumbnailUrl || "/placeholder.svg"}
+                      src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
                       alt={show.title}
                       className="w-full h-full object-cover"
                     />

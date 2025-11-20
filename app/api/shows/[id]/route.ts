@@ -1,5 +1,5 @@
 import { shows, showsToTags, showArrangements } from '@/lib/database/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         difficulty: true,
         duration: true,
         thumbnailUrl: true,
+        graphicUrl: true,
         videoUrl: true,
         youtubeUrl: true,
         commissioned: true,
@@ -109,6 +110,57 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const updatedShow = await db.transaction(async (tx: any) => {
       console.log('PUT /api/shows/' + id, 'Updating show with data:', JSON.stringify(showData, null, 2));
 
+      // First, find the show by ID or slug
+      const idNum = Number.parseInt(id, 10);
+      const isNumeric = Number.isFinite(idNum);
+      
+      let showToUpdate: { id: number } | null = null;
+      
+      if (isNumeric) {
+        // If numeric ID, find by ID
+        const found = await tx
+          .select({ id: shows.id })
+          .from(shows)
+          .where(eq(shows.id, idNum))
+          .limit(1);
+        if (Array.isArray(found) && found[0]) {
+          showToUpdate = found[0];
+        }
+      } else {
+        // If slug, try exact match first
+        let found = await tx
+          .select({ id: shows.id })
+          .from(shows)
+          .where(eq(shows.slug, id))
+          .limit(1);
+        
+        // If not found, try case-insensitive match with underscore/hyphen variations
+        if (!found || !Array.isArray(found) || found.length === 0) {
+          const result = await tx.execute(sql`
+            SELECT id
+            FROM shows
+            WHERE LOWER(slug) = LOWER(${id})
+               OR LOWER(REPLACE(slug, '_', '-')) = LOWER(REPLACE(${id}, '_', '-'))
+               OR LOWER(REPLACE(slug, '-', '_')) = LOWER(REPLACE(${id}, '-', '_'))
+               OR slug LIKE ${id + '-%'}
+            LIMIT 1
+          `);
+          if (Array.isArray(result) && result.length > 0) {
+            found = [{ id: Number((result[0] as any).id) }];
+          }
+        }
+        
+        if (Array.isArray(found) && found[0]) {
+          showToUpdate = found[0];
+        }
+      }
+      
+      if (!showToUpdate) {
+        throw new Error('Show not found');
+      }
+      
+      const showId = showToUpdate.id;
+
       // Compute slug from provided title (server-authoritative)
       const sourceTitle: string | undefined = showData.title as string | undefined;
       const slugFrom = (sourceTitle || '').toString();
@@ -121,9 +173,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             .replace(/^-+|-+$/g, '')
         : undefined;
 
-      const idNum = Number.parseInt(id, 10);
-      const isNumeric = Number.isFinite(idNum);
-
       // Ensure slug uniqueness if we are updating it
       if (slug) {
         const existingWithSlug = await tx
@@ -131,18 +180,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           .from(shows)
           .where(eq(shows.slug, slug))
           .limit(1);
-        const conflict = Array.isArray(existingWithSlug) && existingWithSlug[0] && (isNumeric ? existingWithSlug[0].id !== idNum : true);
+        const conflict = Array.isArray(existingWithSlug) && existingWithSlug[0] && existingWithSlug[0].id !== showId;
         if (conflict) {
-          slug = `${slug}-${isNumeric ? idNum : Date.now()}`;
+          slug = `${slug}-${showId}`;
         }
       }
 
       const payload = { ...showData, ...(slug ? { slug } : {}) };
 
+      // Update by ID (we now have the actual ID)
       const [updated] = await tx
         .update(shows)
         .set(payload)
-        .where(isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id))
+        .where(eq(shows.id, showId))
         .returning();
       
       console.log('PUT /api/shows/' + id, 'Update result:', updated ? 'Success' : 'No rows updated');

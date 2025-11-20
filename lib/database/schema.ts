@@ -40,6 +40,7 @@ export const shows = pgTable('shows', {
 export const arrangements = pgTable('arrangements', {
   id: serial('id').primaryKey(),
   composer: text('composer'),
+  arranger: text('arranger'), // Wind arranger / general arranger
   grade: gradeBandEnum('grade'),
   year: smallint('year'),
   durationSeconds: integer('duration_seconds'),

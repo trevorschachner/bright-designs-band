@@ -88,7 +88,7 @@ export async function GET(request: Request) {
           : [arrangements.title],
         with: {
           files: {
-            where: (files, { eq }) => eq(files.isPublic, true),
+            where: (files: any, { eq }: any) => eq(files.isPublic, true),
             orderBy: [files.displayOrder, files.createdAt],
           },
         },
@@ -160,11 +160,10 @@ export async function POST(request: Request) {
   }
 
   // Prepare arrangement data - convert to Drizzle schema format (camelCase)
-  // Note: 'arranger' field doesn't exist in schema, so we'll skip it
   const arrangementData: any = {};
   if (rest.title !== undefined) arrangementData.title = rest.title;
   if (rest.composer !== undefined) arrangementData.composer = rest.composer;
-  // Skip arranger - not in schema
+  if (rest.arranger !== undefined) arrangementData.arranger = rest.arranger;
   if (rest.percussionArranger !== undefined) arrangementData.percussionArranger = rest.percussionArranger;
   if (rest.description !== undefined) arrangementData.description = rest.description;
   if (rest.grade !== undefined) arrangementData.grade = rest.grade;

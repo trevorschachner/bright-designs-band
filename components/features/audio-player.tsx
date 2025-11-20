@@ -1,28 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX,
-  Download, 
-  Gauge, 
-  SkipBack, 
-  SkipForward,
-  Maximize2
-} from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, Download } from "lucide-react"
 
 export interface AudioTrack {
   id: string
@@ -38,246 +20,86 @@ interface AudioPlayerComponentProps {
   title?: string
   className?: string
   compact?: boolean
+  playerId?: string // Unique ID for this player instance
+  onTrackSelect?: (trackIndex: number) => void // Callback when track should be selected in master player
 }
 
-// Global audio manager to ensure only one track plays at a time
-class GlobalAudioManager {
-  private activePlayerId: string | null = null
-  private players: Map<string, { 
-    pause: () => void
-    play: () => Promise<void>
-    toggle: () => void
-    isPlaying: () => boolean
-    getTrackInfo: () => AudioTrack | null
-  }> = new Map()
-  private globalKeyboardHandler: ((e: KeyboardEvent) => void) | null = null
-  private listeners: Set<() => void> = new Set()
+// Custom event for master player control
+const MASTER_PLAYER_EVENT = 'master-player-play-track'
 
-  register(id: string, controls: { 
-    pause: () => void
-    play: () => Promise<void>
-    toggle: () => void
-    isPlaying: () => boolean
-    getTrackInfo: () => AudioTrack | null
-  }) {
-    this.players.set(id, controls)
-    this.notifyListeners()
-  }
-
-  unregister(id: string) {
-    this.players.delete(id)
-    if (this.activePlayerId === id) {
-      this.activePlayerId = null
-    }
-    this.notifyListeners()
-  }
-
-  setActive(id: string) {
-    // Pause all other players first
-    this.players.forEach((controls, playerId) => {
-      if (playerId !== id && controls.isPlaying()) {
-        controls.pause()
-      }
-    })
-    // Then set this one as active
-    this.activePlayerId = id
-    this.notifyListeners()
-  }
-
-  getActiveId(): string | null {
-    return this.activePlayerId
-  }
-
-  getActiveTrack(): AudioTrack | null {
-    if (!this.activePlayerId) return null
-    const controls = this.players.get(this.activePlayerId)
-    return controls?.getTrackInfo() || null
-  }
-
-  isPlaying(): boolean {
-    if (!this.activePlayerId) return false
-    const controls = this.players.get(this.activePlayerId)
-    return controls?.isPlaying() || false
-  }
-
-  toggleActive() {
-    if (this.activePlayerId) {
-      const controls = this.players.get(this.activePlayerId)
-      if (controls) {
-        // Toggle the active player
-        controls.toggle()
-        // Don't notify here - the toggle will trigger play/pause events
-        // which will update state naturally
-      }
-    }
-  }
-
-  subscribe(listener: () => void) {
-    this.listeners.add(listener)
-    return () => {
-      this.listeners.delete(listener)
-    }
-  }
-
-  private notifyListeners() {
-    this.listeners.forEach(listener => listener())
-  }
-
-  setupGlobalKeyboard() {
-    if (this.globalKeyboardHandler) return
-
-    this.globalKeyboardHandler = (e: KeyboardEvent) => {
-      // Only handle spacebar if not typing in an input
-      if (e.key === ' ' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
-        e.preventDefault()
-        this.toggleActive()
-      }
-    }
-
-    window.addEventListener('keydown', this.globalKeyboardHandler)
-  }
-
-  cleanup() {
-    if (this.globalKeyboardHandler) {
-      window.removeEventListener('keydown', this.globalKeyboardHandler)
-      this.globalKeyboardHandler = null
-    }
-  }
-}
-
-export const globalAudioManager = new GlobalAudioManager()
-
-export function AudioPlayerComponent({ tracks, title, className, compact = false }: AudioPlayerComponentProps) {
+export function AudioPlayerComponent({ 
+  tracks, 
+  title, 
+  className, 
+  compact = false,
+  playerId,
+  onTrackSelect 
+}: AudioPlayerComponentProps) {
   const [currentTrack, setCurrentTrack] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isClient, setIsClient] = useState(false)
-  const [playbackRate, setPlaybackRate] = useState(1)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(0.8)
   const [isMuted, setIsMuted] = useState(false)
-  const [previousVolume, setPreviousVolume] = useState(0.8)
   const audioRef = useRef<HTMLAudioElement>(null)
-  const playerIdRef = useRef<string>(`player-${Math.random().toString(36).substr(2, 9)}`)
+  const isMasterPlayer = playerId === 'master-player'
 
+  const currentTrackData = tracks[currentTrack]
+
+  // Listen for master player events (only master player listens)
   useEffect(() => {
-    setIsClient(true)
-    globalAudioManager.setupGlobalKeyboard()
-    
-    return () => {
-      globalAudioManager.unregister(playerIdRef.current)
-    }
-  }, [])
+    if (!isMasterPlayer) return
 
-  const togglePlayPause = useCallback(() => {
-    if (!audioRef.current) return
-    
-    const playerId = playerIdRef.current
-    const audio = audioRef.current
-    
-    // Check actual audio state, not just React state (to avoid race conditions)
-    if (!audio.paused) {
-      // Currently playing, so pause
-      audio.pause()
-    } else {
-      // Currently paused, so play
-      // Only set active if not already active (prevents unnecessary pauses)
-      if (globalAudioManager.getActiveId() !== playerId) {
-        globalAudioManager.setActive(playerId)
-      }
-      // Then play this one
-      audio.play().catch(() => {
-        setIsPlaying(false)
-      })
-    }
-  }, [])
-
-  // Register/unregister with global manager
-  useEffect(() => {
-    if (!isClient || !audioRef.current) return
-
-    const audio = audioRef.current
-    const playerId = playerIdRef.current
-
-    const controls = {
-      pause: () => {
-        if (!audio.paused) {
-          audio.pause()
-          setIsPlaying(false)
-        }
-      },
-      play: async () => {
-        try {
-          if (audio.paused) {
-            // Don't call setActive here - it's already called in togglePlayPause
-            // This prevents double-triggering
-            await audio.play()
-            setIsPlaying(true)
+    const handleMasterPlay = (e: CustomEvent) => {
+      const { trackIndex } = e.detail
+      if (typeof trackIndex === 'number' && trackIndex >= 0 && trackIndex < tracks.length) {
+        setCurrentTrack(trackIndex)
+        setIsPlaying(true)
+        // Force play after a short delay to ensure audio is loaded
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play().catch(() => setIsPlaying(false))
           }
-        } catch (error) {
-          setIsPlaying(false)
-          throw error
-        }
-      },
-      toggle: () => {
-        togglePlayPause()
-      },
-      isPlaying: () => {
-        return !audio.paused && isPlaying
-      },
-      getTrackInfo: () => {
-        return tracks[currentTrack] || null
+        }, 100)
       }
     }
 
-    globalAudioManager.register(playerId, controls)
-
+    window.addEventListener(MASTER_PLAYER_EVENT as any, handleMasterPlay as EventListener)
     return () => {
-      globalAudioManager.unregister(playerId)
+      window.removeEventListener(MASTER_PLAYER_EVENT as any, handleMasterPlay as EventListener)
     }
-  }, [isClient, isPlaying, togglePlayPause, tracks, currentTrack])
+  }, [isMasterPlayer, tracks.length])
 
   // Initialize audio element
   useEffect(() => {
-    if (!isClient || !audioRef.current) return
+    if (!audioRef.current) return
 
     const audio = audioRef.current
-    const playerId = playerIdRef.current
-
-    // Set initial volume to 80%
-    audio.volume = 0.8
+    audio.volume = volume
 
     const updateTime = () => setCurrentTime(audio.currentTime)
-    const updateDuration = () => setDuration(audio.duration)
-    const handleEnded = () => {
-      setIsPlaying(false)
-      if (currentTrack < tracks.length - 1) {
-        setTimeout(() => {
-          setCurrentTrack(currentTrack + 1)
-        }, 500)
+    const updateDuration = () => {
+      if (audio.duration) {
+        setDuration(audio.duration)
       }
     }
-
-    const handlePlay = () => {
-      setIsPlaying(true)
-      // Don't call setActive here - it's already called in togglePlayPause
-      // This prevents double-triggering
-    }
-
-    const handlePause = () => {
-      setIsPlaying(false)
-    }
-
-    // Listen for pause events from other players
-    const handleOtherPlayerPause = () => {
-      if (globalAudioManager.getActiveId() !== playerId && isPlaying) {
-        audio.pause()
+    const handleEnded = () => {
+      setCurrentTime(0)
+      if (currentTrack < tracks.length - 1) {
+        // Auto-play next track
+        shouldAutoPlayRef.current = true
+        setCurrentTrack(currentTrack + 1)
+      } else {
+        // Reached the end
         setIsPlaying(false)
       }
     }
+    const handlePlay = () => setIsPlaying(true)
+    const handlePause = () => setIsPlaying(false)
 
     audio.addEventListener('timeupdate', updateTime)
     audio.addEventListener('loadedmetadata', updateDuration)
+    audio.addEventListener('canplay', updateDuration)
     audio.addEventListener('ended', handleEnded)
     audio.addEventListener('play', handlePlay)
     audio.addEventListener('pause', handlePause)
@@ -285,28 +107,36 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
     return () => {
       audio.removeEventListener('timeupdate', updateTime)
       audio.removeEventListener('loadedmetadata', updateDuration)
+      audio.removeEventListener('canplay', updateDuration)
       audio.removeEventListener('ended', handleEnded)
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
     }
-  }, [isClient, currentTrack, tracks.length])
+  }, [currentTrack, tracks.length])
+
+  // Track if we should auto-play (used for seamless transitions)
+  const shouldAutoPlayRef = useRef(false)
 
   // Update audio source when track changes
   useEffect(() => {
-    if (audioRef.current && tracks[currentTrack]) {
+    if (audioRef.current && currentTrackData) {
       audioRef.current.load()
-      if (isPlaying) {
+      
+      // Auto-play if explicitly requested (for auto-play next track)
+      if (shouldAutoPlayRef.current) {
+        shouldAutoPlayRef.current = false
+        const playTimer = setTimeout(() => {
+          audioRef.current?.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => setIsPlaying(false))
+        }, 200)
+        return () => clearTimeout(playTimer)
+      } else if (isPlaying) {
+        // Normal play/pause state
         audioRef.current.play().catch(() => setIsPlaying(false))
       }
     }
-  }, [currentTrack, tracks])
-
-  // Update playback rate
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = playbackRate
-    }
-  }, [playbackRate])
+  }, [currentTrack, currentTrackData, isPlaying])
 
   // Update volume
   useEffect(() => {
@@ -315,79 +145,42 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
     }
   }, [volume, isMuted])
 
-  // Local keyboard shortcuts (only for this player when active)
-  useEffect(() => {
-    if (!isClient) return
-
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Only handle if this player is active
-      if (globalAudioManager.getActiveId() !== playerIdRef.current) return
-      
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return
-      }
-
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault()
-          seek(-10)
-          break
-        case 'ArrowRight':
-          e.preventDefault()
-          seek(10)
-          break
-        case 'ArrowUp':
-          e.preventDefault()
-          setVolume(Math.min(1, volume + 0.1))
-          break
-        case 'ArrowDown':
-          e.preventDefault()
-          setVolume(Math.max(0, volume - 0.1))
-          break
-        case 'm':
-        case 'M':
-          e.preventDefault()
-          toggleMute()
-          break
-      }
+  const togglePlayPause = () => {
+    if (!audioRef.current) return
+    
+    // If this is not the master player and has onTrackSelect, trigger master player instead
+    if (!isMasterPlayer && onTrackSelect && tracks.length === 1) {
+      // Find this track in the master player's track list
+      onTrackSelect(0) // For single-track players, always select track 0
+      return
     }
-
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [isClient, volume])
-
-
-  const seek = (seconds: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Math.max(0, Math.min(duration, audioRef.current.currentTime + seconds))
-    }
-  }
-
-  const toggleMute = () => {
-    if (isMuted) {
-      setIsMuted(false)
-      setVolume(previousVolume)
+    
+    if (audioRef.current.paused) {
+      audioRef.current.play().catch(() => setIsPlaying(false))
     } else {
-      setPreviousVolume(volume)
-      setIsMuted(true)
+      audioRef.current.pause()
     }
   }
 
   const handleProgressChange = (value: number[]) => {
     if (audioRef.current) {
       audioRef.current.currentTime = value[0]
+      setCurrentTime(value[0])
     }
   }
 
   const handleVolumeChange = (value: number[]) => {
-    setVolume(value[0])
-    if (value[0] > 0) {
-      setIsMuted(false)
-    }
+    const newVolume = value[0]
+    setVolume(newVolume)
+    setIsMuted(newVolume === 0)
+  }
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
   }
 
   const formatTime = (seconds: number) => {
-    if (!isFinite(seconds)) return '0:00'
+    if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
@@ -395,7 +188,14 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
 
   const handleTrackChange = (index: number) => {
     setCurrentTrack(index)
-    setIsPlaying(false)
+    setCurrentTime(0)
+    // If master player, start playing the selected track
+    if (isMasterPlayer) {
+      setIsPlaying(true)
+      // Audio will auto-play when track changes due to useEffect
+    } else {
+      setIsPlaying(false)
+    }
   }
 
   if (!tracks || tracks.length === 0) {
@@ -417,57 +217,35 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
     )
   }
 
-  const currentTrackData = tracks[currentTrack]
-
   const playerContent = (
-    <div className="space-y-6">
-      {/* Track List - Spotify style */}
-      {tracks.length > 1 && (
+    <div className={compact ? "space-y-3 flex-1 flex flex-col" : "space-y-4"}>
+      {/* Track List - Simple and clean */}
+      {tracks.length > 1 && !compact && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Tracks
           </h4>
           <div className="space-y-1">
             {tracks.map((track, index) => (
-              <div
+              <button
                 key={track.id}
-                className={`group flex items-center gap-3 p-2.5 rounded-md cursor-pointer transition-all ${
-                  currentTrack === index
-                    ? "bg-primary/10"
-                    : "hover:bg-muted/50"
-                }`}
                 onClick={() => handleTrackChange(index)}
+                className={`w-full text-left flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  currentTrack === index
+                    ? "bg-primary/10 border border-primary/20"
+                    : "hover:bg-muted/50 border border-transparent"
+                }`}
               >
-                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-full bg-muted">
                   {currentTrack === index && isPlaying ? (
-                    <div className="w-4 h-4 flex items-center justify-center">
-                      <div className="w-1 h-3 bg-primary rounded-full animate-pulse mr-0.5" style={{ animationDelay: '0ms' }} />
-                      <div className="w-1 h-4 bg-primary rounded-full animate-pulse mr-0.5" style={{ animationDelay: '150ms' }} />
-                      <div className="w-1 h-3 bg-primary rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  ) : currentTrack === index ? (
                     <Pause className="w-4 h-4 text-primary" />
                   ) : (
-                    <span className="text-xs text-muted-foreground group-hover:hidden">
-                      {index + 1}
-                    </span>
-                  )}
-                  {currentTrack !== index && (
-                    <Play className="w-4 h-4 text-foreground hidden group-hover:block" />
+                    <Play className="w-4 h-4 text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-medium truncate ${
-                      currentTrack === index ? 'text-foreground' : 'text-muted-foreground'
-                    }`}>
-                      {track.title}
-                    </span>
-                    {track.type && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0">
-                        {track.type}
-                      </Badge>
-                    )}
+                  <div className="text-sm font-medium truncate">
+                    {track.title}
                   </div>
                   {track.description && (
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -480,15 +258,48 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
                     {track.duration}
                   </span>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Main Player - Spotify style */}
-      <div className={compact ? "" : "border-t pt-6"}>
-        {!compact && (
+      {/* Compact track list for compact mode */}
+      {tracks.length > 1 && compact && (
+        <div className="space-y-1">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            {tracks.length} Tracks
+          </h4>
+          <div className="space-y-1">
+            {tracks.map((track, index) => (
+              <button
+                key={track.id}
+                onClick={() => handleTrackChange(index)}
+                className={`w-full text-left flex items-center gap-2 p-2 rounded transition-colors text-xs ${
+                  currentTrack === index
+                    ? "bg-primary/10 border border-primary/20"
+                    : "hover:bg-muted/50 border border-transparent"
+                }`}
+              >
+                <div className="w-6 h-6 flex items-center justify-center flex-shrink-0 rounded-full bg-muted">
+                  {currentTrack === index && isPlaying ? (
+                    <Pause className="w-3 h-3 text-primary" />
+                  ) : (
+                    <Play className="w-3 h-3 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 truncate text-xs font-medium">
+                  {track.title}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main Player Controls */}
+      <div className={compact ? "" : "border-t pt-4"}>
+        {!compact && currentTrackData && (
           <div className="mb-4">
             <h4 className="font-semibold text-lg mb-1">{currentTrackData.title}</h4>
             {currentTrackData.description && (
@@ -497,8 +308,18 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
           </div>
         )}
 
+        {/* Current Track Info (compact mode) */}
+        {compact && currentTrackData && (
+          <div className="mb-2">
+            <h4 className="font-semibold text-sm mb-0.5 truncate">{currentTrackData.title}</h4>
+            {currentTrackData.description && (
+              <p className="text-xs text-muted-foreground truncate">{currentTrackData.description}</p>
+            )}
+          </div>
+        )}
+
         {/* Progress Bar */}
-        <div className="mb-4">
+        <div className={compact ? "mb-2" : "mb-4"}>
           <Slider
             value={[currentTime]}
             max={duration || 100}
@@ -512,147 +333,91 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-between">
-          {/* Left: Track navigation */}
-          <div className="flex items-center gap-2">
-            {tracks.length > 1 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => currentTrack > 0 && handleTrackChange(currentTrack - 1)}
-                  disabled={currentTrack === 0}
-                >
-                  <SkipBack className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Center: Play/Pause */}
+        {/* Main Controls Row */}
+        <div className={`flex items-center ${compact ? 'gap-2' : 'gap-4'} ${compact ? 'justify-between' : 'justify-between'}`}>
+          {/* Play/Pause Button */}
           <Button
-            variant="ghost"
+            variant="default"
             size="icon"
-            className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:scale-105 transition-transform"
+            className={compact ? "h-10 w-10 rounded-full" : "h-12 w-12 rounded-full"}
             onClick={togglePlayPause}
           >
             {isPlaying ? (
-              <Pause className="w-6 h-6 fill-current" />
+              <Pause className={compact ? "w-4 h-4 fill-current" : "w-5 h-5 fill-current"} />
             ) : (
-              <Play className="w-6 h-6 fill-current ml-0.5" />
+              <Play className={compact ? "w-4 h-4 fill-current ml-0.5" : "w-5 h-5 fill-current ml-0.5"} />
             )}
           </Button>
 
-          {/* Right: Next track */}
-          <div className="flex items-center gap-2">
-            {tracks.length > 1 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => currentTrack < tracks.length - 1 && handleTrackChange(currentTrack + 1)}
-                disabled={currentTrack === tracks.length - 1}
-              >
-                <SkipForward className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Controls */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t">
-          {/* Left: Playback speed */}
-          <div className="flex items-center gap-2">
-            <Gauge className="w-4 h-4 text-muted-foreground" />
-            <Select value={playbackRate.toString()} onValueChange={(v) => setPlaybackRate(parseFloat(v))}>
-              <SelectTrigger className="w-20 h-8 text-xs border-0 bg-transparent hover:bg-muted">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0.5">0.5x</SelectItem>
-                <SelectItem value="0.75">0.75x</SelectItem>
-                <SelectItem value="1">1x</SelectItem>
-                <SelectItem value="1.25">1.25x</SelectItem>
-                <SelectItem value="1.5">1.5x</SelectItem>
-                <SelectItem value="2">2x</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Volume Control */}
+          <div className={`flex items-center gap-2 ${compact ? 'flex-1 max-w-[150px]' : 'flex-1 max-w-[200px]'}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={compact ? "h-7 w-7 flex-shrink-0" : "h-8 w-8 flex-shrink-0"}
+              onClick={toggleMute}
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
+              ) : (
+                <Volume2 className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
+              )}
+            </Button>
+            <Slider
+              value={[isMuted ? 0 : volume]}
+              max={1}
+              step={0.01}
+              onValueChange={handleVolumeChange}
+              className={compact ? "flex-1 min-w-[60px]" : "flex-1"}
+            />
           </div>
 
-          {/* Center: Keyboard shortcuts hint */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Space</kbd>
-              <span>Play</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">←</kbd>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">→</kbd>
-              <span>Seek</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">M</kbd>
-              <span>Mute</span>
-            </div>
-          </div>
-
-          {/* Right: Volume and Download */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 w-32">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 flex-shrink-0"
-                onClick={toggleMute}
-              >
-                {isMuted || volume === 0 ? (
-                  <VolumeX className="w-4 h-4" />
-                ) : (
-                  <Volume2 className="w-4 h-4" />
-                )}
-              </Button>
-              <Slider
-                value={[isMuted ? 0 : volume]}
-                max={1}
-                step={0.01}
-                onValueChange={handleVolumeChange}
-                className="flex-1"
-              />
-            </div>
+          {/* Download Button */}
+          {currentTrackData && !compact && (
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm"
-              className="h-8"
               asChild
             >
               <a 
                 href={currentTrackData.url} 
-                download={`${currentTrackData.title}.mp3`}
+                download={`${currentTrackData.title || 'audio'}.mp3`}
+                className="flex items-center gap-2"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Download
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Download</span>
               </a>
             </Button>
-          </div>
+          )}
         </div>
       </div>
 
       {/* Hidden audio element */}
-      {isClient && (
+      <div data-track-title={currentTrackData?.title || 'Audio'}>
         <audio
           ref={audioRef}
-          src={currentTrackData.url}
+          src={currentTrackData?.url}
           preload="metadata"
           className="hidden"
         />
-      )}
+      </div>
     </div>
   )
 
   if (compact) {
-    return playerContent
+    return (
+      <Card className={`${className} h-full flex flex-col`}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Volume2 className="w-5 h-5" />
+            {title || "Audio Preview"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 flex-1 flex flex-col">
+          {playerContent}
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -670,6 +435,4 @@ export function AudioPlayerComponent({ tracks, title, className, compact = false
   )
 }
 
-// No longer needed since we're using native audio element
 export const audioPlayerStyles = ``
-

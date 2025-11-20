@@ -126,9 +126,7 @@ export const SHOWS_SCHEMA: TableSchema = {
     duration: { key: 'duration', type: 'text' },
     price: { key: 'price', type: 'numeric' },
     description: { key: 'description', type: 'text', nullable: true },
-    createdAt: { key: 'createdAt', type: 'timestamp' },
-    // virtual/computed fields used by UI; handled specially in API
-    ensembleSize: { key: 'ensembleSize', type: 'enum', enumValues: ['small','medium','large'] }
+    createdAt: { key: 'createdAt', type: 'timestamp' }
   },
   relations: {
     tags: {
@@ -199,10 +197,6 @@ export const SHOWS_FILTER_FIELDS: FilterField[] = baseShowsFields.map(field => {
     case 'price':
       enhanced.description = 'The purchase price of the show in USD';
       enhanced.placeholder = 'Filter by price range...';
-      break;
-    case 'ensembleSize':
-      enhanced.description = 'Recommended ensemble size: Small (1-50 members), Medium (51-100 members), or Large (101+ members)';
-      enhanced.placeholder = 'Select ensemble size...';
       break;
     case 'tags':
       enhanced.description = 'Filter by tags or categories associated with the show';

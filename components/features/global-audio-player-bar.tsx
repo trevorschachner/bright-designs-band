@@ -1,60 +1,91 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react"
-import { globalAudioManager } from "./audio-player"
-import type { AudioTrack } from "./audio-player"
+import { Play, Pause, Volume2, VolumeX } from "lucide-react"
 
 export function GlobalAudioPlayerBar() {
-  const [track, setTrack] = useState<AudioTrack | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(0.8)
   const [isMuted, setIsMuted] = useState(false)
+  const [trackTitle, setTrackTitle] = useState<string | null>(null)
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null)
 
+  // Find and track the currently playing audio element
   useEffect(() => {
-    // Set initial volume on all audio elements to 80%
-    const setVolumeOnElements = () => {
+    const findActiveAudio = () => {
       const audioElements = document.querySelectorAll('audio')
-      audioElements.forEach(audio => {
-        audio.volume = 0.8
-      })
+      for (const audio of audioElements) {
+        if (!audio.paused && !audio.ended) {
+          activeAudioRef.current = audio
+          return audio
+        }
+      }
+      // If no playing audio, use the first one if it exists
+      if (audioElements.length > 0 && !activeAudioRef.current) {
+        activeAudioRef.current = audioElements[0]
+        return audioElements[0]
+      }
+      return null
     }
-    
-    setVolumeOnElements()
 
-    // Subscribe to global audio manager changes
-    const unsubscribe = globalAudioManager.subscribe(() => {
-      const activeTrack = globalAudioManager.getActiveTrack()
-      const playing = globalAudioManager.isPlaying()
-      setTrack(activeTrack)
-      setIsPlaying(playing)
-      // Update volume on any new audio elements
-      setVolumeOnElements()
+    const updateState = () => {
+      const audio = findActiveAudio()
+      if (audio) {
+        setIsPlaying(!audio.paused && !audio.ended)
+        setCurrentTime(audio.currentTime)
+        if (audio.duration) {
+          setDuration(audio.duration)
+        }
+        // Try to get track title from parent elements
+        const container = audio.closest('[data-track-title]')
+        if (container) {
+          setTrackTitle(container.getAttribute('data-track-title'))
+        } else {
+          setTrackTitle('Audio')
+        }
+      } else {
+        setIsPlaying(false)
+        setCurrentTime(0)
+        setDuration(0)
+        setTrackTitle(null)
+      }
+    }
+
+    // Initial update
+    updateState()
+
+    // Set up interval for updates
+    const interval = setInterval(updateState, 100)
+
+    // Listen to all audio events
+    const handleAudioEvent = () => {
+      updateState()
+    }
+
+    const audioElements = document.querySelectorAll('audio')
+    audioElements.forEach(audio => {
+      audio.addEventListener('play', handleAudioEvent)
+      audio.addEventListener('pause', handleAudioEvent)
+      audio.addEventListener('timeupdate', handleAudioEvent)
+      audio.addEventListener('loadedmetadata', handleAudioEvent)
+      audio.addEventListener('ended', handleAudioEvent)
     })
 
-    // Initial state
-    setTrack(globalAudioManager.getActiveTrack())
-    setIsPlaying(globalAudioManager.isPlaying())
-
-    // Also listen to play/pause events on audio elements
-    const handlePlayPause = () => {
-      setIsPlaying(globalAudioManager.isPlaying())
-      // Update track in case it changed
-      setTrack(globalAudioManager.getActiveTrack())
-    }
-
-    // Listen for new audio elements being added
+    // Watch for new audio elements
     const observer = new MutationObserver(() => {
-      setVolumeOnElements()
-      const audioElements = document.querySelectorAll('audio')
-      audioElements.forEach(audio => {
-        audio.addEventListener('play', handlePlayPause)
-        audio.addEventListener('pause', handlePlayPause)
+      const newAudioElements = document.querySelectorAll('audio')
+      newAudioElements.forEach(audio => {
+        audio.addEventListener('play', handleAudioEvent)
+        audio.addEventListener('pause', handleAudioEvent)
+        audio.addEventListener('timeupdate', handleAudioEvent)
+        audio.addEventListener('loadedmetadata', handleAudioEvent)
+        audio.addEventListener('ended', handleAudioEvent)
       })
+      updateState()
     })
 
     observer.observe(document.body, {
@@ -62,118 +93,65 @@ export function GlobalAudioPlayerBar() {
       subtree: true
     })
 
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach(audio => {
-      audio.addEventListener('play', handlePlayPause)
-      audio.addEventListener('pause', handlePlayPause)
-    })
-
     return () => {
-      unsubscribe()
+      clearInterval(interval)
       observer.disconnect()
       audioElements.forEach(audio => {
-        audio.removeEventListener('play', handlePlayPause)
-        audio.removeEventListener('pause', handlePlayPause)
+        audio.removeEventListener('play', handleAudioEvent)
+        audio.removeEventListener('pause', handleAudioEvent)
+        audio.removeEventListener('timeupdate', handleAudioEvent)
+        audio.removeEventListener('loadedmetadata', handleAudioEvent)
+        audio.removeEventListener('ended', handleAudioEvent)
       })
     }
   }, [])
 
-  // Update time and duration from active player's audio element
+  // Update volume on all audio elements
   useEffect(() => {
-    if (!track) {
-      setCurrentTime(0)
-      setDuration(0)
-      return
-    }
-
-    const updateTime = () => {
-      const audioElements = document.querySelectorAll('audio')
-      audioElements.forEach(audio => {
-        if (audio.src.includes(track.url) || audio.src.includes(encodeURIComponent(track.url))) {
-          setCurrentTime(audio.currentTime)
-          if (audio.duration) {
-            setDuration(audio.duration)
-          }
-        }
-      })
-    }
-
-    // Initial update
-    updateTime()
-
-    // Set up interval for time updates
-    const interval = setInterval(updateTime, 100)
-
-    // Also listen to timeupdate events on audio elements
     const audioElements = document.querySelectorAll('audio')
-    const handlers: Array<{ element: HTMLAudioElement; handler: () => void }> = []
-    
     audioElements.forEach(audio => {
-      if (audio.src.includes(track.url) || audio.src.includes(encodeURIComponent(track.url))) {
-        const handler = () => {
-          setCurrentTime(audio.currentTime)
-          if (audio.duration) {
-            setDuration(audio.duration)
-          }
-        }
-        audio.addEventListener('timeupdate', handler)
-        audio.addEventListener('loadedmetadata', handler)
-        handlers.push({ element: audio, handler })
-      }
+      audio.volume = isMuted ? 0 : volume
     })
-
-    return () => {
-      clearInterval(interval)
-      handlers.forEach(({ element, handler }) => {
-        element.removeEventListener('timeupdate', handler)
-        element.removeEventListener('loadedmetadata', handler)
-      })
-    }
-  }, [track])
+  }, [volume, isMuted])
 
   const togglePlayPause = () => {
-    globalAudioManager.toggleActive()
+    const audio = activeAudioRef.current || document.querySelector('audio')
+    if (audio) {
+      if (audio.paused) {
+        audio.play().catch(() => setIsPlaying(false))
+      } else {
+        audio.pause()
+      }
+    }
   }
 
   const toggleMute = () => {
     setIsMuted(!isMuted)
-    // Update volume on all audio elements
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach(audio => {
-      audio.volume = isMuted ? volume : 0
-    })
   }
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0]
     setVolume(newVolume)
     setIsMuted(newVolume === 0)
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach(audio => {
-      audio.volume = newVolume
-    })
   }
 
   const handleProgressChange = (value: number[]) => {
     const newTime = value[0]
     setCurrentTime(newTime)
-    // Update the audio element's currentTime
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach(audio => {
-      if (track && (audio.src.includes(track.url) || audio.src.includes(encodeURIComponent(track.url)))) {
-        audio.currentTime = newTime
-      }
-    })
+    const audio = activeAudioRef.current || document.querySelector('audio')
+    if (audio) {
+      audio.currentTime = newTime
+    }
   }
 
   const formatTime = (seconds: number) => {
-    if (!isFinite(seconds)) return '0:00'
+    if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  if (!track) return null
+  if (!trackTitle) return null
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-sm border-t border-border shadow-lg">
@@ -181,14 +159,15 @@ export function GlobalAudioPlayerBar() {
         <div className="flex items-center gap-4">
           {/* Track Info */}
           <div className="flex-1 min-w-0 flex items-center gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-muted rounded-md flex items-center justify-center">
-              <Play className="w-6 h-6 text-muted-foreground" />
+            <div className="flex-shrink-0 w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+              {isPlaying ? (
+                <Pause className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <Play className="w-5 h-5 text-muted-foreground" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm truncate">{track.title}</div>
-              {track.description && (
-                <div className="text-xs text-muted-foreground truncate">{track.description}</div>
-              )}
+              <div className="font-medium text-sm truncate">{trackTitle}</div>
             </div>
           </div>
 
@@ -254,4 +233,3 @@ export function GlobalAudioPlayerBar() {
     </div>
   )
 }
-

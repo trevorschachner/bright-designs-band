@@ -88,6 +88,7 @@ export default function ResourcePage<T>({
         setResponse(json.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching data:', err);
       } finally {
         setIsLoading(false);
       }

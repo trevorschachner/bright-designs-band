@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
@@ -31,22 +33,28 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
       <Card className="frame-card group overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
         <div className="flex flex-col sm:flex-row">
           {/* Thumbnail */}
-          <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 bg-accent-gradient overflow-hidden">
-            <Image
-              src={show.thumbnailUrl || "/placeholder.svg"}
-              alt={show.title || 'Show thumbnail'}
-              width={192}
-              height={160}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <Button
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
-              size="sm"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Preview
-            </Button>
+          <div className="relative w-full sm:w-64 flex-shrink-0 bg-accent-gradient overflow-hidden">
+            <div className="w-full h-0 pb-[56.25%] sm:pb-0 sm:h-auto sm:aspect-video relative">
+              <Image
+                src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
+                alt={show.title || 'Show thumbnail'}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, 256px"
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Button
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
+                size="sm"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Preview
+              </Button>
+            </div>
           </div>
 
         {/* Content */}

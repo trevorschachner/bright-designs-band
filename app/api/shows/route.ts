@@ -4,6 +4,7 @@ import { FilterUrlManager } from '@/lib/filters/query-builder';
 import { requirePermission } from '@/lib/auth/roles';
 import { showSchema } from '@/lib/validation/shows';
 import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
+import { fileStorage, STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     // Build base query selecting only needed columns (include price for filtering/sorting)
     let base = supabase
       .from('shows')
-      .select('id,slug,title,description,year,difficulty,duration,price,thumbnail_url,featured,display_order,created_at', { count: 'exact', head: false });
+      .select('id,slug,title,description,year,difficulty,duration,price,thumbnail_url,graphic_url,featured,display_order,created_at', { count: 'exact', head: false });
 
     // Search across a few text columns
     if (filterState.search) {
@@ -175,13 +176,53 @@ export async function GET(request: Request) {
       }
     }
 
-    // Map snake_case -> camelCase + attach tags and compute ensembleSize
+    // Fetch show image files as fallback for shows without thumbnail_url/graphic_url
+    let showImageUrlsByShowId: Record<number, string | null> = {};
+    if (showIds.length > 0) {
+      const { data: fileRows, error: fileErr } = await supabase
+        .from('files')
+        .select('show_id,url,file_type,is_public')
+        .in('show_id', showIds)
+        .eq('is_public', true)
+        .eq('file_type', 'image')
+        .order('display_order', { ascending: true });
+      
+      if (!fileErr && Array.isArray(fileRows)) {
+        // Get the first image URL for each show
+        fileRows.forEach((file: any) => {
+          if (file.show_id && file.url && !showImageUrlsByShowId[file.show_id]) {
+            showImageUrlsByShowId[file.show_id] = file.url;
+          }
+        });
+      }
+    }
+
+    // Helper function to convert storage path to public URL if needed
+    const convertToPublicUrl = (urlOrPath: string | null | undefined): string | null => {
+      if (!urlOrPath) return null
+      // If it's already a full URL (starts with http:// or https://), return as-is
+      if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) {
+        return urlOrPath
+      }
+      // Otherwise, treat it as a storage path and convert to public URL
+      try {
+        const { data: { publicUrl } } = supabase.storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(withRootPrefix(urlOrPath))
+        return publicUrl
+      } catch (error) {
+        console.warn('Failed to convert storage path to URL:', urlOrPath, error)
+        return null
+      }
+    }
+
+    // Map snake_case -> camelCase + attach tags
     const normalized = (rows || []).map((r: any) => {
-      // Compute ensembleSize based on arrangements (virtual field)
-      // This is a placeholder - you may want to compute this based on actual show metadata
-      let ensembleSize: 'small' | 'medium' | 'large' | undefined = undefined;
-      const arrangementCount = arrangementsByShowId[r.id]?.length || 0;
-      // You can add logic here to determine ensemble size based on show metadata
+      // Determine image URL: graphic_url > thumbnail_url > show image file > null
+      const graphicUrl = convertToPublicUrl(r.graphic_url);
+      const thumbnailUrl = convertToPublicUrl(r.thumbnail_url);
+      const fallbackImageUrl = showImageUrlsByShowId[r.id] || null;
+      const finalThumbnailUrl = graphicUrl || thumbnailUrl || fallbackImageUrl;
       
       return {
         id: r.id,
@@ -192,11 +233,11 @@ export async function GET(request: Request) {
         difficulty: r.difficulty,
         duration: r.duration,
         price: r.price ? Number(r.price) : null,
-        thumbnailUrl: r.thumbnail_url || null,
+        thumbnailUrl: finalThumbnailUrl,
+        graphicUrl: graphicUrl || null,
         featured: !!r.featured,
         displayOrder: typeof r.display_order === 'number' ? r.display_order : 0,
         createdAt: r.created_at,
-        ensembleSize, // Virtual field
         arrangements: arrangementsByShowId[r.id] || [],
         showsToTags: tagsByShowId[r.id] || [],
       };

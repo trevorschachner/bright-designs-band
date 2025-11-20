@@ -11,10 +11,11 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
+import { ArrangementAudioPlayer } from '@/components/features/arrangement-audio-player'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
-import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles } from '@/lib/database/queries'
+import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles, getPublicFilesByShowId } from '@/lib/database/queries'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
@@ -92,7 +93,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return buildMetadata({
       title: `${showRow.title} | Bright Designs`,
       description: showRow.description ?? 'Award-winning marching band show from Bright Designs.',
-      ogImage: showRow.thumbnailUrl ?? '/og-image.jpg',
+      ogImage: showRow.graphicUrl ?? showRow.thumbnailUrl ?? '/og-image.jpg',
       canonical: `${baseUrl}/shows/${canonicalSlug}`,
     })
   } catch (error) {
@@ -130,6 +131,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     difficulty: showRow.difficulty as string | null,
     duration: showRow.duration as string | null,
     thumbnailUrl: showRow.thumbnailUrl ?? null,
+    graphicUrl: showRow.graphicUrl ?? null,
     createdAt: showRow.createdAt instanceof Date ? showRow.createdAt.toISOString() : (showRow as any).createdAt,
   }
 
@@ -145,6 +147,15 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   // This eliminates N+1 queries - previously was 1 + N queries (N = number of arrangements)
   // Now it's just 1 query total
   const arrangements = await getShowWithArrangementsAndFiles(showId)
+
+  // Fetch show image files as fallback if graphicUrl/thumbnailUrl are not set
+  const showFiles = await getPublicFilesByShowId(showId)
+  const showImageFile = Array.isArray(showFiles) 
+    ? showFiles.find((f: any) => f.fileType === 'image' && f.isPublic) 
+    : null
+
+  // Determine display image: graphicUrl > thumbnailUrl > show image file > null
+  const displayImageUrl = show.graphicUrl || show.thumbnailUrl || showImageFile?.url || null
 
   const formatSeconds = (total?: number | null) => {
     if (!total || total < 0) return '—'
@@ -192,17 +203,15 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Left side - Image */}
           <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video" id="listen">
-            {show.thumbnailUrl ? (
-              <div className="w-full h-full flex items-center justify-center relative">
-                <Image
-                  src={show.thumbnailUrl}
-                  alt={show.title}
-                  fill
-                  className="object-contain rounded-lg"
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              </div>
+            {displayImageUrl ? (
+              <Image
+                src={displayImageUrl}
+                alt={show.title}
+                fill
+                className="object-cover rounded-lg"
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="text-muted-foreground">
@@ -246,19 +255,36 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
             </div>
 
             <div className="flex flex-col gap-3">
-              <Button className="btn-primary w-full" asChild>
-                <Link href="#listen">
-                  <Play className="w-4 h-4 mr-2" />
-                  Listen Now
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full">
-                <Download className="w-4 h-4 mr-2" />
-                Download Sample Materials
-              </Button>
               <CheckAvailabilityModal showTitle={show.title} />
             </div>
           </div>
+        </div>
+
+        {/* What's Included & Listen to Full Show - 2 Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* What's Included */}
+          <div>
+            <WhatIsIncluded />
+          </div>
+
+          {/* Master Audio Player - Compact */}
+          {arrangements.filter((a: any) => a.audioUrl).length > 0 && (
+            <div id="master-player">
+              <AudioPlayerComponent
+                playerId="master-player"
+                tracks={arrangements
+                  .filter((a: any) => a.audioUrl)
+                  .map((arrangement: any, index: number) => ({
+                    id: arrangement.id.toString(),
+                    title: arrangement.title || `Movement ${index + 1}`,
+                    description: arrangement.description || undefined,
+                    url: arrangement.audioUrl,
+                  }))}
+                title="Listen to Full Show"
+                compact
+              />
+            </div>
+          )}
         </div>
 
         {/* Show Arrangements Section */}
@@ -293,18 +319,18 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                 className="frame-card overflow-hidden group hover:shadow-lg transition-all duration-200 border border-border hover:border-primary/20"
                 id={index === 0 ? 'listen' : undefined}
               >
-                <CardContent className="p-6">
+                <CardContent className="p-4">
                   {/* Header Row */}
-                  <div className="flex items-start gap-4 mb-4">
+                  <div className="flex items-start gap-3 mb-3">
                     {/* Order Number */}
-                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary font-bold text-lg">
+                    <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-base">
                       {index + 1}
                     </div>
                     
                     {/* Title and Scene */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      <div className="flex items-start justify-between gap-3 mb-1.5">
+                        <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                           <Link href={`/arrangements/${arrangement.id}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
                             {arrangement.title}
                           </Link>
@@ -317,7 +343,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       </div>
                       
                       {/* Metadata Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
                         {arrangement.composer && (
                           <div className="flex items-center gap-2">
                             <Music2 className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -360,28 +386,36 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
 
                   {/* Description */}
                   {arrangement.description && (
-                    <p className="text-muted-foreground leading-relaxed mb-4 ml-16">
+                    <p className="text-muted-foreground leading-relaxed mb-3 ml-12 text-sm">
                       {arrangement.description}
                     </p>
                   )}
 
                   {/* Audio Player */}
-                  {arrangement.audioUrl && (
-                    <div className="ml-16 mb-4">
-                      <AudioPlayerComponent
-                        tracks={[{
-                          id: arrangement.id.toString(),
-                          title: arrangement.title || 'Audio Preview',
-                          description: arrangement.description || undefined,
-                          url: arrangement.audioUrl
-                        }]}
-                        compact
-                      />
-                    </div>
-                  )}
+                  {arrangement.audioUrl && (() => {
+                    // Find the index of this arrangement in the master player's track list
+                    const masterTracks = arrangements.filter((a: any) => a.audioUrl)
+                    const trackIndexInMaster = masterTracks.findIndex((a: any) => a.id === arrangement.id)
+                    
+                    return (
+                      <div className="ml-12 mb-3">
+                        <ArrangementAudioPlayer
+                          arrangementId={arrangement.id}
+                          trackIndex={trackIndexInMaster >= 0 ? trackIndexInMaster : 0}
+                          tracks={[{
+                            id: arrangement.id.toString(),
+                            title: arrangement.title || 'Audio Preview',
+                            description: arrangement.description || undefined,
+                            url: arrangement.audioUrl
+                          }]}
+                          compact
+                        />
+                      </div>
+                    )
+                  })()}
 
                   {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-3 ml-16">
+                  <div className="flex flex-wrap gap-2 ml-12">
                     {arrangement.sampleScoreUrl && (
                       <Button variant="outline" size="sm" asChild>
                         <Link href={arrangement.sampleScoreUrl} target="_blank" rel="noopener noreferrer" className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -401,11 +435,6 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
               </Card>
             );
           })}
-        </div>
-
-        {/* What's Included Section */}
-        <div className="mt-12">
-          <WhatIsIncluded />
         </div>
       </div>
 

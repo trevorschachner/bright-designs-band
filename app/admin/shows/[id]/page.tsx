@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { FileUpload } from '@/components/features/file-upload';
 import { FileGallery } from '@/components/features/file-gallery';
 import { YouTubeUpload } from '@/components/features/youtube-upload';
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
 export default function EditShowPage() {
   const router = useRouter();
@@ -43,6 +44,10 @@ export default function EditShowPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
   const [savingArrangement, setSavingArrangement] = useState<number | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialShowDataRef = useRef<any>(null);
 
   useEffect(() => {
     if (id) {
@@ -101,43 +106,6 @@ export default function EditShowPage() {
     setSelectedTags(prev =>
       prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
     );
-  };
-
-  // Normalize and coerce payload before saving to DB
-  const buildPayload = () => {
-    const normalizeNumber = (v: any) => {
-      if (v === null || v === undefined || v === '') return null;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    };
-    const normalizeString = (v: any) => (v === undefined || v === null ? '' : String(v));
-    const normalizeNullableString = (v: any) => {
-      if (v === undefined || v === null) return null;
-      const s = String(v).trim();
-      return s === '' ? null : s;
-    };
-
-    const payload: any = {
-      title: normalizeString(show.title),
-      description: normalizeNullableString(show.description),
-      difficulty: normalizeString(show.difficulty || ''),
-      duration: normalizeNullableString(show.duration),
-      year: normalizeNumber(show.year),
-      thumbnailUrl: normalizeNullableString(show.thumbnailUrl),
-      featured: !!show.featured,
-      displayOrder: normalizeNumber(show.displayOrder) ?? 0,
-      // extended fields
-      youtubeUrl: normalizeNullableString(show.youtubeUrl),
-      commissioned: normalizeNullableString(show.commissioned),
-      programCoordinator: normalizeNullableString(show.programCoordinator),
-      percussionArranger: normalizeNullableString(show.percussionArranger),
-      soundDesigner: normalizeNullableString(show.soundDesigner),
-      windArranger: normalizeNullableString(show.windArranger),
-      drillWriter: normalizeNullableString(show.drillWriter),
-      // tags handled separately below
-    };
-
-    return payload;
   };
 
   const handleArrangementSubmit = async (e: React.FormEvent) => {
@@ -302,13 +270,50 @@ export default function EditShowPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Normalize and coerce payload before saving to DB
+  const buildPayload = useCallback(() => {
+    const normalizeNumber = (v: any) => {
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const normalizeString = (v: any) => (v === undefined || v === null ? '' : String(v));
+    const normalizeNullableString = (v: any) => {
+      if (v === undefined || v === null) return null;
+      const s = String(v).trim();
+      return s === '' ? null : s;
+    };
+
+    const payload: any = {
+      title: normalizeString(show.title),
+      description: normalizeNullableString(show.description),
+      difficulty: normalizeString(show.difficulty || ''),
+      duration: normalizeNullableString(show.duration),
+      year: normalizeNumber(show.year),
+      thumbnailUrl: normalizeNullableString(show.thumbnailUrl),
+      featured: !!show.featured,
+      displayOrder: normalizeNumber(show.displayOrder) ?? 0,
+      // extended fields
+      youtubeUrl: normalizeNullableString(show.youtubeUrl),
+      commissioned: normalizeNullableString(show.commissioned),
+      programCoordinator: normalizeNullableString(show.programCoordinator),
+      percussionArranger: normalizeNullableString(show.percussionArranger),
+      soundDesigner: normalizeNullableString(show.soundDesigner),
+      windArranger: normalizeNullableString(show.windArranger),
+      drillWriter: normalizeNullableString(show.drillWriter),
+    };
+
+    return payload;
+  }, [show]);
+
+  // Auto-save function (doesn't redirect)
+  const autoSave = useCallback(async (showRedirect: boolean = false) => {
+    if (!show || !show.title) return;
+    
     setSaveError(null);
     setSaving(true);
     try {
       const payload = buildPayload();
-      console.log('Saving payload:', { ...payload, tags: selectedTags });
       const response = await fetch(`/api/shows/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -316,10 +321,14 @@ export default function EditShowPage() {
       });
       
       const responseData = await response.json();
-      console.log('Save response:', response.status, responseData);
       
       if (response.ok) {
-        router.push('/admin/shows');
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+        initialShowDataRef.current = { ...show, tags: selectedTags };
+        if (showRedirect) {
+          router.push('/admin/shows');
+        }
       } else {
         const errorMessage = responseData?.error || responseData?.details || 'Failed to save changes.';
         setSaveError(errorMessage);
@@ -332,6 +341,48 @@ export default function EditShowPage() {
     } finally {
       setSaving(false);
     }
+  }, [show, selectedTags, id, router, buildPayload]);
+
+  // Debounced auto-save
+  useEffect(() => {
+    if (!show || !hasUnsavedChanges) return;
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save (2 seconds after last change)
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      autoSave(false);
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [show, selectedTags, hasUnsavedChanges, autoSave]);
+
+  // Track initial data for change detection
+  useEffect(() => {
+    if (show && !initialShowDataRef.current) {
+      initialShowDataRef.current = { ...show, tags: selectedTags };
+    }
+  }, [show, selectedTags]);
+
+  // Detect changes
+  useEffect(() => {
+    if (!show || !initialShowDataRef.current) return;
+    
+    const hasChanges = JSON.stringify({ ...show, tags: selectedTags }) !== 
+                       JSON.stringify(initialShowDataRef.current);
+    setHasUnsavedChanges(hasChanges);
+  }, [show, selectedTags]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await autoSave(true); // Save and redirect
   };
 
   if (!show) {
@@ -339,12 +390,33 @@ export default function EditShowPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 max-w-7xl">
+    <div className={`container mx-auto py-8 max-w-7xl ${hasUnsavedChanges ? 'pb-24' : ''}`}>
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Edit Show</h1>
-            <p className="text-muted-foreground">Update show details and manage arrangements</p>
+            <div className="flex items-center gap-3">
+              <p className="text-muted-foreground">Update show details and manage arrangements</p>
+              {/* Auto-save status indicator */}
+              {saving && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              )}
+              {!saving && lastSaved && !hasUnsavedChanges && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Saved {lastSaved.toLocaleTimeString()}</span>
+                </div>
+              )}
+              {!saving && hasUnsavedChanges && (
+                <div className="flex items-center gap-2 text-sm text-amber-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Unsaved changes</span>
+                </div>
+              )}
+            </div>
           </div>
           <Button 
             variant="outline"
@@ -1121,6 +1193,42 @@ export default function EditShowPage() {
           </div>
         </div>
       </div>
+
+      {/* Fixed save button at bottom */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 shadow-lg z-50">
+          <div className="container mx-auto max-w-7xl flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Saving changes...</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                  <span>You have unsaved changes</span>
+                </>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline"
+                onClick={() => router.push('/admin/shows')}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => autoSave(true)}
+                disabled={saving || !show.title}
+              >
+                {saving ? 'Saving…' : 'Save & Return'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

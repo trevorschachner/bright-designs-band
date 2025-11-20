@@ -18,13 +18,20 @@ export async function POST(request: NextRequest) {
       return ErrorResponse('Auth provider not configured');
     }
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Use getUser() instead of getSession() for proper authentication
+    // This ensures the user is authenticated and RLS policies can access auth.email()
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
       return UnauthorizedResponse();
     }
 
-    if (!requirePermission(session.user.email, 'canUploadFiles')) {
+    // Verify user email for debugging
+    console.log('Authenticated user:', { email: user.email, id: user.id });
+
+    if (!requirePermission(user.email, 'canUploadFiles')) {
+      console.error('User does not have upload permission:', user.email);
       return ForbiddenResponse();
     }
 
@@ -79,14 +86,49 @@ export async function POST(request: NextRequest) {
       description: metadata.description ?? null,
       display_order: typeof metadata.displayOrder === 'number' ? metadata.displayOrder : 0,
     };
+    // Verify authentication context before insert
+    const { data: { user: verifyUser } } = await supabase.auth.getUser();
+    console.log('Pre-insert auth check:', { 
+      email: verifyUser?.email, 
+      authenticated: !!verifyUser 
+    });
+
     const { data: inserted, error: insertErr } = await supabase
       .from('files')
       .insert(insertPayload)
       .select('*')
       .single();
+    
     if (insertErr) {
-      console.error('Supabase insert error (files):', insertErr.message, { insertPayload });
-      return ErrorResponse('Failed to persist file record');
+      console.error('Supabase insert error (files):', {
+        message: insertErr.message,
+        code: insertErr.code,
+        details: insertErr.details,
+        hint: insertErr.hint,
+        userEmail: verifyUser?.email,
+        insertPayload
+      });
+      return ErrorResponse(`Failed to persist file record: ${insertErr.message}`);
+    }
+
+    // If this is an image uploaded for a show (not an arrangement), update the show's graphicUrl
+    if (metadata.fileType === 'image' && metadata.showId && !metadata.arrangementId && inserted?.url) {
+      try {
+        const { error: updateErr } = await supabase
+          .from('shows')
+          .update({ graphic_url: inserted.url })
+          .eq('id', metadata.showId);
+        
+        if (updateErr) {
+          console.warn('Failed to update show graphicUrl:', updateErr.message);
+          // Don't fail the upload if this update fails
+        } else {
+          console.log('Updated show graphicUrl for show', metadata.showId);
+        }
+      } catch (updateError) {
+        console.warn('Error updating show graphicUrl:', updateError);
+        // Don't fail the upload if this update fails
+      }
     }
 
     return SuccessResponse(inserted, 201);
@@ -107,7 +149,8 @@ export async function GET(request: NextRequest) {
       return ErrorResponse('Auth provider not configured');
     }
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Use getUser() for proper authentication
+    const { data: { user } } = await supabase.auth.getUser();
 
     const { searchParams } = new URL(request.url);
     const showId = searchParams.get('showId');
@@ -122,7 +165,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Public files are always visible. Private files are only visible to authenticated users.
-    if (!session) {
+    if (!user) {
       conditions.push(eq(files.isPublic, true));
     }
 

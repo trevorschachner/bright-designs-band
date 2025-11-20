@@ -89,16 +89,19 @@ export function useFilterState({
 
     try {
       const urlState = FilterUrlManager.fromUrlParams(searchParams);
-      const newState = { ...filterState, ...urlState };
-      
-      // Only update if state actually changed
-      if (JSON.stringify(newState) !== JSON.stringify(filterState)) {
-        setInternalFilterState(newState);
-      }
+      // Only update if URL state differs from current state
+      // Use a more reliable comparison that doesn't depend on filterState in deps
+      setInternalFilterState(currentState => {
+        const newState = { ...currentState, ...urlState };
+        if (JSON.stringify(newState) !== JSON.stringify(currentState)) {
+          return newState;
+        }
+        return currentState;
+      });
     } catch (error) {
       console.warn('Failed to parse filter state from URL params:', error);
     }
-  }, [searchParams, syncWithUrl, filterState]);
+  }, [searchParams, syncWithUrl]); // Removed filterState from deps to avoid infinite loop
 
   const setFilterState = useCallback((newState: FilterState) => {
     setInternalFilterState(newState);
