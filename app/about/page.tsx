@@ -16,7 +16,7 @@ export default function AboutPage() {
         {/* Page Header */}
         <PageHero
           title="About Bright Designs"
-          subtitle="For over 25 years, we've been crafting extraordinary marching band experiences through innovative design, custom arrangements, and a student-centered approach to musical education."
+          subtitle="Serving the marching band community since 2017."
         />
 
         {/* Mission & Values */}
@@ -179,19 +179,19 @@ export default function AboutPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">25+</div>
+              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">10+</div>
               <div className="text-muted-foreground">Years Experience</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-bright-primary mb-2 font-primary">200+</div>
+              <div className="text-4xl font-bold text-bright-primary mb-2 font-primary">50+</div>
               <div className="text-muted-foreground">Custom Shows</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-foreground mb-2 font-primary">100+</div>
+              <div className="text-4xl font-bold text-foreground mb-2 font-primary">50+</div>
               <div className="text-muted-foreground">Schools Served</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">1000+</div>
+              <div className="text-4xl font-bold text-bright-third mb-2 font-primary">250+</div>
               <div className="text-muted-foreground">Arrangements</div>
             </div>
           </div>
@@ -200,12 +200,12 @@ export default function AboutPage() {
         {/* Testimonials */}
         <Testimonials />
 
-        {/* Our Friends Section */}
+        {/* Our Collaborators Section */}
         <section className="py-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-foreground font-primary">Our Friends</h2>
+            <h2 className="text-3xl font-bold mb-4 text-foreground font-primary">Our Colleagues</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Talented collaborators and partners we work with to create exceptional shows
+              Talented professionals and partners we work with to create the best possible shows for your program.
             </p>
           </div>
           
@@ -319,7 +319,7 @@ export default function AboutPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4 text-foreground font-primary">Previous Clients</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              We are proud to have worked with these exceptional programs!
+              We have proudly served these programs across the country!
             </p>
           </div>
           

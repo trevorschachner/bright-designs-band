@@ -6,12 +6,12 @@ export default function ServicesPage() {
   const servicesItems = [
     {
       title: "Custom Show Design",
-      description: "Full show packages and white‑glove support—from concept to delivery—engineered for competitive success.",
+      description: "Full show packages with support from concept to the end of the season. ",
       icon: "music",
     },
     {
       title: "Music Design",
-      description: "Wind, percussion, and sound design that highlights strengths and clarifies effect.",
+      description: "Wind, percussion, and sound design for ensembles of all skill levels.",
       icon: "music",
     },
     {
@@ -21,27 +21,32 @@ export default function ServicesPage() {
     },
     {
       title: "Program Coordination",
-      description: "One point of contact, clear timelines, and dependable delivery across the season.",
+      description: "One point of contact, clear timelines, and dependable delivery throughout the season.",
       icon: "calendar",
     },
     {
       title: "Build Your Show",
-      description: "Select any of our arrangements and we’ll craft a cohesive custom production around it—movement by movement.",
+      description: "Select any of our arrangements and we'll craft a cohesive custom production tailored for your ensemble's needs and competitive goals.",
       icon: "music",
     },
     {
       title: "Choreography",
-      description: "Wind and guard choreography packages to elevate clarity, coordination, and effect.",
+      description: "Wind and guard choreography packages to elevate visual impact, coordination, and effect.",
       icon: "eye",
     },
     {
-      title: "Clinics",
-      description: "On-site or virtual music/visual clinics focused on clarity, pacing, and effect.",
+      title: "Clinics & Consultation",
+      description: "On-site or virtual music/visual clinics and show consultation services available independently—no show purchase required. Get expert guidance on clarity, pacing, effect, and program development tailored to your ensemble's needs.",
+      icon: "users",
+    },
+    {
+      title: "Show Consultation & Teaching",
+      description: "Standalone consultation and teaching services. Receive expert guidance on show design, program development, competitive strategy, and ensemble improvement—available as one-time sessions or ongoing support.",
       icon: "users",
     },
     {
       title: "Judging",
-      description: "Adjudication and feedback services to align design with scoring priorities.",
+      description: "Adjudication and feedback services to help your ensemble prepare for competition.",
       icon: "play",
     },
   ]
@@ -50,7 +55,7 @@ export default function ServicesPage() {
       {/* Hero */}
       <PageHero
         title="Our Services"
-        subtitle="Comprehensive design solutions tailored to your ensemble's unique needs"
+        subtitle="From full show design packages to standalone consultation and teaching—we provide comprehensive design solutions tailored to your ensemble's unique needs, competitive goals, and program vision. Whether you're purchasing a complete show or seeking expert guidance to elevate your existing program, we're here to help."
       />
       {/* Services Section */}
       <ServicesGrid

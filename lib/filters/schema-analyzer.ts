@@ -119,13 +119,15 @@ export const SHOWS_SCHEMA: TableSchema = {
   fields: {
     id: { key: 'id', type: 'serial' },
     title: { key: 'title', type: 'text' },
-    year: { key: 'year', type: 'text' },
+    year: { key: 'year', type: 'smallint' },
     difficulty: { key: 'difficulty', type: 'enum', enumValues: ['Beginner', 'Intermediate', 'Advanced'] },
+    featured: { key: 'featured', type: 'boolean' },
+    displayOrder: { key: 'displayOrder', type: 'integer' },
     duration: { key: 'duration', type: 'text' },
+    price: { key: 'price', type: 'numeric' },
     description: { key: 'description', type: 'text', nullable: true },
-    thumbnailUrl: { key: 'thumbnailUrl', type: 'text', nullable: true },
     createdAt: { key: 'createdAt', type: 'timestamp' },
-    // virtual field used by UI; handled specially in API
+    // virtual/computed fields used by UI; handled specially in API
     ensembleSize: { key: 'ensembleSize', type: 'enum', enumValues: ['small','medium','large'] }
   },
   relations: {
@@ -137,7 +139,7 @@ export const SHOWS_SCHEMA: TableSchema = {
     arrangements: {
       type: 'many', 
       table: 'arrangements',
-      fields: ['title', 'type']
+      fields: ['title', 'scene']
     }
   }
 };
@@ -160,11 +162,60 @@ export const ARRANGEMENTS_SCHEMA: TableSchema = {
   }
 };
 
-// Generate filter fields for our tables
-export const SHOWS_FILTER_FIELDS = SchemaAnalyzer.generateFilterFields(
+// Generate filter fields for our tables with custom definitions
+const baseShowsFields = SchemaAnalyzer.generateFilterFields(
   SHOWS_SCHEMA, 
-  ['id', 'thumbnailUrl', 'description', 'duration', 'createdAt'] // keep UI lean; virtual ensembleSize remains
+  ['id', 'description', 'createdAt'] // Exclude technical/internal fields
 );
+
+// Add custom definitions and enhance fields
+export const SHOWS_FILTER_FIELDS: FilterField[] = baseShowsFields.map(field => {
+  const enhanced: FilterField = { ...field };
+  
+  // Add descriptions/definitions for each field
+  switch (field.key) {
+    case 'title':
+      enhanced.description = 'The name of the show';
+      enhanced.placeholder = 'Search by show title...';
+      break;
+    case 'year':
+      enhanced.description = 'The year the show was created or premiered';
+      enhanced.placeholder = 'Filter by year...';
+      break;
+    case 'difficulty':
+      enhanced.description = 'The skill level required: Beginner (Grade 1-2), Intermediate (Grade 3-4), or Advanced (Grade 5+)';
+      enhanced.placeholder = 'Select difficulty level...';
+      break;
+    case 'featured':
+      enhanced.description = 'Featured shows are editor\'s picks and recommended highlights';
+      break;
+    case 'displayOrder':
+      enhanced.description = 'Custom display order for shows (lower numbers appear first)';
+      break;
+    case 'duration':
+      enhanced.description = 'The total duration or length of the show';
+      enhanced.placeholder = 'Filter by duration...';
+      break;
+    case 'price':
+      enhanced.description = 'The purchase price of the show in USD';
+      enhanced.placeholder = 'Filter by price range...';
+      break;
+    case 'ensembleSize':
+      enhanced.description = 'Recommended ensemble size: Small (1-50 members), Medium (51-100 members), or Large (101+ members)';
+      enhanced.placeholder = 'Select ensemble size...';
+      break;
+    case 'tags':
+      enhanced.description = 'Filter by tags or categories associated with the show';
+      enhanced.placeholder = 'Select tags...';
+      break;
+    case 'arrangements':
+      enhanced.description = 'Filter by arrangements included in the show';
+      enhanced.placeholder = 'Filter by arrangements...';
+      break;
+  }
+  
+  return enhanced;
+});
 
 export const ARRANGEMENTS_FILTER_FIELDS = SchemaAnalyzer.generateFilterFields(
   ARRANGEMENTS_SCHEMA,

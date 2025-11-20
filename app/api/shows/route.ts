@@ -15,10 +15,10 @@ export async function GET(request: Request) {
     const limit = filterState.limit || 20;
     const offset = (page - 1) * limit;
 
-    // Build base query selecting only needed columns
+    // Build base query selecting only needed columns (include price for filtering/sorting)
     let base = supabase
       .from('shows')
-      .select('id,slug,title,description,year,difficulty,duration,thumbnail_url,featured,display_order,created_at', { count: 'exact', head: false });
+      .select('id,slug,title,description,year,difficulty,duration,price,thumbnail_url,featured,display_order,created_at', { count: 'exact', head: false });
 
     // Search across a few text columns
     if (filterState.search) {
@@ -28,24 +28,69 @@ export async function GET(request: Request) {
       );
     }
 
-    // Simple field filters
+    // Field filters - map camelCase to snake_case for database
+    const fieldMap: Record<string, string> = {
+      'year': 'year',
+      'difficulty': 'difficulty',
+      'featured': 'featured',
+      'displayOrder': 'display_order',
+      'price': 'price',
+      'duration': 'duration',
+      'title': 'title',
+      'createdAt': 'created_at',
+    };
+
     for (const cond of filterState.conditions || []) {
       const field = String(cond.field);
+      const dbField = fieldMap[field] || field;
+      const operator = cond.operator;
       const value = cond.value as any;
-      if (field === 'year' && value) base = base.eq('year', String(value));
-      if (field === 'difficulty' && value) base = base.eq('difficulty', String(value));
-      // Additional fields can be added here as needed
+      const values = cond.values as any[];
+
+      // Handle different operators
+      if (operator === 'equals') {
+        if (field === 'featured') {
+          base = base.eq(dbField, value === true || value === 'true' || value === 1 || value === '1');
+        } else if (field === 'year' && value) {
+          base = base.eq(dbField, Number(value));
+        } else if (value !== undefined && value !== null) {
+          base = base.eq(dbField, value);
+        }
+      } else if (operator === 'in' && values && values.length > 0) {
+        base = base.in(dbField, values);
+      } else if (operator === 'gt' && value !== undefined) {
+        base = base.gt(dbField, Number(value));
+      } else if (operator === 'gte' && value !== undefined) {
+        base = base.gte(dbField, Number(value));
+      } else if (operator === 'lt' && value !== undefined) {
+        base = base.lt(dbField, Number(value));
+      } else if (operator === 'lte' && value !== undefined) {
+        base = base.lte(dbField, Number(value));
+      } else if (operator === 'contains' && value) {
+        base = base.ilike(dbField, `%${String(value)}%`);
+      }
     }
-    // Featured filter via direct param (supports featured=true|1)
+
+    // Featured filter via direct param (supports featured=true|1) - legacy support
     const featuredParam = searchParams.get('featured');
     if (featuredParam && ['true', '1'].includes(featuredParam.toLowerCase())) {
       base = base.eq('featured', true as any);
     }
 
-    // Sorting
+    // Sorting - map camelCase to snake_case and handle multiple sort fields
     if (filterState.sort && filterState.sort.length > 0) {
-      const first = filterState.sort[0];
-      base = base.order(first.field, { ascending: first.direction === 'asc' });
+      filterState.sort.forEach((sort, index) => {
+        const dbField = fieldMap[sort.field] || sort.field;
+        // First sort field gets priority, subsequent ones are secondary
+        if (index === 0) {
+          base = base.order(dbField, { ascending: sort.direction === 'asc' });
+        } else {
+          base = base.order(dbField, { ascending: sort.direction === 'asc', nullsFirst: false });
+        }
+      });
+      // Always add display_order and created_at as tie-breakers
+      base = base.order('display_order', { ascending: true });
+      base = base.order('created_at', { ascending: false });
     } else {
       // Default: display_order ASC, then created_at DESC
       base = base.order('display_order', { ascending: true }).order('created_at', { ascending: false });
@@ -130,22 +175,32 @@ export async function GET(request: Request) {
       }
     }
 
-    // Map snake_case -> camelCase + attach tags
-    const normalized = (rows || []).map((r: any) => ({
-      id: r.id,
-      slug: r.slug,
-      title: r.title,
-      description: r.description,
-      year: r.year,
-      difficulty: r.difficulty,
-      duration: r.duration,
-      thumbnailUrl: r.thumbnail_url || null,
-      featured: !!r.featured,
-      displayOrder: typeof r.display_order === 'number' ? r.display_order : 0,
-      createdAt: r.created_at,
-      arrangements: arrangementsByShowId[r.id] || [],
-      showsToTags: tagsByShowId[r.id] || [],
-    }));
+    // Map snake_case -> camelCase + attach tags and compute ensembleSize
+    const normalized = (rows || []).map((r: any) => {
+      // Compute ensembleSize based on arrangements (virtual field)
+      // This is a placeholder - you may want to compute this based on actual show metadata
+      let ensembleSize: 'small' | 'medium' | 'large' | undefined = undefined;
+      const arrangementCount = arrangementsByShowId[r.id]?.length || 0;
+      // You can add logic here to determine ensemble size based on show metadata
+      
+      return {
+        id: r.id,
+        slug: r.slug,
+        title: r.title,
+        description: r.description,
+        year: r.year,
+        difficulty: r.difficulty,
+        duration: r.duration,
+        price: r.price ? Number(r.price) : null,
+        thumbnailUrl: r.thumbnail_url || null,
+        featured: !!r.featured,
+        displayOrder: typeof r.display_order === 'number' ? r.display_order : 0,
+        createdAt: r.created_at,
+        ensembleSize, // Virtual field
+        arrangements: arrangementsByShowId[r.id] || [],
+        showsToTags: tagsByShowId[r.id] || [],
+      };
+    });
 
     const total = typeof count === 'number' ? count : normalized.length;
     const totalPages = limit > 0 ? Math.ceil(total / limit) : 1;

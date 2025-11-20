@@ -33,6 +33,7 @@ export interface FilterField {
   placeholder?: string;
   min?: number;
   max?: number;
+  description?: string; // Human-readable definition/explanation of the field
 }
 
 export interface FilterCondition {

@@ -25,6 +25,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 import { FilterState, FilterField, SortCondition, FilterPreset } from '@/lib/filters/types';
 
 interface FilterSidebarProps {
@@ -206,7 +208,24 @@ export function FilterSidebar({
               <div className="space-y-6">
                 {hasDifficulty && (
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Difficulty</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Difficulty</Label>
+                      {(() => {
+                        const difficultyField = filterFields.find(f => f.key === 'difficulty');
+                        return difficultyField?.description ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">{difficultyField.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : null;
+                      })()}
+                    </div>
                     <div className="grid grid-cols-1 gap-2">
                       {['Beginner','Intermediate','Advanced'].map((level) => {
                         const checked = difficultySelected.includes(level);
@@ -229,7 +248,24 @@ export function FilterSidebar({
 
                 {hasEnsembleSize && (
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Ensemble Size</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Ensemble Size</Label>
+                      {(() => {
+                        const ensembleField = filterFields.find(f => f.key === 'ensembleSize');
+                        return ensembleField?.description ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">{ensembleField.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : null;
+                      })()}
+                    </div>
                     <RadioGroup value={ensembleValue} onValueChange={setEnsemble}>
                       {['small','medium','large'].map((size) => (
                         <label key={size} className="flex items-center gap-3 text-sm capitalize">
