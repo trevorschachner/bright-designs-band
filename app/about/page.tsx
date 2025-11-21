@@ -209,108 +209,165 @@ export default function AboutPage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {/* Collaborator 1 */}
-            <Card className="frame-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-foreground font-primary">Sarah Martinez</h3>
-                <p className="text-bright-third text-sm mb-3">Visual Design & Choreography</p>
-                <a 
-                  href="https://example.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-muted-foreground hover:text-bright-primary transition-colors"
-                >
-                  Visit Website
-                  <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            {/* Collaborator 2 */}
-            <Card className="frame-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-foreground font-primary">Michael Chen</h3>
-                <p className="text-bright-third text-sm mb-3">Percussion Arranging</p>
-                <a 
-                  href="https://example.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-muted-foreground hover:text-bright-primary transition-colors"
-                >
-                  Visit Website
-                  <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            {/* Collaborator 3 */}
-            <Card className="frame-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-foreground font-primary">Emily Johnson</h3>
-                <p className="text-bright-third text-sm mb-3">Sound Design & Engineering</p>
-                <a 
-                  href="https://example.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-muted-foreground hover:text-bright-primary transition-colors"
-                >
-                  Visit Website
-                  <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            {/* Collaborator 4 */}
-            <Card className="frame-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-foreground font-primary">David Thompson</h3>
-                <p className="text-bright-third text-sm mb-3">Guard Choreography</p>
-                <a 
-                  href="https://example.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-muted-foreground hover:text-bright-primary transition-colors"
-                >
-                  Visit Website
-                  <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            {/* Collaborator 5 */}
-            <Card className="frame-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-foreground font-primary">Lisa Rodriguez</h3>
-                <p className="text-bright-third text-sm mb-3">Brass Arranging</p>
-                <a 
-                  href="https://example.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-muted-foreground hover:text-bright-primary transition-colors"
-                >
-                  Visit Website
-                  <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            {/* Collaborator 6 */}
-            <Card className="frame-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-foreground font-primary">James Wilson</h3>
-                <p className="text-bright-third text-sm mb-3">Drill Design</p>
-                <a 
-                  href="https://example.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-muted-foreground hover:text-bright-primary transition-colors"
-                >
-                  Visit Website
-                  <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </CardContent>
-            </Card>
+          <div className="max-w-4xl mx-auto">
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <tbody>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Nicole Davis</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design, Choreography</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Shane Barnes</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design, Choreography</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Hunter Dugie</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design, Program Coordination</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Richard Hinshaw</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Bradley Klemmensen</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Aaron Stickley</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Ben Stone</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Nathan Woods</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Visual Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Eric Kruse</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion, Sound Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Brady Hartness</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion, Sound Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Omar Carmenates</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion, Sound Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Lindsay Vasko</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Taylor Davis</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Reed Kimmel</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Sound Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Steven Simmermon</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion, Sound Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Jensen Thomassie</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion, Sound Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Johnathon Jadvani</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Percussion, Sound Design</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Tom Padgett</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Color Guard, Choreography</span>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-foreground font-primary">Markell Allan</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="italic text-bright-third">Graphic Design, Color Guard, Visual Design</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 

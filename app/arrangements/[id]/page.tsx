@@ -1,4 +1,5 @@
 import { ArrowLeft, Play, Download, Clock, Music2, FileText, Users, Music } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -41,7 +42,9 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   }
 
   // Fetch show information if linked
-  let parentShow: { id: number; title?: string | null; name?: string | null; thumbnailUrl?: string | null } | null = null;
+  let parentShow: { id: number; title?: string | null; name?: string | null; thumbnailUrl?: string | null; graphicUrl?: string | null } | null = null;
+  let showImageFiles: any[] = [];
+  
   const { data: showArrData } = await supabase
     .from('show_arrangements')
     .select('show_id, order_index')
@@ -52,7 +55,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   if (showArrData?.show_id) {
     const { data: showData } = await supabase
       .from('shows')
-      .select('id, title, name, thumbnail_url')
+      .select('id, title, name, thumbnail_url, graphic_url')
       .eq('id', showArrData.show_id)
       .single();
     
@@ -62,7 +65,22 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
         title: showData.title,
         name: showData.name,
         thumbnailUrl: showData.thumbnail_url,
+        graphicUrl: showData.graphic_url,
       };
+      
+      // Fetch show image files as fallback
+      const { data: showFiles } = await supabase
+        .from('files')
+        .select('url, file_type, is_public')
+        .eq('show_id', showData.id)
+        .eq('is_public', true)
+        .eq('file_type', 'image')
+        .order('display_order', { ascending: true })
+        .limit(1);
+      
+      if (showFiles && Array.isArray(showFiles) && showFiles.length > 0) {
+        showImageFiles = showFiles;
+      }
     }
   }
 
@@ -71,8 +89,9 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   const audio = Array.isArray(files) ? files.find((f: any) => f.fileType === 'audio' && f.isPublic) : undefined;
   const arrangementImage = Array.isArray(files) ? files.find((f: any) => f.fileType === 'image' && f.isPublic) : undefined;
 
-  // Use arrangement image, fallback to show thumbnail, or placeholder
-  const displayImage = arrangementImage?.url || parentShow?.thumbnailUrl || null;
+  // Use arrangement image, fallback to show graphic_url, show thumbnail_url, show image files, or null
+  const showImageFile = showImageFiles.length > 0 ? showImageFiles[0] : null;
+  const displayImage = arrangementImage?.url || parentShow?.graphicUrl || parentShow?.thumbnailUrl || showImageFile?.url || null;
 
   const formatSeconds = (total?: number | null) => {
     if (!total || total < 0) return '—'
@@ -147,14 +166,14 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
           {/* Left side - Image */}
           <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video" id="listen">
             {displayImage ? (
-              <div className="w-full h-full flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={displayImage}
-                  alt={arr.title || 'Arrangement image'}
-                  className="w-full h-full object-contain rounded-lg"
-                />
-              </div>
+              <Image
+                src={displayImage}
+                alt={arr.title || 'Arrangement image'}
+                fill
+                className="object-cover rounded-lg"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="text-muted-foreground">
@@ -265,8 +284,9 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
         </div>
 
         {/* Audio Player Section */}
-        {audio?.url && (
+        {audio?.url ? (
           <div id="audio-player" className="mb-12 scroll-mt-8">
+            <h2 className="text-2xl font-bold mb-4 text-foreground font-primary">Listen to Arrangement</h2>
             <AudioPlayerComponent 
               tracks={[{ 
                 id: 'full', 
@@ -279,6 +299,16 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               title="Arrangement Audio Preview"
               className="bg-card/80 backdrop-blur-sm"
             />
+          </div>
+        ) : (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 text-foreground font-primary">Audio Sample</h2>
+            <Card className="bg-muted/50">
+              <CardContent className="p-6 text-center">
+                <Music2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-muted-foreground">No audio sample available for this arrangement.</p>
+              </CardContent>
+            </Card>
           </div>
         )}
 

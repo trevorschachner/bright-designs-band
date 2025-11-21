@@ -1,0 +1,50 @@
+name: Release to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      description:
+        description: 'Release description'
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create release branch
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git checkout -b release/${{ github.event.inputs.version }}
+          git push origin release/${{ github.event.inputs.version }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: release/${{ github.event.inputs.version }}
+          base: main
+          title: "Release: ${{ github.event.inputs.version }}"
+          body: |
+            ## Release ${{ github.event.inputs.version }}
+            
+            ${{ github.event.inputs.description }}
+            
+            ### Changes in this release:
+            - See commits since last release
+            
+            ### Checklist:
+            - [ ] Code reviewed
+            - [ ] Tests passing
+            - [ ] Ready for production deployment
+
