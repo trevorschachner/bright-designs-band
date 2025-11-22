@@ -282,6 +282,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                   }))}
                 title="Listen to Full Show"
                 compact
+                showNavigation={true}
               />
             </div>
           )}

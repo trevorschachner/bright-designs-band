@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Play, Pause, Volume2, VolumeX, Download } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, Download, SkipBack, SkipForward } from "lucide-react"
 
 export interface AudioTrack {
   id: string
@@ -22,6 +22,9 @@ interface AudioPlayerComponentProps {
   compact?: boolean
   playerId?: string // Unique ID for this player instance
   onTrackSelect?: (trackIndex: number) => void // Callback when track should be selected in master player
+  onPreviousTrack?: () => void // Callback for previous track navigation
+  onNextTrack?: () => void // Callback for next track navigation
+  showNavigation?: boolean // Show previous/next buttons
 }
 
 // Custom event for master player control
@@ -33,7 +36,10 @@ export function AudioPlayerComponent({
   className, 
   compact = false,
   playerId,
-  onTrackSelect 
+  onTrackSelect,
+  onPreviousTrack,
+  onNextTrack,
+  showNavigation = false
 }: AudioPlayerComponentProps) {
   const [currentTrack, setCurrentTrack] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -117,9 +123,10 @@ export function AudioPlayerComponent({
   // Track if we should auto-play (used for seamless transitions)
   const shouldAutoPlayRef = useRef(false)
 
-  // Update audio source when track changes
+  // Update audio source when track changes (NOT when isPlaying changes)
   useEffect(() => {
     if (audioRef.current && currentTrackData) {
+      const wasPlaying = isPlaying
       audioRef.current.load()
       
       // Auto-play if explicitly requested (for auto-play next track)
@@ -131,12 +138,23 @@ export function AudioPlayerComponent({
             .catch(() => setIsPlaying(false))
         }, 200)
         return () => clearTimeout(playTimer)
-      } else if (isPlaying) {
-        // Normal play/pause state
+      } else if (wasPlaying) {
+        // Only auto-play if it was playing before track change
         audioRef.current.play().catch(() => setIsPlaying(false))
       }
     }
-  }, [currentTrack, currentTrackData, isPlaying])
+  }, [currentTrack, currentTrackData]) // Removed isPlaying from dependencies
+
+  // Handle play/pause separately (don't reload audio)
+  useEffect(() => {
+    if (!audioRef.current) return
+    
+    if (isPlaying && audioRef.current.paused) {
+      audioRef.current.play().catch(() => setIsPlaying(false))
+    } else if (!isPlaying && !audioRef.current.paused) {
+      audioRef.current.pause()
+    }
+  }, [isPlaying])
 
   // Update volume
   useEffect(() => {
@@ -186,15 +204,32 @@ export function AudioPlayerComponent({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleTrackChange = (index: number) => {
+  const handleTrackChange = (index: number, autoPlay: boolean = false) => {
     setCurrentTrack(index)
     setCurrentTime(0)
+    shouldAutoPlayRef.current = autoPlay
     // If master player, start playing the selected track
-    if (isMasterPlayer) {
+    if (isMasterPlayer && autoPlay) {
       setIsPlaying(true)
       // Audio will auto-play when track changes due to useEffect
-    } else {
+    } else if (!autoPlay) {
       setIsPlaying(false)
+    }
+  }
+
+  const handlePreviousTrack = () => {
+    if (onPreviousTrack) {
+      onPreviousTrack()
+    } else if (currentTrack > 0) {
+      handleTrackChange(currentTrack - 1, isPlaying)
+    }
+  }
+
+  const handleNextTrack = () => {
+    if (onNextTrack) {
+      onNextTrack()
+    } else if (currentTrack < tracks.length - 1) {
+      handleTrackChange(currentTrack + 1, isPlaying)
     }
   }
 
@@ -274,7 +309,7 @@ export function AudioPlayerComponent({
             {tracks.map((track, index) => (
               <button
                 key={track.id}
-                onClick={() => handleTrackChange(index)}
+                onClick={() => handleTrackChange(index, true)}
                 className={`w-full text-left flex items-center gap-2 p-2 rounded transition-colors text-xs ${
                   currentTrack === index
                     ? "bg-primary/10 border border-primary/20"
@@ -335,19 +370,48 @@ export function AudioPlayerComponent({
 
         {/* Main Controls Row */}
         <div className={`flex items-center ${compact ? 'gap-2' : 'gap-4'} ${compact ? 'justify-between' : 'justify-between'}`}>
-          {/* Play/Pause Button */}
-          <Button
-            variant="default"
-            size="icon"
-            className={compact ? "h-10 w-10 rounded-full" : "h-12 w-12 rounded-full"}
-            onClick={togglePlayPause}
-          >
-            {isPlaying ? (
-              <Pause className={compact ? "w-4 h-4 fill-current" : "w-5 h-5 fill-current"} />
-            ) : (
-              <Play className={compact ? "w-4 h-4 fill-current ml-0.5" : "w-5 h-5 fill-current ml-0.5"} />
+          {/* Navigation and Play Controls */}
+          <div className="flex items-center gap-2">
+            {/* Previous Track Button */}
+            {showNavigation && tracks.length > 1 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={compact ? "h-8 w-8" : "h-10 w-10"}
+                onClick={handlePreviousTrack}
+                disabled={currentTrack === 0}
+              >
+                <SkipBack className={compact ? "w-4 h-4" : "w-5 h-5"} />
+              </Button>
             )}
-          </Button>
+            
+            {/* Play/Pause Button */}
+            <Button
+              variant="default"
+              size="icon"
+              className={compact ? "h-10 w-10 rounded-full" : "h-12 w-12 rounded-full"}
+              onClick={togglePlayPause}
+            >
+              {isPlaying ? (
+                <Pause className={compact ? "w-4 h-4 fill-current" : "w-5 h-5 fill-current"} />
+              ) : (
+                <Play className={compact ? "w-4 h-4 fill-current ml-0.5" : "w-5 h-5 fill-current ml-0.5"} />
+              )}
+            </Button>
+
+            {/* Next Track Button */}
+            {showNavigation && tracks.length > 1 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={compact ? "h-8 w-8" : "h-10 w-10"}
+                onClick={handleNextTrack}
+                disabled={currentTrack === tracks.length - 1}
+              >
+                <SkipForward className={compact ? "w-4 h-4" : "w-5 h-5"} />
+              </Button>
+            )}
+          </div>
 
           {/* Volume Control */}
           <div className={`flex items-center gap-2 ${compact ? 'flex-1 max-w-[150px]' : 'flex-1 max-w-[200px]'}`}>
