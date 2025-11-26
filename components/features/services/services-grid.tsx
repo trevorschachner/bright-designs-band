@@ -1,6 +1,7 @@
-import Link from "next/link"
+import { SpotlightCard } from "@/components/ui/spotlight-card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 import React from "react"
 import { Calendar, Eye, Music, Users, Play, ArrowRight } from "lucide-react"
 
@@ -44,7 +45,7 @@ export function ServicesGrid({ items, heading, description, cta }: ServicesGridP
           {items.map(({ title, description: itemDescription, icon }, index) => {
             const IconComp = icon ? iconMap[icon] ?? Music : Music
             return (
-            <Card key={`${title}-${index}`} className="border-2">
+            <SpotlightCard key={`${title}-${index}`} className="border-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                   <IconComp className="w-8 h-8 text-primary" />
@@ -54,7 +55,7 @@ export function ServicesGrid({ items, heading, description, cta }: ServicesGridP
               <CardContent className="text-center">
                 <p className="plus-body-sm">{itemDescription}</p>
               </CardContent>
-            </Card>
+            </SpotlightCard>
             )
           })}
         </div>

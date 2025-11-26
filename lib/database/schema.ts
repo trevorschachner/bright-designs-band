@@ -91,6 +91,13 @@ export const showsToTags = pgTable('shows_to_tags', {
   pk: primaryKey({ columns: [table.showId, table.tagId] }),
 }));
 
+export const arrangementsToTags = pgTable('arrangements_to_tags', {
+  arrangementId: integer('arrangement_id').references(() => arrangements.id, { onDelete: 'cascade' }).notNull(),
+  tagId: integer('tag_id').references(() => tags.id, { onDelete: 'cascade' }).notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.arrangementId, table.tagId] }),
+}));
+
 // Show ↔ Arrangements (ordered join)
 export const showArrangements = pgTable('show_arrangements', {
   showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
@@ -101,6 +108,20 @@ export const showArrangements = pgTable('show_arrangements', {
   idxShow: index('show_arrangements_show_idx').on(table.showId),
   idxArrangement: index('show_arrangements_arr_idx').on(table.arrangementId),
 }));
+
+export const resources = pgTable('resources', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  description: text('description'),
+  fileUrl: text('file_url'),
+  imageUrl: text('image_url'),
+  isActive: boolean('is_active').default(true).notNull(),
+  requiresContactForm: boolean('requires_contact_form').default(true).notNull(),
+  downloadCount: integer('download_count').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
 // Relations
 
@@ -113,6 +134,7 @@ export const showsRelations = relations(shows, ({ many }) => ({
 export const arrangementsRelations = relations(arrangements, ({ many }) => ({
   files: many(files),
   showArrangements: many(showArrangements),
+  arrangementsToTags: many(arrangementsToTags),
 }));
 
 export const filesRelations = relations(files, ({ one }) => ({
@@ -128,6 +150,7 @@ export const filesRelations = relations(files, ({ one }) => ({
 
 export const tagsRelations = relations(tags, ({ many }) => ({
   showsToTags: many(showsToTags),
+  arrangementsToTags: many(arrangementsToTags),
 }));
 
 export const showsToTagsRelations = relations(showsToTags, ({ one }) => ({
@@ -137,6 +160,17 @@ export const showsToTagsRelations = relations(showsToTags, ({ one }) => ({
   }),
   tag: one(tags, {
     fields: [showsToTags.tagId],
+    references: [tags.id],
+  }),
+}));
+
+export const arrangementsToTagsRelations = relations(arrangementsToTags, ({ one }) => ({
+  arrangement: one(arrangements, {
+    fields: [arrangementsToTags.arrangementId],
+    references: [arrangements.id],
+  }),
+  tag: one(tags, {
+    fields: [arrangementsToTags.tagId],
     references: [tags.id],
   }),
 }));

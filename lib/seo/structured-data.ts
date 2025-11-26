@@ -14,6 +14,8 @@ export function generateStructuredData(props: StructuredDataProps): string {
   return JSON.stringify(baseContext, null, 2)
 }
 
+import { social } from '@/config/site'
+
 // Organization Schema for main business
 export const organizationSchema = {
   '@context': 'https://schema.org',
@@ -48,9 +50,7 @@ export const organizationSchema = {
     email: 'trevorschachner@gmail.com',
     availableLanguage: 'English'
   },
-  sameAs: [
-    // Add social media profiles when available
-  ],
+  sameAs: social.map(link => link.href),
   serviceType: [
     'Marching Band Show Design',
     'Custom Show Design',

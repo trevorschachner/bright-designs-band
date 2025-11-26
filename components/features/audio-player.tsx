@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, Volume2, VolumeX, Download, SkipBack, SkipForward } from "lucide-react"
+import { Waveform } from "@/components/ui/waveform"
 
 export interface AudioTrack {
   id: string
@@ -123,6 +124,25 @@ export function AudioPlayerComponent({
   // Track if we should auto-play (used for seamless transitions)
   const shouldAutoPlayRef = useRef(false)
 
+  // Enforce single track playback: pause this player if another player starts
+  useEffect(() => {
+    const handleGlobalPlay = (e: Event) => {
+      // If the event target is an audio element and it's not our audio element
+      if (e.target instanceof HTMLAudioElement && e.target !== audioRef.current) {
+        // Pause our audio if it's playing
+        if (audioRef.current && !audioRef.current.paused) {
+          audioRef.current.pause()
+        }
+      }
+    }
+
+    // Use capture phase to ensure we catch the event
+    window.addEventListener('play', handleGlobalPlay, true)
+    return () => {
+      window.removeEventListener('play', handleGlobalPlay, true)
+    }
+  }, [])
+
   // Update audio source when track changes (NOT when isPlaying changes)
   useEffect(() => {
     if (audioRef.current && currentTrackData) {
@@ -149,12 +169,70 @@ export function AudioPlayerComponent({
   useEffect(() => {
     if (!audioRef.current) return
     
+    // If we are in delegate mode (not master and has callback), DO NOT control local audio
+    // The master player handles the actual playback
+    if (!isMasterPlayer && onTrackSelect) return
+
     if (isPlaying && audioRef.current.paused) {
       audioRef.current.play().catch(() => setIsPlaying(false))
     } else if (!isPlaying && !audioRef.current.paused) {
       audioRef.current.pause()
     }
-  }, [isPlaying])
+  }, [isPlaying, isMasterPlayer, onTrackSelect])
+
+  // In delegate mode, sync isPlaying state with the global audio state
+  // This ensures the "Audio Preview" button shows as playing when the master player is playing its track
+  useEffect(() => {
+    if (isMasterPlayer || !onTrackSelect) return
+
+    const checkAudioState = () => {
+      const myTrackUrl = tracks[currentTrack]?.url
+      if (!myTrackUrl) return
+
+      // Check if any audio element on the page is playing our URL
+      const audioElements = document.querySelectorAll('audio')
+      let isMyTrackPlaying = false
+      let myTrackTime = 0
+      let myTrackDuration = 0
+
+      for (const audio of audioElements) {
+        if (!audio.paused && !audio.ended) {
+          // Check for URL match (handle relative vs absolute)
+          if (audio.src === myTrackUrl || audio.src.endsWith(myTrackUrl) || (audio.currentSrc && (audio.currentSrc === myTrackUrl || audio.currentSrc.endsWith(myTrackUrl)))) {
+            isMyTrackPlaying = true
+            myTrackTime = audio.currentTime
+            myTrackDuration = audio.duration || 0
+            break
+          }
+        }
+      }
+
+      setIsPlaying(isMyTrackPlaying)
+      if (isMyTrackPlaying) {
+        setCurrentTime(myTrackTime)
+        if (myTrackDuration > 0) {
+          setDuration(myTrackDuration)
+        }
+      }
+    }
+
+    // Check immediately
+    checkAudioState()
+
+    // Listen for play/pause events globally to update UI
+    // Use capture=true to catch events from audio elements that don't bubble
+    window.addEventListener('play', checkAudioState, true)
+    window.addEventListener('pause', checkAudioState, true)
+    window.addEventListener('ended', checkAudioState, true)
+    window.addEventListener('timeupdate', checkAudioState, true)
+
+    return () => {
+      window.removeEventListener('play', checkAudioState, true)
+      window.removeEventListener('pause', checkAudioState, true)
+      window.removeEventListener('ended', checkAudioState, true)
+      window.removeEventListener('timeupdate', checkAudioState, true)
+    }
+  }, [isMasterPlayer, onTrackSelect, tracks, currentTrack])
 
   // Update volume
   useEffect(() => {
@@ -473,7 +551,11 @@ export function AudioPlayerComponent({
       <Card className={`${className} h-full flex flex-col`}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Volume2 className="w-5 h-5" />
+            {isPlaying ? (
+              <Waveform isPlaying={true} className="text-primary" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
             {title || "Audio Preview"}
           </CardTitle>
         </CardHeader>
@@ -488,7 +570,11 @@ export function AudioPlayerComponent({
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Volume2 className="w-5 h-5" />
+          {isPlaying ? (
+            <Waveform isPlaying={true} className="text-primary" />
+          ) : (
+            <Volume2 className="w-5 h-5" />
+          )}
           {title || "Audio Preview"}
         </CardTitle>
       </CardHeader>

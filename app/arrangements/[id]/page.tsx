@@ -15,6 +15,34 @@ import Link from "next/link"
 import { AudioPlayerComponent, audioPlayerStyles } from "@/components/features/audio-player"
 import { getFilesByArrangementId } from "@/lib/database/queries"
 import { createClient } from '@/lib/utils/supabase/server'
+import { Metadata } from 'next'
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { JsonLd } from '@/components/features/seo/JsonLd'
+import { createCreativeWorkSchema } from '@/lib/seo/structured-data'
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  
+  const { data: arr } = await supabase
+    .from('arrangements')
+    .select('title, description, composer')
+    .eq('id', Number(id))
+    .single()
+
+  if (!arr) {
+    return buildMetadata({
+      title: 'Arrangement Not Found',
+      noindex: true
+    })
+  }
+
+  return buildMetadata({
+    title: `${arr.title} - ${arr.composer} | Bright Designs Arrangements`,
+    description: arr.description || `Custom arrangement of ${arr.title} by ${arr.composer}. Professional marching band music design.`,
+    // OG Image is automatically handled by opengraph-image.tsx
+  })
+}
 
 export default async function ArrangementDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -40,6 +68,15 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
       </div>
     );
   }
+
+  // Generate Structured Data
+  const creativeWorkSchema = createCreativeWorkSchema({
+    name: arr.title,
+    description: arr.description || `Arrangement of ${arr.title}`,
+    creator: arr.composer || 'Bright Designs',
+    difficulty: arr.grade ? `Grade ${arr.grade}` : undefined,
+    duration: arr.duration_seconds ? `${Math.floor(arr.duration_seconds / 60)}:${String(arr.duration_seconds % 60).padStart(2, '0')}` : undefined,
+  })
 
   // Fetch show information if linked
   let parentShow: { id: number; title?: string | null; name?: string | null; thumbnailUrl?: string | null; graphicUrl?: string | null } | null = null;
@@ -119,6 +156,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   return (
     <div className="min-h-screen bg-background">
       <style dangerouslySetInnerHTML={{ __html: audioPlayerStyles }} />
+      <JsonLd data={creativeWorkSchema} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb Navigation */}
@@ -175,11 +213,14 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                 priority
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-muted-foreground">
-                  <Music2 className="w-16 h-16 mx-auto mb-2" />
-                  <p className="text-sm">No image available</p>
-                </div>
+              <div className="w-full h-full flex items-center justify-center bg-muted/30">
+                <Image 
+                  src="/placeholder-logo.png" 
+                  alt="Bright Designs Logo" 
+                  width={180} 
+                  height={180}
+                  className="opacity-20 grayscale"
+                />
               </div>
             )}
           </div>

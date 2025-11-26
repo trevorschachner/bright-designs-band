@@ -1,4 +1,4 @@
-import { FileText, Music, BarChart, Folder, BookOpen, Users } from 'lucide-react'
+import { FileText, Music, BarChart, Folder, BookOpen, Users, Speaker, Video, Flag, Palette } from 'lucide-react'
 import React from 'react'
 
 const includedItems = [
@@ -11,6 +11,11 @@ const includedItems = [
     icon: <Music className="h-6 w-6 text-primary" />,
     title: 'Notation and Audio Files',
     description: 'Receive MusicXML/XML files for easy edits and MP3 recordings for practice.',
+  },
+  {
+    icon: <Speaker className="h-6 w-6 text-primary" />,
+    title: 'Sound Design',
+    description: 'Mainstage file included for all sound design and sound effects.',
   },
   {
     icon: <Folder className="h-6 w-6 text-primary" />,
@@ -31,9 +36,19 @@ const optionalItems = [
     description: 'Drill design is available by request. We will connect you with a professional drill designer to create custom drill for your ensemble.',
   },
   {
+    icon: <Video className="h-6 w-6 text-primary" />,
+    title: 'Wind Choreography',
+    description: 'Detailed videos for all wind choreography available by request to help your students learn quickly.',
+  },
+  {
     icon: <Users className="h-6 w-6 text-primary" />,
-    title: 'Choreography',
-    description: 'Choreography is available by request. We will connect you with a professional choreographer to create custom movement for your ensemble.',
+    title: 'Color Guard Choreography',
+    description: 'Complete packages including flags, weapons, and dance choreography available by request.',
+  },
+  {
+    icon: <Palette className="h-6 w-6 text-primary" />,
+    title: 'Prop and Flag Design',
+    description: 'Custom design services for props and flags to perfectly match your show theme.',
   },
 ]
 

@@ -90,7 +90,7 @@ export default async function HomePage() {
       <PageHero
         title="Student centered marching band design."
         subtitle={
-          "We design shows that help students shine. 100+ championship-caliber shows performed nationwide, each one perfectly suited to performer ability."
+          "We design marching band shows that help students shine. Over 100+ shows performed nationwide across all competitive circuits."
         }
       >
         <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
@@ -129,7 +129,7 @@ export default async function HomePage() {
               <div className="text-sm sm:text-base text-muted-foreground font-medium">Ensembles Served</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-foreground mb-3">100+</div>
+              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-foreground mb-3">75+</div>
               <div className="text-sm sm:text-base text-muted-foreground font-medium">Custom Shows</div>
             </div>
             <div className="text-center">
@@ -144,6 +144,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <Testimonials />
 
       {/* Show Catalog Preview */}
       <section id="shows" className="plus-section bg-background">
@@ -236,9 +239,6 @@ export default async function HomePage() {
         items={homeServices}
         cta={{ label: "Explore All Services", href: "/services", iconRight: true }}
       />
-
-      {/* Testimonials Section */}
-      <Testimonials />
 
       {/* Structured Data for SEO */}
       <JsonLd data={marchingBandSchemas.showDesignService} />

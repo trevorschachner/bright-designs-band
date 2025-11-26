@@ -13,7 +13,17 @@ export function GlobalAudioPlayerBar() {
   const [isMuted, setIsMuted] = useState(false)
   const [trackTitle, setTrackTitle] = useState<string | null>(null)
   const [hasHadAudio, setHasHadAudio] = useState(false) // Track if we've ever had audio
+  const [highlight, setHighlight] = useState(false)
   const activeAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Trigger highlight when playback starts
+  useEffect(() => {
+    if (isPlaying) {
+      setHighlight(true)
+      const timer = setTimeout(() => setHighlight(false), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [isPlaying])
 
   // Find and track the currently playing or recently played audio element
   useEffect(() => {
@@ -208,7 +218,7 @@ export function GlobalAudioPlayerBar() {
   if (!trackTitle && !hasHadAudio) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-sm border-t border-border shadow-lg">
+    <div className={`fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-sm border-t border-border shadow-lg transition-all duration-500 ${highlight ? 'ring-2 ring-primary border-primary shadow-[0_-5px_20px_-5px_hsl(var(--primary)/0.3)]' : ''}`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center gap-4">
           {/* Track Info */}

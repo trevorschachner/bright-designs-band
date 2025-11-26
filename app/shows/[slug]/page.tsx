@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
-import { ArrangementAudioPlayer } from '@/components/features/arrangement-audio-player'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
@@ -58,20 +57,20 @@ async function getShowByIdentifier(identifier: string): Promise<ShowWithTagsResu
     return null
   }
 
-  const { showsToTags: tagRelations = [], ...rest } = show as any
-  const formattedTags = Array.isArray(tagRelations)
-    ? tagRelations
-        .map((relation: any) => ({
-          tag: relation?.tag ?? null,
-        }))
-        .filter((relation) => relation.tag)
-    : []
+    const { showsToTags: tagRelations = [], ...rest } = show as any
+    const formattedTags = Array.isArray(tagRelations)
+      ? tagRelations
+          .map((relation: any) => ({
+            tag: relation?.tag ?? null,
+          }))
+          .filter((relation) => relation.tag)
+      : []
 
-  return {
-    show: rest,
-    showsToTags: formattedTags,
+    return {
+      show: rest,
+      showsToTags: formattedTags,
+    }
   }
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -79,6 +78,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // Optimized: Use the same helper function, React 18+ will deduplicate this request
     const showResult = await getShowByIdentifier(slug)
     const showRow = showResult?.show
+    const tags = showResult?.showsToTags || []
 
     if (!showRow) {
       return buildMetadata({
@@ -90,11 +90,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'
     const canonicalSlug = showRow.slug || slug
+    
+    // Generate keywords from tags
+    const tagKeywords = tags.map((t: any) => t.tag.name)
+    const defaultKeywords = [
+      "marching band show", 
+      "competitive marching band", 
+      "custom drill design", 
+      "marching band arrangements",
+      showRow.title
+    ]
+    
     return buildMetadata({
       title: `${showRow.title} | Bright Designs`,
       description: showRow.description ?? 'Award-winning marching band show from Bright Designs.',
-      ogImage: showRow.graphicUrl ?? showRow.thumbnailUrl ?? '/og-image.jpg',
+      // Explicitly prioritize graphic/thumb if available, otherwise let opengraph-image.tsx handle it (by passing undefined)
+      ogImage: showRow.graphicUrl ?? showRow.thumbnailUrl ?? undefined,
       canonical: `${baseUrl}/shows/${canonicalSlug}`,
+      keywords: [...defaultKeywords, ...tagKeywords]
     })
   } catch (error) {
     console.error('Failed to generate metadata for show slug:', slug, error)
@@ -213,14 +226,14 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-muted-foreground">
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <path d="M21 15l-5-5L5 21"/>
-                  </svg>
-                </div>
+              <div className="w-full h-full flex items-center justify-center bg-muted/30">
+                <Image 
+                  src="/placeholder-logo.png" 
+                  alt="Bright Designs Logo" 
+                  width={180} 
+                  height={180}
+                  className="opacity-20 grayscale"
+                />
               </div>
             )}
           </div>
@@ -272,14 +285,25 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
             <div id="master-player">
               <AudioPlayerComponent
                 playerId="master-player"
+                className="border-primary/20 shadow-sm"
                 tracks={arrangements
                   .filter((a: any) => a.audioUrl)
-                  .map((arrangement: any, index: number) => ({
-                    id: arrangement.id.toString(),
-                    title: arrangement.title || `Movement ${index + 1}`,
-                    description: arrangement.description || undefined,
-                    url: arrangement.audioUrl,
-                  }))}
+                  .map((arrangement: any, index: number) => {
+                    const parts = [];
+                    if (arrangement.arranger) parts.push(`${arrangement.arranger} (Wind)`);
+                    if (arrangement.percussionArranger) parts.push(`${arrangement.percussionArranger} (Percussion)`);
+                    
+                    const description = parts.length > 0 
+                      ? `Arranged by ${parts.join(', ')}`
+                      : arrangement.description || undefined;
+
+                    return {
+                      id: arrangement.id.toString(),
+                      title: arrangement.title || `Movement ${index + 1}`,
+                      description: description,
+                      url: arrangement.audioUrl,
+                    };
+                  })}
                 title="Listen to Full Show"
                 compact
                 showNavigation={true}
@@ -391,29 +415,6 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       {arrangement.description}
                     </p>
                   )}
-
-                  {/* Audio Player */}
-                  {arrangement.audioUrl && (() => {
-                    // Find the index of this arrangement in the master player's track list
-                    const masterTracks = arrangements.filter((a: any) => a.audioUrl)
-                    const trackIndexInMaster = masterTracks.findIndex((a: any) => a.id === arrangement.id)
-                    
-                    return (
-                      <div className="ml-12 mb-3">
-                        <ArrangementAudioPlayer
-                          arrangementId={arrangement.id}
-                          trackIndex={trackIndexInMaster >= 0 ? trackIndexInMaster : 0}
-                          tracks={[{
-                            id: arrangement.id.toString(),
-                            title: arrangement.title || 'Audio Preview',
-                            description: arrangement.description || undefined,
-                            url: arrangement.audioUrl
-                          }]}
-                          compact
-                        />
-                      </div>
-                    )
-                  })()}
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 ml-12">

@@ -15,7 +15,7 @@ export default function ProcessPage() {
           <div className="text-center mb-20">
             <h1 className="plus-h2 mb-4">Our Design Process</h1>
             <p className="plus-body-lg max-w-2xl mx-auto">
-              A proven, collaborative approach to creating championship-caliber shows.
+              A proven, collaborative approach to creating award-winning marching band shows.
             </p>
           </div>
 
@@ -55,11 +55,11 @@ export default function ProcessPage() {
                 <div className="pl-12">
                   <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow">
                     <h3 className="plus-h3 mb-3 flex items-center gap-3">
-                      <Lightbulb className="w-6 h-6 text-primary" />
-                      Design Concepts
+                      <FileText className="w-6 h-6 text-primary" />
+                      Contracts
                     </h3>
                     <p className="plus-body-sm">
-                      Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
+                      Clear agreements and timelines ensure everyone is aligned and expectations are set for a smooth collaboration.
                     </p>
                   </div>
                 </div>
@@ -70,11 +70,11 @@ export default function ProcessPage() {
                 <div className="text-right pr-12">
                   <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow">
                     <h3 className="plus-h3 mb-3 flex items-center justify-end gap-3">
-                      Contracts
-                      <FileText className="w-6 h-6 text-primary" />
+                      Design Concepts
+                      <Lightbulb className="w-6 h-6 text-primary" />
                     </h3>
                     <p className="plus-body-sm">
-                      Clear agreements and timelines ensure everyone is aligned and expectations are set for a smooth collaboration.
+                      Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
                     </p>
                   </div>
                 </div>
@@ -176,11 +176,11 @@ export default function ProcessPage() {
                 </div>
                 <div className="plus-surface-elevated p-6">
                   <h3 className="plus-h3 mb-3 flex items-center gap-3">
-                    <Lightbulb className="w-6 h-6 text-primary" />
-                    Design Concepts
+                    <FileText className="w-6 h-6 text-primary" />
+                    Contracts
                   </h3>
                   <p className="plus-body-sm">
-                    Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
+                    Clear agreements and timelines ensure everyone is aligned and expectations are set for a smooth collaboration.
                   </p>
                 </div>
               </div>
@@ -192,11 +192,11 @@ export default function ProcessPage() {
                 </div>
                 <div className="plus-surface-elevated p-6">
                   <h3 className="plus-h3 mb-3 flex items-center gap-3">
-                    <FileText className="w-6 h-6 text-primary" />
-                    Contracts
+                    <Lightbulb className="w-6 h-6 text-primary" />
+                    Design Concepts
                   </h3>
                   <p className="plus-body-sm">
-                    Clear agreements and timelines ensure everyone is aligned and expectations are set for a smooth collaboration.
+                    Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
                   </p>
                 </div>
               </div>

@@ -70,13 +70,18 @@ export const siteConfig: SiteConfig = {
       {
         title: "Resources",
         links: [
+          { label: "Free Guides", href: "/resources" },
           { label: "Contact Form", href: "/contact" },
         ],
       },
     ],
     copyright: `© ${new Date().getFullYear()} Bright Designs LLC. All rights reserved.`,
   },
-  social: [],
+  social: [
+    { label: "Instagram", href: "https://instagram.com/brightdesignsband" },
+    { label: "Facebook", href: "https://facebook.com/brightdesignsband" },
+    // { label: "Twitter", href: "https://twitter.com/brightdesigns" },
+  ],
 }
 
 // Export individual properties for backward compatibility

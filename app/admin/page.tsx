@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle } from 'lucide-react';
+import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle, FileText } from 'lucide-react';
 import { getUserRole, getUserPermissions } from '@/lib/auth/roles';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -114,7 +114,7 @@ export default async function AdminPage() {
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalShows}</div>
               <p className="text-xs text-muted-foreground">Active shows</p>
-              <Link href="/admin/shows" className="mt-4 inline-block">
+              <Link href="/admin/shows" className="mt-4 inline-block w-full">
                 <Button className="w-full">
                   View Shows
                 </Button>
@@ -132,9 +132,27 @@ export default async function AdminPage() {
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalTags}</div>
               <p className="text-xs text-muted-foreground">Total tags</p>
-              <Link href="/admin/tags" className="mt-4 inline-block">
+              <Link href="/admin/tags" className="mt-4 inline-block w-full">
                 <Button className="w-full">
                   View Tags
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        {permissions.canManageShows && (
+          <Card className="frame-card cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Manage Resources</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">-</div>
+              <p className="text-xs text-muted-foreground">Downloadable files</p>
+              <Link href="/admin/resources" className="mt-4 inline-block w-full">
+                <Button className="w-full">
+                  View Resources
                 </Button>
               </Link>
             </CardContent>
@@ -188,45 +206,6 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-
-      <div className="mt-8">
-        <Card className="frame-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Settings className="w-5 h-5" />
-              <span>Quick Actions</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {permissions.canCreateArrangements && (
-                <Link href="/admin/shows/new">
-                  <Button className="w-full h-20 flex flex-col space-y-2">
-                    <Music className="w-6 h-6" />
-                    <span>Add New Show</span>
-                  </Button>
-                </Link>
-              )}
-              {permissions.canManageTags && (
-                <Button className="w-full h-20 flex flex-col space-y-2">
-                  <Tags className="w-6 h-6" />
-                  <span>Manage Categories</span>
-                </Button>
-              )}
-              {permissions.canViewAnalytics && (
-                <Button className="w-full h-20 flex flex-col space-y-2">
-                  <BarChart3 className="w-6 h-6" />
-                  <span>View Reports</span>
-                </Button>
-              )}
-              <Button className="w-full h-20 flex flex-col space-y-2">
-                <Settings className="w-6 h-6" />
-                <span>Site Settings</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
     </div>

@@ -16,10 +16,10 @@
     @apply border-b border-border;
   }
   .plus-surface {
-    @apply bg-card border border-border rounded-lg;
+    @apply bg-card/80 backdrop-blur-sm border border-border rounded-lg;
   }
   .plus-surface-elevated {
-    @apply bg-card border border-border rounded-lg shadow-sm;
+    @apply bg-card/80 backdrop-blur-sm border border-border rounded-lg shadow-sm;
   }
 
   /* Tailwind Plus spacing system */

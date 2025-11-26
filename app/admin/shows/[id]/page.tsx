@@ -22,6 +22,7 @@ export default function EditShowPage() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [arrangements, setArrangements] = useState<any[]>([]);
   const [showAddArrangementForm, setShowAddArrangementForm] = useState(false);
+  const [selectedArrangementTags, setSelectedArrangementTags] = useState<number[]>([]);
   const [newArrangement, setNewArrangement] = useState({
     title: '',
     composer: '',
@@ -39,6 +40,12 @@ export default function EditShowPage() {
     copyrightAmountUsd: '',
     displayOrder: ''
   });
+
+  const handleArrangementTagChange = (tagId: number) => {
+    setSelectedArrangementTags(prev =>
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    );
+  };
   const [editingArrangement, setEditingArrangement] = useState<number | null>(null);
   const [editingArrangementData, setEditingArrangementData] = useState<any>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -137,6 +144,7 @@ export default function EditShowPage() {
         copyrightAmountUsd: newArrangement.copyrightAmountUsd ? Number(newArrangement.copyrightAmountUsd) : null,
         displayOrder: newArrangement.displayOrder ? Number(newArrangement.displayOrder) : undefined,
         showId: show?.id,
+        tags: selectedArrangementTags,
       };
 
     const response = await fetch('/api/arrangements', {
@@ -164,6 +172,7 @@ export default function EditShowPage() {
           copyrightAmountUsd: '',
           displayOrder: ''
         });
+        setSelectedArrangementTags([]);
         setShowAddArrangementForm(false);
         // Reload arrangements
         fetch(`/api/shows/${id}`)
@@ -199,6 +208,7 @@ export default function EditShowPage() {
       copyrightAmountUsd: arrangement.copyrightAmountUsd || arrangement.copyright_amount_usd || '',
       displayOrder: arrangement.displayOrder || arrangement.display_order || 0,
     });
+    setSelectedArrangementTags((arrangement.tags || []).map((t: any) => t.id));
   };
 
   const handleSaveArrangement = async (arrangementId: number) => {
@@ -222,6 +232,7 @@ export default function EditShowPage() {
         sample_score_url: editingArrangementData.sampleScoreUrl || null,
         copyright_amount_usd: editingArrangementData.copyrightAmountUsd ? Number(editingArrangementData.copyrightAmountUsd) : null,
         display_order: editingArrangementData.displayOrder ? Number(editingArrangementData.displayOrder) : 0,
+        tags: selectedArrangementTags,
       };
 
       const response = await fetch(`/api/arrangements/${arrangementId}`, {
@@ -233,6 +244,7 @@ export default function EditShowPage() {
     if (response.ok) {
         setEditingArrangement(null);
         setEditingArrangementData(null);
+        setSelectedArrangementTags([]);
         // Reload arrangements
       fetch(`/api/shows/${id}`)
         .then(res => res.json())
@@ -863,7 +875,24 @@ export default function EditShowPage() {
                       onChange={(e) => setNewArrangement({ ...newArrangement, commissioned: e.target.value })} 
                     />
           </div>
-          </div>
+                  <div className="md:col-span-2">
+                    <label className="block mb-2 text-sm font-medium">Tags</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 border rounded bg-muted/30">
+                      {tags.map(tag => (
+                        <div key={tag.id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`arr-tag-new-${tag.id}`}
+                            checked={selectedArrangementTags.includes(tag.id)}
+                            onChange={() => handleArrangementTagChange(tag.id)}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`arr-tag-new-${tag.id}`} className="text-sm cursor-pointer">{tag.name}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
           
                 <div className="flex gap-2 pt-4">
                   <Button 
@@ -896,6 +925,7 @@ export default function EditShowPage() {
                         displayOrder: ''
                       });
                       setSaveError(null);
+                      setSelectedArrangementTags([]);
                     }}
                   >
                     Cancel
@@ -924,6 +954,7 @@ export default function EditShowPage() {
                             setEditingArrangement(null);
                             setEditingArrangementData(null);
                             setSaveError(null);
+                            setSelectedArrangementTags([]);
                           }}
                         >
                           Cancel
@@ -1095,6 +1126,23 @@ export default function EditShowPage() {
                           onChange={(e) => setEditingArrangementData({ ...editingArrangementData, commissioned: e.target.value })} 
                         />
                       </div>
+                      <div className="md:col-span-2">
+                        <label className="block mb-2 text-sm font-medium">Tags</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 border rounded bg-muted/30">
+                          {tags.map(tag => (
+                            <div key={tag.id} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                id={`arr-tag-edit-${tag.id}`}
+                                checked={selectedArrangementTags.includes(tag.id)}
+                                onChange={() => handleArrangementTagChange(tag.id)}
+                                className="mr-2"
+                              />
+                              <label htmlFor={`arr-tag-edit-${tag.id}`} className="text-sm cursor-pointer">{tag.name}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1115,6 +1163,15 @@ export default function EditShowPage() {
                               <span className="ml-2">Percussion: {arrangement.percussionArranger || arrangement.percussion_arranger}</span>
                             )}
                           </p>
+                        )}
+                        {arrangement.tags && arrangement.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {arrangement.tags.map((tag: any) => (
+                              <Badge key={tag.id} variant="secondary" className="text-xs">
+                                {tag.name}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
                       <div className="flex gap-2">
