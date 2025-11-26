@@ -35,16 +35,16 @@
 
   /* Tailwind Plus typography system - clean and minimal */
   .plus-h1 {
-    @apply text-4xl font-bold tracking-tight text-foreground sm:text-6xl;
+    @apply text-4xl font-heading font-bold tracking-tight text-foreground sm:text-6xl;
   }
   .plus-h2 {
-    @apply text-3xl font-bold tracking-tight text-foreground sm:text-4xl;
+    @apply text-3xl font-heading font-bold tracking-tight text-foreground sm:text-4xl;
   }
   .plus-h3 {
-    @apply text-2xl font-semibold text-foreground;
+    @apply text-2xl font-heading font-semibold text-foreground;
   }
   .plus-h4 {
-    @apply text-xl font-semibold text-foreground;
+    @apply text-xl font-heading font-semibold text-foreground;
   }
   .plus-body-lg {
     @apply text-lg leading-8 text-muted-foreground;

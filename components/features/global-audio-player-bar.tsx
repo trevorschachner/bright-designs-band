@@ -12,23 +12,50 @@ export function GlobalAudioPlayerBar() {
   const [volume, setVolume] = useState(0.8)
   const [isMuted, setIsMuted] = useState(false)
   const [trackTitle, setTrackTitle] = useState<string | null>(null)
+  const [hasHadAudio, setHasHadAudio] = useState(false) // Track if we've ever had audio
   const activeAudioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Find and track the currently playing audio element
+  // Find and track the currently playing or recently played audio element
   useEffect(() => {
     const findActiveAudio = () => {
       const audioElements = document.querySelectorAll('audio')
+      
+      // First, try to find currently playing audio
       for (const audio of audioElements) {
         if (!audio.paused && !audio.ended) {
           activeAudioRef.current = audio
+          setHasHadAudio(true)
           return audio
         }
       }
-      // If no playing audio, use the first one if it exists
-      if (audioElements.length > 0 && !activeAudioRef.current) {
+      
+      // If no playing audio, check if we have a previously tracked audio that still exists
+      if (activeAudioRef.current && document.contains(activeAudioRef.current)) {
+        setHasHadAudio(true)
+        return activeAudioRef.current
+      }
+      
+      // If we've had audio before, try to find any audio element (even if paused)
+      if (hasHadAudio && audioElements.length > 0) {
+        // Prefer the first audio element that has been interacted with
+        for (const audio of audioElements) {
+          if (audio.currentTime > 0 || audio.duration > 0) {
+            activeAudioRef.current = audio
+            return audio
+          }
+        }
+        // Fallback to first audio element
         activeAudioRef.current = audioElements[0]
         return audioElements[0]
       }
+      
+      // If no audio has been played yet, use first available
+      if (audioElements.length > 0) {
+        activeAudioRef.current = audioElements[0]
+        setHasHadAudio(true)
+        return audioElements[0]
+      }
+      
       return null
     }
 
@@ -43,15 +70,41 @@ export function GlobalAudioPlayerBar() {
         // Try to get track title from parent elements
         const container = audio.closest('[data-track-title]')
         if (container) {
-          setTrackTitle(container.getAttribute('data-track-title'))
+          const title = container.getAttribute('data-track-title')
+          if (title) {
+            setTrackTitle(title)
+          }
         } else {
-          setTrackTitle('Audio')
+          // Try to get title from data attributes on audio element itself
+          const audioTitle = audio.getAttribute('data-track-title') || 
+                           audio.getAttribute('aria-label') ||
+                           'Audio'
+          setTrackTitle(audioTitle)
         }
       } else {
-        setIsPlaying(false)
-        setCurrentTime(0)
-        setDuration(0)
-        setTrackTitle(null)
+        // Only hide if we've never had audio or all audio elements are gone
+        const audioElements = document.querySelectorAll('audio')
+        if (audioElements.length === 0 && !hasHadAudio) {
+          setIsPlaying(false)
+          setCurrentTime(0)
+          setDuration(0)
+          setTrackTitle(null)
+          setHasHadAudio(false)
+          activeAudioRef.current = null
+        } else if (hasHadAudio && activeAudioRef.current) {
+          // Keep player visible with last known state
+          setIsPlaying(false)
+          setCurrentTime(activeAudioRef.current.currentTime)
+          if (activeAudioRef.current.duration) {
+            setDuration(activeAudioRef.current.duration)
+          }
+          // Keep track title
+          const container = activeAudioRef.current.closest('[data-track-title]')
+          if (container) {
+            const title = container.getAttribute('data-track-title')
+            if (title) setTrackTitle(title)
+          }
+        }
       }
     }
 
@@ -151,7 +204,8 @@ export function GlobalAudioPlayerBar() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  if (!trackTitle) return null
+  // Show player if we have a track title OR if we've had audio before (even if paused)
+  if (!trackTitle && !hasHadAudio) return null
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-sm border-t border-border shadow-lg">

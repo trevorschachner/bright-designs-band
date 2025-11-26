@@ -12,6 +12,18 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from 'lucide-react';
 
 export interface ColumnDef<T> {
   header: string;
@@ -33,30 +45,60 @@ export default function AdminTable<T extends { id: number }>({
   const [data, setData] = useState<T[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<number | string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${resourceName}`);
+      }
+      const result = await response.json();
+      const payload = result?.data;
+      const rows =
+        Array.isArray(payload?.shows) ? payload.shows :
+        Array.isArray(payload?.data) ? payload.data :
+        Array.isArray(payload) ? payload : [];
+      setData(rows as T[]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'An unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${resourceName}`);
-        }
-        const result = await response.json();
-        const payload = result?.data;
-        const rows =
-          Array.isArray(payload?.shows) ? payload.shows :
-          Array.isArray(payload?.data) ? payload.data :
-          Array.isArray(payload) ? payload : [];
-        setData(rows as T[]);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchData();
   }, [endpoint, resourceName]);
+
+  const handleDelete = async (id: number | string) => {
+    try {
+      setIsDeleting(true);
+      // Determine the delete endpoint URL
+      // If endpoint is /api/shows, we want /api/shows/[id]
+      const deleteUrl = `${endpoint}/${id}`;
+      
+      const response = await fetch(deleteUrl, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to delete ${resourceName}`);
+      }
+
+      // Refresh data
+      await fetchData();
+      setDeletingId(null);
+    } catch (e) {
+      console.error('Delete error:', e);
+      alert(e instanceof Error ? e.message : 'Failed to delete item');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -117,9 +159,41 @@ export default function AdminTable<T extends { id: number }>({
                 </TableCell>
               ))}
               <TableCell>
-                <Link href={`/admin/${resourceName.toLowerCase()}/${(row as any).slug ?? row.id}`}>
-                  <Button variant="outline" size="sm">Edit</Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href={`/admin/${resourceName.toLowerCase()}/${(row as any).slug ?? row.id}`}>
+                    <Button variant="outline" size="sm">Edit</Button>
+                  </Link>
+                  
+                  <AlertDialog open={deletingId === row.id} onOpenChange={(open) => setDeletingId(open ? row.id : null)}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="w-8 h-8 p-0">
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete this {resourceName.slice(0, -1)} and remove it from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDelete(row.id);
+                          }}
+                          disabled={isDeleting}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {isDeleting ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </TableCell>
             </TableRow>
           ))}

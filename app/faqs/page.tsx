@@ -1,7 +1,7 @@
 export default function FaqsPage() {
   return (
     <div className="container mx-auto py-20">
-      <h1 className="text-4xl font-bold text-center mb-6 font-primary text-foreground">Frequently Asked Questions</h1>
+      <h1 className="text-4xl font-heading font-bold text-center mb-6 text-foreground">Frequently Asked Questions</h1>
       <div className="max-w-3xl mx-auto frame-card p-6">
         <p className="text-lg text-center mb-6 text-muted-foreground">Common questions our clients ask.</p>
         <ul className="list-better">
