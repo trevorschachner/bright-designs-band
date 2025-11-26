@@ -18,7 +18,7 @@ export function ShowCatalogHero({
       <div className="container mx-auto px-4 py-16 sm:py-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Title */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4 font-primary">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-4">
             Show Catalog
           </h1>
           

@@ -198,7 +198,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               )}
             </div>
 
-            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{arr.title}</h1>
+            <h1 className="text-4xl font-heading font-bold mb-4 text-foreground">{arr.title}</h1>
             
             {parentShow && (
               <p className="text-lg text-primary mb-4">
@@ -286,8 +286,8 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
         {/* Audio Player Section */}
         {audio?.url ? (
           <div id="audio-player" className="mb-12 scroll-mt-8">
-            <h2 className="text-2xl font-bold mb-4 text-foreground font-primary">Listen to Arrangement</h2>
-            <AudioPlayerComponent 
+            <h2 className="text-2xl font-heading font-bold mb-4 text-foreground">Listen to Arrangement</h2>
+            <AudioPlayerComponent  
               tracks={[{ 
                 id: 'full', 
                 title: arr.title || 'Full Arrangement', 
@@ -302,7 +302,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
           </div>
         ) : (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-4 text-foreground font-primary">Audio Sample</h2>
+            <h2 className="text-2xl font-heading font-bold mb-4 text-foreground">Audio Sample</h2>
             <Card className="bg-muted/50">
               <CardContent className="p-6 text-center">
                 <Music2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
@@ -315,7 +315,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
         {/* Additional Files Section */}
         {files && files.length > 1 && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-4 text-foreground font-primary">Related Files</h2>
+            <h2 className="text-2xl font-heading font-bold mb-4 text-foreground">Related Files</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {files.filter((f: any) => f.fileType !== 'audio' || !f.isPublic).map((file: any) => (
                 <Card key={file.id} className="hover:shadow-md transition-shadow">

@@ -301,10 +301,41 @@ export async function POST(request: Request) {
 
     const { tags: tagIds, ...showData } = parsedData.data as any;
 
+    // Generate slug from title
+    const generateSlug = (title: string): string => {
+      return title
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+    };
+
+    // Generate a unique slug
+    let slug = generateSlug(showData.title);
+    let slugSuffix = 1;
+    
+    // Check if slug already exists and make it unique
+    while (true) {
+      const { data: existingShow } = await supabase
+        .from('shows')
+        .select('id')
+        .eq('slug', slug)
+        .single();
+      
+      if (!existingShow) break;
+      
+      // If slug exists, append a number
+      slug = `${generateSlug(showData.title)}-${slugSuffix}`;
+      slugSuffix++;
+    }
+
     // Map camelCase -> snake_case for Supabase
     const insertPayload: any = {};
     const mapIf = (key: string, value: any) => { if (value !== undefined) insertPayload[key] = value; };
     mapIf('title', showData.title);
+    mapIf('slug', slug); // Add the generated slug
     mapIf('year', showData.year);
     mapIf('difficulty', showData.difficulty);
     mapIf('duration', showData.duration);

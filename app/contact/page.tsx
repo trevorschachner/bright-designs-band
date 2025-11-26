@@ -58,7 +58,7 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="text-4xl font-heading font-bold tracking-tight text-foreground sm:text-5xl">
             Contact Us
           </h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
@@ -71,10 +71,10 @@ export default function ContactPage() {
               <div className="flex items-center justify-center mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-semibold mb-2">Thanks! Your inquiry has been sent.</h2>
+              <h2 className="text-2xl font-heading font-semibold mb-2">Thanks! Your inquiry has been sent.</h2>
               <p className="text-muted-foreground mb-6">We&apos;ll get back to you shortly. If you need to reach us directly, use the email button below.</p>
               <div className="mt-8 text-left">
-                <h3 className="text-lg font-semibold mb-3">What to expect next</h3>
+                <h3 className="text-lg font-heading font-semibold mb-3">What to expect next</h3>
                 <ol className="list-decimal pl-5 space-y-3 text-foreground/90">
                   <li>We will follow up within 24–48 hours.</li>
                   <li>We will schedule a call and/or send a few forms to gather details like instrumentation and ability level.</li>

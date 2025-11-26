@@ -232,7 +232,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
               <Badge variant="secondary" className="text-sm">{displayDifficulty}</Badge>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4 text-foreground font-primary">{show.title}</h1>
+            <h1 className="text-4xl font-heading font-bold mb-4 text-foreground">{show.title}</h1>
             <p className="text-lg text-muted-foreground mb-6">{show.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -291,7 +291,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
         {/* Show Arrangements Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-foreground font-primary">Show Arrangements</h2>
+            <h2 className="text-3xl font-heading font-bold text-foreground">Show Arrangements</h2>
             <Badge variant="secondary" className="text-sm font-medium">
               {arrangements.length} {arrangements.length === 1 ? 'Movement' : 'Movements'}
             </Badge>
@@ -331,7 +331,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                     {/* Title and Scene */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 mb-1.5">
-                        <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                        <h3 className="text-lg font-heading font-bold text-foreground group-hover:text-primary transition-colors">
                           <Link href={`/arrangements/${arrangement.id}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
                             {arrangement.title}
                           </Link>
