@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resources } from '@/lib/database/schema';
+import { resources, files } from '@/lib/database/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -42,14 +42,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user is staff
-    const userEmail = session.user?.email;
+    const userEmail = user?.email;
     if (!userEmail?.endsWith('@brightdesigns.band')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -64,6 +64,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const idNum = parseInt(id, 10);
+    const isNumeric = !isNaN(idNum);
     
     const [updatedResource] = await db
       .update(resources)
@@ -77,11 +78,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         requiresContactForm: body.requiresContactForm,
         updatedAt: new Date(),
       })
-      .where(eq(resources.id, idNum))
+      .where(isNumeric ? eq(resources.id, idNum) : eq(resources.slug, id))
       .returning();
 
     if (!updatedResource) {
       return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
+    }
+
+    // Sync description to file record if exists
+    if (body.fileUrl && body.description) {
+      try {
+        await db.update(files)
+          .set({ description: body.description })
+          .where(eq(files.url, body.fileUrl));
+      } catch (e) {
+        console.warn('Failed to sync file description', e);
+      }
     }
 
     return NextResponse.json(updatedResource);
@@ -102,14 +114,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
     
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user is staff
-    const userEmail = session.user?.email;
+    const userEmail = user?.email;
     if (!userEmail?.endsWith('@brightdesigns.band')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -122,10 +134,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const idNum = parseInt(id, 10);
+    const isNumeric = !isNaN(idNum);
     
     const [deletedResource] = await db
       .delete(resources)
-      .where(eq(resources.id, idNum))
+      .where(isNumeric ? eq(resources.id, idNum) : eq(resources.slug, id))
       .returning();
 
     if (!deletedResource) {

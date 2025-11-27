@@ -15,15 +15,15 @@ import {
 
 export default async function ManageResourcesPage() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect('/login');
   }
 
   // Assuming if they can manage shows they can manage resources, or we need a new permission. 
   // Reusing 'canManageShows' for simplicity for now as 'admin' check.
-  if (!requirePermission(session.user.email, 'canManageShows')) {
+  if (!requirePermission(user.email, 'canManageShows')) {
     redirect('/');
   }
 

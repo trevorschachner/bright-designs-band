@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { getArrangementById } from '@/lib/database/supabase-queries';
-import { arrangements, arrangementsToTags } from '@/lib/database/schema';
-import { eq } from 'drizzle-orm';
+import { arrangements, arrangementsToTags, showArrangements } from '@/lib/database/schema';
+import { eq, and } from 'drizzle-orm';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -90,6 +90,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     console.log('PUT /api/arrangements/' + arrangementId, 'Drizzle payload:', JSON.stringify(drizzlePayload, null, 2));
 
     const tagIds = body.tags;
+    const showId = body.show_id;
 
     try {
       const updatedArrangement = await db.transaction(async (tx: any) => {
@@ -101,6 +102,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
         if (!updated) {
           throw new Error('Arrangement not found or update failed');
+        }
+
+        // Update order in show_arrangements if showId and displayOrder are provided
+        if (showId && drizzlePayload.displayOrder !== undefined) {
+          await tx
+            .update(showArrangements)
+            .set({ orderIndex: drizzlePayload.displayOrder })
+            .where(
+              and(
+                eq(showArrangements.showId, Number(showId)),
+                eq(showArrangements.arrangementId, arrangementId)
+              )
+            );
         }
 
         if (tagIds && Array.isArray(tagIds)) {

@@ -49,7 +49,8 @@ export const fileUploadSchema = z.object({
     
     // Check file type matches allowed types
     const fileTypePrefix = file.type?.split('/')[0];
-    if (!ALLOWED_FILE_TYPES.includes(fileTypePrefix) && !ALLOWED_FILE_TYPES.includes(file.type)) {
+    const isPdf = file.type === 'application/pdf';
+    if (!ALLOWED_FILE_TYPES.includes(fileTypePrefix) && !isPdf) {
       return false;
     }
     
@@ -64,7 +65,8 @@ export const fileUploadSchema = z.object({
     }
     
     const fileTypePrefix = file.type?.split('/')[0];
-    if (!ALLOWED_FILE_TYPES.includes(fileTypePrefix) && !ALLOWED_FILE_TYPES.includes(file.type)) {
+    const isPdf = file.type === 'application/pdf';
+    if (!ALLOWED_FILE_TYPES.includes(fileTypePrefix) && !isPdf) {
       return { message: 'Only .jpg, .gif, .png, .webp, .mp3, .wav, .ogg, and .pdf files are accepted.', path: ['file'] };
     }
     

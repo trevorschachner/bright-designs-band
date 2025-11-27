@@ -17,7 +17,7 @@ import { getDashboardStats } from '@/lib/database/queries';
 
 export default async function AdminPage() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   
   // Fetch actual stats
   let stats;
@@ -34,12 +34,12 @@ export default async function AdminPage() {
     };
   }
 
-  if (!session) {
+  if (!user) {
     return redirect('/login');
   }
 
-  const userRole = getUserRole(session.user.email || '');
-  const permissions = getUserPermissions(session.user.email || '');
+  const userRole = getUserRole(user.email || '');
+  const permissions = getUserPermissions(user.email || '');
   const analyticsConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY);
   const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
 
@@ -83,7 +83,7 @@ export default async function AdminPage() {
         <div>
           <h1 className="text-4xl font-bold text-foreground font-primary">Admin Dashboard</h1>
           <div className="flex items-center space-x-4 mt-2">
-            <p className="text-muted-foreground">Welcome back, {session.user.email}</p>
+            <p className="text-muted-foreground">Welcome back, {user.email}</p>
             <Badge className={getRoleBadgeColor(userRole)}>
               <Shield className="w-3 h-3 mr-1" />
               {userRole.toUpperCase()}

@@ -11,8 +11,9 @@ export const metadata: Metadata = {
   description: "Free resources, guides, and tools for marching band directors and educators.",
 }
 
-// Force dynamic to ensure we get latest resources
-export const dynamic = 'force-dynamic';
+// Use revalidation instead of force-dynamic for better performance
+export const revalidate = 60; // Revalidate every minute
+// export const dynamic = 'force-dynamic';
 
 async function getResources() {
   try {
@@ -44,12 +45,19 @@ export default async function ResourcesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {resourcesList.map((resource: any) => (
                 <Card key={resource.id} className="flex flex-col h-full">
-                  <div className="h-48 bg-primary/5 flex items-center justify-center border-b overflow-hidden relative">
+                  <div className="h-48 bg-muted flex items-center justify-center border-b overflow-hidden relative">
                     {resource.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={resource.imageUrl} alt={resource.title} className="w-full h-full object-cover" />
                     ) : (
-                      <FileText className="h-16 w-16 text-primary/40" />
+                      <div className="flex flex-col items-center justify-center opacity-20">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img 
+                          src="/placeholder-logo.png" 
+                          alt="Bright Designs" 
+                          className="h-24 w-24 object-contain grayscale"
+                        />
+                      </div>
                     )}
                   </div>
                   <CardHeader>

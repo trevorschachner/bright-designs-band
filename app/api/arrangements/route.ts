@@ -146,6 +146,9 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const { showId, displayOrder, tags: tagIds, ...rest } = body as any;
+  
+  console.log('POST /api/arrangements', { showId, displayOrder, typeOfDisplayOrder: typeof displayOrder });
+
   if (!showId) {
     return NextResponse.json({ error: 'showId is required' }, { status: 400 });
   }
@@ -189,7 +192,8 @@ export async function POST(request: Request) {
   if (rest.commissioned !== undefined) arrangementData.commissioned = rest.commissioned;
   if (rest.sampleScoreUrl !== undefined) arrangementData.sampleScoreUrl = rest.sampleScoreUrl;
   if (rest.copyrightAmountUsd !== undefined) arrangementData.copyrightAmountUsd = rest.copyrightAmountUsd ? Number(rest.copyrightAmountUsd) : null;
-  if (rest.displayOrder !== undefined) arrangementData.displayOrder = rest.displayOrder ? Number(rest.displayOrder) : 0;
+  // Use the destructured displayOrder, not rest.displayOrder (which is undefined)
+  if (displayOrder !== undefined) arrangementData.displayOrder = displayOrder ? Number(displayOrder) : 0;
 
   // Create arrangement (no direct FK on arrangements table anymore)
   const inserted = await db.insert(arrangements).values(arrangementData).returning({ id: arrangements.id });

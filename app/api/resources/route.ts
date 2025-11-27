@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resources } from '@/lib/database/schema';
+import { resources, files } from '@/lib/database/schema';
 import { desc, eq } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const data = await query;
 
-    return NextResponse.json(data);
+    return NextResponse.json({ data });
   } catch (error: any) {
     console.error('Error fetching resources:', error);
     return NextResponse.json({ error: 'Failed to fetch resources' }, { status: 500 });
@@ -40,14 +40,14 @@ export async function POST(request: NextRequest) {
     }
     
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user is staff
-    const userEmail = session.user?.email;
+    const userEmail = user?.email;
     if (!userEmail?.endsWith('@brightdesigns.band')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -89,6 +89,17 @@ export async function POST(request: NextRequest) {
       isActive: body.isActive ?? true,
       requiresContactForm: body.requiresContactForm ?? true,
     }).returning();
+
+    // Sync description to file record if exists
+    if (body.fileUrl && body.description) {
+      try {
+        await db.update(files)
+          .set({ description: body.description })
+          .where(eq(files.url, body.fileUrl));
+      } catch (e) {
+        console.warn('Failed to sync file description', e);
+      }
+    }
 
     return NextResponse.json(newResource);
   } catch (error: any) {

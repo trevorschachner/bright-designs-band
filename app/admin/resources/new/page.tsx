@@ -23,21 +23,70 @@ export default function NewResourcePage() {
     isActive: true,
     requiresContactForm: true,
   });
-  const [uploading, setUploading] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
+    setUploadingFile(true);
     setError('');
 
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('fileType', 'other'); // or detect type
+      // Dynamically determine fileType for API based on MIME
+      const mime = file.type;
+      let type = 'other';
+      if (mime.startsWith('image/')) type = 'image';
+      else if (mime.startsWith('audio/')) type = 'audio';
+      else if (mime === 'application/pdf') type = 'pdf';
+      
+      formData.append('fileType', type);
       formData.append('isPublic', 'true');
       formData.append('description', 'Resource File');
+
+      const response = await fetch('/api/files', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        // Try to parse JSON, but handle if it fails
+        let errorMessage = 'Upload failed';
+        try {
+            const data = await response.json();
+            errorMessage = data.error || errorMessage;
+        } catch (e) {
+            errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, fileUrl: data.data.url }));
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setError(err.message || 'Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileType', 'image');
+      formData.append('isPublic', 'true');
+      formData.append('description', 'Resource Image');
 
       const response = await fetch('/api/files', {
         method: 'POST',
@@ -50,12 +99,12 @@ export default function NewResourcePage() {
       }
 
       const data = await response.json();
-      setFormData(prev => ({ ...prev, fileUrl: data.data.url }));
+      setFormData(prev => ({ ...prev, imageUrl: data.data.url }));
     } catch (err: any) {
       console.error('Upload error:', err);
-      setError(err.message || 'Failed to upload file');
+      setError(err.message || 'Failed to upload image');
     } finally {
-      setUploading(false);
+      setUploadingImage(false);
     }
   };
 
@@ -136,14 +185,34 @@ export default function NewResourcePage() {
                   id="file"
                   type="file"
                   onChange={handleFileChange}
-                  disabled={uploading}
+                  disabled={uploadingFile}
                   className="cursor-pointer"
                 />
-                {uploading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {uploadingFile && <Loader2 className="h-4 w-4 animate-spin" />}
               </div>
               {formData.fileUrl && (
                 <p className="text-xs text-green-600 mt-1">
                   File uploaded successfully: {formData.fileUrl.split('/').pop()}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="image">Resource Image (Optional)</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={uploadingImage}
+                  className="cursor-pointer"
+                />
+                {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
+              </div>
+              {formData.imageUrl && (
+                <p className="text-xs text-green-600 mt-1">
+                  Image uploaded successfully: {formData.imageUrl.split('/').pop()}
                 </p>
               )}
             </div>
@@ -176,7 +245,7 @@ export default function NewResourcePage() {
               <Label htmlFor="requiresContactForm">Requires Contact Form (Gated)</Label>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting || uploading}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || uploadingFile || uploadingImage}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

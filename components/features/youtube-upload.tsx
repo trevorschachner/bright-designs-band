@@ -160,7 +160,7 @@ export function YouTubeUpload({
             <div>
               <Label className="text-sm font-medium">Preview:</Label>
               <div className="mt-2">
-                <YouTubePlayer url={url} title={description || 'Preview'} />
+                <YouTubePlayer youtubeUrl={url} />
               </div>
             </div>
           )}

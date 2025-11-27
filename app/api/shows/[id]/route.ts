@@ -106,6 +106,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const body = await request.json();
   const { tags: tagIds, ...showData } = body;
+  
+  console.log('PUT /api/shows/' + id, 'Received body:', JSON.stringify(body, null, 2));
 
   // Basic validation for required fields on update
   if ('title' in showData) {

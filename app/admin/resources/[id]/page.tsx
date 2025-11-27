@@ -30,7 +30,8 @@ export default function EditResourcePage() {
     isActive: true,
     requiresContactForm: true,
   });
-  const [uploading, setUploading] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -60,13 +61,20 @@ export default function EditResourcePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
+    setUploadingFile(true);
     setError('');
 
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('fileType', 'other'); 
+      // Dynamically determine fileType for API based on MIME
+      const mime = file.type;
+      let type = 'other';
+      if (mime.startsWith('image/')) type = 'image';
+      else if (mime.startsWith('audio/')) type = 'audio';
+      else if (mime === 'application/pdf') type = 'pdf';
+      
+      formData.append('fileType', type);
       formData.append('isPublic', 'true');
       formData.append('description', 'Resource File Update');
 
@@ -86,7 +94,41 @@ export default function EditResourcePage() {
       console.error('Upload error:', err);
       setError(err.message || 'Failed to upload file');
     } finally {
-      setUploading(false);
+      setUploadingFile(false);
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileType', 'image');
+      formData.append('isPublic', 'true');
+      formData.append('description', 'Resource Image Update');
+
+      const response = await fetch('/api/files', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, imageUrl: data.data.url }));
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setError(err.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -218,14 +260,34 @@ export default function EditResourcePage() {
                   id="file"
                   type="file"
                   onChange={handleFileChange}
-                  disabled={uploading}
+                  disabled={uploadingFile}
                   className="cursor-pointer"
                 />
-                {uploading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {uploadingFile && <Loader2 className="h-4 w-4 animate-spin" />}
               </div>
               {formData.fileUrl && (
                 <p className="text-xs text-muted-foreground mt-1 break-all">
                   Current: {formData.fileUrl}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="image">Update Image (Thumbnail)</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={uploadingImage}
+                  className="cursor-pointer"
+                />
+                {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
+              </div>
+              {formData.imageUrl && (
+                <p className="text-xs text-muted-foreground mt-1 break-all">
+                  Current: {formData.imageUrl}
                 </p>
               )}
             </div>
@@ -257,7 +319,7 @@ export default function EditResourcePage() {
               <Label htmlFor="requiresContactForm">Requires Contact Form (Gated)</Label>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting || uploading}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || uploadingFile || uploadingImage}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

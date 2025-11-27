@@ -14,5 +14,8 @@ export const showSchema = z.object({
   songTitle: z.string().optional(),
   bpm: z.number().int().positive().optional().nullable(),
   duration: z.string().optional(),
+  displayOrder: z.number().int().optional().nullable(),
   tags: z.array(z.number()).optional(),
+  thumbnailUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
 });
