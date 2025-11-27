@@ -5,21 +5,7 @@ import { FilterPreset, FilterState } from './types';
  */
 
 // Shows presets
-export const SHOWS_PRESETS: FilterPreset[] = [
-  {
-    id: 'featured',
-    name: 'Featured',
-    description: 'Editor’s picks',
-    filters: {
-      conditions: [
-        { field: 'featured', operator: 'equals', value: true }
-      ],
-      sort: [
-        { field: 'createdAt', direction: 'desc' }
-      ]
-    }
-  },
-];
+export const SHOWS_PRESETS: FilterPreset[] = [];
 
 // Arrangements presets
 export const ARRANGEMENTS_PRESETS: FilterPreset[] = [

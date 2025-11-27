@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { 
   Image as ImageIcon, 
   Music, 
@@ -185,7 +186,7 @@ export function FileGallery({
                <Video className="w-5 h-5 text-bright-primary" />
                <span className="font-medium">{file.originalName}</span>
              </div>
-             <YouTubePlayer url={file.url} title={file.originalName} />
+             <YouTubePlayer youtubeUrl={file.url} />
            </div>
          )
       
@@ -302,61 +303,70 @@ export function FileGallery({
         </div>
       ) : (
         // List layout for other file types
-        <div className="space-y-4">
-          {files.map((file) => (
-            <Card key={file.id} className="frame-card">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0 mt-1">
+        <div className="border rounded-md overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[30px]"></TableHead>
+                <TableHead>File</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Size</TableHead>
+                <TableHead className="w-[80px]">Public</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {files.map((file) => (
+                <TableRow key={file.id}>
+                  <TableCell>
                     {getFileIcon(file.fileType)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium truncate">{file.originalName}</h4>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-xs">
-                          {file.fileType}
-                        </Badge>
-                        {!file.isPublic && (
-                          <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700">
-                            Private
-                          </Badge>
-                        )}
-                      </div>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span className="truncate max-w-[300px]" title={file.originalName}>
+                        {file.originalName}
+                      </span>
+                      {/* Optional inline preview for audio could go here if needed, but keeping it simple for now */}
                     </div>
-                    {file.description && (
-                      <p className="text-sm text-muted-foreground mb-3">{file.description}</p>
-                    )}
-                    <div className="mb-4">
-                      {renderFilePreview(file)}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">{formatFileSize(file.fileSize)}</span>
-                      <div className="flex space-x-2">
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={file.url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Open
-                          </a>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{file.fileType}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">{file.description || '—'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">{formatFileSize(file.fileSize)}</span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={file.isPublic ? "default" : "secondary"}>
+                      {file.isPublic ? 'Public' : 'Private'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="ghost" asChild>
+                        <a href={file.url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </Button>
+                      {editable && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(file.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
-                        {editable && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDelete(file.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

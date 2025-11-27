@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { requirePermission } from '@/lib/auth/roles';
 import { Suspense } from 'react';
 import ShowsTable from './ShowsTable';
-import BackfillImagesButton from './BackfillImagesButton';
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -16,13 +15,13 @@ import {
 
 export default async function ManageShowsPage() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect('/login');
   }
 
-  if (!requirePermission(session.user.email, 'canManageShows')) {
+  if (!requirePermission(user.email, 'canManageShows')) {
     redirect('/'); // Or redirect to an unauthorized page
   }
 
@@ -42,7 +41,6 @@ export default async function ManageShowsPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Manage Shows</h1>
         <div className="flex items-center gap-3">
-          <BackfillImagesButton />
           <Link href="/admin/shows/new" className="bg-primary text-primary-foreground px-4 py-2 rounded">
             Add New Show
           </Link>

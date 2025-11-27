@@ -6,22 +6,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { 
   Upload, 
   X, 
   File, 
-  Image, 
+  Image as ImageIcon, 
   Music, 
   Video, 
   FileText,
   CheckCircle,
   AlertCircle,
-  Trash2
+  Play
 } from 'lucide-react'
 
 interface FileUploadProps {
@@ -33,6 +33,7 @@ interface FileUploadProps {
   maxFiles?: number
   title?: string
   description?: string
+  variant?: 'default' | 'button' | 'compact'
 }
 
 interface UploadingFile {
@@ -57,6 +58,7 @@ export function FileUpload({
   maxFiles = 10,
   title,
   description,
+  variant = 'default',
 }: FileUploadProps) {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
@@ -64,9 +66,10 @@ export function FileUpload({
 
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
-      case 'image': return <Image className="w-4 h-4" />
+      case 'image': return <ImageIcon className="w-4 h-4" />
       case 'audio': return <Music className="w-4 h-4" />
-      case 'video': return <Video className="w-4 h-4" />
+      case 'video': 
+      case 'youtube': return <Video className="w-4 h-4" />
       case 'pdf': return <FileText className="w-4 h-4" />
       case 'score': return <FileText className="w-4 h-4" />
       default: return <File className="w-4 h-4" />
@@ -232,6 +235,152 @@ export function FileUpload({
   const successFiles = uploadingFiles.filter(f => f.status === 'success')
   const errorFiles = uploadingFiles.filter(f => f.status === 'error')
 
+  // Button Trigger for Button/Compact variants
+  const UploadTrigger = (
+    <div className="inline-block">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileSelect(e.target.files)}
+      />
+      <Button 
+        variant="outline" 
+        onClick={() => fileInputRef.current?.click()}
+        className="gap-2"
+      >
+        <Upload className="w-4 h-4" />
+        Upload Files
+      </Button>
+    </div>
+  )
+
+  const CompactFileList = (
+    <div className="mt-4 border rounded-md overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[30px]"></TableHead>
+            <TableHead>File</TableHead>
+            <TableHead className="w-[120px]">Type</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead className="w-[80px]">Public</TableHead>
+            <TableHead className="w-[100px] text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {uploadingFiles.map((file) => (
+            <TableRow key={file.id}>
+              <TableCell>
+                {getFileIcon(file.fileType)}
+              </TableCell>
+              <TableCell className="font-medium">
+                <div className="flex flex-col">
+                  <span className="truncate max-w-[200px] text-sm" title={file.file?.name || file.youtubeUrl}>
+                    {file.file?.name || file.youtubeUrl || 'YouTube Video'}
+                  </span>
+                  {file.status === 'error' && (
+                    <span className="text-xs text-red-500">{file.error}</span>
+                  )}
+                  {file.status === 'uploading' && (
+                    <Progress value={file.progress} className="h-1 mt-1 w-full" />
+                  )}
+                  {file.status === 'success' && (
+                    <span className="text-xs text-green-500 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Uploaded
+                    </span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {file.status === 'pending' ? (
+                  <Select
+                    value={file.fileType}
+                    onValueChange={(value: any) => 
+                      updateFile(file.id, { fileType: value })
+                    }
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allowedTypes.map(type => (
+                        <SelectItem key={type} value={type}>
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge variant="outline">{file.fileType}</Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {file.status === 'pending' ? (
+                  <Input 
+                    value={file.description}
+                    onChange={(e) => updateFile(file.id, { description: e.target.value })}
+                    placeholder="Description..."
+                    className="h-8"
+                  />
+                ) : (
+                  <span className="text-sm text-muted-foreground">{file.description || '—'}</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {file.status === 'pending' ? (
+                  <Switch
+                    checked={file.isPublic}
+                    onCheckedChange={(checked) => updateFile(file.id, { isPublic: checked })}
+                  />
+                ) : (
+                  <Badge variant={file.isPublic ? "default" : "secondary"}>
+                    {file.isPublic ? 'Public' : 'Private'}
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  {file.status === 'pending' && (
+                    <>
+                      <Button size="sm" onClick={() => uploadFile(file)}>Upload</Button>
+                      <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}><X className="w-4 h-4" /></Button>
+                    </>
+                  )}
+                  {file.status === 'error' && (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => uploadFile(file)}>Retry</Button>
+                      <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}><X className="w-4 h-4" /></Button>
+                    </>
+                  )}
+                  {file.status === 'success' && (
+                    <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}><X className="w-4 h-4" /></Button>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {pendingFiles.length > 0 && (
+        <div className="p-4 bg-muted/20 border-t flex justify-end">
+          <Button onClick={uploadAllFiles}>Upload All ({pendingFiles.length})</Button>
+        </div>
+      )}
+    </div>
+  )
+
+  if (variant === 'button' || variant === 'compact') {
+    return (
+      <div className="w-full">
+        {UploadTrigger}
+        {uploadingFiles.length > 0 && CompactFileList}
+      </div>
+    )
+  }
+
+  // Default Large Layout
   return (
     <Card className="w-full frame-card">
       <CardHeader>
@@ -444,4 +593,4 @@ export function FileUpload({
       </CardContent>
     </Card>
   )
-} 
+}

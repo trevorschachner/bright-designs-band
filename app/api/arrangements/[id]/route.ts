@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { getArrangementById } from '@/lib/database/supabase-queries';
-import { arrangements } from '@/lib/database/schema';
-import { eq } from 'drizzle-orm';
+import { arrangements, arrangementsToTags, showArrangements } from '@/lib/database/schema';
+import { eq, and } from 'drizzle-orm';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -89,20 +89,51 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     console.log('PUT /api/arrangements/' + arrangementId, 'Drizzle payload:', JSON.stringify(drizzlePayload, null, 2));
 
-    try {
-      const [updatedArrangement] = await db
-        .update(arrangements)
-        .set(drizzlePayload)
-        .where(eq(arrangements.id, arrangementId))
-        .returning();
+    const tagIds = body.tags;
+    const showId = body.show_id;
 
-      if (!updatedArrangement) {
-        console.error('PUT /api/arrangements/' + arrangementId, 'Update returned no rows');
-        return NextResponse.json(
-          { error: 'Arrangement not found or update failed' },
-          { status: 404 }
-        );
-      }
+    try {
+      const updatedArrangement = await db.transaction(async (tx: any) => {
+        const [updated] = await tx
+          .update(arrangements)
+          .set(drizzlePayload)
+          .where(eq(arrangements.id, arrangementId))
+          .returning();
+
+        if (!updated) {
+          throw new Error('Arrangement not found or update failed');
+        }
+
+        // Update order in show_arrangements if showId and displayOrder are provided
+        if (showId && drizzlePayload.displayOrder !== undefined) {
+          await tx
+            .update(showArrangements)
+            .set({ orderIndex: drizzlePayload.displayOrder })
+            .where(
+              and(
+                eq(showArrangements.showId, Number(showId)),
+                eq(showArrangements.arrangementId, arrangementId)
+              )
+            );
+        }
+
+        if (tagIds && Array.isArray(tagIds)) {
+          // Delete existing tags
+          await tx.delete(arrangementsToTags).where(eq(arrangementsToTags.arrangementId, arrangementId));
+          
+          // Insert new tags
+          if (tagIds.length > 0) {
+            await tx.insert(arrangementsToTags).values(
+              tagIds.map((tagId: number) => ({
+                arrangementId,
+                tagId,
+              }))
+            );
+          }
+        }
+        
+        return updated;
+      });
 
       console.log('PUT /api/arrangements/' + arrangementId, 'Successfully updated');
       return NextResponse.json(updatedArrangement);

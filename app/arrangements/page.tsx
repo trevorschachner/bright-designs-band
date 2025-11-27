@@ -2,15 +2,21 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Music, Users, Loader, Play, FileText } from "lucide-react";
+import { Music, Loader, FileText, ExternalLink } from "lucide-react";
 import { FilterBar } from "@/components/features/filters/filter-bar";
 import { Pagination } from "@/components/features/filters/pagination";
 import { useFilterState } from "@/lib/hooks/use-filter-state";
 import { ARRANGEMENTS_FILTER_FIELDS } from "@/lib/filters/schema-analyzer";
-import { ARRANGEMENTS_PRESETS } from "@/lib/filters/presets";
 import { FilteredResponse } from "@/lib/filters/types";
 
 interface ArrangementFile { id: number; fileType: string; url: string }
@@ -23,12 +29,13 @@ interface Arrangement {
   duration_seconds?: number | null;
   durationSeconds?: number | null;
   files?: ArrangementFile[];
+  showArrangements?: { show: { id: number; title: string; slug: string } }[];
 }
 
 export default function ArrangementsPage() {
   const { filterState, setFilterState } = useFilterState({
     defaultState: {
-      limit: 12 // Show more items per page for grid layout
+      limit: 25 // Show more items per page for grid layout
     }
   });
 
@@ -124,7 +131,6 @@ export default function ArrangementsPage() {
           filterState={filterState}
           onFilterStateChange={setFilterState}
           filterFields={ARRANGEMENTS_FILTER_FIELDS}
-          presets={ARRANGEMENTS_PRESETS}
           isLoading={isLoading}
           totalResults={arrangementsResponse?.pagination.total}
         />
@@ -138,81 +144,105 @@ export default function ArrangementsPage() {
         </div>
       )}
 
-      {/* Arrangements Grid */}
+      {/* Arrangements Table */}
       {arrangementsResponse && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-            {arrangementsResponse.data.map((arrangement) => {
-              const title = arrangement.title || 'Arrangement'
-              const composer = arrangement.composer
-              const duration = (arrangement.durationSeconds ?? arrangement.duration_seconds) as number | undefined
-              const files = arrangement.files || []
-              const audio = files.find(f => f.fileType === 'audio')
-              const sampleScore = (arrangement.sampleScoreUrl ?? (arrangement as any).sample_score_url) as string | undefined
-              const formatSeconds = (total?: number) => {
-                if (!total || total < 0) return '—'
-                const m = Math.floor(total / 60)
-                const s = total % 60
-                return `${m}:${String(s).padStart(2, '0')}`
-              }
-              return (
-              <Card
-                key={arrangement.id}
-                className={`frame-card ${
-                  isLoading ? 'opacity-50' : ''
-                }`}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <CardTitle className="text-xl font-primary flex-1">
-                      {title}
-                    </CardTitle>
-                  </div>
-                  <CardDescription className="text-sm">
-                    <div className="flex items-center gap-2">
-                      {composer ? (
-                        <>
-                          <Music className="w-4 h-4" />
-                          <span>Composer: {composer}</span>
-                        </>
-                      ) : null}
-                      <span className="ml-2 text-bright-primary">{formatSeconds(duration)}</span>
-                    </div>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
-                        <Play className="w-4 h-4" />
-                        Audio Preview
-                      </div>
-                      {audio ? (
-                        <audio controls className="w-full h-10 rounded-lg" preload="metadata">
-                          <source src={audio.url} />
-                        </audio>
-                      ) : (
-                        <div className="text-xs text-muted-foreground">No audio preview available.</div>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {sampleScore ? (
-                        <Button variant="outline" className="flex-1 sm:flex-none" asChild>
-                          <Link href={sampleScore} target="_blank" rel="noopener noreferrer">
-                            <FileText className="w-4 h-4 mr-2" /> Sample Score
-                          </Link>
-                        </Button>
-                      ) : null}
-                      <Button className="btn-primary flex-1 sm:flex-none" asChild>
-                        <Link href={`/arrangements/${arrangement.id}`}>
-                          View Details
+          <div className="rounded-md border mb-8 bg-card text-card-foreground shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[25%]">Title</TableHead>
+                  <TableHead className="w-[20%]">Show</TableHead>
+                  <TableHead className="w-[15%]">Composer</TableHead>
+                  <TableHead className="w-[10%]">Duration</TableHead>
+                  <TableHead className="w-[20%]">Audio</TableHead>
+                  <TableHead className="w-[10%] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {arrangementsResponse.data.map((arrangement) => {
+                  const title = arrangement.title || 'Arrangement'
+                  const composer = arrangement.composer
+                  const duration = (arrangement.durationSeconds ?? arrangement.duration_seconds) as number | undefined
+                  const files = arrangement.files || []
+                  const audio = files.find(f => f.fileType === 'audio')
+                  const sampleScore = (arrangement.sampleScoreUrl ?? (arrangement as any).sample_score_url) as string | undefined
+                  const formatSeconds = (total?: number) => {
+                    if (!total || total < 0) return '—'
+                    const m = Math.floor(total / 60)
+                    const s = total % 60
+                    return `${m}:${String(s).padStart(2, '0')}`
+                  }
+
+                  const associatedShow = arrangement.showArrangements?.[0]?.show;
+
+                  return (
+                    <TableRow key={arrangement.id} className="group">
+                      <TableCell className="font-medium">
+                        <Link 
+                          href={`/arrangements/${arrangement.id}`}
+                          className="text-primary hover:underline font-primary text-lg"
+                        >
+                          {title}
                         </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )})}
+                      </TableCell>
+                      <TableCell>
+                        {associatedShow ? (
+                          <Link 
+                            href={`/shows/${associatedShow.slug}`}
+                            className="text-muted-foreground hover:text-primary hover:underline"
+                          >
+                            {associatedShow.title}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground text-sm italic">Independent</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {composer || <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-mono text-muted-foreground">
+                          {formatSeconds(duration)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {audio ? (
+                          <div className="flex items-center gap-2">
+                            <audio 
+                              controls 
+                              className="h-8 w-full max-w-[200px]" 
+                              preload="none"
+                              src={audio.url}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No audio</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {sampleScore && (
+                            <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                              <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score">
+                                <FileText className="w-4 h-4" />
+                                <span className="sr-only">Sample Score</span>
+                              </Link>
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                            <Link href={`/arrangements/${arrangement.id}`} title="View Details">
+                              <ExternalLink className="w-4 h-4" />
+                              <span className="sr-only">View Details</span>
+                            </Link>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
 
           {/* Empty State */}

@@ -1,4 +1,4 @@
-import { shows, showsToTags, showArrangements } from '@/lib/database/schema';
+import { shows, showsToTags, showArrangements, arrangementsToTags } from '@/lib/database/schema';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -47,7 +47,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         showArrangements: {
           orderBy: [showArrangements.orderIndex],
           with: {
-            arrangement: true,
+            arrangement: {
+              with: {
+                arrangementsToTags: {
+                  with: {
+                    tag: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -59,7 +67,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { showArrangements: sa = [], ...rest } = show as any;
     const normalized = {
       ...rest,
-      arrangements: (sa as any[]).map((item) => item.arrangement).filter(Boolean),
+      arrangements: (sa as any[]).map((item) => {
+        const arr = item.arrangement;
+        if (!arr) return null;
+        
+        // Flatten arrangement tags
+        const tags = (arr.arrangementsToTags || []).map((at: any) => at.tag);
+        
+        return {
+          ...arr,
+          tags,
+          arrangementsToTags: undefined, // Remove the junction array
+        };
+      }).filter(Boolean),
     };
     return NextResponse.json(normalized);
   } catch (e) {
@@ -86,6 +106,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const body = await request.json();
   const { tags: tagIds, ...showData } = body;
+  
+  console.log('PUT /api/shows/' + id, 'Received body:', JSON.stringify(body, null, 2));
 
   // Basic validation for required fields on update
   if ('title' in showData) {

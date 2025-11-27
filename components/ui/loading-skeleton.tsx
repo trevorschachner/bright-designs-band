@@ -1,13 +1,15 @@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { MarchingFormationLoader } from "@/components/ui/marching-formation-loader"
 
 export function PageLoadingSkeleton() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section Skeleton */}
-      <section className="relative py-20 sm:py-24 bg-gradient-to-b from-muted/50 to-background">
+      <section className="relative py-20 sm:py-24 bg-gradient-to-b from-muted/50 to-background flex flex-col items-center justify-center">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
+          <div className="max-w-4xl mx-auto text-center space-y-6 flex flex-col items-center">
+            <MarchingFormationLoader className="mb-6" />
             <Skeleton className="h-12 w-3/4 mx-auto" />
             <Skeleton className="h-6 w-full max-w-2xl mx-auto" />
             <Skeleton className="h-6 w-2/3 mx-auto" />
@@ -49,14 +51,15 @@ export function PageLoadingSkeleton() {
 export function ContentLoadingSkeleton() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <Skeleton className="h-10 w-3/4" />
-        <div className="space-y-4">
+      <div className="max-w-4xl mx-auto space-y-8 flex flex-col items-center">
+        <MarchingFormationLoader className="mb-8" />
+        <Skeleton className="h-10 w-3/4 w-full" />
+        <div className="space-y-4 w-full">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-2/3" />

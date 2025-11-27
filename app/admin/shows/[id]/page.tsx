@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { formatDuration, parseDuration } from '@/lib/utils';
 
 export default function EditShowPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function EditShowPage() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [arrangements, setArrangements] = useState<any[]>([]);
   const [showAddArrangementForm, setShowAddArrangementForm] = useState(false);
+  const [selectedArrangementTags, setSelectedArrangementTags] = useState<number[]>([]);
   const [newArrangement, setNewArrangement] = useState({
     title: '',
     composer: '',
@@ -39,6 +41,12 @@ export default function EditShowPage() {
     copyrightAmountUsd: '',
     displayOrder: ''
   });
+
+  const handleArrangementTagChange = (tagId: number) => {
+    setSelectedArrangementTags(prev =>
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    );
+  };
   const [editingArrangement, setEditingArrangement] = useState<number | null>(null);
   const [editingArrangementData, setEditingArrangementData] = useState<any>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -128,7 +136,7 @@ export default function EditShowPage() {
         description: newArrangement.description || null,
         grade: newArrangement.grade || null,
         year: newArrangement.year ? Number(newArrangement.year) : null,
-        durationSeconds: newArrangement.durationSeconds ? Number(newArrangement.durationSeconds) : null,
+        durationSeconds: newArrangement.durationSeconds ? parseDuration(newArrangement.durationSeconds) : null,
         scene: newArrangement.scene || null,
         ensembleSize: newArrangement.ensembleSize || null,
         youtubeUrl: newArrangement.youtubeUrl || null,
@@ -137,6 +145,7 @@ export default function EditShowPage() {
         copyrightAmountUsd: newArrangement.copyrightAmountUsd ? Number(newArrangement.copyrightAmountUsd) : null,
         displayOrder: newArrangement.displayOrder ? Number(newArrangement.displayOrder) : undefined,
         showId: show?.id,
+        tags: selectedArrangementTags,
       };
 
     const response = await fetch('/api/arrangements', {
@@ -164,6 +173,7 @@ export default function EditShowPage() {
           copyrightAmountUsd: '',
           displayOrder: ''
         });
+        setSelectedArrangementTags([]);
         setShowAddArrangementForm(false);
         // Reload arrangements
         fetch(`/api/shows/${id}`)
@@ -190,7 +200,7 @@ export default function EditShowPage() {
       description: arrangement.description || '',
       grade: arrangement.grade || '',
       year: arrangement.year || '',
-      durationSeconds: arrangement.durationSeconds || arrangement.duration_seconds || '',
+      durationSeconds: arrangement.durationSeconds || arrangement.duration_seconds ? formatDuration(arrangement.durationSeconds || arrangement.duration_seconds) : '',
       scene: arrangement.scene || '',
       ensembleSize: arrangement.ensembleSize || arrangement.ensemble_size || '',
       youtubeUrl: arrangement.youtubeUrl || arrangement.youtube_url || '',
@@ -199,6 +209,7 @@ export default function EditShowPage() {
       copyrightAmountUsd: arrangement.copyrightAmountUsd || arrangement.copyright_amount_usd || '',
       displayOrder: arrangement.displayOrder || arrangement.display_order || 0,
     });
+    setSelectedArrangementTags((arrangement.tags || []).map((t: any) => t.id));
   };
 
   const handleSaveArrangement = async (arrangementId: number) => {
@@ -214,7 +225,7 @@ export default function EditShowPage() {
         description: editingArrangementData.description || null,
         grade: editingArrangementData.grade || null,
         year: editingArrangementData.year ? Number(editingArrangementData.year) : null,
-        duration_seconds: editingArrangementData.durationSeconds ? Number(editingArrangementData.durationSeconds) : null,
+        duration_seconds: editingArrangementData.durationSeconds ? parseDuration(editingArrangementData.durationSeconds) : null,
         scene: editingArrangementData.scene || null,
         ensemble_size: editingArrangementData.ensembleSize || null,
         youtube_url: editingArrangementData.youtubeUrl || null,
@@ -222,6 +233,8 @@ export default function EditShowPage() {
         sample_score_url: editingArrangementData.sampleScoreUrl || null,
         copyright_amount_usd: editingArrangementData.copyrightAmountUsd ? Number(editingArrangementData.copyrightAmountUsd) : null,
         display_order: editingArrangementData.displayOrder ? Number(editingArrangementData.displayOrder) : 0,
+        show_id: show?.id,
+        tags: selectedArrangementTags,
       };
 
       const response = await fetch(`/api/arrangements/${arrangementId}`, {
@@ -233,6 +246,7 @@ export default function EditShowPage() {
     if (response.ok) {
         setEditingArrangement(null);
         setEditingArrangementData(null);
+        setSelectedArrangementTags([]);
         // Reload arrangements
       fetch(`/api/shows/${id}`)
         .then(res => res.json())
@@ -541,6 +555,7 @@ export default function EditShowPage() {
           maxFiles={1}
           title="Show Image Upload"
           description={`Upload the featured image for ${show.title || 'this show'}. Images are automatically linked to this show.`}
+          variant="button"
           onUploadSuccess={() => setFilesVersion(v => v + 1)}
           onUploadError={(err) => console.error('Show image upload error:', err)}
         />
@@ -800,10 +815,11 @@ export default function EditShowPage() {
                     />
                   </div>
                   <div>
-                    <label className="block mb-2 text-sm font-medium">Duration (seconds)</label>
+                    <label className="block mb-2 text-sm font-medium">Duration (mm:ss)</label>
                     <input 
                       className="w-full p-2 border rounded" 
-                      type="number" 
+                      type="text" 
+                      placeholder="e.g. 4:30"
                       value={newArrangement.durationSeconds} 
                       onChange={(e) => setNewArrangement({ ...newArrangement, durationSeconds: e.target.value })} 
                     />
@@ -863,7 +879,24 @@ export default function EditShowPage() {
                       onChange={(e) => setNewArrangement({ ...newArrangement, commissioned: e.target.value })} 
                     />
           </div>
-          </div>
+                  <div className="md:col-span-2">
+                    <label className="block mb-2 text-sm font-medium">Tags</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 border rounded bg-muted/30">
+                      {tags.map(tag => (
+                        <div key={tag.id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`arr-tag-new-${tag.id}`}
+                            checked={selectedArrangementTags.includes(tag.id)}
+                            onChange={() => handleArrangementTagChange(tag.id)}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`arr-tag-new-${tag.id}`} className="text-sm cursor-pointer">{tag.name}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
           
                 <div className="flex gap-2 pt-4">
                   <Button 
@@ -896,6 +929,7 @@ export default function EditShowPage() {
                         displayOrder: ''
                       });
                       setSaveError(null);
+                      setSelectedArrangementTags([]);
                     }}
                   >
                     Cancel
@@ -924,6 +958,7 @@ export default function EditShowPage() {
                             setEditingArrangement(null);
                             setEditingArrangementData(null);
                             setSaveError(null);
+                            setSelectedArrangementTags([]);
                           }}
                         >
                           Cancel
@@ -1032,10 +1067,11 @@ export default function EditShowPage() {
                         />
                       </div>
                       <div>
-                        <label className="block mb-2 text-sm font-medium">Duration (seconds)</label>
+                        <label className="block mb-2 text-sm font-medium">Duration (mm:ss)</label>
                         <input 
                           className="w-full p-2 border rounded" 
-                          type="number" 
+                          type="text" 
+                          placeholder="e.g. 4:30"
                           value={editingArrangementData?.durationSeconds || ''} 
                           onChange={(e) => setEditingArrangementData({ ...editingArrangementData, durationSeconds: e.target.value })} 
                         />
@@ -1095,6 +1131,23 @@ export default function EditShowPage() {
                           onChange={(e) => setEditingArrangementData({ ...editingArrangementData, commissioned: e.target.value })} 
                         />
                       </div>
+                      <div className="md:col-span-2">
+                        <label className="block mb-2 text-sm font-medium">Tags</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 border rounded bg-muted/30">
+                          {tags.map(tag => (
+                            <div key={tag.id} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                id={`arr-tag-edit-${tag.id}`}
+                                checked={selectedArrangementTags.includes(tag.id)}
+                                onChange={() => handleArrangementTagChange(tag.id)}
+                                className="mr-2"
+                              />
+                              <label htmlFor={`arr-tag-edit-${tag.id}`} className="text-sm cursor-pointer">{tag.name}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1104,8 +1157,9 @@ export default function EditShowPage() {
                       <div>
                         <h3 className="text-lg font-semibold">{arrangement.title || 'Untitled'}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {arrangement.displayOrder !== undefined && <span className="ml-2">Order: {arrangement.displayOrder}</span>}
-                          {arrangement.scene && <span className="ml-2">Scene: {arrangement.scene}</span>}
+                          {arrangement.displayOrder !== undefined && <span className="mr-2">Order: {arrangement.displayOrder}</span>}
+                          {arrangement.durationSeconds && <span className="mr-2">Duration: {formatDuration(arrangement.durationSeconds)}</span>}
+                          {arrangement.scene && <span>Scene: {arrangement.scene}</span>}
                         </p>
                         {(arrangement.composer || arrangement.arranger || arrangement.percussionArranger || arrangement.percussion_arranger) && (
                           <p className="text-sm text-muted-foreground mt-1">
@@ -1115,6 +1169,15 @@ export default function EditShowPage() {
                               <span className="ml-2">Percussion: {arrangement.percussionArranger || arrangement.percussion_arranger}</span>
                             )}
                           </p>
+                        )}
+                        {arrangement.tags && arrangement.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {arrangement.tags.map((tag: any) => (
+                              <Badge key={tag.id} variant="secondary" className="text-xs">
+                                {tag.name}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -1134,17 +1197,20 @@ export default function EditShowPage() {
                     
                     {/* File Upload for this Arrangement */}
                     <div className="mt-4 pt-4 border-t">
-                      <h4 className="text-sm font-medium mb-3">Upload Files for this Arrangement</h4>
-                      <FileUpload 
-                        arrangementId={arrangement.id}
-                        showId={show?.id}
-                        allowedTypes={['audio', 'image', 'pdf', 'score']}
-                        onUploadSuccess={() => setFilesVersion(v => v + 1)}
-                        onUploadError={(err) => console.error('Upload error:', err)}
-                      />
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium">Files</h4>
+                        <FileUpload 
+                          arrangementId={arrangement.id}
+                          showId={show?.id}
+                          allowedTypes={['audio', 'image', 'pdf', 'score']}
+                          variant="button"
+                          onUploadSuccess={() => setFilesVersion(v => v + 1)}
+                          onUploadError={(err) => console.error('Upload error:', err)}
+                        />
+                      </div>
                       
                       {/* Gallery of files for this arrangement */}
-                      <div className="mt-4">
+                      <div>
                         <FileGallery 
                           key={`arrangement-${arrangement.id}-${filesVersion}`}
                           arrangementId={arrangement.id}
@@ -1162,24 +1228,27 @@ export default function EditShowPage() {
       </div>
 
       {/* Files section */}
-      <div className="max-w-3xl mx-auto mt-12">
-        <h2 className="text-2xl font-bold mb-4">Files</h2>
+      <div className="max-w-3xl mx-auto mt-12 mb-24">
+        <h2 className="text-2xl font-bold mb-4">Additional Show Files</h2>
         <div className="grid grid-cols-1 gap-8">
-          {/* Upload files for this show */}
-          <FileUpload 
-            showId={show?.id}
-            title="Additional File Uploads"
-            description="Upload supporting audio, scores, or documents for this show."
-            onUploadSuccess={() => setFilesVersion(v => v + 1)}
-            onUploadError={(err) => console.error('Upload error:', err)}
-          />
+          <div className="flex gap-4 items-start">
+             {/* Upload files for this show */}
+            <FileUpload 
+              showId={show?.id}
+              title="Additional File Uploads"
+              description="Upload supporting audio, scores, or documents for this show."
+              variant="button"
+              onUploadSuccess={() => setFilesVersion(v => v + 1)}
+              onUploadError={(err) => console.error('Upload error:', err)}
+            />
 
-        {/* Add YouTube link for this show */}
-          <YouTubeUpload 
-            showId={show?.id}
-            onUploadSuccess={() => setFilesVersion(v => v + 1)}
-            onUploadError={(err) => console.error('YouTube upload error:', err)}
-          />
+            {/* Add YouTube link for this show */}
+            <YouTubeUpload 
+              showId={show?.id}
+              onUploadSuccess={() => setFilesVersion(v => v + 1)}
+              onUploadError={(err) => console.error('YouTube upload error:', err)}
+            />
+          </div>
 
           {/* Gallery of all files for this show */}
           <div>

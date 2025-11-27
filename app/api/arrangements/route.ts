@@ -1,4 +1,4 @@
-import { arrangements, files, showArrangements } from '@/lib/database/schema';
+import { arrangements, files, showArrangements, arrangementsToTags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     
     // Default pagination
     const page = filterState.page || 1;
-    const limit = filterState.limit || 20;
+    const limit = filterState.limit || 25;
     const offset = (page - 1) * limit;
 
     // Build base query with conditional chaining
@@ -91,16 +91,30 @@ export async function GET(request: Request) {
             where: (files: any, { eq }: any) => eq(files.isPublic, true),
             orderBy: [files.displayOrder, files.createdAt],
           },
+          showArrangements: {
+            with: {
+              show: {
+                columns: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                },
+              },
+            },
+          },
         },
       })
     ]);
 
     const total = totalResult[0]?.count || 0;
 
+    // Ensure the response pagination reflects the actual limit used (25) even if not in URL
+    const activeFilterState = { ...filterState, limit };
+
     const response = QueryBuilder.buildFilteredResponse(
       arrangementsWithRelations,
       total,
-      filterState
+      activeFilterState
     );
 
     return NextResponse.json(response);
@@ -131,7 +145,10 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { showId, displayOrder, ...rest } = body as any;
+  const { showId, displayOrder, tags: tagIds, ...rest } = body as any;
+  
+  console.log('POST /api/arrangements', { showId, displayOrder, typeOfDisplayOrder: typeof displayOrder });
+
   if (!showId) {
     return NextResponse.json({ error: 'showId is required' }, { status: 400 });
   }
@@ -175,7 +192,8 @@ export async function POST(request: Request) {
   if (rest.commissioned !== undefined) arrangementData.commissioned = rest.commissioned;
   if (rest.sampleScoreUrl !== undefined) arrangementData.sampleScoreUrl = rest.sampleScoreUrl;
   if (rest.copyrightAmountUsd !== undefined) arrangementData.copyrightAmountUsd = rest.copyrightAmountUsd ? Number(rest.copyrightAmountUsd) : null;
-  if (rest.displayOrder !== undefined) arrangementData.displayOrder = rest.displayOrder ? Number(rest.displayOrder) : 0;
+  // Use the destructured displayOrder, not rest.displayOrder (which is undefined)
+  if (displayOrder !== undefined) arrangementData.displayOrder = displayOrder ? Number(displayOrder) : 0;
 
   // Create arrangement (no direct FK on arrangements table anymore)
   const inserted = await db.insert(arrangements).values(arrangementData).returning({ id: arrangements.id });
@@ -190,6 +208,16 @@ export async function POST(request: Request) {
     arrangementId: newId,
     orderIndex: finalOrder,
   });
+
+  // Insert tags if provided
+  if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+    await db.insert(arrangementsToTags).values(
+      tagIds.map((tagId: number) => ({
+        arrangementId: newId,
+        tagId,
+      }))
+    );
+  }
 
   return NextResponse.json({ id: newId, showId: Number(showId), orderIndex: finalOrder });
 }

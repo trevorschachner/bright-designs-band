@@ -6,6 +6,7 @@ import { InquiryForm } from '@/components/forms/inquiry-form'
 import { toast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Mail } from 'lucide-react'
+import confetti from 'canvas-confetti'
 
 interface ContactPayload {
   type: 'inquiry' | 'contact';
@@ -33,6 +34,31 @@ export default function ContactPage() {
       if (!response.ok) {
         throw new Error('Something went wrong');
       }
+
+      // Trigger confetti
+      const end = Date.now() + 3 * 1000; // 3 seconds
+      const colors = ['#2563eb', '#ffffff'];
+
+      (function frame() {
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: colors
+        });
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: colors
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
 
       toast({
         title: "Inquiry Submitted!",

@@ -163,7 +163,7 @@ export const ARRANGEMENTS_SCHEMA: TableSchema = {
 // Generate filter fields for our tables with custom definitions
 const baseShowsFields = SchemaAnalyzer.generateFilterFields(
   SHOWS_SCHEMA, 
-  ['id', 'description', 'createdAt'] // Exclude technical/internal fields
+  ['id', 'description', 'createdAt', 'featured'] // Exclude technical/internal fields
 );
 
 // Add custom definitions and enhance fields

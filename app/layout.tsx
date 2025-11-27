@@ -16,6 +16,9 @@ import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
 import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
+import { GlobalSpotlight } from "@/components/ui/global-spotlight"
+import { GlobalBackground } from "@/components/ui/global-background"
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -78,6 +81,8 @@ export default function RootLayout({
         */}
         
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <GlobalBackground />
+          <GlobalSpotlight />
           <ShowPlanProvider>
             <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
             <Suspense fallback={<PageLoadingSkeleton />}>

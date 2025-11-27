@@ -25,6 +25,7 @@ export default function NewShowPage() {
   const [year, setYear] = useState('');
   const [difficulty, setDifficulty] = useState('Intermediate');
   const [duration, setDuration] = useState('');
+  const [displayOrder, setDisplayOrder] = useState('0');
   const [description, setDescription] = useState('');
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
@@ -104,6 +105,7 @@ export default function NewShowPage() {
         title,
         difficulty,
         duration,
+        displayOrder: parseInt(displayOrder) || 0,
         description,
         tags: selectedTags,
       };
@@ -244,6 +246,17 @@ export default function NewShowPage() {
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="e.g., 8:30"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="displayOrder">Display Order</Label>
+              <Input
+                id="displayOrder"
+                type="number"
+                value={displayOrder}
+                onChange={(e) => setDisplayOrder(e.target.value)}
+                placeholder="0"
               />
             </div>
 
