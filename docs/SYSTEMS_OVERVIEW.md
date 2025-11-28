@@ -217,11 +217,8 @@ ADMIN_EMAIL="your-email@brightdesigns.band"
   - Built-in analytics
 
 **Environments**:
-- **Development**: `dev.brightdesigns.band`
-  - Auto-deploys from `main` branch
-  - Testing environment
 - **Production**: `brightdesigns.band`
-  - Manual promotion from dev
+  - Auto-deploys from `main` branch
   - Production environment
 
 **Configuration**: 

@@ -22,7 +22,7 @@ export function PageHero({
   const alignment = align === "center" ? "text-center" : "text-left"
 
   return (
-    <section id={id} className={`plus-section bg-background ${className ?? ""}`}>
+    <section id={id} className={`plus-section ${className ?? ""}`}>
       <div className={`plus-container ${alignment} ${containerClassName ?? ""}`}>
         <h1 className="plus-h1 mb-4">{title}</h1>
         {subtitle ? (
