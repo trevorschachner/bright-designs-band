@@ -11,7 +11,7 @@ import Link from "next/link"
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <PageHero
@@ -359,7 +359,7 @@ export default function AboutPage() {
                   </tr>
                   <tr className="hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Markell Allan</span>
+                      <span className="font-bold text-foreground font-heading">Markell Allen</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="italic text-bright-third">Graphic Design, Color Guard, Visual Design</span>

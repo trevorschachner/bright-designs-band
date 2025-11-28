@@ -2,12 +2,11 @@
 
 ## Overview
 
-This guide covers deploying the Bright Designs Band Next.js application to Netlify for both development and production environments.
+This guide covers deploying the Bright Designs Band Next.js application to Netlify for the production environment.
 
 ## Architecture
 
-- **Dev Environment**: `dev.brightdesigns.band` - Auto-deploys from `main` branch
-- **Production Environment**: `brightdesigns.band` - Will replace current Webflow site when ready
+- **Production Environment**: `brightdesigns.band` - Auto-deploys from `main` branch
 
 ## Configuration Files
 
@@ -38,7 +37,7 @@ All deployments require the following environment variables. See `.env.example` 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `NODE_VERSION` | Node.js version for builds | `18` |
-| `NEXT_PUBLIC_SITE_URL` | Full URL of the deployment | `https://dev.brightdesigns.band` |
+| `NEXT_PUBLIC_SITE_URL` | Full URL of the deployment | `https://brightdesigns.band` |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | `https://xxx.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | From Supabase dashboard |
 | `EMAIL_SERVICE` | Email service to use | `resend` |
@@ -59,7 +58,7 @@ All deployments require the following environment variables. See `.env.example` 
 3. Choose "Sign up with GitHub" (recommended)
 4. Authorize Netlify to access your GitHub repositories
 
-## Step 2: Deploy Development Environment
+## Step 2: Create Production Site
 
 ### Create New Site
 
@@ -83,7 +82,7 @@ Netlify should auto-detect Next.js settings. Verify:
 
 ```
 NODE_VERSION=18
-NEXT_PUBLIC_SITE_URL=https://dev.brightdesigns.band
+NEXT_PUBLIC_SITE_URL=https://brightdesigns.band
 NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-key>
 EMAIL_SERVICE=resend
@@ -116,26 +115,27 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=<your-ga-id>
 
 1. Go to **Site settings** → **Domain management**
 2. Click **"Add custom domain"**
-3. Enter: `dev.brightdesigns.band`
-4. Click **"Verify"**
-5. Netlify will show DNS configuration needed
-
-You should see:
-- **Type**: CNAME
-- **Name**: `dev`
-- **Value**: `amazing-site-123.netlify.app`
+3. Enter: `brightdesigns.band`
+4. Also add: `www.brightdesigns.band` (redirects to root)
+5. Click **"Verify"**
 
 ### In Squarespace Domains
 
 1. Log in to your Squarespace account
 2. Navigate to **Domains** → **brightdesigns.band** → **DNS Settings**
-3. Click **"Add Record"**
-4. Configure the CNAME record:
-   - **Record Type**: CNAME
-   - **Host**: `dev`
-   - **Data**: `amazing-site-123.netlify.app` (from Netlify)
-   - **TTL**: 3600 (or use automatic)
-5. Click **"Save"**
+3. Configure DNS records:
+
+**For root domain:**
+- **Type**: A Record
+- **Host**: `@`
+- **Value**: Netlify's IP address (shown in dashboard, usually `75.2.60.5`)
+
+**For www subdomain:**
+- **Type**: CNAME
+- **Host**: `www`
+- **Value**: Your Netlify site subdomain (e.g., `amazing-site-123.netlify.app`)
+
+4. Click **"Save"**
 
 **Note**: DNS propagation can take 5-60 minutes. You can check status at [https://dnschecker.org/](https://dnschecker.org/)
 
@@ -150,14 +150,12 @@ You should see:
 
 ## Step 5: Test Deployment
 
-Visit `https://dev.brightdesigns.band` and test:
+Visit `https://brightdesigns.band` and test:
 
 - ✅ Homepage loads correctly
 - ✅ Navigation works (shows, arrangements, about, etc.)
-- ✅ Dark/light theme toggle functions
 - ✅ Contact form sends emails (check spam folder)
 - ✅ Show pages load with Supabase data
-- ✅ Arrangement pages display correctly
 - ✅ Admin pages require authentication
 - ✅ File uploads/galleries work
 
@@ -165,7 +163,7 @@ Visit `https://dev.brightdesigns.band` and test:
 
 ### Auto-Publishing
 
-By default, every push to `main` triggers a deploy. This is perfect for dev environment.
+By default, every push to `main` triggers a deploy.
 
 ### Deploy Notifications
 
@@ -180,47 +178,6 @@ Create webhook URLs for manual or programmatic deploys:
 2. Click **"Add build hook"**
 3. Name it (e.g., "Manual Deploy")
 4. Save and copy webhook URL
-
-## Production Deployment
-
-When ready to migrate from Webflow to your Next.js site:
-
-### Step 1: Create Production Site
-
-1. Repeat **Step 2** above to create a second Netlify site
-2. Use these environment variables:
-
-```
-NEXT_PUBLIC_SITE_URL=https://brightdesigns.band
-```
-(All other variables remain the same)
-
-### Step 2: Configure Root Domain
-
-1. In the production Netlify site, add custom domain: `brightdesigns.band`
-2. Also add: `www.brightdesigns.band` (redirects to root)
-3. Update DNS in Squarespace:
-
-**For root domain:**
-- **Type**: A Record
-- **Host**: `@`
-- **Value**: Netlify's IP address (shown in dashboard)
-
-**For www subdomain:**
-- **Type**: CNAME
-- **Host**: `www`
-- **Value**: Your production Netlify URL
-
-### Step 3: Migration Checklist
-
-- [ ] Test all features on dev.brightdesigns.band
-- [ ] Update `NEXT_PUBLIC_SITE_URL` to production URL
-- [ ] Configure production Netlify site
-- [ ] Update DNS records in Squarespace
-- [ ] Wait for DNS propagation
-- [ ] Enable HTTPS on production
-- [ ] Test production site thoroughly
-- [ ] Disable/redirect Webflow site
 
 ## Troubleshooting
 
@@ -293,7 +250,7 @@ If the build fails with "Secrets scanning found secrets in build":
 When you push to `main`:
 1. Netlify automatically detects the change
 2. Starts a new build
-3. Deploys to dev.brightdesigns.band
+3. Deploys to brightdesigns.band
 4. Previous version remains available in deploy history
 
 ### Rollbacks
@@ -335,4 +292,3 @@ Consider paid plan ($19/month) if you exceed:
 - **Netlify Support**: [https://www.netlify.com/support/](https://www.netlify.com/support/)
 - **Community Forums**: [https://answers.netlify.com/](https://answers.netlify.com/)
 - **Status Page**: [https://www.netlifystatus.com/](https://www.netlifystatus.com/)
-

@@ -5,58 +5,14 @@ import ServicesGrid, { ServiceItem } from "@/components/features/services/servic
 import Testimonials from "@/components/features/testimonials"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import PageHero from "@/components/layout/page-hero"
-
 import Link from "next/link"
-// Using the API envelope shape without importing types to avoid server/type coupling
-
-
 import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
-
-// Force dynamic rendering to prevent build-time database connection issues
-export const dynamic = 'force-dynamic'
+import { getFeaturedShows } from "@/lib/services/shows"
 
 export default async function HomePage() {
-  // Trust Supabase-backed API for shape and schema
-  let featuredShows: any[] = [];
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
-    const res = await fetch(`${baseUrl}/api/shows?featured=true&limit=6`, { cache: 'no-store' });
-    const json = await res.json() as any;
-    const data = json?.data?.data || [];
-    featuredShows = data.map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      description: s.description,
-      year: s.year,
-      difficulty: s.difficulty,
-      duration: s.duration,
-      thumbnailUrl: s.thumbnailUrl || null,
-      graphicUrl: s.graphicUrl || null,
-      createdAt: s.createdAt || s.created_at,
-      showsToTags: s.showsToTags || [],
-    }));
-    // Fallback: if no featured shows are flagged, load latest shows
-    if (featuredShows.length === 0) {
-      const res2 = await fetch(`${baseUrl}/api/shows?limit=6`, { cache: 'no-store' });
-      const json2 = await res2.json() as any;
-      const data2 = json2?.data?.data || [];
-      featuredShows = data2.map((s: any) => ({
-        id: s.id,
-        title: s.title,
-        description: s.description,
-        year: s.year,
-        difficulty: s.difficulty,
-        duration: s.duration,
-        thumbnailUrl: s.thumbnailUrl || null,
-        graphicUrl: s.graphicUrl || null,
-        createdAt: s.createdAt || s.created_at,
-        showsToTags: s.showsToTags || [],
-      }));
-    }
-  } catch (error) {
-    console.error('Error fetching shows:', error);
-    featuredShows = [];
-  }
+  // Fetch cached featured shows from the service layer
+  const featuredShows = await getFeaturedShows();
+
   const homeServices: ServiceItem[] = [
     {
       title: "Custom Show Design",
@@ -85,7 +41,7 @@ export default async function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <PageHero
         title="Student centered marching band design."
@@ -161,7 +117,7 @@ export default async function HomePage() {
           {/* Show Grid - Featured Shows Only */}
           {featuredShows.length > 0 ? (
             <div className="plus-grid-3">
-              {featuredShows.map((show: any) => (
+              {featuredShows.map((show) => (
               <Card key={show.id}>
                 <div className="plus-divider mb-4 pb-4">
                   <div className="w-full aspect-video plus-border rounded-lg overflow-hidden bg-muted">
@@ -193,7 +149,7 @@ export default async function HomePage() {
                     <span>{show.duration}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 mb-6">
-                    {show.showsToTags.map((st: any) => (
+                    {show.showsToTags.map((st) => (
                       <span key={st.tag.id} className="plus-surface px-2 py-1 plus-caption">
                         {st.tag.name}
                       </span>
