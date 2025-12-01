@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
@@ -61,9 +62,9 @@ export function FileGallery({
 
   useEffect(() => {
     fetchFiles()
-  }, [showId, arrangementId, fileType])
+  }, [fetchFiles])
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams()
@@ -107,7 +108,7 @@ export function FileGallery({
     } finally {
       setLoading(false)
     }
-  }
+  }, [showId, arrangementId, fileType])
 
   const handleDelete = async (fileId: number) => {
     if (!confirm('Are you sure you want to delete this file?')) return
@@ -153,10 +154,12 @@ export function FileGallery({
       case 'image':
         return (
           <AspectRatio ratio={16 / 9}>
-            <img
+            <Image
               src={file.url}
               alt={file.originalName}
-              className="object-cover w-full h-full rounded-lg"
+              fill
+              className="object-cover rounded-lg"
+              unoptimized
             />
           </AspectRatio>
         )

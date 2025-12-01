@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -48,7 +48,7 @@ export default function AdminTable<T extends { id: number }>({
   const [deletingId, setDeletingId] = useState<number | string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(endpoint);
@@ -67,11 +67,11 @@ export default function AdminTable<T extends { id: number }>({
     } finally {
       setLoading(false);
     }
-  };
+  }, [endpoint, resourceName]);
 
   useEffect(() => {
     fetchData();
-  }, [endpoint, resourceName]);
+  }, [fetchData]);
 
   const handleDelete = async (id: number | string) => {
     try {

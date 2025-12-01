@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -312,10 +313,12 @@ export default function NewShowPage() {
               <div className="space-y-2">
                 <Label>Preview</Label>
                 <div className="relative w-full max-w-md aspect-video bg-muted rounded-lg overflow-hidden">
-                  <img
+                  <Image
                     src={thumbnailPreview}
                     alt="Thumbnail preview"
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
                   />
                 </div>
               </div>
