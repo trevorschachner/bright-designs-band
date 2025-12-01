@@ -5,8 +5,13 @@ const { createClient } = require('@supabase/supabase-js');
 
 config({ path: resolve(process.cwd(), '.env.local') });
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const sanitizeValue = (value) => {
+  if (!value || value === '****') return null;
+  return value.trim();
+};
+
+const url = sanitizeValue(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const key = sanitizeValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 if (!url || !key) {
   console.error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');

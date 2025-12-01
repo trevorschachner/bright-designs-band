@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { generateSitemapXML, staticRoutes, getDynamicRoutes } from '@/lib/seo/sitemap'
+import { getPublicSiteUrl } from '@/lib/env'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const envUrl = process.env.NEXT_PUBLIC_SITE_URL
-    const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://www.brightdesigns.band'
+    const baseUrl = getPublicSiteUrl()
     
     // Combine static and dynamic routes
     const dynamicRoutes = await getDynamicRoutes()

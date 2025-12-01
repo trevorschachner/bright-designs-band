@@ -18,6 +18,7 @@ import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
 import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
+import { getPublicSiteUrl } from "@/lib/env"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,9 +39,7 @@ const poppins = Poppins({
 // Enhanced SEO metadata using our new system
 export const metadata: Metadata = generateMetadata({
   ...defaultSEOConfig,
-  canonical: (process.env.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL !== '****') 
-    ? process.env.NEXT_PUBLIC_SITE_URL 
-    : 'https://www.brightdesigns.band'
+  canonical: getPublicSiteUrl(),
 })
 
 export default function RootLayout({
@@ -50,8 +49,8 @@ export default function RootLayout({
 }) {
   const resourceHints = generateResourceHints()
   // TODO(posthog): Restore PostHog environment variables when analytics go live.
-  // const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-  // const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
+  // const posthogKey = getPosthogKey()
+  // const posthogHost = getPosthogHost()
   
   return (
     <html lang="en" suppressHydrationWarning>

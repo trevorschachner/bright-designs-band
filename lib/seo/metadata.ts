@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { getOptionalPublicSiteUrl, sanitizePublicUrl } from '@/lib/env'
 
 export interface SEOConfig {
   title: string
@@ -35,10 +36,8 @@ export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
   const config = { ...defaultSEOConfig, ...seoConfig }
   
   // Set metadataBase to resolve social open graph and twitter images
-  let siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-  if (siteUrl === '****') siteUrl = null
-
-  const canonical = config.canonical === '****' ? null : config.canonical
+  const siteUrl = getOptionalPublicSiteUrl()
+  const canonical = sanitizePublicUrl(config.canonical)
   const baseUrl = siteUrl || canonical || 'https://www.brightdesigns.band'
   
   const metadata: Metadata = {

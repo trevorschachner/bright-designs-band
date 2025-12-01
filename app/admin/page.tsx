@@ -14,6 +14,7 @@ import {
   BreadcrumbPage 
 } from '@/components/ui/breadcrumb';
 import { getDashboardStats } from '@/lib/database/queries';
+import { getPosthogHost, getPosthogKey } from '@/lib/env';
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -40,8 +41,9 @@ export default async function AdminPage() {
 
   const userRole = getUserRole(user.email || '');
   const permissions = getUserPermissions(user.email || '');
-  const analyticsConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY);
-  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
+  const posthogKey = getPosthogKey()
+  const analyticsConfigured = Boolean(posthogKey);
+  const posthogHost = getPosthogHost();
 
   // Check if user has admin access
   if (!permissions.canAccessAdmin) {

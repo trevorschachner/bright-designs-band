@@ -4,6 +4,7 @@ import { eq, desc, notInArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { STORAGE_BUCKET, withRootPrefix } from "@/lib/storage";
 import { createClient } from "@supabase/supabase-js";
+import { getSupabaseConfig } from "@/lib/env";
 
 export type ShowSummary = {
   id: number;
@@ -25,9 +26,7 @@ function getPublicUrl(path: string | null): string | null {
   if (!path) return null;
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   
-  const envSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseUrl = (envSupabaseUrl && envSupabaseUrl !== '****') ? envSupabaseUrl : null;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 
   if (!supabaseUrl || !supabaseKey) return null;
 

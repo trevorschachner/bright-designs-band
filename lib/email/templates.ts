@@ -1,4 +1,5 @@
 import { ContactFormData } from './types';
+import { getPublicSiteUrl } from '@/lib/env';
 
 // Minimal HTML escapers to prevent XSS in email HTML templates
 // Text nodes: do not escape single quotes to preserve names like O'Brien
@@ -46,8 +47,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
     'solos': 'Solo Adjustments'
   };
 
-  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://brightdesigns.band';
+  const baseUrl = getPublicSiteUrl('https://brightdesigns.band');
   const logoUrl = `${baseUrl}/bright-designs-logo.png`;
 
   const html = `
@@ -519,8 +519,7 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
     'solos': 'Solo Adjustments'
   };
 
-  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://brightdesigns.band';
+  const baseUrl = getPublicSiteUrl('https://brightdesigns.band');
   const logoUrl = `${baseUrl}/bright-designs-logo.png`;
 
   const html = `

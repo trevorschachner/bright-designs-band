@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { getSupabaseConfig } from '@/lib/env'
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
@@ -15,10 +16,8 @@ export async function middleware(request: NextRequest) {
 
   // 2. Legacy Redirect: /shows/:id -> /shows/:slug
   // Only attempt if env vars are present and valid (not placeholders)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  // Check against the '****' placeholder seen in build logs
-  const isValidConfig = supabaseUrl && supabaseUrl !== '****' && supabaseUrl.startsWith('http') && supabaseKey
+  const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig()
+  const isValidConfig = Boolean(supabaseUrl && supabaseKey)
 
   const showsMatch = request.nextUrl.pathname.match(/^\/shows\/(\d+)(?:\/)?$/)
   if (showsMatch && isValidConfig) {
