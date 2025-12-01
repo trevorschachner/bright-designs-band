@@ -33,7 +33,7 @@ export default async function Image({ params }: { params: { id: string } }) {
   const ensemble = arr?.ensemble_size || ''
 
   // Load logo
-  const logoPath = join(process.cwd(), 'public/bright-designs-logo.png')
+  const logoPath = join(process.cwd(), 'public/logos/brightdesignslogo-main.png')
   const logoData = readFileSync(logoPath)
   const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
 

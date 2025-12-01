@@ -40,7 +40,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
   const year = show?.year || ''
 
   // Load logo
-  const logoPath = join(process.cwd(), 'public/bright-designs-logo.png')
+  const logoPath = join(process.cwd(), 'public/logos/brightdesignslogo-main.png')
   const logoData = readFileSync(logoPath)
   const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
 

@@ -84,30 +84,43 @@
 
 @layer base {
   :root {
+    /* Updated to Match "Lampshade" #F2E9D0 as a warm white, keeping true white for now for cleanliness */
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    
+    /* "Charcoal" #242323 */
+    --foreground: 0 1% 14%;
+
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 0 1% 14%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --popover-foreground: 0 1% 14%;
+
+    /* "Electric Yellow" #FFD230 */
+    --primary: 47 100% 59%;
+    --primary-foreground: 229 50% 20%; /* Midnight text on yellow */
+    --primary-hover: 47 100% 50%; /* Slightly darker for hover */
+
+    /* "Midnight" #1A244D */
+    --secondary: 229 50% 20%;
+    --secondary-foreground: 0 0% 98%;
+    --secondary-hover: 229 50% 30%;
+
+    /* "Lampshade" #F2E9D0 used for muted backgrounds */
+    --muted: 44 57% 88%;
+    --muted-foreground: 0 0% 45.1%; /* Keep standard muted text for readability */
+
+    /* "Clear Sky" #45D4FF */
+    --accent: 194 100% 64%;
+    --accent-foreground: 229 50% 20%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
+
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --ring: 47 100% 59%; /* Focus ring is primary yellow */
+    
     --radius: 0.5rem;
   }
   .dark {
@@ -144,7 +157,8 @@
     border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    /* Removed explicit bg-background to allow fixed GlobalBackground to show */
+    @apply text-foreground;
   }
 }
 
@@ -195,10 +209,10 @@
   
   /* Legacy card classes - updated to Tailwind Plus style */
   .wireframe-card, .frame-card, .material-card {
-    @apply plus-card;
+    @apply plus-card bg-card;
   }
   .wireframe-card-simple, .material-surface {
-    @apply plus-card-simple;
+    @apply plus-card-simple bg-card;
   }
 
   /* Clean form components like Tailwind Plus */
