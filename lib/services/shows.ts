@@ -56,7 +56,7 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
           }
         },
         files: {
-          where: eq(files.fileType, 'image'),
+          where: (files, { eq }) => eq(files.fileType, 'image'),
           limit: 1
         }
       }
@@ -78,7 +78,7 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
             }
           },
           files: {
-            where: eq(files.fileType, 'image'),
+            where: (files, { eq }) => eq(files.fileType, 'image'),
             limit: 1
           }
         }

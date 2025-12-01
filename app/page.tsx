@@ -47,7 +47,7 @@ export default async function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <PageHero
-        title="Student centered marching band design."
+        title={<>Student centered <span className="text-brand-sky">marching band design.</span></>}
         subtitle={
           "We design marching band shows that help students shine. Over 100+ shows performed nationwide across all competitive circuits."
         }
@@ -80,19 +80,19 @@ export default async function HomePage() {
         <div className="plus-container">
           <div className="grid grid-cols-2 gap-8 sm:gap-12 lg:grid-cols-4 lg:gap-16">
             <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-foreground mb-3">10+</div>
+              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-brand-electric mb-3">10+</div>
               <div className="text-sm sm:text-base text-muted-foreground font-medium">Years Experience</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-foreground mb-3">50+</div>
+              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-brand-sky mb-3">50+</div>
               <div className="text-sm sm:text-base text-muted-foreground font-medium">Ensembles Served</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-foreground mb-3">75+</div>
+              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-brand-turf mb-3">75+</div>
               <div className="text-sm sm:text-base text-muted-foreground font-medium">Custom Shows</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-foreground mb-3">250+</div>
+              <div className="text-4xl sm:text-5xl font-heading font-bold tracking-tight text-brand-midnight mb-3">250+</div>
               <div className="text-sm sm:text-base text-muted-foreground font-medium">Arrangements</div>
             </div>
           </div>

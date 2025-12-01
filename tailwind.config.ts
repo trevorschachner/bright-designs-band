@@ -55,13 +55,15 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Bright Designs brand colors
-        bright: {
-          primary: "#F5DF4D",
-          secondary: "#939597",
-          third: "#6ccad2",
-          dark: "#333",
-          muted: "#777",
+        // New Bright Designs Color Palette
+        brand: {
+          sky: "#45D4FF",
+          midnight: "#1A244D", 
+          electric: "#FFD230",
+          turf: "#0C3825",
+          lampshade: "#F2E9D0",
+          metal: "#474747",
+          charcoal: "#242323",
         },
       },
       borderRadius: {

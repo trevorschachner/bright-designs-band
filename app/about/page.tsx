@@ -12,20 +12,20 @@ import Link from "next/link"
 export default function AboutPage() {
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        {/* Page Header */}
-        <PageHero
-          title="About Bright Designs"
-          subtitle="Serving the marching band community since 2017."
-        />
+      {/* Page Header */}
+      <PageHero
+        title={<span className="text-brand-midnight">About Bright Designs</span>}
+        subtitle="Serving the marching band community since 2017."
+      />
 
-        {/* Mission & Values */}
-        <section className="py-16">
+      {/* Mission & Values */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="frame-card">
+            <Card className="frame-card border-t-4 border-t-brand-electric">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-bright-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Target className="w-8 h-8 text-bright-primary" />
+                <div className="w-16 h-16 bg-brand-electric/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Target className="w-8 h-8 text-brand-electric" />
                 </div>
                 <CardTitle className="font-heading">Our Mission</CardTitle>
               </CardHeader>
@@ -37,10 +37,10 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <Card className="frame-card">
+            <Card className="frame-card border-t-4 border-t-brand-sky">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-bright-third/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-bright-third" />
+                <div className="w-16 h-16 bg-brand-sky/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-brand-sky" />
                 </div>
                 <CardTitle className="font-heading">Student-Centered</CardTitle>
               </CardHeader>
@@ -52,10 +52,10 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <Card className="frame-card">
+            <Card className="frame-card border-t-4 border-t-brand-turf">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-bright-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Award className="w-8 h-8 text-bright-secondary" />
+                <div className="w-16 h-16 bg-brand-turf/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Award className="w-8 h-8 text-brand-turf" />
                 </div>
                 <CardTitle className="font-heading">Excellence</CardTitle>
               </CardHeader>
@@ -67,12 +67,14 @@ export default function AboutPage() {
               </CardContent>
             </Card>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Our Story */}
-        <section className="py-16">
+      {/* Our Story */}
+      <section className="py-16 relative overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-foreground font-heading text-center">Our Story</h2>
+            <h2 className="text-3xl font-bold mb-8 text-brand-midnight font-heading text-center">Our Story</h2>
             <div className="prose prose-lg mx-auto text-muted-foreground">
               <p className="mb-6">
                 Founded in 2017, Bright Designs began as a passion project between 3 friends. We fell inlove with marching band during our days of performing and wanted to bring that same passion to the next generation of performers.
@@ -89,119 +91,124 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Why Us / Beliefs */}
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4 text-foreground font-heading">Why Bright Designs</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Your program deserves a design partner who actually cares. You&apos;ll get clear world-class design, realistic timelines, all that work for YOUR band.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-heading">Belief 1</CardTitle>
-                  <CardDescription>A show will never be perfect—great programs iterate, refine, and keep growing.</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-heading">Belief 2</CardTitle>
-                  <CardDescription>Design must serve students first—clarity, pacing, and achievable demand win seasons.</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-heading">Belief 3</CardTitle>
-                  <CardDescription>Communication beats chaos—predictable timelines and drafts reduce rehearsal stress.</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-heading">Belief 4</CardTitle>
-                  <CardDescription>Details create outcomes—sound, staging, and effect work together to score.</CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
-            <div className="text-center mt-8">
-              <Button variant="outline" asChild>
-                <Link href="/services#process">See our design process</Link>
-              </Button>
-            </div>
+      {/* Why Us / Beliefs */}
+      <section className="py-16 bg-muted/30 my-8 rounded-3xl container mx-auto px-4">
+        <div className="">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-foreground font-heading">Why Bright Designs</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Your program deserves a design partner who actually cares. You&apos;ll get clear world-class design, realistic timelines, all that work for YOUR band.
+            </p>
           </div>
-        </section>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            <Card className="bg-brand-midnight text-white border-none">
+              <CardHeader>
+                <CardTitle className="font-heading text-brand-electric text-2xl mb-2">Belief 1</CardTitle>
+                <CardDescription className="text-gray-300 text-lg">A show will never be perfect—great programs iterate, refine, and keep growing.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="bg-brand-electric text-brand-midnight border-none">
+              <CardHeader>
+                <CardTitle className="font-heading text-brand-midnight text-2xl mb-2">Belief 2</CardTitle>
+                <CardDescription className="text-brand-midnight/80 text-lg font-medium">Design must serve students first—clarity, pacing, and achievable demand win seasons.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="bg-brand-turf text-white border-none">
+              <CardHeader>
+                <CardTitle className="font-heading text-brand-sky text-2xl mb-2">Belief 3</CardTitle>
+                <CardDescription className="text-gray-300 text-lg">Communication beats chaos—predictable timelines and drafts reduce rehearsal stress.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="bg-brand-sky text-brand-midnight border-none">
+              <CardHeader>
+                <CardTitle className="font-heading text-brand-midnight text-2xl mb-2">Belief 4</CardTitle>
+                <CardDescription className="text-brand-midnight/80 text-lg font-medium">Details create outcomes—sound, staging, and effect work together to score.</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+          <div className="text-center mt-8">
+            <Button variant="outline" asChild>
+              <Link href="/services#process">See our design process</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
-        {/* Team Section */}
-        <section className="py-16">
+      {/* Team Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-12 text-foreground font-heading text-center">Meet Our Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="frame-card text-center">
+            <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-electric">
               <CardContent className="p-6">
-                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-muted">
+                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-electric/20 shadow-lg">
                   <img src="/placeholder-user.jpg" alt="Trevor Schachner" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-xl font-bold mb-1 font-heading">Trevor Schachner</h3>
-                <p className="text-bright-third mb-3">Owner, Educator, Music + Visual Designer</p>
-                <p className="text-muted-foreground text-sm">Combines educational focus with championship-caliber design across music and visual, guiding programs with clarity and consistency.</p>
+                <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Trevor Schachner</h3>
+                <p className="text-brand-electric font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">Combines educational focus with championship-caliber design across music and visual, guiding programs with clarity and consistency.</p>
               </CardContent>
             </Card>
-            <Card className="frame-card text-center">
+            <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-sky">
               <CardContent className="p-6">
-                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-muted">
+                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-sky/20 shadow-lg">
                   <img src="/placeholder-user.jpg" alt="Brighton Barrineau" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-xl font-bold mb-1 font-heading">Brighton Barrineau</h3>
-                <p className="text-bright-third mb-3">Owner, Educator, Music + Visual Designer</p>
-                <p className="text-muted-foreground text-sm">Designs cohesive productions that put students first and align pacing and effect for competitive success.</p>
+                <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Brighton Barrineau</h3>
+                <p className="text-brand-sky font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">Designs cohesive productions that put students first and align pacing and effect for competitive success.</p>
               </CardContent>
             </Card>
-            <Card className="frame-card text-center">
+            <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-turf">
               <CardContent className="p-6">
-                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-muted">
+                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-turf/20 shadow-lg">
                   <img src="/placeholder-user.jpg" alt="Ryan Wilhite" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-xl font-bold mb-1 font-heading">Ryan Wilhite</h3>
-                <p className="text-bright-third mb-3">Owner, Educator, Program Coordinator</p>
-                <p className="text-muted-foreground text-sm">Leads program coordination with clear timelines and communication, ensuring delivery and alignment across the season.</p>
+                <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Ryan Wilhite</h3>
+                <p className="text-brand-turf font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Program Coordinator</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">Leads program coordination with clear timelines and communication, ensuring delivery and alignment across the season.</p>
               </CardContent>
             </Card>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Stats */}
-        <section className="py-16 bg-muted/30 rounded-2xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-foreground font-heading">By the Numbers</h2>
-            <p className="text-xl text-muted-foreground">Our impact on marching band education</p>
+      {/* Stats */}
+      <section className="py-16 bg-muted/30 rounded-2xl container mx-auto px-4 my-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4 text-foreground font-heading">By the Numbers</h2>
+          <p className="text-xl text-muted-foreground">Our impact on marching band education</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div>
+            <div className="text-4xl font-heading font-bold text-brand-electric mb-2">10+</div>
+            <div className="text-muted-foreground">Years Experience</div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-heading font-bold text-bright-third mb-2">10+</div>
-              <div className="text-muted-foreground">Years Experience</div>
-            </div>
-            <div>
-              <div className="text-4xl font-heading font-bold text-bright-primary mb-2">50+</div>
-              <div className="text-muted-foreground">Custom Shows</div>
-            </div>
-            <div>
-              <div className="text-4xl font-heading font-bold text-foreground mb-2">50+</div>
-              <div className="text-muted-foreground">Schools Served</div>
-            </div>
-            <div>
-              <div className="text-4xl font-heading font-bold text-bright-third mb-2">250+</div>
-              <div className="text-muted-foreground">Arrangements</div>
-            </div>
+          <div>
+            <div className="text-4xl font-heading font-bold text-brand-sky mb-2">50+</div>
+            <div className="text-muted-foreground">Custom Shows</div>
           </div>
-        </section>
+          <div>
+            <div className="text-4xl font-heading font-bold text-brand-turf mb-2">50+</div>
+            <div className="text-muted-foreground">Schools Served</div>
+          </div>
+          <div>
+            <div className="text-4xl font-heading font-bold text-brand-midnight mb-2">250+</div>
+            <div className="text-muted-foreground">Arrangements</div>
+          </div>
+        </div>
+      </section>
 
-        {/* Testimonials */}
-        <Testimonials />
+      {/* Testimonials */}
+      <div className="py-8" /> {/* Spacer to separate sections visually if needed, but Testimonials has its own padding */}
+      <Testimonials />
 
-        {/* Our Collaborators Section */}
-        <section className="py-16">
+      {/* Our Collaborators Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4 text-foreground font-heading">Our Colleagues</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -209,216 +216,53 @@ export default function AboutPage() {
             </p>
           </div>
           
-          <div className="max-w-4xl mx-auto">
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full">
-                <tbody>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Nicole Davis</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design, Choreography</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Shane Barnes</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design, Choreography</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Hunter Dugie</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design, Program Coordination</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Richard Hinshaw</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Bradley Klemmensen</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Aaron Stickley</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Ben Stone</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Nathan Woods</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Visual Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Eric Kruse</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion, Sound Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Brady Hartness</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion, Sound Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Omar Carmenates</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion, Sound Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Lindsay Vasko</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Taylor Davis</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Reed Kimmel</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Sound Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Steven Simmermon</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion, Sound Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Jensen Thomassie</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion, Sound Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Johnathon Jadvani</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Percussion, Sound Design</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Tom Padgett</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Color Guard, Choreography</span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-foreground font-heading">Markell Allen</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="italic text-bright-third">Graphic Design, Color Guard, Visual Design</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        {/* Previous Clients Section */}
-        <section className="py-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-foreground font-heading">Previous Clients</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              We have proudly served these programs across the country!
-            </p>
-          </div>
-          
-          <div className="max-w-7xl mx-auto space-y-8">
-            {/* Clients List */}
-            <div className="border border-border rounded-lg p-8 bg-muted/30">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-4">
-                {(() => {
-                  // Reorganize clients to display alphabetically by column instead of row
-                  // CSS Grid flows row-first, so we need to reorganize the array
-                  const cols = 4; // Use the largest column count for organization
-                  const rows = Math.ceil(clients.length / cols);
-                  const columnFirst: typeof clients = [];
-                  
-                  // Fill column-first: first item of each column, then second item of each column, etc.
-                  for (let row = 0; row < rows; row++) {
-                    for (let col = 0; col < cols; col++) {
-                      const index = col * rows + row;
-                      if (index < clients.length) {
-                        columnFirst.push(clients[index]);
-                      }
-                    }
-                  }
-                  
-                  return columnFirst.map((client) => (
-                    <div key={`${client.name}-${client.location}`}>
-                      <h3 className="font-semibold text-foreground">{client.name}</h3>
-                      <p className="text-sm text-muted-foreground">{client.location}</p>
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { name: "Nicole Davis", role: "Visual Design, Choreography" },
+                { name: "Shane Barnes", role: "Visual Design, Choreography" },
+                { name: "Hunter Dugie", role: "Visual Design, Program Coordination" },
+                { name: "Richard Hinshaw", role: "Visual Design" },
+                { name: "Bradley Klemmensen", role: "Visual Design" },
+                { name: "Aaron Stickley", role: "Visual Design" },
+                { name: "Ben Stone", role: "Visual Design" },
+                { name: "Nathan Woods", role: "Visual Design" },
+                { name: "Eric Kruse", role: "Percussion, Sound Design" },
+                { name: "Brady Hartness", role: "Percussion, Sound Design" },
+                { name: "Omar Carmenates", role: "Percussion, Sound Design" },
+                { name: "Lindsay Vasko", role: "Percussion" },
+                { name: "Taylor Davis", role: "Percussion" },
+                { name: "Reed Kimmel", role: "Sound Design" },
+                { name: "Steven Simmermon", role: "Percussion, Sound Design" },
+                { name: "Jensen Thomassie", role: "Percussion, Sound Design" },
+                { name: "Johnathon Jadvani", role: "Percussion, Sound Design" },
+                { name: "Tom Padgett", role: "Color Guard, Choreography" },
+                { name: "Markell Allen", role: "Graphic Design, Color Guard, Visual Design" }
+              ].map((colleague: any, index) => (
+                <div 
+                  key={index}
+                  className="group relative overflow-hidden rounded-xl bg-white border border-border p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold text-lg group-hover:bg-brand-electric group-hover:text-brand-midnight transition-colors">
+                      {colleague.name.charAt(0)}
                     </div>
-                  ));
-                })()}
-              </div>
-            </div>
-
-            {/* Map Visualization */}
-            <div className="mt-8">
-              <ClientsMap />
+                    {colleague.link ? (
+                      <Link href={colleague.link} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    ) : null}
+                  </div>
+                  <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-brand-midnight transition-colors">{colleague.name}</h3>
+                  <p className="text-sm text-muted-foreground">{colleague.role}</p>
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-brand-electric via-brand-sky to-brand-turf opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              ))}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-      </div>
     </div>
   )
 }

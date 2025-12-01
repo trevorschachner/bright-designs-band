@@ -87,7 +87,7 @@ export default function RootLayout({
           <ShowPlanProvider>
             <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
             <Suspense fallback={<PageLoadingSkeleton />}>
-              <main className="pb-20">{children}</main>
+              <main>{children}</main>
             </Suspense>
             <CTASection />
             <SiteFooter footer={footer} social={social} />
