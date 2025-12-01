@@ -1,5 +1,6 @@
 
 import { ArrowLeft, Users, Award, Target, ExternalLink } from "lucide-react"
+import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -144,8 +145,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-electric">
               <CardContent className="p-6">
-                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-electric/20 shadow-lg">
-                  <img src="/placeholder-user.jpg" alt="Trevor Schachner" className="w-full h-full object-cover" />
+                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-electric/20 shadow-lg relative">
+                  <Image src="/placeholder-user.jpg" alt="Trevor Schachner" fill className="object-cover" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Trevor Schachner</h3>
                 <p className="text-brand-electric font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
@@ -154,8 +155,8 @@ export default function AboutPage() {
             </Card>
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-sky">
               <CardContent className="p-6">
-                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-sky/20 shadow-lg">
-                  <img src="/placeholder-user.jpg" alt="Brighton Barrineau" className="w-full h-full object-cover" />
+                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-sky/20 shadow-lg relative">
+                  <Image src="/placeholder-user.jpg" alt="Brighton Barrineau" fill className="object-cover" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Brighton Barrineau</h3>
                 <p className="text-brand-sky font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
@@ -164,8 +165,8 @@ export default function AboutPage() {
             </Card>
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-turf">
               <CardContent className="p-6">
-                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-turf/20 shadow-lg">
-                  <img src="/placeholder-user.jpg" alt="Ryan Wilhite" className="w-full h-full object-cover" />
+                <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-turf/20 shadow-lg relative">
+                  <Image src="/placeholder-user.jpg" alt="Ryan Wilhite" fill className="object-cover" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Ryan Wilhite</h3>
                 <p className="text-brand-turf font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Program Coordinator</p>

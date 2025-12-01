@@ -59,6 +59,7 @@ export function FilterSidebar({
     if (!isTyping && filterState.search !== searchValue) {
       setSearchValue(filterState.search || '');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterState.search, isTyping]); // Removed searchValue from deps to avoid loops
 
   useEffect(() => {

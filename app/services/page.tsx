@@ -12,7 +12,7 @@ export default function ServicesPage() {
       {/* Hero */}
       <PageHero
         title={<span className="text-brand-midnight">Our Services</span>}
-        subtitle="From full show design packages to standalone consultation and teaching—we provide comprehensive design solutions tailored to your ensemble's unique needs, competitive goals, and program vision."
+        subtitle="From full show design packages to standalone consultation and teaching—we provide comprehensive design solutions tailored to your ensemble&apos;s unique needs, competitive goals, and program vision."
       />
 
       {/* Featured Service: Custom Show Design */}
@@ -32,7 +32,7 @@ export default function ServicesPage() {
               </div>
               <h2 className="text-4xl lg:text-5xl font-heading font-bold mb-6">Custom Show Design</h2>
               <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-                Our flagship service. We build a complete production from the ground up, tailored specifically to your students' strengths and your competitive goals. From concept to championship, we are your design partners.
+                Our flagship service. We build a complete production from the ground up, tailored specifically to your students&apos; strengths and your competitive goals. From concept to championship, we are your design partners.
               </p>
               <ul className="space-y-4 mb-8">
                 {[
@@ -85,7 +85,7 @@ export default function ServicesPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Wind, percussion, and sound design for ensembles of all skill levels. We write to your band's specific instrumentation and ability.
+                  Wind, percussion, and sound design for ensembles of all skill levels. We write to your band&apos;s specific instrumentation and ability.
                 </p>
               </CardContent>
             </SpotlightCard>

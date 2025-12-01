@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { generateSitemapXML, staticRoutes, getDynamicRoutes } from '@/lib/seo/sitemap'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'

@@ -119,6 +119,7 @@ export function AudioPlayerComponent({
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTrack, tracks.length])
 
   // Track if we should auto-play (used for seamless transitions)
@@ -163,6 +164,7 @@ export function AudioPlayerComponent({
         audioRef.current.play().catch(() => setIsPlaying(false))
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTrack, currentTrackData]) // Removed isPlaying from dependencies
 
   // Handle play/pause separately (don't reload audio)

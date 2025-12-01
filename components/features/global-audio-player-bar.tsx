@@ -167,7 +167,7 @@ export function GlobalAudioPlayerBar() {
         audio.removeEventListener('ended', handleAudioEvent)
       })
     }
-  }, [])
+  }, [hasHadAudio])
 
   // Update volume on all audio elements
   useEffect(() => {
