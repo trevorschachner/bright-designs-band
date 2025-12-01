@@ -35,7 +35,11 @@ export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
   const config = { ...defaultSEOConfig, ...seoConfig }
   
   // Set metadataBase to resolve social open graph and twitter images
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || config.canonical || 'https://www.brightdesigns.band'
+  let siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (siteUrl === '****') siteUrl = null
+
+  const canonical = config.canonical === '****' ? null : config.canonical
+  const baseUrl = siteUrl || canonical || 'https://www.brightdesigns.band'
   
   const metadata: Metadata = {
     metadataBase: new URL(baseUrl),

@@ -7,10 +7,10 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export const createClient = async () => {
   const cookieStore = await cookies();
 
-  if (!supabaseUrl || !supabaseKey) {
-    if (process.env.NODE_ENV !== "production") {
+  if (!supabaseUrl || !supabaseKey || supabaseUrl === '****') {
+    if (process.env.NODE_ENV !== "production" || supabaseUrl === '****') {
       console.warn(
-        "Supabase env vars are not set (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY). Using a mock client that returns no session."
+        "Supabase env vars are not set or invalid (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY). Using a mock client."
       );
     }
 

@@ -38,7 +38,9 @@ const poppins = Poppins({
 // Enhanced SEO metadata using our new system
 export const metadata: Metadata = generateMetadata({
   ...defaultSEOConfig,
-  canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'
+  canonical: (process.env.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL !== '****') 
+    ? process.env.NEXT_PUBLIC_SITE_URL 
+    : 'https://www.brightdesigns.band'
 })
 
 export default function RootLayout({
