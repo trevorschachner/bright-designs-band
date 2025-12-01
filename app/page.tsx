@@ -9,6 +9,9 @@ import Link from "next/link"
 import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
 
+// Force dynamic to ensure we get fresh data initially, though the service caches it
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // Fetch cached featured shows from the service layer
   const featuredShows = await getFeaturedShows();

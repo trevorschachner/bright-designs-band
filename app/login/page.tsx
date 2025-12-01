@@ -8,7 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Mail, Music, Shield, AlertCircle, Check, RefreshCw } from 'lucide-react'
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
+import { Mail, Music, Shield, AlertCircle, Check, RefreshCw, KeyRound, ArrowLeft } from 'lucide-react'
 
 function LoginForm() {
   const router = useRouter()
@@ -17,6 +22,8 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [email, setEmail] = useState('')
+  const [otpCode, setOtpCode] = useState('')
+  const [showOtpInput, setShowOtpInput] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -47,14 +54,43 @@ function LoginForm() {
       })
       
       if (error) {
-        setError(`Magic link error: ${error.message}`)
+        setError(`Login error: ${error.message}`)
       } else {
-        setSuccess('Check your email for a login link!')
+        setSuccess('Check your email for a login link or code!')
+        setShowOtpInput(true)
       }
     } catch (err) {
-      console.error('Magic link error:', err)
+      console.error('Login error:', err)
       setError('An unexpected error occurred. Please try again.')
     } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (code: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: 'email'
+      })
+
+      if (error) {
+        setError(`Verification error: ${error.message}`)
+        setLoading(false)
+      } else {
+        // Successful verification will set the session
+        // Redirect to admin or next path
+        const next = searchParams.get('next') ?? '/admin'
+        setLoading(false)
+        router.push(next)
+      }
+    } catch (err) {
+      console.error('Verification error:', err)
+      setError('An unexpected error occurred during verification.')
       setLoading(false)
     }
   }
@@ -63,6 +99,13 @@ function LoginForm() {
     setEmail(value)
     if (error) setError(null)
     if (success) setSuccess(null)
+  }
+
+  const handleBackToEmail = () => {
+    setShowOtpInput(false)
+    setOtpCode('')
+    setSuccess(null)
+    setError(null)
   }
 
   return (
@@ -78,7 +121,9 @@ function LoginForm() {
                 Admin Access
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Enter your email to receive a magic link to sign in.
+                {showOtpInput 
+                  ? "Enter the 6-digit code from your email" 
+                  : "Enter your email to receive a login code"}
               </CardDescription>
             </div>
           </CardHeader>
@@ -102,6 +147,7 @@ function LoginForm() {
               </Alert>
             )}
 
+            {!showOtpInput ? (
             <form onSubmit={sendMagicLink} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="magic-email">Email</Label>
@@ -112,6 +158,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => handleInputChange(e.target.value)}
                   required
+                    disabled={loading}
                 />
               </div>
               <Button
@@ -127,11 +174,59 @@ function LoginForm() {
                 ) : (
                   <>
                     <Mail className="w-4 h-4 mr-2" />
-                    Send Magic Link
+                      Send Login Code
                   </>
                 )}
               </Button>
             </form>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(value) => {
+                      setOtpCode(value)
+                      if (value.length === 6) {
+                        handleVerifyOtp(value)
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                
+                <div className="text-center text-sm text-muted-foreground">
+                  <p>Didn&apos;t receive a code?</p>
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto font-normal text-bright-primary hover:text-bright-primary/80"
+                    onClick={sendMagicLink}
+                    disabled={loading}
+                  >
+                    Resend Code
+                  </Button>
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleBackToEmail}
+                  disabled={loading}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Use a different email
+                </Button>
+              </div>
+            )}
 
             <div className="pt-4 text-center">
               <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">

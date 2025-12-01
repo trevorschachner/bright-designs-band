@@ -66,9 +66,10 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#2563eb" />
         
         {/* Favicon and app icons */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/logos/favicon.ico" sizes="any" />
+        <link rel="icon" href="/logos/brightdesignslogo-main.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/logos/apple-touch-icon.png" />
+        <link rel="manifest" href="/logos/manifest.json" />
       </head>
       <body suppressHydrationWarning className={`${inter.variable} ${poppins.variable} font-sans font-light`}>
         {/* Organization and Local Business structured data */}

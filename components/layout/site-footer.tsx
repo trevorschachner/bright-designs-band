@@ -21,7 +21,7 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 					<div className="lg:col-span-2">
 						<div className="flex items-center gap-3 mb-2">
 							<Image
-								src="/bright-designs-logo.png"
+								src="/logos/brightdesignslogo-main.png"
 								alt="Bright Designs"
 								width={200}
 								height={105}

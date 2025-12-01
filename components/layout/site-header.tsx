@@ -29,7 +29,7 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 			<div className="plus-container flex h-16 items-center justify-between">
 				<Link href="/" className="flex items-center gap-3" aria-label={brand.name}>
 					<Image
-						src="/bright-designs-logo.png"
+						src="/logos/brightdesignslogo-main.png"
 						alt={brand.name}
 						width={160}
 						height={84}

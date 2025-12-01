@@ -23,9 +23,12 @@ export async function GET(request: NextRequest) {
         : (isAdminPath ? '/' : nextPath)
 
       return NextResponse.redirect(`${origin}${targetPath}`)
+    } else if (error) {
+      console.error('Auth callback error:', error)
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
     }
   }
 
-  // If there's an error or no code, redirect to login
+  // If there's no code, redirect to login
   return NextResponse.redirect(`${origin}/login?error=Authentication failed`)
 } 

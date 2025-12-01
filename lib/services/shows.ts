@@ -1,6 +1,6 @@
 import { db } from "@/lib/database";
-import { shows, showsToTags } from "@/lib/database/schema";
-import { eq, desc } from "drizzle-orm";
+import { shows, showsToTags, files } from "@/lib/database/schema";
+import { eq, desc, notInArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { STORAGE_BUCKET, withRootPrefix } from "@/lib/storage";
 import { createClient } from "@supabase/supabase-js";
@@ -45,7 +45,7 @@ function getPublicUrl(path: string | null): string | null {
 async function fetchFeaturedShows(): Promise<ShowSummary[]> {
   try {
     // Drizzle query for featured shows
-    const result = await db.query.shows.findMany({
+    let result = await db.query.shows.findMany({
       where: eq(shows.featured, true),
       orderBy: [desc(shows.createdAt)],
       limit: 6,
@@ -54,43 +54,61 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
           with: {
             tag: true
           }
+        },
+        files: {
+          where: eq(files.fileType, 'image'),
+          limit: 1
         }
       }
     });
 
-    // If no featured shows, fallback to latest
-    let data = result;
-    if (data.length === 0) {
-      data = await db.query.shows.findMany({
+    // If less than 6 shows, fill with latest non-featured shows
+    if (result.length < 6) {
+      const existingIds = result.map(s => s.id);
+      const limit = 6 - result.length;
+      
+      const moreShows = await db.query.shows.findMany({
+        where: existingIds.length > 0 ? notInArray(shows.id, existingIds) : undefined,
         orderBy: [desc(shows.createdAt)],
-        limit: 6,
+        limit: limit,
         with: {
           showsToTags: {
             with: {
               tag: true
             }
+          },
+          files: {
+            where: eq(files.fileType, 'image'),
+            limit: 1
           }
         }
       });
+      
+      result = [...result, ...moreShows];
     }
 
     // Map and resolve URLs
     // Note: getPublicUrl is now synchronous/lightweight
-    return data.map((s) => ({
-      id: s.id,
-      title: s.title,
-      slug: s.slug,
-      description: s.description,
-      year: s.year,
-      difficulty: s.difficulty,
-      duration: s.duration,
-      thumbnailUrl: getPublicUrl(s.thumbnailUrl),
-      graphicUrl: getPublicUrl(s.graphicUrl),
-      createdAt: s.createdAt,
-      showsToTags: s.showsToTags.map((st) => ({
-        tag: st.tag
-      })),
-    }));
+    return result.map((s) => {
+      // Fallback to first image file if graphicUrl/thumbnailUrl is missing
+      const fallbackImage = s.files && s.files.length > 0 ? s.files[0].storagePath : null;
+      
+      return {
+        id: s.id,
+        title: s.title,
+        slug: s.slug,
+        description: s.description,
+        year: s.year,
+        difficulty: s.difficulty,
+        duration: s.duration,
+        thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
+        graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
+        createdAt: s.createdAt,
+        showsToTags: s.showsToTags.map((st) => ({
+          tag: st.tag
+        })),
+      };
+    });
 
   } catch (error) {
     console.error('Error fetching featured shows:', error);
