@@ -10,10 +10,12 @@ import { writeFileSync, mkdirSync, copyFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '../lib/email/templates';
 import type { ContactFormData } from '../lib/email/types';
+import { getPublicSiteUrl } from '../lib/env';
 
 // Set environment variable if not set or invalid
-const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
-process.env.NEXT_PUBLIC_SITE_URL = (envUrl && envUrl !== '****') ? envUrl : 'https://brightdesigns.band';
+// Ensure downstream code sees a valid site URL
+const siteUrl = getPublicSiteUrl('https://brightdesigns.band');
+process.env.NEXT_PUBLIC_SITE_URL = siteUrl;
 
 // Create previews directory
 const previewsDir = join(process.cwd(), 'email-previews');
@@ -83,8 +85,7 @@ function generatePreviewFiles() {
 
   // Replace logo URLs in HTML with relative path for local previews
   const replaceLogoUrl = (html: string): string => {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://brightdesigns.band';
-    const absoluteUrl = `${baseUrl}/bright-designs-logo.png`;
+    const absoluteUrl = `${siteUrl}/bright-designs-logo.png`;
     // Replace absolute URL with relative path for local previews
     return html.replace(new RegExp(absoluteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), 'bright-designs-logo.png');
   };
@@ -294,7 +295,7 @@ function generatePreviewFiles() {
 
         <div class="note">
             <strong>💡 How to Use</strong>
-            <p>These preview files are generated HTML that you can open in any browser. The logo images will load from your site URL (${process.env.NEXT_PUBLIC_SITE_URL || 'https://brightdesigns.band'}).</p>
+            <p>These preview files are generated HTML that you can open in any browser. The logo images will load from your site URL (${siteUrl}).</p>
             <p style="margin-top: 8px;"><strong>Tip:</strong> To test how emails look in different email clients, you can copy the HTML and paste it into email testing tools like Litmus or Email on Acid.</p>
         </div>
     </div>

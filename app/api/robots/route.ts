@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { generateRobotsTxt } from '@/lib/seo/sitemap'
+import { getPublicSiteUrl } from '@/lib/env'
 
 export async function GET() {
   try {
-    const envUrl = process.env.NEXT_PUBLIC_SITE_URL
-    const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://www.brightdesigns.band'
+    const baseUrl = getPublicSiteUrl()
     const robotsTxt = generateRobotsTxt(baseUrl)
     
     return new NextResponse(robotsTxt, {

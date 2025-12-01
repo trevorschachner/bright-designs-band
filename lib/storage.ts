@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/utils/supabase/client'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getStorageBucket, getStorageRootPrefix } from '@/lib/env'
 
 export interface FileUploadResult {
   success: boolean
@@ -23,13 +24,11 @@ export interface FileUploadOptions {
 }
 
 // Centralized storage configuration
-export const STORAGE_BUCKET =
-  (process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'Bright Designs').trim()
+export const STORAGE_BUCKET = getStorageBucket()
 
 // We keep DB storagePath values WITHOUT this prefix, and only prepend it
 // when interacting with Supabase Storage so we don't have to migrate DB rows.
-export const STORAGE_ROOT_PREFIX =
-  (process.env.NEXT_PUBLIC_STORAGE_ROOT_PREFIX || 'files').replace(/^\/+|\/+$/g, '')
+export const STORAGE_ROOT_PREFIX = getStorageRootPrefix()
 
 export function withRootPrefix(path: string): string {
   const trimmed = String(path || '').replace(/^\/+/, '')
@@ -93,7 +92,6 @@ export class FileStorageService {
       if (storageError) {
         console.error('Storage upload error:', {
           message: storageError.message,
-          statusCode: storageError.statusCode,
           error: storageError,
           storagePath
         })

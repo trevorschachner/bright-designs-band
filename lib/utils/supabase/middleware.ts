@@ -1,8 +1,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { getSupabaseConfig } from "@/lib/env";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 
 // Track if we've already shown the warning to avoid console spam
 let hasShownWarning = false;

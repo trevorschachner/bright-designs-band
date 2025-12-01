@@ -25,6 +25,7 @@ import { db } from '@/lib/database'
 import { shows } from '@/lib/database/schema'
 import { eq } from 'drizzle-orm'
 import { Suspense } from 'react'
+import { getPublicSiteUrl } from '@/lib/env'
 
 interface ShowWithTagsResult {
   show: any
@@ -88,8 +89,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       })
     }
 
-    const envUrl = process.env.NEXT_PUBLIC_SITE_URL
-    const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://www.brightdesigns.band'
+    const baseUrl = getPublicSiteUrl()
     const canonicalSlug = showRow.slug || slug
     
     // Generate keywords from tags

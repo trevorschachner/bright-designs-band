@@ -10,8 +10,16 @@ const chromeLauncher = require('chrome-launcher');
 const fs = require('fs');
 const path = require('path');
 
-const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
-const SITE_URL = (envUrl && envUrl !== '****') ? envUrl : 'http://localhost:3000';
+const resolveSiteUrl = (value, fallback) => {
+  if (!value || value === '****') return fallback;
+  try {
+    return new URL(value.trim()).toString();
+  } catch {
+    return fallback;
+  }
+};
+
+const SITE_URL = resolveSiteUrl(process.env.NEXT_PUBLIC_SITE_URL, 'http://localhost:3000');
 const AUDIT_PAGES = [
   '/',
   '/arrangements',
