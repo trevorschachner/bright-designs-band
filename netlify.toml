@@ -8,6 +8,7 @@
 
 # Secrets Scanning Configuration
 [build.environment]
+  NODE_VERSION = "20"
   # Exclude cache and build directories from secrets scanning
   SECRETS_SCAN_OMIT_PATHS = ".netlify/**,.next/**,node_modules/**,docs/**"
   

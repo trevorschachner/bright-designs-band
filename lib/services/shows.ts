@@ -25,7 +25,8 @@ function getPublicUrl(path: string | null): string | null {
   if (!path) return null;
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const envSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = (envSupabaseUrl && envSupabaseUrl !== '****') ? envSupabaseUrl : null;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) return null;
