@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yibokqolsyxosftcupgz.supabase.co'
+const envSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseUrl = (envSupabaseUrl && envSupabaseUrl !== '****') 
+  ? envSupabaseUrl 
+  : 'https://yibokqolsyxosftcupgz.supabase.co'
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseKey) {

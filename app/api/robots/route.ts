@@ -3,7 +3,8 @@ import { generateRobotsTxt } from '@/lib/seo/sitemap'
 
 export async function GET() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'
+    const envUrl = process.env.NEXT_PUBLIC_SITE_URL
+    const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://www.brightdesigns.band'
     const robotsTxt = generateRobotsTxt(baseUrl)
     
     return new NextResponse(robotsTxt, {

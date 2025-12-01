@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.brightdesigns.band'
+    const envUrl = process.env.NEXT_PUBLIC_SITE_URL
+    const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://www.brightdesigns.band'
     
     // Combine static and dynamic routes
     const dynamicRoutes = await getDynamicRoutes()

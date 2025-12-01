@@ -12,8 +12,9 @@
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '../lib/email/templates';
 import type { ContactFormData } from '../lib/email/types';
 
-// Set environment variable if not set
-process.env.NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://brightdesigns.band';
+// Set environment variable if not set or invalid
+const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+process.env.NEXT_PUBLIC_SITE_URL = (envUrl && envUrl !== '****') ? envUrl : 'https://brightdesigns.band';
 
 interface ValidationResult {
   passed: boolean;

@@ -46,7 +46,8 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
     'solos': 'Solo Adjustments'
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://brightdesigns.band';
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://brightdesigns.band';
   const logoUrl = `${baseUrl}/bright-designs-logo.png`;
 
   const html = `
@@ -518,7 +519,8 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
     'solos': 'Solo Adjustments'
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://brightdesigns.band';
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const baseUrl = (envUrl && envUrl !== '****') ? envUrl : 'https://brightdesigns.band';
   const logoUrl = `${baseUrl}/bright-designs-logo.png`;
 
   const html = `
