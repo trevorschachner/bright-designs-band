@@ -1,8 +1,6 @@
 import { ContactFormData } from './types';
-import { getPublicSiteUrl } from '@/lib/env';
 
-const LOGO_PATH = '/logos/brightdesignslogo-main.png';
-const getLogoSrc = (baseUrl: string) => `${baseUrl}${LOGO_PATH}`;
+const LOGO_URL = 'https://brightdesigns.band/logos/brightdesignslogo-main.png';
 
 // Minimal HTML escapers to prevent XSS in email HTML templates
 // Text nodes: do not escape single quotes to preserve names like O'Brien
@@ -540,11 +538,11 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
     'drill': 'Drill and Visual Design',
     'copyright': 'Copyright Acquisition',
     'percussion': 'Percussion Writing/Right-Sizing',
-    'solos': 'Solo Adjustments'
+    'solos': 'Solo Adjustments',
+    'visual-technique-guide': 'Visual Technique Guide Download'
   };
 
-  const baseUrl = getPublicSiteUrl('https://brightdesigns.band');
-  const logoUrl = getLogoSrc(baseUrl);
+  const logoUrl = LOGO_URL;
 
   const html = `
 <!DOCTYPE html>
@@ -787,11 +785,11 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
     'drill': 'Drill and Visual Design',
     'copyright': 'Copyright Acquisition',
     'percussion': 'Percussion Writing/Right-Sizing',
-    'solos': 'Solo Adjustments'
+    'solos': 'Solo Adjustments',
+    'visual-technique-guide': 'Visual Technique Guide Download'
   };
 
-  const baseUrl = getPublicSiteUrl('https://brightdesigns.band');
-  const logoUrl = getLogoSrc(baseUrl);
+  const logoUrl = LOGO_URL;
 
   const html = `
 <!DOCTYPE html>
@@ -940,7 +938,6 @@ Bright Designs LLC
 Email: hello@brightdesigns.band
 Website: https://brightdesigns.band
 
-If you have any immediate questions, don't hesitate to reply to this email!
   `.trim();
 
   return { html, text };

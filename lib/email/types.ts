@@ -23,6 +23,7 @@ export type ServiceCategory =
   | 'copyright'
   | 'percussion'
   | 'solos'
+  | 'visual-technique-guide'
   
   // Other
   | 'collaboration'

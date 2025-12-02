@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '../templates';
 import type { ContactFormData } from '../types';
 
+const LOGO_URL = 'https://brightdesigns.band/logos/brightdesignslogo-main.png';
+
 describe('Email Templates', () => {
   // Mock environment variable
   beforeEach(() => {
@@ -24,6 +26,7 @@ describe('Email Templates', () => {
       // Essential checks only
       expect(result.html).toBeDefined();
       expect(result.text).toBeDefined();
+      expect(result.html).toContain(LOGO_URL);
       expect(typeof result.html).toBe('string');
       expect(typeof result.text).toBe('string');
       expect(result.html.length).toBeGreaterThan(0);
@@ -88,6 +91,7 @@ describe('Email Templates', () => {
       // Essential checks only
       expect(result.html).toBeDefined();
       expect(result.text).toBeDefined();
+      expect(result.html).toContain(LOGO_URL);
       expect(typeof result.html).toBe('string');
       expect(typeof result.text).toBe('string');
       expect(result.html.length).toBeGreaterThan(0);

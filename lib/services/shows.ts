@@ -61,33 +61,13 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
       }
     });
 
-    // If less than 6 shows, fill with latest non-featured shows
-    if (result.length < 6) {
-      const existingIds = result.map(s => s.id);
-      const limit = 6 - result.length;
-      
-      const moreShows = await db.query.shows.findMany({
-        where: existingIds.length > 0 ? notInArray(shows.id, existingIds) : undefined,
-        orderBy: [desc(shows.createdAt)],
-        limit: limit,
-        with: {
-          showsToTags: {
-            with: {
-              tag: true
-            }
-          },
-          files: {
-            where: (files, { eq }) => eq(files.fileType, 'image'),
-            limit: 1
-          }
-        }
-      });
-      
-      result = [...result, ...moreShows];
-    }
-
     // Map and resolve URLs
     // Note: getPublicUrl is now synchronous/lightweight
+    // If fewer than 3 featured shows, we consider the section empty
+    if (result.length < 3) {
+      return [];
+    }
+
     return result.map((s) => {
       // Fallback to first image file if graphicUrl/thumbnailUrl is missing
       const fallbackImage = s.files && s.files.length > 0 ? s.files[0].storagePath : null;

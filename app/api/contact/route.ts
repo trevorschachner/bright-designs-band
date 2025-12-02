@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email/service';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '@/lib/email/templates';
 import { contactSubmissions } from '@/lib/database/schema';
+import type { ServiceCategory } from '@/lib/email/types';
 
 const ADMIN_EMAIL_FALLBACK = 'hello@brightdesigns.band';
-
+const ADMIN_EMAIL_ADDRESS = 'hello@brightdesigns.band';
 const getAdminRecipients = (): string[] => {
   const raw =
     process.env.ADMIN_EMAIL_ADDRESSES ??
@@ -106,6 +107,7 @@ export async function POST(request: NextRequest) {
 
     } else if (type === 'resource_download') {
       const subject = `Resource Download: Visual Technique Guide - ${name || 'Unknown'}`;
+      const resourceServices: ServiceCategory[] = ['visual-technique-guide'];
       
       const emailData = {
         firstName: name?.split(' ')?.[0] || name || 'Friend',
@@ -113,7 +115,7 @@ export async function POST(request: NextRequest) {
         email,
         school: rest.school,
         role: rest.role, // Capture role if provided
-        services: ['Visual Technique Guide Download'],
+        services: resourceServices,
         message: 'User downloaded the Visual Technique Guide.',
         privacyAgreed: true,
         source: submissionSource,
