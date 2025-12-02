@@ -4,7 +4,7 @@ import { eq, desc, notInArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { STORAGE_BUCKET, withRootPrefix } from "@/lib/storage";
 import { createClient } from "@supabase/supabase-js";
-import { getSupabaseConfig } from "@/lib/env";
+import { getSupabaseConfig, shouldSkipSupabase } from "@/lib/env";
 
 export type ShowSummary = {
   id: number;
@@ -25,14 +25,13 @@ export type ShowSummary = {
 function getPublicUrl(path: string | null): string | null {
   if (!path) return null;
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+  if (shouldSkipSupabase()) return null;
   
   const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 
   if (!supabaseUrl || !supabaseKey) return null;
 
-  // Direct URL construction is most efficient for public files
-  // Format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
-  // But using the SDK's getPublicUrl is safer for edge cases
   const supabase = createClient(supabaseUrl, supabaseKey);
   
   const { data } = supabase.storage
@@ -116,10 +115,16 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
   }
 }
 
-// Cache the result for 1 hour (3600 seconds)
-// Tag 'shows' allows on-demand revalidation when shows are updated
-export const getFeaturedShows = unstable_cache(
+const getFeaturedShowsCached = unstable_cache(
   fetchFeaturedShows,
   ['featured-shows'],
   { revalidate: 3600, tags: ['shows'] }
 );
+
+export async function getFeaturedShows(): Promise<ShowSummary[]> {
+  if (shouldSkipSupabase()) {
+    console.warn('[getFeaturedShows] Skipping Supabase fetch during masked Netlify build.');
+    return [];
+  }
+  return getFeaturedShowsCached();
+}

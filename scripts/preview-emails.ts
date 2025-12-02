@@ -26,8 +26,8 @@ try {
 }
 
 // Copy logo to previews directory for local viewing
-const logoSource = join(process.cwd(), 'public', 'bright-designs-logo.png');
-const logoDest = join(previewsDir, 'bright-designs-logo.png');
+const logoSource = join(process.cwd(), 'public', 'logos', 'brightdesignslogo-main.png');
+const logoDest = join(previewsDir, 'brightdesignslogo-main.png');
 if (existsSync(logoSource)) {
   try {
     copyFileSync(logoSource, logoDest);
@@ -49,7 +49,7 @@ const fullSampleData: ContactFormData = {
   school: 'Riverside High School',
   showInterest: 'Custom Fall Show 2024',
   bandSize: '51-100',
-  abilityLevel: 'Grade 3-4',
+  abilityLevel: '3-4',
   instrumentation: 'We have a strong flute section (12 members) but only one tuba player. We also have 3 synth players who need parts. Our percussion section is strong with 8 members.',
   showPlan: ['Opening - High Energy', 'Ballad - Emotional Moment', 'Closer - Powerful Finish'],
 };
@@ -76,7 +76,7 @@ const inquirySampleData: ContactFormData = {
   school: 'Mountain View High School',
   showInterest: 'Spring Competition Show',
   bandSize: '101-150',
-  abilityLevel: 'Grade 4-5+',
+  abilityLevel: '5-6+',
   instrumentation: 'Large brass section, needs specialized drill patterns.',
 };
 
@@ -85,9 +85,9 @@ function generatePreviewFiles() {
 
   // Replace logo URLs in HTML with relative path for local previews
   const replaceLogoUrl = (html: string): string => {
-    const absoluteUrl = `${siteUrl}/bright-designs-logo.png`;
+    const absoluteUrl = `${siteUrl}/logos/brightdesignslogo-main.png`;
     // Replace absolute URL with relative path for local previews
-    return html.replace(new RegExp(absoluteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), 'bright-designs-logo.png');
+    return html.replace(new RegExp(absoluteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), 'brightdesignslogo-main.png');
   };
 
   // Generate admin notification emails

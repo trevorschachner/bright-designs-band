@@ -29,7 +29,7 @@ const inquiryFormSchema = z.object({
   bandSize: z.enum(["1-50", "51-100", "101-150", "150+"], {
     required_error: "You need to select a band size.",
   }),
-    abilityLevel: z.enum(["Grade 2-3", "Grade 3-4", "Grade 4-5+"], {
+  abilityLevel: z.enum(["1-2", "3-4", "5-6+"], {
     required_error: "You need to select an ability level.",
   }),
   instrumentation: z.string().optional(),
@@ -178,6 +178,9 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             render={({ field }) => (
               <FormItem className="space-y-3">
                 <FormLabel>Ensemble Ability Level</FormLabel>
+                <FormDescription className="text-[0.8rem] text-muted-foreground">
+                  This helps us understand how to best serve your program.
+                </FormDescription>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -186,21 +189,21 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
                   >
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="Grade 2-3" />
+                        <RadioGroupItem value="1-2" />
                       </FormControl>
-                      <FormLabel className="font-normal">Grade 2-3</FormLabel>
+                      <FormLabel className="font-normal">Grades 1-2</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="Grade 3-4" />
+                        <RadioGroupItem value="3-4" />
                       </FormControl>
-                      <FormLabel className="font-normal">Grade 3-4</FormLabel>
+                      <FormLabel className="font-normal">Grades 3-4</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                          <RadioGroupItem value="Grade 4-5+" />
+                        <RadioGroupItem value="5-6+" />
                       </FormControl>
-                      <FormLabel className="font-normal">Grade 4-5+</FormLabel>
+                      <FormLabel className="font-normal">Grades 5-6+</FormLabel>
                     </FormItem>
                   </RadioGroup>
                 </FormControl>
@@ -262,17 +265,14 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
           name="instrumentation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Specific Instrumentation Notes</FormLabel>
+              <FormLabel>Additional Notes or Questions</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="e.g., 'We have a strong flute section but only one tuba.' or 'Need parts for 2 synths.'"
+                  placeholder="Share instrumentation context, logistics, timelines, or anything else we should know."
                   className="resize-none"
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                Let us know any specific strengths, weaknesses, or needs in your instrumentation.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

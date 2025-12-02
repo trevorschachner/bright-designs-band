@@ -227,14 +227,23 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted/30">
-                <Image 
-                  src="/placeholder-logo.png" 
-                  alt="Bright Designs Logo" 
-                  width={180} 
-                  height={180}
-                  className="opacity-20 grayscale"
-                />
+              <div className="relative w-full h-full overflow-hidden bg-muted/30">
+                <div className="absolute inset-0">
+                  <Image
+                    src="/placeholder-logo.png"
+                    alt="Bright Designs"
+                    fill
+                    className="object-contain opacity-10"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/80 to-background/95" />
+                <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-8">
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">Bright Designs Show</p>
+                  <p className="text-3xl font-heading font-bold text-foreground">{show.title}</p>
+                  {show.description && (
+                    <p className="mt-3 text-sm text-muted-foreground line-clamp-3">{show.description}</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -303,6 +312,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       title: arrangement.title || `Movement ${index + 1}`,
                       description: description,
                       url: arrangement.audioUrl,
+                      imageUrl: displayImageUrl || arrangement.graphicUrl || arrangement.thumbnailUrl || undefined,
                     };
                   })}
                 title="Listen to Full Show"

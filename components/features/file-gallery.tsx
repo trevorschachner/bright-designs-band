@@ -60,10 +60,6 @@ export function FileGallery({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchFiles()
-  }, [fetchFiles])
-
   const fetchFiles = useCallback(async () => {
     try {
       setLoading(true)
@@ -109,6 +105,10 @@ export function FileGallery({
       setLoading(false)
     }
   }, [showId, arrangementId, fileType])
+
+  useEffect(() => {
+    fetchFiles()
+  }, [fetchFiles])
 
   const handleDelete = async (fileId: number) => {
     if (!confirm('Are you sure you want to delete this file?')) return

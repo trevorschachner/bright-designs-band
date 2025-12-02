@@ -213,14 +213,25 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                 priority
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted/30">
-                <Image 
-                  src="/placeholder-logo.png" 
-                  alt="Bright Designs Logo" 
-                  width={180} 
-                  height={180}
-                  className="opacity-20 grayscale"
-                />
+              <div className="relative w-full h-full overflow-hidden bg-muted/30">
+                {parentShow?.graphicUrl && (
+                  <Image
+                    src={parentShow.graphicUrl}
+                    alt={parentShow.title || 'Show artwork'}
+                    fill
+                    className="object-cover opacity-30 blur-sm"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/75 to-background/90" />
+                <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-8">
+                  {parentShow?.title && (
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">
+                      {parentShow.title}
+                    </p>
+                  )}
+                  <p className="text-3xl font-heading font-bold text-foreground">{arr.title}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Arrangement preview</p>
+                </div>
               </div>
             )}
           </div>
@@ -335,7 +346,8 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                 duration: arr.duration_seconds ? formatSeconds(arr.duration_seconds) : '', 
                 description: arr.description || '', 
                 type: 'Full Track', 
-                url: audio.url 
+                url: audio.url,
+                imageUrl: parentShow?.graphicUrl || parentShow?.thumbnailUrl || undefined
               }]}
               title="Arrangement Audio Preview"
               className="bg-card/80 backdrop-blur-sm"

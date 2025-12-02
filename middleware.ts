@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { getSupabaseConfig } from '@/lib/env'
+import { getSupabaseConfig, shouldSkipSupabase } from '@/lib/env'
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
@@ -12,6 +12,10 @@ export async function middleware(request: NextRequest) {
     const target = new URL('/auth/callback', request.url)
     target.search = incomingUrl.search
     return NextResponse.redirect(target)
+  }
+
+  if (shouldSkipSupabase()) {
+    return response
   }
 
   // 2. Legacy Redirect: /shows/:id -> /shows/:slug

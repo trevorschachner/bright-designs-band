@@ -14,6 +14,7 @@ export interface AudioTrack {
   description?: string
   type?: string
   url: string
+  imageUrl?: string
 }
 
 interface AudioPlayerComponentProps {
@@ -537,7 +538,10 @@ export function AudioPlayerComponent({
       </div>
 
       {/* Hidden audio element */}
-      <div data-track-title={currentTrackData?.title || 'Audio'}>
+      <div
+        data-track-title={currentTrackData?.title || 'Audio'}
+        data-track-image={currentTrackData?.imageUrl || ''}
+      >
         <audio
           ref={audioRef}
           src={currentTrackData?.url}

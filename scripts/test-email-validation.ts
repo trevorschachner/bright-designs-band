@@ -101,7 +101,7 @@ function runValidation(): void {
     school: 'Test High School',
     showInterest: 'Custom Show Title',
     bandSize: '51-100',
-    abilityLevel: 'Grade 3-4',
+    abilityLevel: '3-4',
     instrumentation: 'Strong flute section, needs percussion parts',
     showPlan: ['Opening', 'Ballad', 'Closer'],
   };

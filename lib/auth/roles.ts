@@ -10,6 +10,7 @@ export interface UserPermissions {
   canEditArrangements: boolean
   canDeleteArrangements: boolean
   canUploadFiles: boolean
+  canDeleteFiles: boolean
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
@@ -23,6 +24,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     canEditArrangements: true,
     canDeleteArrangements: true,
     canUploadFiles: true,
+    canDeleteFiles: true,
   },
   staff: {
     canAccessAdmin: true,
@@ -34,6 +36,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     canEditArrangements: true,
     canDeleteArrangements: false,
     canUploadFiles: true,
+    canDeleteFiles: true,
   },
   user: {
     canAccessAdmin: false,
@@ -45,6 +48,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     canEditArrangements: false,
     canDeleteArrangements: false,
     canUploadFiles: false,
+    canDeleteFiles: false,
   },
 }
 

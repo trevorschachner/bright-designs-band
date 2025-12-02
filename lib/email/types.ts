@@ -11,12 +11,18 @@ export type ServiceCategory =
   | 'choreography'
   | 'visual-design'
   | 'costume-consultation'
+  | 'wind-arranging'
+  | 'program-coordination'
+  | 'drill'
   
   // Production & Support
   | 'show-consultation'
   | 'rehearsal-support'
   | 'audio-production'
   | 'video-production'
+  | 'copyright'
+  | 'percussion'
+  | 'solos'
   
   // Other
   | 'collaboration'

@@ -95,7 +95,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Why Us / Beliefs */}
+      {/* Why Us / Beliefs
       <section className="py-16 bg-muted/30 my-8 rounded-3xl container mx-auto px-4">
         <div className="">
           <div className="text-center mb-12">
@@ -118,8 +118,8 @@ export default function AboutPage() {
               </CardHeader>
             </Card>
             <Card className="bg-brand-turf text-white border-none">
-              <CardHeader>
-                <CardTitle className="font-heading text-brand-sky text-2xl mb-2">Belief 3</CardTitle>
+                <CardHeader>
+                  <CardTitle className="font-heading text-white text-2xl mb-2">Belief 3</CardTitle>
                 <CardDescription className="text-gray-300 text-lg">Communication beats chaos—predictable timelines and drafts reduce rehearsal stress.</CardDescription>
               </CardHeader>
             </Card>
@@ -137,6 +137,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* Team Section */}
       <section className="py-16">
@@ -146,7 +147,7 @@ export default function AboutPage() {
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-electric">
               <CardContent className="p-6">
                 <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-electric/20 shadow-lg relative">
-                  <Image src="/placeholder-user.jpg" alt="Trevor Schachner" fill className="object-cover" />
+                  <Image src="/trevor-schachner-headshot.jpeg" alt="Trevor Schachner" fill className="object-cover" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Trevor Schachner</h3>
                 <p className="text-brand-electric font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
@@ -156,7 +157,7 @@ export default function AboutPage() {
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-sky">
               <CardContent className="p-6">
                 <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-sky/20 shadow-lg relative">
-                  <Image src="/placeholder-user.jpg" alt="Brighton Barrineau" fill className="object-cover" />
+                  <Image src="/brighton-barrineau-headshot.jpg" alt="Brighton Barrineau" fill className="object-cover" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Brighton Barrineau</h3>
                 <p className="text-brand-sky font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
@@ -166,7 +167,7 @@ export default function AboutPage() {
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-turf">
               <CardContent className="p-6">
                 <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-turf/20 shadow-lg relative">
-                  <Image src="/placeholder-user.jpg" alt="Ryan Wilhite" fill className="object-cover" />
+                  <Image src="/ryan-wilhite-headshot.jpg" alt="Ryan Wilhite" fill className="object-cover" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Ryan Wilhite</h3>
                 <p className="text-brand-turf font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Program Coordinator</p>

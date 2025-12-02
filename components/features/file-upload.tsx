@@ -102,7 +102,13 @@ export function FileUpload({
       return
     }
 
-    setUploadingFiles(prev => [...prev, ...newFiles])
+    setUploadingFiles(prev => {
+      const updated = [...prev, ...newFiles]
+      setTimeout(() => {
+        newFiles.forEach(file => uploadFile(file))
+      }, 0)
+      return updated
+    })
   }
 
   const updateFile = (id: string, updates: Partial<UploadingFile>) => {
