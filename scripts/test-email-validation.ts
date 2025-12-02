@@ -45,7 +45,13 @@ function validateHTML(html: string): ValidationResult {
   }
 
   // Check for logo
-  if (!html.includes('bright-designs-logo.png')) {
+  const logoTokens = [
+    'bright-designs-logo.png',
+    'brightdesignslogo-main.png',
+    '/logos/brightdesignslogo-main.png',
+  ];
+  const hasLogo = logoTokens.some(token => html.includes(token));
+  if (!hasLogo) {
     errors.push('Logo image reference missing');
   }
 
