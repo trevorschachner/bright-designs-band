@@ -73,6 +73,9 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
     },
   })
 
+  const showInterestLabel = isGeneralInquiry ? "Inquiry Topic or Project" : "Show of Interest"
+  const showInterestPlaceholder = isGeneralInquiry ? "e.g., Custom Show Inquiry, General Question" : ""
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -81,9 +84,14 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
           name="showInterest"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Show of Interest</FormLabel>
+              <FormLabel>{showInterestLabel}</FormLabel>
               <FormControl>
-                <Input {...field} readOnly={!isGeneralInquiry} className={isGeneralInquiry ? "" : "bg-muted"} placeholder={isGeneralInquiry ? "e.g., Custom Show Inquiry, General Question" : ""} />
+                <Input
+                  {...field}
+                  readOnly={!isGeneralInquiry}
+                  className={isGeneralInquiry ? "" : "bg-muted"}
+                  placeholder={showInterestPlaceholder}
+                />
               </FormControl>
             </FormItem>
           )}

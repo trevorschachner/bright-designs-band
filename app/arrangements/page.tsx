@@ -107,6 +107,13 @@ export default function ArrangementsPage() {
     });
   };
 
+  const formatSeconds = (total?: number) => {
+    if (!total || total < 0) return '—';
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
   if (error) {
     return (
       <div className="container mx-auto py-20">
@@ -147,102 +154,175 @@ export default function ArrangementsPage() {
       {/* Arrangements Table */}
       {arrangementsResponse && (
         <>
-          <div className="rounded-md border mb-8 bg-card text-card-foreground shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[25%]">Title</TableHead>
-                  <TableHead className="w-[20%]">Show</TableHead>
-                  <TableHead className="w-[15%]">Composer</TableHead>
-                  <TableHead className="w-[10%]">Duration</TableHead>
-                  <TableHead className="w-[20%]">Audio</TableHead>
-                  <TableHead className="w-[10%] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {arrangementsResponse.data.map((arrangement) => {
-                  const title = arrangement.title || 'Arrangement'
-                  const composer = arrangement.composer
-                  const duration = (arrangement.durationSeconds ?? arrangement.duration_seconds) as number | undefined
-                  const files = arrangement.files || []
-                  const audio = files.find(f => f.fileType === 'audio')
-                  const sampleScore = (arrangement.sampleScoreUrl ?? (arrangement as any).sample_score_url) as string | undefined
-                  const formatSeconds = (total?: number) => {
-                    if (!total || total < 0) return '—'
-                    const m = Math.floor(total / 60)
-                    const s = total % 60
-                    return `${m}:${String(s).padStart(2, '0')}`
-                  }
+          <div className="hidden sm:block">
+            <div className="rounded-md border mb-8 bg-card text-card-foreground shadow-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[25%]">Title</TableHead>
+                    <TableHead className="w-[20%]">Show</TableHead>
+                    <TableHead className="w-[15%]">Composer</TableHead>
+                    <TableHead className="w-[10%]">Duration</TableHead>
+                    <TableHead className="w-[20%]">Audio</TableHead>
+                    <TableHead className="w-[10%] text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {arrangementsResponse.data.map((arrangement) => {
+                    const title = arrangement.title || 'Arrangement';
+                    const composer = arrangement.composer;
+                    const duration = (arrangement.durationSeconds ?? arrangement.duration_seconds) as number | undefined;
+                    const files = arrangement.files || [];
+                    const audio = files.find(f => f.fileType === 'audio');
+                    const sampleScore = (arrangement.sampleScoreUrl ?? (arrangement as any).sample_score_url) as string | undefined;
 
-                  const associatedShow = arrangement.showArrangements?.[0]?.show;
+                    const associatedShow = arrangement.showArrangements?.[0]?.show;
 
-                  return (
-                    <TableRow key={arrangement.id} className="group">
-                      <TableCell className="font-medium">
-                        <Link 
-                          href={`/arrangements/${arrangement.id}`}
-                          className="text-primary hover:underline font-primary text-lg"
-                        >
-                          {title}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        {associatedShow ? (
+                    return (
+                      <TableRow key={arrangement.id} className="group">
+                        <TableCell className="font-medium">
                           <Link 
-                            href={`/shows/${associatedShow.slug}`}
-                            className="text-muted-foreground hover:text-primary hover:underline"
+                            href={`/arrangements/${arrangement.id}`}
+                            className="text-brand-midnight hover:underline font-primary text-lg"
                           >
-                            {associatedShow.title}
+                            {title}
                           </Link>
-                        ) : (
-                          <span className="text-muted-foreground text-sm italic">Independent</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {composer || <span className="text-muted-foreground">—</span>}
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-mono text-muted-foreground">
-                          {formatSeconds(duration)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {audio ? (
-                          <div className="flex items-center gap-2">
-                            <audio 
-                              controls 
-                              className="h-8 w-full max-w-[200px]" 
-                              preload="none"
-                              src={audio.url}
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">No audio</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {sampleScore && (
+                        </TableCell>
+                        <TableCell>
+                          {associatedShow ? (
+                            <Link 
+                              href={`/shows/${associatedShow.slug}`}
+                              className="text-muted-foreground hover:text-primary hover:underline"
+                            >
+                              {associatedShow.title}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground text-sm italic">Independent</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {composer || <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-mono text-muted-foreground">
+                            {formatSeconds(duration)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {audio ? (
+                            <div className="flex items-center gap-2">
+                              <audio 
+                                controls 
+                                className="h-8 w-full max-w-[200px]" 
+                                preload="none"
+                                src={audio.url}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No audio</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {sampleScore && (
+                              <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                                <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score">
+                                  <FileText className="w-4 h-4" />
+                                  <span className="sr-only">Sample Score</span>
+                                </Link>
+                              </Button>
+                            )}
                             <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                              <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score">
-                                <FileText className="w-4 h-4" />
-                                <span className="sr-only">Sample Score</span>
+                              <Link href={`/arrangements/${arrangement.id}`} title="View Details">
+                                <ExternalLink className="w-4 h-4" />
+                                <span className="sr-only">View Details</span>
                               </Link>
                             </Button>
-                          )}
-                          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                            <Link href={`/arrangements/${arrangement.id}`} title="View Details">
-                              <ExternalLink className="w-4 h-4" />
-                              <span className="sr-only">View Details</span>
-                            </Link>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <div className="sm:hidden space-y-4 mb-8">
+            {arrangementsResponse.data.map((arrangement) => {
+              const title = arrangement.title || 'Arrangement';
+              const composer = arrangement.composer;
+              const duration = (arrangement.durationSeconds ?? arrangement.duration_seconds) as number | undefined;
+              const files = arrangement.files || [];
+              const audio = files.find(f => f.fileType === 'audio');
+              const sampleScore = (arrangement.sampleScoreUrl ?? (arrangement as any).sample_score_url) as string | undefined;
+              const associatedShow = arrangement.showArrangements?.[0]?.show;
+
+              return (
+                <div key={arrangement.id} className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-4">
+                  <div>
+                    <Link
+                      href={`/arrangements/${arrangement.id}`}
+                      className="text-brand-midnight hover:underline font-primary text-xl"
+                    >
+                      {title}
+                    </Link>
+                    {associatedShow ? (
+                      <Link
+                        href={`/shows/${associatedShow.slug}`}
+                        className="block text-sm text-muted-foreground hover:text-primary hover:underline mt-1"
+                      >
+                        {associatedShow.title}
+                      </Link>
+                    ) : (
+                      <span className="block text-sm text-muted-foreground italic mt-1">Independent</span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Composer</p>
+                      <p className="font-medium">{composer || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Duration</p>
+                      <p className="font-mono text-muted-foreground">{formatSeconds(duration)}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Audio</p>
+                    {audio ? (
+                      <audio
+                        controls
+                        className="w-full"
+                        preload="none"
+                        src={audio.url}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No audio sample</span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {sampleScore && (
+                      <Button variant="secondary" size="sm" asChild className="flex-1">
+                        <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score" className="flex items-center justify-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Sample Score
+                        </Link>
+                      </Button>
+                    )}
+                    <Button size="sm" asChild className="flex-1">
+                      <Link href={`/arrangements/${arrangement.id}`} title="View Details" className="flex items-center justify-center gap-2">
+                        <ExternalLink className="w-4 h-4" />
+                        Details
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Empty State */}

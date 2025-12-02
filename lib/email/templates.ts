@@ -1,5 +1,25 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { ContactFormData } from './types';
 import { getPublicSiteUrl } from '@/lib/env';
+
+const LOGO_FILENAME = 'brightdesignslogo-main.png';
+
+function resolveInlineLogo(): string | null {
+  try {
+    const assetPath = path.join(process.cwd(), 'public', 'logos', LOGO_FILENAME);
+    const file = fs.readFileSync(assetPath);
+    return `data:image/png;base64,${file.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
+
+const inlineLogoSrc = resolveInlineLogo();
+
+const getLogoSrc = (baseUrl: string) =>
+  inlineLogoSrc ?? `${baseUrl}/logos/${LOGO_FILENAME}`;
 
 // Minimal HTML escapers to prevent XSS in email HTML templates
 // Text nodes: do not escape single quotes to preserve names like O'Brien
@@ -48,6 +68,12 @@ const brandColors = {
 
 const additionalNotesLabel = 'Additional Notes or Questions';
 
+const getInquiryLabel = (data: ContactFormData) =>
+  data?.source === 'check-availability' ? 'Show of Interest' : 'Inquiry Topic';
+
+const getInquiryLabelUpper = (data: ContactFormData) =>
+  getInquiryLabel(data).toUpperCase();
+
 const adminEmailCSS = `
         :root {
             color-scheme: light dark;
@@ -70,10 +96,17 @@ const adminEmailCSS = `
             border: 1px solid rgba(26, 36, 77, 0.08);
         }
         .header {
-            background: linear-gradient(135deg, ${brandColors.midnight} 0%, #0F1A3C 100%);
+            background: #FFFFFF;
             padding: 32px;
             text-align: center;
             border-bottom: 4px solid ${brandColors.electric};
+        }
+        .logo-wrapper {
+            background-color: #FFFFFF;
+            border-radius: 16px;
+            padding: 18px 28px;
+            display: inline-block;
+            border: 1px solid rgba(26, 36, 77, 0.12);
         }
         .logo {
             max-width: 220px;
@@ -88,7 +121,7 @@ const adminEmailCSS = `
             margin-bottom: 16px;
         }
         .header-title {
-            color: ${brandColors.lampshade};
+            color: ${brandColors.midnight};
             margin: 0;
             font-size: 24px;
             font-weight: 600;
@@ -275,38 +308,40 @@ const adminEmailCSS = `
         }
         @media (prefers-color-scheme: dark) {
             body {
-                background-color: ${brandColors.dusk} !important;
-                color: #F5F7FF !important;
+                background-color: ${brandColors.paper} !important;
+                color: ${brandColors.midnight} !important;
             }
-            .container {
-                background-color: #0F1A3C !important;
-                border-color: rgba(255, 255, 255, 0.08) !important;
-                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6) !important;
+            .container,
+            .content,
+            .priority,
+            .section,
+            .what-to-expect {
+                background-color: ${brandColors.paper} !important;
+                color: ${brandColors.midnight} !important;
+                border-color: rgba(26, 36, 77, 0.12) !important;
             }
-            .content {
-                background-color: #0F1A3C !important;
+            .header {
+                background: #FFFFFF !important;
+                border-bottom-color: ${brandColors.electric} !important;
             }
             .field-value,
             .radio-option,
-            .checkbox-item,
-            .what-to-expect {
-                background-color: rgba(255, 255, 255, 0.05) !important;
-                border-color: rgba(255, 255, 255, 0.12) !important;
-                color: #F5F7FF !important;
+            .checkbox-item {
+                background-color: rgba(26, 36, 77, 0.04) !important;
+                border-color: rgba(26, 36, 77, 0.12) !important;
+                color: ${brandColors.midnight} !important;
             }
             .field-label,
             .section-title,
             .priority-text,
-            .what-to-expect h3 {
-                color: #E5E9FF !important;
-            }
-            .header {
-                background: linear-gradient(135deg, #050A1F 0%, #0F1A3C 100%) !important;
-                border-bottom-color: ${brandColors.sky} !important;
+            .what-to-expect h3,
+            .header-title {
+                color: ${brandColors.midnight} !important;
             }
             .service-badge {
-                border-color: rgba(255, 255, 255, 0.2) !important;
-                color: #F5F7FF !important;
+                background-color: rgba(69, 212, 255, 0.15) !important;
+                border-color: rgba(69, 212, 255, 0.4) !important;
+                color: ${brandColors.midnight} !important;
             }
         }
 `;
@@ -333,10 +368,17 @@ const customerEmailCSS = `
             border: 1px solid rgba(26, 36, 77, 0.08);
         }
         .header {
-            background: linear-gradient(135deg, ${brandColors.midnight} 0%, #0F1A3C 100%);
+            background: #FFFFFF;
             padding: 36px;
             text-align: center;
             border-bottom: 4px solid ${brandColors.electric};
+        }
+        .logo-wrapper {
+            background-color: #FFFFFF;
+            border-radius: 18px;
+            padding: 20px 32px;
+            display: inline-block;
+            border: 1px solid rgba(26, 36, 77, 0.12);
         }
         .logo {
             max-width: 240px;
@@ -351,7 +393,7 @@ const customerEmailCSS = `
             margin-bottom: 16px;
         }
         .header-title {
-            color: ${brandColors.lampshade};
+            color: ${brandColors.midnight};
             margin: 0;
             font-size: 26px;
             font-weight: 600;
@@ -462,32 +504,34 @@ const customerEmailCSS = `
         }
         @media (prefers-color-scheme: dark) {
             body {
-                background-color: ${brandColors.dusk} !important;
-                color: #F5F7FF !important;
+                background-color: ${brandColors.paper} !important;
+                color: ${brandColors.midnight} !important;
             }
-            .container {
-                background-color: #0F1A3C !important;
-                border-color: rgba(255, 255, 255, 0.08) !important;
-                box-shadow: 0 18px 32px rgba(0, 0, 0, 0.6) !important;
-            }
+            .container,
             .content,
             .submission-summary,
             .highlight {
-                background-color: rgba(255, 255, 255, 0.03) !important;
-                border-color: rgba(255, 255, 255, 0.12) !important;
-                color: #F5F7FF !important;
+                background-color: ${brandColors.paper} !important;
+                color: ${brandColors.midnight} !important;
+                border-color: rgba(26, 36, 77, 0.12) !important;
             }
+            .header {
+                background: #FFFFFF !important;
+                border-bottom-color: ${brandColors.electric} !important;
+            }
+            .header-title,
             .summary-label,
             .summary-value,
             .message p {
-                color: #F5F7FF !important;
+                color: ${brandColors.midnight} !important;
             }
             .service-badge {
-                color: ${brandColors.electric} !important;
+                background-color: rgba(255, 210, 48, 0.2) !important;
                 border-color: rgba(255, 210, 48, 0.5) !important;
+                color: ${brandColors.midnight} !important;
             }
             .button {
-                box-shadow: 0 14px 24px rgba(0, 0, 0, 0.5) !important;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
             }
         }
 `;
@@ -517,7 +561,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
   };
 
   const baseUrl = getPublicSiteUrl('https://brightdesigns.band');
-  const logoUrl = `${baseUrl}/logos/brightdesignslogo-main.png`;
+  const logoUrl = getLogoSrc(baseUrl);
 
   const html = `
 <!DOCTYPE html>
@@ -530,11 +574,13 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
 ${adminEmailCSS}
     </style>
 </head>
-<body>
+<body bgcolor="#FFFFFF">
     <div class="container">
         <div class="header">
-            <img src="${logoUrl}" alt="Bright Designs Band" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-            <div class="logo-fallback" style="display: none;">Bright Designs Band</div>
+            <div class="logo-wrapper">
+                <img src="${logoUrl}" alt="Bright Designs Band" class="logo" style="display:block;background:#ffffff;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <div class="logo-fallback" style="display: none;">Bright Designs Band</div>
+            </div>
             <h1 class="header-title">New Contact Form Submission</h1>
         </div>
         
@@ -545,7 +591,7 @@ ${adminEmailCSS}
 
             ${data.showInterest ? `
             <div class="section">
-                <h2 class="section-title">Show of Interest</h2>
+                <h2 class="section-title">${getInquiryLabel(data)}</h2>
                 <div class="field">
                     <div class="field-value">${escapeHtmlText(data.showInterest)}</div>
                 </div>
@@ -705,7 +751,7 @@ Email: ${data.email}
 ${data.phone ? `Phone: ${data.phone}` : ''}
 ${data.school ? `School/Organization: ${data.school}` : ''}
 
-${data.showInterest ? `SHOW INTEREST\n${data.showInterest}\n` : ''}
+${data.showInterest ? `${getInquiryLabelUpper(data)}\n${data.showInterest}\n` : ''}
 ${(data.bandSize || data.abilityLevel || data.instrumentation) ? `
 ENSEMBLE DETAILS
 ${data.bandSize ? `Band Size: ${data.bandSize}` : ''}
@@ -762,7 +808,7 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
   };
 
   const baseUrl = getPublicSiteUrl('https://brightdesigns.band');
-  const logoUrl = `${baseUrl}/logos/brightdesignslogo-main.png`;
+  const logoUrl = getLogoSrc(baseUrl);
 
   const html = `
 <!DOCTYPE html>
@@ -775,11 +821,13 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
 ${customerEmailCSS}
     </style>
 </head>
-<body>
+<body bgcolor="#FFFFFF">
     <div class="container">
         <div class="header">
-            <img src="${logoUrl}" alt="Bright Designs Band" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-            <div class="logo-fallback" style="display: none;">Bright Designs Band</div>
+            <div class="logo-wrapper">
+                <img src="${logoUrl}" alt="Bright Designs Band" class="logo" style="display:block;background:#ffffff;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <div class="logo-fallback" style="display: none;">Bright Designs Band</div>
+            </div>
             <h1 class="header-title">Thank You, ${escapeHtmlText(data.firstName)}!</h1>
         </div>
         
@@ -793,7 +841,7 @@ ${customerEmailCSS}
                 
                 ${data.showInterest ? `
                 <div class="summary-field">
-                    <span class="summary-label">Show of Interest:</span>
+                    <span class="summary-label">${getInquiryLabel(data)}:</span>
                     <span class="summary-value">${escapeHtmlText(data.showInterest)}</span>
                 </div>
                 ` : ''}
@@ -870,7 +918,7 @@ ${customerEmailCSS}
         </div>
 
         <div class="footer">
-            <p><strong>Bright Designs Band</strong><br>
+            <p><strong>Bright Designs LLC</strong><br>
             Email: <a href="mailto:hello@brightdesigns.band" class="footer-link">hello@brightdesigns.band</a><br>
             <a href="https://brightdesigns.band" class="footer-link">brightdesigns.band</a></p>
             
@@ -896,7 +944,7 @@ Our team will review your request and respond within 24 hours during business da
 YOUR SUBMISSION SUMMARY
 Name: ${data.firstName} ${data.lastName}
 ${data.school ? `School: ${data.school}` : ''}
-${data.showInterest ? `Show Interest: ${data.showInterest}` : ''}
+${data.showInterest ? `${getInquiryLabel(data)}: ${data.showInterest}` : ''}
 ${data.bandSize ? `Band Size: ${data.bandSize}` : ''}
 ${data.abilityLevel ? `Ability Level: ${formatAbilityLevel(data.abilityLevel)}` : ''}
 Services: ${data.services.map(service => serviceLabels[service] || service).join(', ')}
@@ -905,7 +953,7 @@ ${data.message ? `\nMessage:\n${data.message}` : ''}
 In the meantime, feel free to browse our website at https://brightdesigns.band
 
 Contact Information:
-Bright Designs Band
+Bright Designs LLC
 Email: hello@brightdesigns.band
 Website: https://brightdesigns.band
 

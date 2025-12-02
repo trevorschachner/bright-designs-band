@@ -284,6 +284,10 @@ export default function EditShowPage() {
     }
   };
 
+  const handleSetThumbnail = (url: string) => {
+    setShow((prev: any) => ({ ...prev, thumbnailUrl: url }));
+  };
+
   // Normalize and coerce payload before saving to DB
   const buildPayload = useCallback(() => {
     const normalizeNumber = (v: any) => {
@@ -1187,17 +1191,23 @@ export default function EditShowPage() {
                         )}
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
-                        <Button variant="outline" size="sm" onClick={() => handleEditArrangement(arrangement)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="font-medium"
+                          onClick={() => handleEditArrangement(arrangement)}
+                        >
                           Edit
                         </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => handleDeleteArrangement(arrangement.id)}
-                      disabled={savingArrangement === arrangement.id}
-                    >
-                      {savingArrangement === arrangement.id ? 'Deleting...' : 'Delete'}
-                    </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteArrangement(arrangement.id)}
+                          disabled={savingArrangement === arrangement.id}
+                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                        >
+                          {savingArrangement === arrangement.id ? 'Deleting...' : 'Delete'}
+                        </Button>
                       </div>
                     </div>
                     
@@ -1262,6 +1272,7 @@ export default function EditShowPage() {
               showId={show?.id}
               editable
               onFileDelete={() => setFilesVersion(v => v + 1)}
+              onSetAsThumbnail={handleSetThumbnail}
             />
           </div>
         </div>

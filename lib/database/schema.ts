@@ -195,6 +195,7 @@ export const contactSubmissions = pgTable('contact_submissions', {
   phone: text('phone'),
   service: text('service').notNull(), // existing-show, choreography, etc.
   message: text('message').notNull(),
+  source: text('source').notNull().default('contact'),
   privacyAgreed: boolean('privacy_agreed').notNull().default(false),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),

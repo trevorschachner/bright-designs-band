@@ -47,6 +47,7 @@ interface FileGalleryProps {
   fileType?: 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other'
   editable?: boolean
   onFileDelete?: (fileId: number) => void
+  onSetAsThumbnail?: (url: string) => void
 }
 
 export function FileGallery({ 
@@ -54,7 +55,8 @@ export function FileGallery({
   arrangementId, 
   fileType, 
   editable = false,
-  onFileDelete 
+  onFileDelete,
+  onSetAsThumbnail
 }: FileGalleryProps) {
   const [files, setFiles] = useState<FileRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -153,15 +155,30 @@ export function FileGallery({
     switch (file.fileType) {
       case 'image':
         return (
-          <AspectRatio ratio={16 / 9}>
-            <Image
-              src={file.url}
-              alt={file.originalName}
-              fill
-              className="object-cover rounded-lg"
-              unoptimized
-            />
-          </AspectRatio>
+          <div className="relative group">
+            <AspectRatio ratio={16 / 9}>
+              <Image
+                src={file.url}
+                alt={file.originalName}
+                fill
+                className="object-cover rounded-lg"
+                unoptimized
+              />
+            </AspectRatio>
+            {editable && onSetAsThumbnail && (
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-lg">
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  onClick={() => onSetAsThumbnail(file.url)}
+                  className="shadow-lg"
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  Set as Thumbnail
+                </Button>
+              </div>
+            )}
+          </div>
         )
       
              case 'audio':
@@ -267,12 +284,15 @@ export function FileGallery({
     )
   }
 
+  const imageFiles = files.filter(file => file.fileType === 'image');
+  const nonImageFiles = fileType === 'image' ? [] : files.filter(file => file.fileType !== 'image');
+
   return (
     <div className="space-y-6">
-      {fileType === 'image' ? (
+      {imageFiles.length > 0 && (
         // Grid layout for images
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {files.map((file) => (
+          {imageFiles.map((file) => (
             <Card key={file.id} className="frame-card">
               <CardContent className="p-4">
                 {renderFilePreview(file)}
@@ -304,7 +324,9 @@ export function FileGallery({
             </Card>
           ))}
         </div>
-      ) : (
+      )}
+
+      {nonImageFiles.length > 0 && (
         // List layout for other file types
         <div className="border rounded-md overflow-hidden">
           <Table>
@@ -320,7 +342,7 @@ export function FileGallery({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {files.map((file) => (
+              {nonImageFiles.map((file) => (
                 <TableRow key={file.id}>
                   <TableCell>
                     {getFileIcon(file.fileType)}

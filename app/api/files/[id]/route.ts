@@ -54,6 +54,32 @@ export async function DELETE(
       // Continue with database deletion even if storage deletion fails
     }
 
+    // Check if this file is used as a thumbnail or graphic for a show
+    if (file.show_id && file.url) {
+      const { data: show } = await supabase
+        .from('shows')
+        .select('id, graphic_url, thumbnail_url')
+        .eq('id', file.show_id)
+        .single()
+      
+      if (show) {
+        const updates: any = {}
+        if (show.graphic_url === file.url) updates.graphic_url = null
+        if (show.thumbnail_url === file.url) updates.thumbnail_url = null
+        
+        if (Object.keys(updates).length > 0) {
+          const { error: updateErr } = await supabase
+            .from('shows')
+            .update(updates)
+            .eq('id', file.show_id)
+            
+          if (updateErr) {
+            console.error('Failed to clear show thumbnail references:', updateErr)
+          }
+        }
+      }
+    }
+
     // Delete from database via Supabase (RLS-aware)
     const { error: delErr } = await supabase.from('files').delete().eq('id', fileId)
     if (delErr) {

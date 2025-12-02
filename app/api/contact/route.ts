@@ -1,12 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail, checkRateLimit } from '@/lib/email/service';
+import { sendEmail } from '@/lib/email/service';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '@/lib/email/templates';
 import { contactSubmissions } from '@/lib/database/schema';
+
+const ADMIN_EMAIL_FALLBACK = 'hello@brightdesigns.band';
+
+const getAdminRecipients = (): string[] => {
+  const raw =
+    process.env.ADMIN_EMAIL_ADDRESSES ??
+    process.env.ADMIN_EMAIL ??
+    ADMIN_EMAIL_FALLBACK;
+
+  return raw
+    .split(',')
+    .map(email => email.trim())
+    .filter(Boolean);
+};
+
+type SendEmailPayload = Parameters<typeof sendEmail>[0];
+
+async function sendEmailOrThrow(
+  payload: SendEmailPayload,
+  context: string
+): Promise<void> {
+  const result = await sendEmail(payload);
+  if (!result.success) {
+    console.error(`[contact] Failed to send ${context}: ${result.error}`);
+    throw new Error(`Failed to send ${context}.`);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, message, type, ...rest } = body as Record<string, any>;
+    const formSource = typeof rest.source === 'string' ? rest.source : undefined;
+    const submissionSource =
+      formSource ||
+      (type === 'resource_download'
+        ? 'resource-download'
+        : type || 'contact');
 
     // Save to database
     try {
@@ -19,6 +52,7 @@ export async function POST(request: NextRequest) {
         service: type === 'resource_download' ? 'Visual Technique Guide Download' : (Array.isArray(rest.services) ? rest.services.join(', ') : (type || 'General Contact')),
         message: message || (type === 'resource_download' ? 'Resource Download Request' : ''),
         privacyAgreed: true, // Assuming consent is given by submitting
+        source: submissionSource,
         status: 'new',
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
@@ -48,26 +82,27 @@ export async function POST(request: NextRequest) {
         showPlan: showPlan.length > 0 ? showPlan : undefined,
         message: message || '',
         privacyAgreed: true,
+        source: submissionSource,
       };
 
       const { html, text } = generateContactEmailTemplate(emailData);
 
-      await sendEmail({
-        to: process.env.ADMIN_EMAIL || 'hello@brightdesigns.band',
+      await sendEmailOrThrow({
+        to: getAdminRecipients(),
         subject,
         html,
         text,
         replyTo: email,
-      });
+      }, 'admin inquiry notification');
 
       const confirmation = generateCustomerConfirmationTemplate(emailData);
 
-      await sendEmail({
+      await sendEmailOrThrow({
         to: email,
         subject: 'We received your inquiry — Bright Designs Band',
         html: confirmation.html,
         text: confirmation.text,
-      });
+      }, 'customer inquiry confirmation');
 
     } else if (type === 'resource_download') {
       const subject = `Resource Download: Visual Technique Guide - ${name || 'Unknown'}`;
@@ -81,18 +116,19 @@ export async function POST(request: NextRequest) {
         services: ['Visual Technique Guide Download'],
         message: 'User downloaded the Visual Technique Guide.',
         privacyAgreed: true,
+        source: submissionSource,
       };
 
       const { html, text } = generateContactEmailTemplate(emailData);
 
       // Notification to admin
-      await sendEmail({
-        to: process.env.ADMIN_EMAIL || 'hello@brightdesigns.band',
+      await sendEmailOrThrow({
+        to: getAdminRecipients(),
         subject,
         html,
         text,
         replyTo: email,
-      });
+      }, 'admin resource download notification');
 
       // We could send a specific confirmation/download link email to the user here if we wanted
       // For now, we'll stick to just the notification to admin as requested ("get an internal notification")
@@ -112,26 +148,27 @@ export async function POST(request: NextRequest) {
         services,
         message: message || '',
         privacyAgreed: true,
+        source: submissionSource,
       };
 
       const { html, text } = generateContactEmailTemplate(emailData);
 
-      await sendEmail({
-        to: process.env.ADMIN_EMAIL || 'hello@brightdesigns.band',
+      await sendEmailOrThrow({
+        to: getAdminRecipients(),
         subject,
         html,
         text,
         replyTo: email,
-      });
+      }, 'admin general contact notification');
 
       const confirmation = generateCustomerConfirmationTemplate(emailData);
 
-      await sendEmail({
+      await sendEmailOrThrow({
         to: email,
         subject: 'We received your message — Bright Designs Band',
         html: confirmation.html,
         text: confirmation.text,
-      });
+      }, 'customer general confirmation');
     }
 
     return NextResponse.json({ success: true });

@@ -28,7 +28,7 @@ export default function ContactPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...data, type: 'inquiry' }),
+        body: JSON.stringify({ ...data, type: 'inquiry', source: 'contact' }),
       });
 
       if (!response.ok) {
