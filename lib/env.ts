@@ -1,10 +1,18 @@
 const MASKED_VALUE = '****'
 
+const isMaskedValue = (value?: string | null): boolean =>
+  (value ?? '').trim() === MASKED_VALUE
+
 const sanitizeEnvString = (value?: string | null): string | null => {
-  if (!value) return null
+  if (value === undefined || value === null) return null
   const trimmed = value.trim()
-  if (!trimmed || trimmed === MASKED_VALUE) return null
-  return trimmed
+  return trimmed.length ? trimmed : null
+}
+
+const sanitizeSecretString = (value?: string | null): string | null => {
+  const sanitized = sanitizeEnvString(value)
+  if (!sanitized || isMaskedValue(sanitized)) return null
+  return sanitized
 }
 
 const isValidUrl = (value: string): boolean => {
@@ -17,7 +25,7 @@ const isValidUrl = (value: string): boolean => {
 }
 
 export const sanitizePublicUrl = (value?: string | null): string | null => {
-  const sanitized = sanitizeEnvString(value)
+  const sanitized = sanitizeSecretString(value)
   if (!sanitized) return null
   return isValidUrl(sanitized) ? sanitized : null
 }
@@ -29,31 +37,36 @@ export const getPublicSiteUrl = (
   fallback = 'https://www.brightdesigns.band'
 ): string => getOptionalPublicSiteUrl() ?? fallback
 
-export const getSupabaseUrl = (): string | null =>
-  sanitizePublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
-
-export const getSupabaseAnonKey = (): string | null =>
-  sanitizeEnvString(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
 export const getSupabaseConfig = () => ({
-  url: getSupabaseUrl(),
-  key: getSupabaseAnonKey(),
+  url: sanitizeSecretString(process.env.NEXT_PUBLIC_SUPABASE_URL),
+  key: sanitizeSecretString(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
 })
 
 export const getPosthogKey = (): string | null =>
-  sanitizeEnvString(process.env.NEXT_PUBLIC_POSTHOG_KEY)
+  sanitizeSecretString(process.env.NEXT_PUBLIC_POSTHOG_KEY)
 
 export const getPosthogHost = (fallback = 'https://app.posthog.com'): string =>
   sanitizePublicUrl(process.env.NEXT_PUBLIC_POSTHOG_HOST) ?? fallback
 
 export const getGaMeasurementId = (): string | null =>
-  sanitizeEnvString(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
+  sanitizeSecretString(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
 
 export const getStorageBucket = (fallback = 'Bright Designs'): string =>
-  sanitizeEnvString(process.env.NEXT_PUBLIC_STORAGE_BUCKET) ?? fallback
+  sanitizeSecretString(process.env.NEXT_PUBLIC_STORAGE_BUCKET) ?? fallback
 
 export const getStorageRootPrefix = (fallback = 'files'): string => {
-  const raw = sanitizeEnvString(process.env.NEXT_PUBLIC_STORAGE_ROOT_PREFIX) ?? fallback
+  const raw = sanitizeSecretString(process.env.NEXT_PUBLIC_STORAGE_ROOT_PREFIX) ?? fallback
   return raw.replace(/^\/+|\/+$/g, '')
 }
+
+const isNetlifyBuild =
+  process.env.NETLIFY === 'true' &&
+  process.env.NETLIFY_LOCAL !== 'true'
+
+const isSupabaseEnvMasked =
+  isMaskedValue(process.env.NEXT_PUBLIC_SUPABASE_URL) ||
+  isMaskedValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+export const shouldSkipSupabase = (): boolean =>
+  Boolean(isNetlifyBuild && isSupabaseEnvMasked)
 

@@ -1,6 +1,7 @@
 import { shows, showsToTags, showArrangements, arrangementsToTags } from '@/lib/database/schema';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -241,6 +242,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
 
     console.log('PUT /api/shows/' + id, 'Transaction completed successfully');
+    revalidateTag('shows');
     return NextResponse.json(updatedShow);
   } catch (error: any) {
     console.error('PUT /api/shows/' + id, 'Error updating show:', error);
@@ -281,5 +283,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .delete(shows)
     .where(isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id))
     .returning();
+  revalidateTag('shows');
   return NextResponse.json(deletedShow);
 } 

@@ -31,7 +31,7 @@ export async function DELETE(
     }
 
     const userPermissions = getUserPermissions(session.user.email || '')
-    if (!userPermissions.canDeleteArrangements) {
+    if (!userPermissions.canDeleteFiles) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 

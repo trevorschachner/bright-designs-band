@@ -549,16 +549,6 @@ export default function EditShowPage() {
           </CardContent>
         </Card>
 
-        <FileUpload
-          showId={show?.id}
-          allowedTypes={['image']}
-          maxFiles={1}
-          title="Show Image Upload"
-          description={`Upload the featured image for ${show.title || 'this show'}. Images are automatically linked to this show.`}
-          variant="button"
-          onUploadSuccess={() => setFilesVersion(v => v + 1)}
-          onUploadError={(err) => console.error('Show image upload error:', err)}
-        />
       </div>
 
       {/* Edit Show Form */}
@@ -1153,34 +1143,50 @@ export default function EditShowPage() {
                 ) : (
                   /* View Mode */
                   <>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">{arrangement.title || 'Untitled'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {arrangement.displayOrder !== undefined && <span className="mr-2">Order: {arrangement.displayOrder}</span>}
-                          {arrangement.durationSeconds && <span className="mr-2">Duration: {formatDuration(arrangement.durationSeconds)}</span>}
-                          {arrangement.scene && <span>Scene: {arrangement.scene}</span>}
-                        </p>
+                    <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                      <div className="space-y-2 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-semibold">{arrangement.title || 'Untitled'}</h3>
+                          {arrangement.scene && (
+                            <Badge variant="outline" className="text-xs">{arrangement.scene}</Badge>
+                          )}
+                          {arrangement.grade && (
+                            <Badge variant="secondary" className="text-xs">
+                              {arrangement.grade.replace('_', '-').replace('plus', '+')}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          {arrangement.displayOrder !== undefined && (
+                            <span className="px-2 py-0.5 rounded-full bg-muted">Order {arrangement.displayOrder}</span>
+                          )}
+                          {arrangement.durationSeconds && (
+                            <span className="px-2 py-0.5 rounded-full bg-muted">{formatDuration(arrangement.durationSeconds)}</span>
+                          )}
+                          {arrangement.year && (
+                            <span className="px-2 py-0.5 rounded-full bg-muted">{arrangement.year}</span>
+                          )}
+                        </div>
                         {(arrangement.composer || arrangement.arranger || arrangement.percussionArranger || arrangement.percussion_arranger) && (
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                             {arrangement.composer && <span>Composer: {arrangement.composer}</span>}
-                            {arrangement.arranger && <span className="ml-2">Arranger: {arrangement.arranger}</span>}
+                            {arrangement.arranger && <span>Arranger: {arrangement.arranger}</span>}
                             {(arrangement.percussionArranger || arrangement.percussion_arranger) && (
-                              <span className="ml-2">Percussion: {arrangement.percussionArranger || arrangement.percussion_arranger}</span>
+                              <span>Percussion: {arrangement.percussionArranger || arrangement.percussion_arranger}</span>
                             )}
-                          </p>
+                          </div>
                         )}
                         {arrangement.tags && arrangement.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
+                          <div className="flex flex-wrap gap-1">
                             {arrangement.tags.map((tag: any) => (
-                              <Badge key={tag.id} variant="secondary" className="text-xs">
+                              <Badge key={tag.id} variant="secondary" className="text-[10px]">
                                 {tag.name}
                               </Badge>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0">
                         <Button variant="outline" size="sm" onClick={() => handleEditArrangement(arrangement)}>
                           Edit
                         </Button>
@@ -1196,9 +1202,9 @@ export default function EditShowPage() {
                     </div>
                     
                     {/* File Upload for this Arrangement */}
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium">Files</h4>
+                    <div className="mt-3 pt-3 border-t space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-xs font-semibold text-muted-foreground tracking-wide">Files</h4>
                         <FileUpload 
                           arrangementId={arrangement.id}
                           showId={show?.id}
@@ -1208,9 +1214,7 @@ export default function EditShowPage() {
                           onUploadError={(err) => console.error('Upload error:', err)}
                         />
                       </div>
-                      
-                      {/* Gallery of files for this arrangement */}
-                      <div>
+                      <div className="bg-white rounded border border-border">
                         <FileGallery 
                           key={`arrangement-${arrangement.id}-${filesVersion}`}
                           arrangementId={arrangement.id}

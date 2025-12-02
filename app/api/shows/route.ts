@@ -1,5 +1,6 @@
 import { shows, showArrangements, showsToTags, files } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
 import { eq, desc } from 'drizzle-orm';
@@ -292,6 +293,7 @@ export async function POST(request: Request) {
       }
     }
 
+    revalidateTag('shows');
     return SuccessResponse(inserted, 201);
   } catch (error) {
     console.error('Error creating show (Supabase):', error);
