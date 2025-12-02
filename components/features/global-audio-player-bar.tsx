@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Play, Pause, Volume2, VolumeX } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react"
 
 export function GlobalAudioPlayerBar() {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -200,8 +200,16 @@ export function GlobalAudioPlayerBar() {
     })
   }, [volume, isMuted])
 
+  const getActiveAudio = () => {
+    if (typeof document === 'undefined') {
+      return activeAudioRef.current
+    }
+
+    return activeAudioRef.current || document.querySelector('audio')
+  }
+
   const togglePlayPause = () => {
-    const audio = activeAudioRef.current || document.querySelector('audio')
+    const audio = getActiveAudio()
     if (audio) {
       if (audio.paused) {
         audio.play().catch(() => setIsPlaying(false))
@@ -224,11 +232,35 @@ export function GlobalAudioPlayerBar() {
   const handleProgressChange = (value: number[]) => {
     const newTime = value[0]
     setCurrentTime(newTime)
-    const audio = activeAudioRef.current || document.querySelector('audio')
+    const audio = getActiveAudio()
     if (audio) {
       audio.currentTime = newTime
     }
   }
+
+  const seekBy = (delta: number) => {
+    const audio = getActiveAudio()
+    if (!audio) return
+
+    const trackDuration = isFinite(audio.duration) && audio.duration > 0
+      ? audio.duration
+      : duration > 0
+        ? duration
+        : undefined
+
+    const unclampedTime = audio.currentTime + delta
+    const clampedTime = trackDuration
+      ? Math.min(Math.max(unclampedTime, 0), trackDuration)
+      : Math.max(unclampedTime, 0)
+
+    audio.currentTime = clampedTime
+    setCurrentTime(clampedTime)
+  }
+
+  const skipBackward = () => seekBy(-10)
+  const skipForward = () => seekBy(10)
+
+  const canSeek = Boolean(hasHadAudio && (duration > 0 || activeAudioRef.current))
 
   const formatTime = (seconds: number) => {
     if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
@@ -273,11 +305,24 @@ export function GlobalAudioPlayerBar() {
           {/* Player Controls */}
           <div className={`flex ${isMobile ? 'w-full justify-between items-center' : 'flex-col items-center gap-2 flex-1 max-w-2xl'}`}>
             <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-2'}`}>
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10"
+                  onClick={skipBackward}
+                  aria-label="Skip backward 10 seconds"
+                  disabled={!canSeek}
+                >
+                  <SkipBack className="w-4 h-4" />
+                </Button>
+              )}
               <Button
                 variant={isMobile ? 'default' : 'ghost'}
                 size={isMobile ? 'icon' : 'icon'}
                 className={isMobile ? 'h-10 w-10 rounded-full bg-primary text-primary-foreground' : 'h-8 w-8'}
                 onClick={togglePlayPause}
+                aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
               >
                 {isPlaying ? (
                   <Pause className={isMobile ? 'w-4 h-4' : 'w-4 h-4 fill-current'} />
@@ -286,18 +331,31 @@ export function GlobalAudioPlayerBar() {
                 )}
               </Button>
               {isMobile && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10"
-                  onClick={toggleMute}
-                >
-                  {isMuted || volume === 0 ? (
-                    <VolumeX className="w-5 h-5" />
-                  ) : (
-                    <Volume2 className="w-5 h-5" />
-                  )}
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10"
+                    onClick={skipForward}
+                    aria-label="Skip forward 10 seconds"
+                    disabled={!canSeek}
+                  >
+                    <SkipForward className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10"
+                    onClick={toggleMute}
+                    aria-label={isMuted || volume === 0 ? 'Unmute audio' : 'Mute audio'}
+                  >
+                    {isMuted || volume === 0 ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
+                  </Button>
+                </>
               )}
             </div>
             

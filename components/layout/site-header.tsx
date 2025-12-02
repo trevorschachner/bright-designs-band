@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Menu, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import type { NavigationItem, CallToAction } from "@/config/site"
 import { useShowPlan } from "@/lib/hooks/use-show-plan"
  
@@ -72,6 +72,7 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 						</Button>
 					</SheetTrigger>
 					<SheetContent side="right" className="w-[320px] wireframe-border bg-background">
+						<SheetTitle className="sr-only">Main menu</SheetTitle>
 						<div className="mt-8 grid gap-6">
 							<nav className="grid gap-3">
 								{navigation.map(item => (

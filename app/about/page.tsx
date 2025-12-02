@@ -95,7 +95,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Why Us / Beliefs */}
+      {/* Why Us / Beliefs
       <section className="py-16 bg-muted/30 my-8 rounded-3xl container mx-auto px-4">
         <div className="">
           <div className="text-center mb-12">
@@ -137,6 +137,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* Team Section */}
       <section className="py-16">
