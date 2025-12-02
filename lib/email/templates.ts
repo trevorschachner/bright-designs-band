@@ -1,25 +1,8 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
 import { ContactFormData } from './types';
 import { getPublicSiteUrl } from '@/lib/env';
 
-const LOGO_FILENAME = 'brightdesignslogo-main.png';
-
-function resolveInlineLogo(): string | null {
-  try {
-    const assetPath = path.join(process.cwd(), 'public', 'logos', LOGO_FILENAME);
-    const file = fs.readFileSync(assetPath);
-    return `data:image/png;base64,${file.toString('base64')}`;
-  } catch {
-    return null;
-  }
-}
-
-const inlineLogoSrc = resolveInlineLogo();
-
-const getLogoSrc = (baseUrl: string) =>
-  inlineLogoSrc ?? `${baseUrl}/logos/${LOGO_FILENAME}`;
+const LOGO_PATH = '/logos/brightdesignslogo-main.png';
+const getLogoSrc = (baseUrl: string) => `${baseUrl}${LOGO_PATH}`;
 
 // Minimal HTML escapers to prevent XSS in email HTML templates
 // Text nodes: do not escape single quotes to preserve names like O'Brien
@@ -138,7 +121,7 @@ const adminEmailCSS = `
             margin-bottom: 24px;
         }
         .priority-text {
-            color: ${brandColors.midnight};
+            color: ${brandColors.sky};
             font-weight: 600;
             margin: 0;
             font-size: 16px;
@@ -574,7 +557,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
 ${adminEmailCSS}
     </style>
 </head>
-<body bgcolor="#FFFFFF">
+<body>
     <div class="container">
         <div class="header">
             <div class="logo-wrapper">
@@ -821,7 +804,7 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
 ${customerEmailCSS}
     </style>
 </head>
-<body bgcolor="#FFFFFF">
+<body>
     <div class="container">
         <div class="header">
             <div class="logo-wrapper">
