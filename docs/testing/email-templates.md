@@ -147,7 +147,7 @@ The validation script checks for:
 Fix issues in the template file and re-run tests.
 
 ### Environment Variables
-Tests use `NEXT_PUBLIC_SITE_URL` for logo URLs. Set this in your `.env.local`:
+Email templates now reference the production logo asset directly (`https://brightdesigns.band/logos/brightdesignslogo-main.png`), so they no longer depend on `NEXT_PUBLIC_SITE_URL` to render the logo. Still, set `NEXT_PUBLIC_SITE_URL` in `.env.local` for other parts of the app that expect it:
 ```
 NEXT_PUBLIC_SITE_URL=https://brightdesigns.band
 ```

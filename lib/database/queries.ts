@@ -453,6 +453,7 @@ export async function createContactSubmission(data: {
   phone?: string;
   service: string;
   message: string;
+  source?: string;
   privacyAgreed: boolean;
   ipAddress?: string;
   userAgent?: string;
@@ -464,6 +465,7 @@ export async function createContactSubmission(data: {
       .insert(contactSubmissions)
       .values({
         ...data,
+        source: data.source ?? 'contact',
         createdAt: new Date(),
         updatedAt: new Date(),
       })

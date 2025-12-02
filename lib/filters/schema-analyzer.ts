@@ -149,13 +149,19 @@ export const ARRANGEMENTS_SCHEMA: TableSchema = {
     title: { key: 'title', type: 'text' },
     type: { key: 'type', type: 'text', nullable: true },
     price: { key: 'price', type: 'numeric' },
-    showId: { key: 'showId', type: 'integer' }
+    showId: { key: 'showId', type: 'integer' },
+    scene: { key: 'scene', type: 'enum', enumValues: ['Opener', 'Ballad', 'Closer'] }
   },
   relations: {
     show: {
       type: 'one',
       table: 'shows', 
       fields: ['title', 'year', 'difficulty']
+    },
+    tags: {
+      type: 'many',
+      table: 'tags',
+      fields: ['arrangementsToTags', 'tag', 'name']
     }
   }
 };
@@ -211,7 +217,28 @@ export const SHOWS_FILTER_FIELDS: FilterField[] = baseShowsFields.map(field => {
   return enhanced;
 });
 
-export const ARRANGEMENTS_FILTER_FIELDS = SchemaAnalyzer.generateFilterFields(
+const baseArrangementsFields = SchemaAnalyzer.generateFilterFields(
   ARRANGEMENTS_SCHEMA,
   ['id', 'showId'] // Exclude technical fields
 );
+
+export const ARRANGEMENTS_FILTER_FIELDS: FilterField[] = baseArrangementsFields.map(field => {
+  const enhanced: FilterField = { ...field };
+
+  switch (field.key) {
+    case 'title':
+      enhanced.description = 'The name of the arrangement';
+      enhanced.placeholder = 'Search by title...';
+      break;
+    case 'scene':
+      enhanced.description = 'The scene type (Opener, Ballad, Closer)';
+      enhanced.placeholder = 'Select scene...';
+      break;
+    case 'tags':
+      enhanced.description = 'Filter by tags or categories associated with the arrangement';
+      enhanced.placeholder = 'Select tags...';
+      break;
+  }
+
+  return enhanced;
+});

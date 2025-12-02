@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X } from "lucide-react"
 
 export function GlobalAudioPlayerBar() {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -16,6 +16,7 @@ export function GlobalAudioPlayerBar() {
   const [hasHadAudio, setHasHadAudio] = useState(false) // Track if we've ever had audio
   const [highlight, setHighlight] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isDismissed, setIsDismissed] = useState(false)
   const activeAudioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -33,6 +34,12 @@ export function GlobalAudioPlayerBar() {
     return () => mq.removeListener(handleChange)
   }, [])
 
+  useEffect(() => {
+    if (!isMobile && isDismissed) {
+      setIsDismissed(false)
+    }
+  }, [isMobile, isDismissed])
+
   // Trigger highlight when playback starts
   useEffect(() => {
     if (isPlaying) {
@@ -41,6 +48,12 @@ export function GlobalAudioPlayerBar() {
       return () => clearTimeout(timer)
     }
   }, [isPlaying])
+
+  useEffect(() => {
+    if (isPlaying && isDismissed) {
+      setIsDismissed(false)
+    }
+  }, [isPlaying, isDismissed])
 
   // Find and track the currently playing or recently played audio element
   useEffect(() => {
@@ -269,8 +282,17 @@ export function GlobalAudioPlayerBar() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const handleDismiss = () => {
+    const audio = getActiveAudio()
+    if (audio) {
+      audio.pause()
+    }
+    setIsPlaying(false)
+    setIsDismissed(true)
+  }
+
   // Show player if we have a track title OR if we've had audio before (even if paused)
-  if (!trackTitle && !hasHadAudio) return null
+  if ((!trackTitle && !hasHadAudio) || (isMobile && isDismissed)) return null
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-sm border-t border-border shadow-lg transition-all duration-500 ${highlight ? 'ring-2 ring-primary border-primary shadow-[0_-5px_20px_-5px_hsl(var(--primary)/0.3)]' : ''}`}>
@@ -300,6 +322,17 @@ export function GlobalAudioPlayerBar() {
                 </div>
               )}
             </div>
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ml-auto h-8 w-8 text-muted-foreground"
+                onClick={handleDismiss}
+                aria-label="Close audio player"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
           </div>
 
           {/* Player Controls */}

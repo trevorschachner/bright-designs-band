@@ -45,12 +45,18 @@ function validateHTML(html: string): ValidationResult {
   }
 
   // Check for logo
-  if (!html.includes('bright-designs-logo.png')) {
+  const logoTokens = [
+    'bright-designs-logo.png',
+    'brightdesignslogo-main.png',
+    '/logos/brightdesignslogo-main.png',
+  ];
+  const hasLogo = logoTokens.some(token => html.includes(token));
+  if (!hasLogo) {
     errors.push('Logo image reference missing');
   }
 
   // Check for branding colors
-  if (!html.includes('#F5DF4D') && !html.includes('#6ccad2')) {
+  if (!html.includes('#FFD230') && !html.includes('#45D4FF')) {
     warnings.push('Brand colors may be missing');
   }
 

@@ -2,7 +2,7 @@ import { arrangements, files, showArrangements, arrangementsToTags } from '@/lib
 import { NextResponse } from 'next/server';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, exists, and, inArray } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
@@ -42,11 +42,40 @@ export async function GET(request: Request) {
       }
     }
 
-    // Add filter conditions
-    if (filterState.conditions.length > 0) {
-      const filterCondition = QueryBuilder.buildWhereClause(arrangements, filterState.conditions);
+    // Separate tag conditions from other conditions
+    const tagConditions = filterState.conditions.filter(c => c.field === 'tags');
+    const otherConditions = filterState.conditions.filter(c => c.field !== 'tags');
+
+    // Add standard filter conditions
+    if (otherConditions.length > 0) {
+      const filterCondition = QueryBuilder.buildWhereClause(arrangements, otherConditions);
       if (filterCondition) {
         whereConditions.push(filterCondition);
+      }
+    }
+
+    // Add tag filter conditions
+    if (tagConditions.length > 0) {
+      // Logic for filtering by tags (many-to-many)
+      // We essentially want arrangements that have at least one of the selected tags (OR logic within the IN clause)
+      // or if multiple tag conditions exist, we might want AND. 
+      // Typically 'in' operator means "has any of these tags".
+      
+      const tagIds = tagConditions.flatMap(c => c.values || [c.value]).filter(Boolean);
+      
+      if (tagIds.length > 0) {
+        whereConditions.push(
+          exists(
+            db.select()
+              .from(arrangementsToTags)
+              .where(
+                and(
+                  eq(arrangementsToTags.arrangementId, arrangements.id),
+                  inArray(arrangementsToTags.tagId, tagIds)
+                )
+              )
+          )
+        );
       }
     }
 
@@ -55,7 +84,7 @@ export async function GET(request: Request) {
     if (whereConditions.length > 0) {
       finalWhereClause = whereConditions.length === 1 
         ? whereConditions[0] 
-        : QueryBuilder.buildWhereClause(arrangements, filterState.conditions);
+        : and(...whereConditions); // Use imported 'and'
       
       if (finalWhereClause) {
         queryBuilder = queryBuilder.where(finalWhereClause) as typeof queryBuilder;

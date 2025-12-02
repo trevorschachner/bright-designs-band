@@ -36,6 +36,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         soundDesigner: true,
         windArranger: true,
         drillWriter: true,
+        featured: true,
+        displayOrder: true,
         createdAt: true,
         updatedAt: true,
       },

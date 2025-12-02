@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { InquiryForm } from "@/components/forms/inquiry-form"
 import { toast } from "@/components/ui/use-toast"
-import { Calendar, ArrowRight, Sparkles } from "lucide-react"
+import { Calendar, ArrowRight, Sparkles, CheckCircle } from "lucide-react"
+import confetti from "canvas-confetti"
 
 interface CheckAvailabilityModalProps {
   showTitle: string
@@ -34,6 +35,7 @@ interface InquiryPayload {
 export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvailabilityModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const defaultTrigger = (
     <Button className="group relative w-full text-base py-7 h-auto font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-2xl transition-all duration-300 rounded-lg overflow-hidden">
@@ -57,18 +59,40 @@ export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvaila
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...data, type: 'inquiry' }),
+        body: JSON.stringify({ ...data, type: 'inquiry', source: 'check-availability' }),
       })
 
       if (!response.ok) {
         throw new Error('Something went wrong')
       }
 
+      const end = Date.now() + 1500
+      const colors = ['#2563eb', '#ffffff']
+      ;(function frame() {
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors,
+        })
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors,
+        })
+        if (Date.now() < end) {
+          requestAnimationFrame(frame)
+        }
+      })()
+
       toast({
         title: "Inquiry Submitted!",
         description: "Thank you for your interest. We will get back to you shortly.",
       })
-      setIsOpen(false)
+      setSubmitted(true)
     } catch (error) {
       toast({
         title: "Submission Failed",
@@ -80,8 +104,15 @@ export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvaila
     }
   }
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open)
+    if (!open) {
+      setSubmitted(false)
+    }
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {triggerButton || defaultTrigger}
       </DialogTrigger>
@@ -93,11 +124,36 @@ export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvaila
           </DialogDescription>
         </DialogHeader>
         <div className="py-6">
-          <InquiryForm 
-            showTitle={showTitle}
-            onSubmit={handleSubmit as any}
-            isLoading={isLoading}
-          />
+          {submitted ? (
+            <div className="text-center space-y-6">
+              <div className="flex justify-center">
+                <CheckCircle className="w-12 h-12 text-green-500" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-heading font-semibold mb-2">We received your request!</h3>
+                <p className="text-muted-foreground">
+                  We&apos;ll follow up within 24 hours to talk through next steps for {showTitle}.
+                </p>
+              </div>
+              <div className="text-left bg-muted/40 border border-muted rounded-xl p-4 space-y-3">
+                <h4 className="font-heading font-semibold">What happens next?</h4>
+                <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                  <li>We confirm availability and timelines for your program.</li>
+                  <li>We review show needs like instrumentation, difficulty, and services.</li>
+                  <li>You receive next steps on scheduling, pricing, and deliverables.</li>
+                </ul>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => handleOpenChange(false)}>Close</Button>
+              </div>
+            </div>
+          ) : (
+            <InquiryForm
+              showTitle={showTitle}
+              onSubmit={handleSubmit as any}
+              isLoading={isLoading}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>
