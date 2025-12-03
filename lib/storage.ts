@@ -119,6 +119,57 @@ export class FileStorageService {
     }
   }
 
+  // Generate a Signed Upload URL for direct client-side upload
+  // Returns the signed URL and the storage path that should be used
+  async createSignedUploadUrl(fileName: string, options: FileUploadOptions, supabaseClient?: SupabaseClient): Promise<{ success: boolean; data?: { signedUrl: string; token: string; storagePath: string; publicUrl: string }; error?: string }> {
+    try {
+      const supabase = supabaseClient || this.getClient()
+      
+      // Generate unique filename
+      const timestamp = Date.now()
+      const randomId = Math.random().toString(36).substring(2, 15)
+      const fileExtension = fileName.split('.').pop()
+      const uniqueFileName = `${timestamp}_${randomId}.${fileExtension}`
+      
+      // Determine storage path
+      const storagePath = this.generateStoragePath(uniqueFileName, options)
+      const fullPath = withRootPrefix(storagePath)
+
+      console.log('Generating signed upload URL:', {
+        fullPath,
+        storagePath,
+        options
+      })
+
+      const { data, error } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .createSignedUploadUrl(fullPath)
+
+      if (error) {
+        console.error('Signed URL generation error:', error)
+        return { success: false, error: `Failed to generate upload URL: ${error.message}` }
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(fullPath)
+
+      return {
+        success: true,
+        data: {
+          signedUrl: data.signedUrl,
+          token: data.token,
+          storagePath,
+          publicUrl
+        }
+      }
+    } catch (error) {
+      console.error('Signed URL generation error:', error)
+      return { success: false, error: 'An unexpected error occurred generating upload URL' }
+    }
+  }
+
   // Delete file from Supabase Storage
   async deleteFile(storagePath: string, supabaseClient?: SupabaseClient): Promise<{ success: boolean; error?: string }> {
     try {
@@ -215,4 +266,4 @@ export class FileStorageService {
   }
 }
 
-export const fileStorage = new FileStorageService() 
+export const fileStorage = new FileStorageService()

@@ -54,7 +54,7 @@ export function FileUpload({
   arrangementId, 
   onUploadSuccess, 
   onUploadError,
-  allowedTypes = ['image', 'audio', 'youtube', 'pdf', 'score', 'other'],
+  allowedTypes = ['image', 'audio', 'youtube', 'pdf' | 'score' | 'other'],
   maxFiles = 10,
   title,
   description,
@@ -81,6 +81,18 @@ export function FileUpload({
     if (file.type.startsWith('audio/')) return 'audio'
     if (file.type === 'application/pdf') return 'pdf'
     return 'other'
+  }
+
+  const parseJsonResponse = async (response: Response): Promise<{ data: any; rawText: string }> => {
+    const rawText = await response.text()
+    if (!rawText) {
+      return { data: null, rawText }
+    }
+    try {
+      return { data: JSON.parse(rawText), rawText }
+    } catch {
+      return { data: null, rawText }
+    }
   }
 
   const handleFileSelect = (files: FileList | null) => {
@@ -116,7 +128,7 @@ export function FileUpload({
   }
 
   const uploadFile = async (uploadingFile: UploadingFile) => {
-    updateFile(uploadingFile.id, { status: 'uploading', progress: 10 })
+    updateFile(uploadingFile.id, { status: 'uploading', progress: 5 })
 
     try {
       if (uploadingFile.fileType === 'youtube') {
@@ -141,10 +153,10 @@ export function FileUpload({
           }),
         })
 
-        const result = await response.json()
+        const { data: result, rawText } = await parseJsonResponse(response)
 
         if (!response.ok) {
-          throw new Error(result.error || 'Upload failed')
+          throw new Error(result?.error || rawText || 'Upload failed')
         }
 
         updateFile(uploadingFile.id, { 
@@ -152,40 +164,86 @@ export function FileUpload({
           progress: 100 
         })
 
-        onUploadSuccess?.(result.file)
+        if (result?.file) {
+          onUploadSuccess?.(result.file)
+        }
       } else {
-        // Handle regular file upload
+        // Handle regular file upload (Direct to Storage via Signed URL)
         if (!uploadingFile.file) {
           throw new Error('File is required')
         }
 
-        const formData = new FormData()
-        formData.append('file', uploadingFile.file)
-        formData.append('fileType', uploadingFile.fileType)
-        formData.append('isPublic', uploadingFile.isPublic.toString())
-        formData.append('description', uploadingFile.description)
-        formData.append('displayOrder', uploadingFile.displayOrder.toString())
-        
-        if (showId) formData.append('showId', showId.toString())
-        if (arrangementId) formData.append('arrangementId', arrangementId.toString())
+        updateFile(uploadingFile.id, { progress: 10 })
 
-        updateFile(uploadingFile.id, { progress: 50 })
-
-        const response = await fetch('/api/files', {
+        // 1. Get Signed Upload URL
+        const signResponse = await fetch('/api/files/sign', {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: uploadingFile.file.name,
+            fileType: uploadingFile.fileType,
+            showId,
+            arrangementId,
+            isPublic: uploadingFile.isPublic,
+          }),
         })
 
-        const result = await response.json()
+        const { data: signResult, rawText: signRaw } = await parseJsonResponse(signResponse)
 
-        if (!response.ok) {
-          // Include validation details if available
-          const errorMsg = result.error || 'Upload failed'
-          const details = result.details
-          const fullError = details 
-            ? `${errorMsg}: ${Array.isArray(details) ? details.map((d: any) => d.message || JSON.stringify(d)).join(', ') : JSON.stringify(details)}`
-            : errorMsg
-          throw new Error(fullError)
+        if (!signResponse.ok || !signResult) {
+           // Fallback to error message or raw text
+           throw new Error(signResult?.error || signRaw || 'Failed to get upload URL')
+        }
+
+        const { signedUrl, token, storagePath } = signResult.data
+
+        updateFile(uploadingFile.id, { progress: 20 })
+
+        // 2. Upload to Supabase Storage directly (Client -> Storage)
+        // Use XMLHttpRequest to track progress if possible, or fetch
+        // Fetch is simpler but no progress events. For now, simulate progress.
+        
+        // Note: Supabase Signed URLs for upload are typically PUT requests with the file body
+        const uploadResponse = await fetch(signedUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': uploadingFile.file.type,
+            // 'Authorization': `Bearer ${token}` // Usually signed URL includes token in query params, but sometimes needs header. 
+            // supabase.storage.createSignedUploadUrl returns a URL that includes the token.
+            // Documentation says: PUT to the returned signedUrl.
+          },
+          body: uploadingFile.file,
+        })
+
+        if (!uploadResponse.ok) {
+          const errText = await uploadResponse.text()
+          throw new Error(`Storage upload failed: ${uploadResponse.statusText} ${errText}`)
+        }
+
+        updateFile(uploadingFile.id, { progress: 80 })
+
+        // 3. Record Metadata in DB
+        const recordResponse = await fetch('/api/files', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            storagePath,
+            fileName: uploadingFile.file.name,
+            fileType: uploadingFile.fileType,
+            fileSize: uploadingFile.file.size,
+            mimeType: uploadingFile.file.type,
+            showId,
+            arrangementId,
+            isPublic: uploadingFile.isPublic,
+            description: uploadingFile.description,
+            displayOrder: uploadingFile.displayOrder,
+          }),
+        })
+
+        const { data: recordResult, rawText: recordRaw } = await parseJsonResponse(recordResponse)
+
+        if (!recordResponse.ok) {
+           throw new Error(recordResult?.error || recordRaw || 'Failed to record file upload')
         }
 
         updateFile(uploadingFile.id, { 
@@ -193,10 +251,13 @@ export function FileUpload({
           progress: 100 
         })
 
-        onUploadSuccess?.(result.file)
+        if (recordResult?.data) {
+          onUploadSuccess?.(recordResult.data)
+        }
       }
 
     } catch (error) {
+      console.error('Upload flow error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Upload failed'
       updateFile(uploadingFile.id, { 
         status: 'error', 
