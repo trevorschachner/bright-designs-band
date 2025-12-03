@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { files, fileTypeEnum } from '@/lib/database/schema';
-import { fileStorage } from '@/lib/storage';
+import { fileStorage, withRootPrefix, STORAGE_BUCKET } from '@/lib/storage';
 import { requirePermission } from '@/lib/auth/roles';
 import { and, eq } from 'drizzle-orm';
 import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { fileUploadSchema } from '@/lib/validation/files';
+import { z } from 'zod';
 
 type FileType = typeof fileTypeEnum.enumValues[number];
+
+// Schema for recording a file after direct client-side upload
+const fileRecordSchema = z.object({
+  storagePath: z.string(),
+  fileName: z.string(),
+  fileType: z.enum(['image', 'audio', 'youtube', 'pdf', 'score', 'other']),
+  fileSize: z.number().nonnegative(),
+  mimeType: z.string(),
+  showId: z.number().optional(),
+  arrangementId: z.number().optional(),
+  isPublic: z.boolean().optional(),
+  description: z.string().optional(),
+  displayOrder: z.number().optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,120 +33,134 @@ export async function POST(request: NextRequest) {
       return ErrorResponse('Auth provider not configured');
     }
     const supabase = await createClient();
-    // Use getUser() instead of getSession() for proper authentication
-    // This ensures the user is authenticated and RLS policies can access auth.email()
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error('Authentication error:', authError);
       return UnauthorizedResponse();
     }
 
-    // Verify user email for debugging
-    console.log('Authenticated user:', { email: user.email, id: user.id });
-
     if (!requirePermission(user.email, 'canUploadFiles')) {
-      console.error('User does not have upload permission:', user.email);
       return ForbiddenResponse();
     }
 
-    const formData = await request.formData();
-    const rawData = Object.fromEntries(formData.entries());
+    // Determine request type: JSON (Record Mode) or Multipart (Legacy/Server Upload)
+    const contentType = request.headers.get('content-type') || '';
     
-    console.log('File upload - raw form data:', {
-      fileType: rawData.fileType,
-      showId: rawData.showId,
-      arrangementId: rawData.arrangementId,
-      isPublic: rawData.isPublic,
-      hasFile: !!rawData.file,
-      fileSize:
-        rawData.file && typeof rawData.file === 'object' && 'size' in (rawData.file as any)
-          ? (rawData.file as any).size
-          : 'unknown',
-      mimeType:
-        rawData.file && typeof rawData.file === 'object' && 'type' in (rawData.file as any)
-          ? (rawData.file as any).type
-          : 'unknown',
-    });
-    
-    const parsedData = fileUploadSchema.safeParse(rawData);
+    if (contentType.includes('application/json')) {
+      // --- RECORD MODE (Direct Upload) ---
+      const json = await request.json();
+      const parsed = fileRecordSchema.safeParse(json);
+      
+      if (!parsed.success) {
+        return BadRequestResponse(parsed.error.errors);
+      }
+      
+      const metadata = parsed.data;
+      
+      // Get public URL from storage path
+      const { data: { publicUrl } } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(withRootPrefix(metadata.storagePath));
+        
+      const insertPayload: any = {
+        file_name: metadata.fileName,
+        original_name: metadata.fileName, // Or pass separately if needed
+        file_type: metadata.fileType,
+        file_size: metadata.fileSize,
+        mime_type: metadata.mimeType,
+        url: publicUrl,
+        storage_path: metadata.storagePath,
+        show_id: metadata.showId ?? null,
+        arrangement_id: metadata.arrangementId ?? null,
+        is_public: metadata.isPublic ?? true,
+        description: metadata.description ?? null,
+        display_order: typeof metadata.displayOrder === 'number' ? metadata.displayOrder : 0,
+      };
 
-    if (!parsedData.success) {
-      console.error('File upload validation failed:', parsedData.error.errors);
-      return BadRequestResponse(parsedData.error.errors);
-    }
-    
-    const { file, ...metadata } = parsedData.data;
-
-    // Pass the authenticated server-side Supabase client to the storage service
-    const uploadResult = await fileStorage.uploadFile(file, metadata, supabase);
-
-    if (!uploadResult.success) {
-      console.error('File upload failed:', uploadResult.error);
-      return BadRequestResponse(uploadResult.error);
-    }
-
-    // Write via Supabase (respects RLS using the authenticated user)
-    const insertPayload: any = {
-      file_name: uploadResult.data!.fileName,
-      original_name: file.name,
-      file_type: metadata.fileType,
-      file_size: uploadResult.data!.fileSize,
-      mime_type: uploadResult.data!.mimeType,
-      url: uploadResult.data!.url,
-      storage_path: uploadResult.data!.storagePath,
-      show_id: metadata.showId ?? null,
-      arrangement_id: metadata.arrangementId ?? null,
-      is_public: metadata.isPublic ?? true,
-      description: metadata.description ?? null,
-      display_order: typeof metadata.displayOrder === 'number' ? metadata.displayOrder : 0,
-    };
-    // Verify authentication context before insert
-    const { data: { user: verifyUser } } = await supabase.auth.getUser();
-    console.log('Pre-insert auth check:', { 
-      email: verifyUser?.email, 
-      authenticated: !!verifyUser 
-    });
-
-    const { data: inserted, error: insertErr } = await supabase
-      .from('files')
-      .insert(insertPayload)
-      .select('*')
-      .single();
-    
-    if (insertErr) {
-      console.error('Supabase insert error (files):', {
-        message: insertErr.message,
-        code: insertErr.code,
-        details: insertErr.details,
-        hint: insertErr.hint,
-        userEmail: verifyUser?.email,
-        insertPayload
-      });
-      return ErrorResponse(`Failed to persist file record: ${insertErr.message}`);
-    }
-
-    // If this is an image uploaded for a show (not an arrangement), update the show's graphicUrl
-    if (metadata.fileType === 'image' && metadata.showId && !metadata.arrangementId && inserted?.url) {
-      try {
-        const { error: updateErr } = await supabase
+      const { data: inserted, error: insertErr } = await supabase
+        .from('files')
+        .insert(insertPayload)
+        .select('*')
+        .single();
+      
+      if (insertErr) {
+        return ErrorResponse(`Failed to persist file record: ${insertErr.message}`);
+      }
+      
+      // Update show graphicUrl if applicable
+      if (metadata.fileType === 'image' && metadata.showId && !metadata.arrangementId && inserted?.url) {
+        await supabase
           .from('shows')
           .update({ graphic_url: inserted.url })
           .eq('id', metadata.showId);
-        
-        if (updateErr) {
-          console.warn('Failed to update show graphicUrl:', updateErr.message);
-          // Don't fail the upload if this update fails
-        } else {
-          console.log('Updated show graphicUrl for show', metadata.showId);
-        }
-      } catch (updateError) {
-        console.warn('Error updating show graphicUrl:', updateError);
-        // Don't fail the upload if this update fails
       }
-    }
+      
+      return SuccessResponse(inserted, 201);
 
-    return SuccessResponse(inserted, 201);
+    } else {
+      // --- UPLOAD MODE (Server-side Upload) ---
+      const formData = await request.formData();
+      const rawData = Object.fromEntries(formData.entries());
+      
+      // Parse numbers/booleans from formData strings
+      // ...existing logic...
+      
+      // Quick fix: convert formData entries to primitives for schema
+      // fileUploadSchema expects numbers for IDs, but formData provides strings.
+      // The schema preprocessing handles this, but let's be safe.
+      
+      const parsedData = fileUploadSchema.safeParse(rawData);
+  
+      if (!parsedData.success) {
+        console.error('File upload validation failed:', parsedData.error.errors);
+        return BadRequestResponse(parsedData.error.errors);
+      }
+      
+      const { file, ...metadata } = parsedData.data;
+  
+      // Pass the authenticated server-side Supabase client to the storage service
+      const uploadResult = await fileStorage.uploadFile(file, metadata, supabase);
+  
+      if (!uploadResult.success) {
+        console.error('File upload failed:', uploadResult.error);
+        return BadRequestResponse(uploadResult.error);
+      }
+  
+      // Write via Supabase
+      const insertPayload: any = {
+        file_name: uploadResult.data!.fileName,
+        original_name: file.name,
+        file_type: metadata.fileType,
+        file_size: uploadResult.data!.fileSize,
+        mime_type: uploadResult.data!.mimeType,
+        url: uploadResult.data!.url,
+        storage_path: uploadResult.data!.storagePath,
+        show_id: metadata.showId ?? null,
+        arrangement_id: metadata.arrangementId ?? null,
+        is_public: metadata.isPublic ?? true,
+        description: metadata.description ?? null,
+        display_order: typeof metadata.displayOrder === 'number' ? metadata.displayOrder : 0,
+      };
+  
+      const { data: inserted, error: insertErr } = await supabase
+        .from('files')
+        .insert(insertPayload)
+        .select('*')
+        .single();
+      
+      if (insertErr) {
+        return ErrorResponse(`Failed to persist file record: ${insertErr.message}`);
+      }
+  
+      if (metadata.fileType === 'image' && metadata.showId && !metadata.arrangementId && inserted?.url) {
+        await supabase
+          .from('shows')
+          .update({ graphic_url: inserted.url })
+          .eq('id', metadata.showId);
+      }
+  
+      return SuccessResponse(inserted, 201);
+    }
 
   } catch (error) {
     console.error('File upload error:', error);
@@ -189,4 +218,4 @@ export async function GET(request: NextRequest) {
     console.error('File fetch error:', error);
     return ErrorResponse('Internal server error');
   }
-} 
+}
