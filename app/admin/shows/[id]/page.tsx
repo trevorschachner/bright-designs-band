@@ -39,7 +39,9 @@ export default function EditShowPage() {
     commissioned: '',
     sampleScoreUrl: '',
     copyrightAmountUsd: '',
-    displayOrder: ''
+    displayOrder: '',
+    // Default Wind Arranger
+    windArranger: 'Brighton Barrineau, Trevor Schachner',
   });
 
   const handleArrangementTagChange = (tagId: number) => {
@@ -90,7 +92,7 @@ export default function EditShowPage() {
             programCoordinator: data.programCoordinator ?? '',
             percussionArranger: data.percussionArranger ?? '',
             soundDesigner: data.soundDesigner ?? '',
-            windArranger: data.windArranger ?? '',
+            windArranger: data.windArranger ?? 'Brighton Barrineau, Trevor Schachner', // Default for Shows
             drillWriter: data.drillWriter ?? '',
           });
           const tagIds = Array.isArray(data.showsToTags)
@@ -131,7 +133,7 @@ export default function EditShowPage() {
       const payload: any = {
         title: newArrangement.title,
         composer: newArrangement.composer || null,
-        arranger: newArrangement.arranger || null,
+        arranger: newArrangement.arranger || 'Brighton Barrineau, Trevor Schachner', // Default for Arrangement
         percussionArranger: newArrangement.percussionArranger || null,
         description: newArrangement.description || null,
         grade: newArrangement.grade || null,
@@ -171,7 +173,8 @@ export default function EditShowPage() {
           commissioned: '',
           sampleScoreUrl: '',
           copyrightAmountUsd: '',
-          displayOrder: ''
+          displayOrder: '',
+          windArranger: 'Brighton Barrineau, Trevor Schachner', // Reset default
         });
         setSelectedArrangementTags([]);
         setShowAddArrangementForm(false);
@@ -195,7 +198,7 @@ export default function EditShowPage() {
     setEditingArrangementData({
       title: arrangement.title || '',
       composer: arrangement.composer || '',
-      arranger: arrangement.arranger || '',
+      arranger: arrangement.arranger || 'Brighton Barrineau, Trevor Schachner',
       percussionArranger: arrangement.percussionArranger || arrangement.percussion_arranger || '',
       description: arrangement.description || '',
       grade: arrangement.grade || '',
@@ -872,7 +875,7 @@ export default function EditShowPage() {
                       value={newArrangement.commissioned} 
                       onChange={(e) => setNewArrangement({ ...newArrangement, commissioned: e.target.value })} 
                     />
-          </div>
+                  </div>
                   <div className="md:col-span-2">
                     <label className="block mb-2 text-sm font-medium">Tags</label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 border rounded bg-muted/30">
@@ -920,7 +923,8 @@ export default function EditShowPage() {
                         commissioned: '',
                         sampleScoreUrl: '',
                         copyrightAmountUsd: '',
-                        displayOrder: ''
+                        displayOrder: '',
+                        windArranger: 'Brighton Barrineau, Trevor Schachner', // Reset default
                       });
                       setSaveError(null);
                       setSelectedArrangementTags([]);
@@ -928,8 +932,8 @@ export default function EditShowPage() {
                   >
                     Cancel
                   </Button>
-          </div>
-        </form>
+                </div>
+              </form>
             </CardContent>
           </Card>
         )}
@@ -1201,7 +1205,7 @@ export default function EditShowPage() {
                         </Button>
                         <Button 
                           variant="outline" 
-                          size="sm"
+                          size="sm" 
                           onClick={() => handleDeleteArrangement(arrangement.id)}
                           disabled={savingArrangement === arrangement.id}
                           className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
@@ -1315,4 +1319,4 @@ export default function EditShowPage() {
       )}
     </div>
   );
-} 
+}
