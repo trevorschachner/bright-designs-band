@@ -62,33 +62,84 @@ export default function NewShowPage() {
     }
   };
 
+  // Helper to safely parse JSON response
+  const parseJsonResponse = async (response: Response): Promise<{ data: any; rawText: string }> => {
+    const rawText = await response.text();
+    if (!rawText) return { data: null, rawText };
+    try {
+      return { data: JSON.parse(rawText), rawText };
+    } catch {
+      return { data: null, rawText };
+    }
+  };
+
   const uploadThumbnail = async (showId: number): Promise<string | null> => {
     if (!thumbnailFile) return null;
 
     setIsUploadingThumbnail(true);
     try {
-      const formData = new FormData();
-      formData.append('file', thumbnailFile);
-      formData.append('fileType', 'image');
-      formData.append('isPublic', 'true');
-      formData.append('description', 'Show thumbnail');
-      formData.append('displayOrder', '0');
-      formData.append('showId', showId.toString());
-
-      const response = await fetch('/api/files', {
+      // 1. Get Signed Upload URL
+      const signResponse = await fetch('/api/files/sign', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: thumbnailFile.name,
+          fileType: 'image',
+          showId: showId,
+          isPublic: true,
+        }),
       });
 
-      const result = await response.json();
+      const { data: signResult, rawText: signRaw } = await parseJsonResponse(signResponse);
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to upload thumbnail');
+      if (!signResponse.ok || !signResult) {
+         throw new Error(signResult?.error || signRaw || 'Failed to get upload URL');
       }
 
-      return result.file?.url || null;
+      const { signedUrl, storagePath } = signResult.data;
+
+      // 2. Upload to Supabase Storage directly
+      const uploadResponse = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': thumbnailFile.type,
+        },
+        body: thumbnailFile,
+      });
+
+      if (!uploadResponse.ok) {
+        const errText = await uploadResponse.text();
+        throw new Error(`Storage upload failed: ${uploadResponse.statusText} ${errText}`);
+      }
+
+      // 3. Record Metadata in DB
+      const recordResponse = await fetch('/api/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storagePath,
+          fileName: thumbnailFile.name,
+          fileType: 'image',
+          fileSize: thumbnailFile.size,
+          mimeType: thumbnailFile.type,
+          showId: showId,
+          isPublic: true,
+          description: 'Show thumbnail',
+          displayOrder: 0,
+        }),
+      });
+
+      const { data: recordResult, rawText: recordRaw } = await parseJsonResponse(recordResponse);
+
+      if (!recordResponse.ok) {
+         throw new Error(recordResult?.error || recordRaw || 'Failed to record file upload');
+      }
+
+      return recordResult?.data?.url || null;
+
     } catch (error) {
       console.error('Error uploading thumbnail:', error);
+      // Propagate error so we know it failed, but don't stop the whole flow if show was created
       throw error;
     } finally {
       setIsUploadingThumbnail(false);
@@ -140,7 +191,8 @@ export default function NewShowPage() {
           await uploadThumbnail(createdShowId);
         } catch (thumbnailError) {
           console.warn('Show created but thumbnail upload failed:', thumbnailError);
-          // Continue anyway since show was created
+          // Optional: Set a warning message, but still consider success since show exists
+          setSubmitError('Show created, but thumbnail upload failed. You can retry uploading it on the edit page.');
         }
       }
 
@@ -342,4 +394,4 @@ export default function NewShowPage() {
       </form>
     </div>
   );
-} 
+}
