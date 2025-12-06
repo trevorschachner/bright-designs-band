@@ -78,7 +78,7 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold mb-8 text-brand-midnight font-heading text-center">Our Story</h2>
             <div className="prose prose-lg mx-auto text-muted-foreground">
               <p className="mb-6">
-                Founded in 2017, Bright Designs began as a passion project between 3 friends. We fell inlove with marching band during our days of performing and wanted to bring that same passion to the next generation of performers.
+                Founded in 2017, Bright Designs began as a passion project between 3 friends. We fell in love with marching band during our days of performing and wanted to bring that same passion to the next generation of performers.
                 What started as a small endeavor has grown into a widely trusted name in the marching band community serving over 25 schools each year.
               </p>
               <p className="mb-6">

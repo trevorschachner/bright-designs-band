@@ -53,6 +53,7 @@ export const organizationSchema = {
   sameAs: social.map(link => link.href),
   serviceType: [
     'Marching Band Show Design',
+    'Marching Band Shows',
     'Custom Show Design',
     'Professional Music Design & Arrangements',
     'Custom Music Arrangements', 

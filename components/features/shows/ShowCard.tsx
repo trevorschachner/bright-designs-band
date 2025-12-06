@@ -17,7 +17,7 @@ interface ShowCardProps {
 export function ShowCard({ item: show, isLoading }: ShowCardProps) {
   const router = useRouter();
   
-  if (isLoading) {
+  if (isLoading || !show) {
     return <ShowCardSkeleton />;
   }
   const href = `/shows/${(show as any).slug ?? show.id}`;
