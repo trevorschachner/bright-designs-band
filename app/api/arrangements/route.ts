@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       // or if multiple tag conditions exist, we might want AND. 
       // Typically 'in' operator means "has any of these tags".
       
-      const tagIds = tagConditions.flatMap(c => c.values || [c.value]).filter(Boolean);
+      const tagIds = tagConditions.flatMap(c => c.values || [c.value]).filter(Boolean).map(Number);
       
       if (tagIds.length > 0) {
         whereConditions.push(

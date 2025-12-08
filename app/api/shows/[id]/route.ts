@@ -244,6 +244,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
 
     console.log('PUT /api/shows/' + id, 'Transaction completed successfully');
+    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
     revalidateTag('shows');
     return NextResponse.json(updatedShow);
   } catch (error: any) {
@@ -285,6 +286,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .delete(shows)
     .where(isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id))
     .returning();
+  // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
   revalidateTag('shows');
   return NextResponse.json(deletedShow);
 } 

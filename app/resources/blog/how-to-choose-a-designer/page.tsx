@@ -26,17 +26,17 @@ export default function GuidePage() {
           </p>
 
           <p>
-            With hundreds of "custom design" sites popping up, how do you filter the professionals from the hobbyists? 
+            With hundreds of &quot;custom design&quot; sites popping up, how do you filter the professionals from the hobbyists? 
             Here is the honest truth about what to look for—and what to avoid.
           </p>
 
           <div className="my-12 p-6 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">
             <h3 className="text-amber-800 flex items-center gap-2 mt-0">
               <AlertTriangle className="w-5 h-5" />
-              The "Ghosting" Epidemic
+              The &quot;Ghosting&quot; Epidemic
             </h3>
             <p className="text-amber-900 mb-0">
-              The #1 complaint we hear from new clients isn't about bad music—it's about communication. 
+              The #1 complaint we hear from new clients isn&apos;t about bad music—it&apos;s about communication. 
               Too many designers take a deposit and then disappear until August. Your designer needs to be a <strong>partner</strong>, 
               not just a vendor.
             </p>
@@ -49,21 +49,21 @@ export default function GuidePage() {
             to ensure you never have to chase us for a movement or a rewrite.
           </p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Ask for references:</strong> Don't just look at the portfolio. Ask specifically to speak to a director they worked with <em>last year</em>.</li>
-            <li><strong>Check their timeline:</strong> If they can't give you a specific delivery date for "Movement 2 Percussion," run away.</li>
+            <li><strong>Ask for references:</strong> Don&apos;t just look at the portfolio. Ask specifically to speak to a director they worked with <em>last year</em>.</li>
+            <li><strong>Check their timeline:</strong> If they can&apos;t give you a specific delivery date for &quot;Movement 2 Percussion,&quot; run away.</li>
           </ul>
 
-          <h3>2. "Custom" Should Mean Custom</h3>
+          <h3>2. &quot;Custom&quot; Should Mean Custom</h3>
           <p>
-            Many "custom" shows are just recycled templates with a new title. True custom design starts with <em>your</em> instrumentation 
-            and <em>your</em> students' ability levels.
+            Many &quot;custom&quot; shows are just recycled templates with a new title. True custom design starts with <em>your</em> instrumentation 
+            and <em>your</em> students&apos; ability levels.
           </p>
           <p>
-            If a designer doesn't ask for your <strong>Instrumentation List</strong> or <strong>Soloist Capabilities</strong> before writing a single note, 
-            they aren't writing for <em>your</em> band. They are writing for a MIDI file.
+            If a designer doesn&apos;t ask for your <strong>Instrumentation List</strong> or <strong>Soloist Capabilities</strong> before writing a single note, 
+            they aren&apos;t writing for <em>your</em> band. They are writing for a MIDI file.
           </p>
 
-          <h3>3. The "Rewrite" Policy</h3>
+          <h3>3. The &quot;Rewrite&quot; Policy</h3>
           <p>
             This is the hidden cost that blows up budgets. What happens if the woodwind feature is too hard? 
             What if your drill writer needs 16 more counts in the ballad?
@@ -89,7 +89,7 @@ export default function GuidePage() {
               <div>
                 <h4 className="font-bold mb-4 text-red-500 flex items-center gap-2"><X /> Typical Designer</h4>
                 <ul className="space-y-3 text-sm">
-                  <li className="flex gap-2"><X className="w-4 h-4 text-red-400 shrink-0" /> "I'll get to it when I can" communication</li>
+                  <li className="flex gap-2"><X className="w-4 h-4 text-red-400 shrink-0" /> &quot;I&apos;ll get to it when I can&quot; communication</li>
                   <li className="flex gap-2"><X className="w-4 h-4 text-red-400 shrink-0" /> Charges hourly for every rewrite</li>
                   <li className="flex gap-2"><X className="w-4 h-4 text-red-400 shrink-0" /> Delivers PDF parts late in July</li>
                   <li className="flex gap-2"><X className="w-4 h-4 text-red-400 shrink-0" /> One-size-fits-all difficulty</li>
@@ -103,7 +103,7 @@ export default function GuidePage() {
                   <li className="flex gap-2"><Check className="w-4 h-4 text-brand-turf shrink-0" /> <strong>Free</strong> difficulty adjustments forever</li>
                   <li className="flex gap-2"><Check className="w-4 h-4 text-brand-turf shrink-0" /> Complete parts package by June 1st</li>
                   <li className="flex gap-2"><Check className="w-4 h-4 text-brand-turf shrink-0" /> Tailored to your specific instrumentation</li>
-                  <li className="flex gap-2"><Check className="w-4 h-4 text-brand-turf shrink-0" /> Educational & achievable scoring</li>
+                  <li className="flex gap-2"><Check className="w-4 h-4 text-brand-turf shrink-0" /> Educational &amp; achievable scoring</li>
                 </ul>
               </div>
             </div>
@@ -113,7 +113,7 @@ export default function GuidePage() {
         <div className="bg-brand-midnight text-white p-8 rounded-xl text-center">
           <h3 className="text-2xl font-bold mb-4">Ready for a stress-free season?</h3>
           <p className="mb-8 text-gray-300">
-            Let's discuss your band's goals and how we can design a vehicle for your success.
+            Let&apos;s discuss your band&apos;s goals and how we can design a vehicle for your success.
           </p>
           <div className="flex justify-center gap-4">
             <Button size="lg" className="bg-brand-electric text-brand-midnight hover:bg-white" asChild>

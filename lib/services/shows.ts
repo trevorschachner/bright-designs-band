@@ -18,6 +18,7 @@ export type ShowSummary = {
   graphicUrl: string | null;
   createdAt: Date;
   showsToTags: { tag: { id: number; name: string } }[];
+  arrangements: { id: number; title: string | null; scene: string | null }[];
 };
 
 // Helper to convert storage paths to public URLs
@@ -54,6 +55,18 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
             tag: true
           }
         },
+        showArrangements: {
+          orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
+          with: {
+            arrangement: {
+              columns: {
+                id: true,
+                title: true,
+                scene: true,
+              }
+            }
+          }
+        },
         files: {
           where: (files, { eq }) => eq(files.fileType, 'image'),
           limit: 1
@@ -86,6 +99,7 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
         showsToTags: s.showsToTags.map((st) => ({
           tag: st.tag
         })),
+        arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
       };
     });
 
@@ -166,6 +180,18 @@ async function fetchShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermedi
             tag: true
           }
         },
+        showArrangements: {
+          orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
+          with: {
+            arrangement: {
+              columns: {
+                id: true,
+                title: true,
+                scene: true,
+              }
+            }
+          }
+        },
         files: {
           where: (files, { eq }) => eq(files.fileType, 'image'),
           limit: 1
@@ -189,6 +215,7 @@ async function fetchShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermedi
         showsToTags: s.showsToTags.map((st) => ({
           tag: st.tag
         })),
+        arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
       };
     });
 

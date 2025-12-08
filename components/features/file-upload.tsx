@@ -54,7 +54,7 @@ export function FileUpload({
   arrangementId, 
   onUploadSuccess, 
   onUploadError,
-  allowedTypes = ['image', 'audio', 'youtube', 'pdf' | 'score' | 'other'],
+  allowedTypes = ['image', 'audio', 'youtube', 'pdf', 'score', 'other'],
   maxFiles = 10,
   title,
   description,

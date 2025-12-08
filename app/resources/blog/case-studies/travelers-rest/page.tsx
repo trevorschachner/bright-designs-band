@@ -40,40 +40,40 @@ export default function TravelersRestCaseStudy() {
           <h2>The Context</h2>
           <p>
             Travelers Rest High School (TR) had a passionate student base and dedicated staff, but they were stuck in a competitive plateau. 
-            Competing in South Carolina's fierce AAA and AAAA classifications, the band was consistently finishing around 14th place at Upper State—just missing the cutoff for State Finals.
+            Competing in South Carolina&apos;s fierce AAA and AAAA classifications, the band was consistently finishing around 14th place at Upper State—just missing the cutoff for State Finals.
           </p>
           <p>
-            The students were working hard, but the vehicle on the field wasn't rewarding their efforts. The show designs were often "too safe" to be competitive or "too difficult" to be clean.
+            The students were working hard, but the vehicle on the field wasn&apos;t rewarding their efforts. The show designs were often &quot;too safe&quot; to be competitive or &quot;too difficult&quot; to be clean.
           </p>
 
           <div className="my-12 p-8 bg-muted rounded-xl border-l-4 border-brand-electric not-prose">
             <Quote className="w-8 h-8 text-brand-electric mb-4 opacity-50" />
             <p className="text-xl font-medium italic text-muted-foreground mb-4">
-              "We needed a change. We needed a design team that understood where we were and, more importantly, where we wanted to go. Bright Designs didn't just write us a show; they built us a ladder."
+              &quot;We needed a change. We needed a design team that understood where we were and, more importantly, where we wanted to go. Bright Designs didn&apos;t just write us a show; they built us a ladder.&quot;
             </p>
             <div className="font-bold text-brand-midnight">– Ryan Wilhite, Former Director of Bands</div>
           </div>
 
-          <h2>The Strategy: "Maximize GE"</h2>
+          <h2>The Strategy: &quot;Maximize GE&quot;</h2>
           <p>
-            To jump from 14th place to the Top 3, we couldn't just be "better." We had to be <strong>smarter</strong>. 
-            As <strong>Program Coordinators</strong> and <strong>Music Designers</strong>, Bright Designs partnered with TR's staff to implement a comprehensive strategy.
+            To jump from 14th place to the Top 3, we couldn&apos;t just be &quot;better.&quot; We had to be <strong>smarter</strong>. 
+            As <strong>Program Coordinators</strong> and <strong>Music Designers</strong>, Bright Designs partnered with TR&apos;s staff to implement a comprehensive strategy.
           </p>
 
           <h3>1. Program Coordination: The Vision</h3>
           <p>
             We worked to align every element of the production—music, visual, and props—under a single, cohesive vision.
-            With a mid-sized ensemble, "looking small" is a death sentence on the score sheets. We coordinated with the visual team to ensure:
+            With a mid-sized ensemble, &quot;looking small&quot; is a death sentence on the score sheets. We coordinated with the visual team to ensure:
           </p>
           <ul>
             <li><strong>Strategic Staging:</strong> Compressed staging to create visual density and integrate the winds and guard.</li>
-            <li><strong>Prop Integration:</strong> Using scenic elements to frame the field, focusing the audience's eye and making the band appear larger.</li>
+            <li><strong>Prop Integration:</strong> Using scenic elements to frame the field, focusing the audience&apos;s eye and making the band appear larger.</li>
           </ul>
 
-          <h3>2. Music Design: "Goldilocks" Difficulty</h3>
+          <h3>2. Music Design: &quot;Goldilocks&quot; Difficulty</h3>
           <p>
             Previous shows often exposed student weaknesses. We pivoted to writing <strong>achievable vocabulary</strong>. 
-            The wind book was designed to sound sophisticated and full, but lay comfortably in the students' ranges. 
+            The wind book was designed to sound sophisticated and full, but lay comfortably in the students&apos; ranges. 
             This allowed the students to play with confidence, volume, and great intonation—factors that immediately boosted Music Analysis scores.
           </p>
 
@@ -85,7 +85,7 @@ export default function TravelersRestCaseStudy() {
 
           <h2>The Outcome</h2>
           <p>
-            The results were historic for the program. In the first year of our partnership, Travelers Rest didn't just make finals—they skyrocketed up the rankings.
+            The results were historic for the program. In the first year of our partnership, Travelers Rest didn&apos;t just make finals—they skyrocketed up the rankings.
           </p>
           <ul>
             <li><strong>State Finals:</strong> TR became a consistent State Medalist (Top 3), earning multiple caption awards for Visual Performance and General Effect.</li>
@@ -114,13 +114,13 @@ export default function TravelersRestCaseStudy() {
           </div>
         </div>
 
-        <div className="mt-16 text-center">
-          <h3 className="text-2xl font-bold mb-4">Ready to write your own turnaround story?</h3>
-          <Button size="lg" className="bg-brand-electric text-brand-midnight hover:bg-white transition-colors" asChild>
-            <Link href="/contact">Let's Talk Design</Link>
-          </Button>
-        </div>
-      </section>
-    </div>
-  );
+          <div className="mt-16 text-center">
+            <h3 className="text-2xl font-bold mb-4">Ready to write your own turnaround story?</h3>
+            <Button size="lg" className="bg-brand-electric text-brand-midnight hover:bg-white transition-colors" asChild>
+              <Link href="/contact">Let&apos;s Talk Design</Link>
+            </Button>
+          </div>
+        </section>
+      </div>
+    );
 }

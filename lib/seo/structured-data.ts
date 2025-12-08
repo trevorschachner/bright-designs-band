@@ -50,7 +50,7 @@ export const organizationSchema = {
     email: 'trevorschachner@gmail.com',
     availableLanguage: 'English'
   },
-  sameAs: social.map(link => link.href),
+  sameAs: (social || []).map(link => link.href),
   serviceType: [
     'Marching Band Show Design',
     'Marching Band Shows',

@@ -11,6 +11,9 @@ import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse
 import { fileStorage, STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const filterState = FilterUrlManager.fromUrlParams(searchParams);
+
   try {
     // Lazy import DB to avoid requiring DATABASE_URL at module-eval time
     let db: any;
@@ -20,9 +23,6 @@ export async function GET(request: Request) {
       console.error('Database import failed (likely no DATABASE_URL).', e);
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
-
-    const { searchParams } = new URL(request.url);
-    const filterState = FilterUrlManager.fromUrlParams(searchParams);
 
     // Default pagination
     const page = filterState.page || 1;
@@ -293,6 +293,7 @@ export async function POST(request: Request) {
       }
     }
 
+    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
     revalidateTag('shows');
     return SuccessResponse(inserted, 201);
   } catch (error) {
