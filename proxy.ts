@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getSupabaseConfig, shouldSkipSupabase } from '@/lib/env'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const response = NextResponse.next()
   
   // 1. Handle Code Exchange Redirect

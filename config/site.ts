@@ -71,6 +71,8 @@ export const siteConfig: SiteConfig = {
         title: "Resources",
         links: [
           { label: "Free Guides", href: "/resources" },
+          { label: "Design Guide", href: "/resources/blog/how-to-choose-a-designer" },
+          { label: "Success Stories", href: "/resources/blog/case-studies" },
           { label: "Contact Form", href: "/contact" },
         ],
       },

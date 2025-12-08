@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle, Upload } from 'lucide-react';
 import { formatDuration, parseDuration } from '@/lib/utils';
+import Image from 'next/image';
 
 export default function EditShowPage() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function EditShowPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialShowDataRef = useRef<any>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -116,6 +118,98 @@ export default function EditShowPage() {
     setSelectedTags(prev =>
       prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
     );
+  };
+
+  // Helper to safely parse JSON response
+  const parseJsonResponse = async (response: Response): Promise<{ data: any; rawText: string }> => {
+    const rawText = await response.text();
+    if (!rawText) return { data: null, rawText };
+    try {
+      return { data: JSON.parse(rawText), rawText };
+    } catch {
+      return { data: null, rawText };
+    }
+  };
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingThumbnail(true);
+    setSaveError(null);
+    try {
+       // 1. Get Signed Upload URL
+       const signResponse = await fetch('/api/files/sign', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           fileName: file.name,
+           fileType: 'image',
+           showId: show.id,
+           isPublic: true,
+         }),
+       });
+
+       const { data: signResult, rawText: signRaw } = await parseJsonResponse(signResponse);
+
+       if (!signResponse.ok || !signResult) {
+          throw new Error(signResult?.error || signRaw || 'Failed to get upload URL');
+       }
+
+       const { signedUrl, storagePath } = signResult.data;
+
+       // 2. Upload to Supabase Storage directly
+       const uploadResponse = await fetch(signedUrl, {
+         method: 'PUT',
+         headers: {
+           'Content-Type': file.type,
+         },
+         body: file,
+       });
+
+       if (!uploadResponse.ok) {
+         const errText = await uploadResponse.text();
+         throw new Error(`Storage upload failed: ${uploadResponse.statusText} ${errText}`);
+       }
+
+       // 3. Record Metadata in DB
+       const recordResponse = await fetch('/api/files', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           storagePath,
+           fileName: file.name,
+           fileType: 'image',
+           fileSize: file.size,
+           mimeType: file.type,
+           showId: show.id,
+           isPublic: true,
+           description: 'Show thumbnail',
+           displayOrder: 0,
+         }),
+       });
+
+       const { data: recordResult, rawText: recordRaw } = await parseJsonResponse(recordResponse);
+
+       if (!recordResponse.ok) {
+          throw new Error(recordResult?.error || recordRaw || 'Failed to record file upload');
+       }
+
+       // Update show thumbnail URL
+       const newUrl = recordResult?.data?.url;
+       if (newUrl) {
+         setShow((prev: any) => ({ ...prev, thumbnailUrl: newUrl }));
+         setFilesVersion(v => v + 1); // Refresh gallery
+       }
+
+    } catch (error) {
+      console.error('Error uploading thumbnail:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to upload thumbnail');
+    } finally {
+      setIsUploadingThumbnail(false);
+      // Reset input
+      e.target.value = '';
+    }
   };
 
   const handleArrangementSubmit = async (e: React.FormEvent) => {
@@ -492,6 +586,15 @@ export default function EditShowPage() {
                 <div className="md:col-span-2">
                   <div className="text-sm font-medium text-muted-foreground mb-1">Thumbnail URL</div>
                   <div className="text-base break-all text-sm">{show.thumbnailUrl}</div>
+                  <div className="mt-2 relative w-40 aspect-video rounded-md overflow-hidden border">
+                    <Image
+                      src={show.thumbnailUrl}
+                      alt="Thumbnail preview"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
                 </div>
               )}
               {show.youtubeUrl && (
@@ -608,7 +711,34 @@ export default function EditShowPage() {
               </div>
               <div>
                 <label className="block mb-2 text-sm font-medium" htmlFor="thumbnailUrl">Thumbnail URL</label>
-                <input className="w-full p-2 border rounded" type="text" id="thumbnailUrl" value={show.thumbnailUrl} onChange={(e) => setShow({ ...show, thumbnailUrl: e.target.value })} />
+                <div className="flex gap-2">
+                  <input 
+                    className="w-full p-2 border rounded" 
+                    type="text" 
+                    id="thumbnailUrl" 
+                    value={show.thumbnailUrl || ''} 
+                    onChange={(e) => setShow({ ...show, thumbnailUrl: e.target.value })} 
+                  />
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="thumbnail-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleThumbnailUpload}
+                      disabled={isUploadingThumbnail}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      disabled={isUploadingThumbnail}
+                      onClick={() => document.getElementById('thumbnail-upload')?.click()}
+                      title="Upload Thumbnail"
+                    >
+                      {isUploadingThumbnail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block mb-2 text-sm font-medium" htmlFor="displayOrder">Display Order</label>

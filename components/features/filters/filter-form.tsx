@@ -124,7 +124,7 @@ export function FilterForm({
             <Label>From</Label>
             <Input
               type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-              value={values[0] || ''}
+              value={String(values[0] || '')}
               onChange={(e) => updateValues([e.target.value, values[1] || ''])}
               min={field.min}
               max={field.max}
@@ -134,7 +134,7 @@ export function FilterForm({
             <Label>To</Label>
             <Input
               type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-              value={values[1] || ''}
+              value={String(values[1] || '')}
               onChange={(e) => updateValues([values[0] || '', e.target.value])}
               min={field.min}
               max={field.max}
@@ -149,7 +149,7 @@ export function FilterForm({
       return (
         <div>
           <Label>Value</Label>
-          <Select value={condition.value || ''} onValueChange={updateValue}>
+          <Select value={String(condition.value || '')} onValueChange={updateValue}>
             <SelectTrigger>
               <SelectValue placeholder="Select a value..." />
             </SelectTrigger>
@@ -190,7 +190,7 @@ export function FilterForm({
         <Input
           type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
           placeholder={field.placeholder || 'Enter value...'}
-          value={condition.value || ''}
+          value={String(condition.value || '')}
           onChange={(e) => updateValue(e.target.value)}
           min={field.min}
           max={field.max}

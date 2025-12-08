@@ -1,6 +1,6 @@
 import { db } from "@/lib/database";
-import { shows, showsToTags, files } from "@/lib/database/schema";
-import { eq, desc, notInArray } from "drizzle-orm";
+import { shows, showsToTags, files, tags } from "@/lib/database/schema";
+import { eq, desc, notInArray, and } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { STORAGE_BUCKET, withRootPrefix } from "@/lib/storage";
 import { createClient } from "@supabase/supabase-js";
@@ -18,6 +18,7 @@ export type ShowSummary = {
   graphicUrl: string | null;
   createdAt: Date;
   showsToTags: { tag: { id: number; name: string } }[];
+  arrangements: { id: number; title: string | null; scene: string | null }[];
 };
 
 // Helper to convert storage paths to public URLs
@@ -54,6 +55,18 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
             tag: true
           }
         },
+        showArrangements: {
+          orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
+          with: {
+            arrangement: {
+              columns: {
+                id: true,
+                title: true,
+                scene: true,
+              }
+            }
+          }
+        },
         files: {
           where: (files, { eq }) => eq(files.fileType, 'image'),
           limit: 1
@@ -86,6 +99,7 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
         showsToTags: s.showsToTags.map((st) => ({
           tag: st.tag
         })),
+        arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
       };
     });
 
@@ -107,4 +121,126 @@ export async function getFeaturedShows(): Promise<ShowSummary[]> {
     return [];
   }
   return getFeaturedShowsCached();
+}
+
+// Fetch shows for collections/landing pages
+async function fetchShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermediate' | 'Advanced'; tag?: string }): Promise<ShowSummary[]> {
+  try {
+    // Drizzle is type-safe but filtering on relations in findMany 'where' clause is complex.
+    // Instead we'll use query builder approach or raw filters if possible.
+    
+    // Simplest approach: Fetch matches first then join, or use db.query with where clause
+    
+    // If filtering by tag, we need to find showIds that have that tag
+    let tagShowIds: number[] | null = null;
+    if (filter.tag) {
+      const tagRecord = await db.query.tags.findFirst({
+        where: eq(tags.name, filter.tag)
+      });
+      
+      if (tagRecord) {
+        const relations = await db.query.showsToTags.findMany({
+          where: eq(showsToTags.tagId, tagRecord.id)
+        });
+        tagShowIds = relations.map(r => r.showId);
+      } else {
+        // Tag not found, so no shows match
+        return [];
+      }
+    }
+
+    // Build query conditions
+    const conditions = [];
+    if (filter.difficulty) {
+      conditions.push(eq(shows.difficulty, filter.difficulty));
+    }
+    
+    // If tag filter was active
+    if (filter.tag) {
+      // If we found shows with the tag, filter by ID
+      if (tagShowIds && tagShowIds.length > 0) {
+        // Drizzle inArray requires non-empty array
+        // We can't import inArray easily here without potentially breaking types if versions mismatch, 
+        // but let's assume 'inArray' is available from drizzle-orm if we add it to imports.
+        // Actually, importing 'inArray' from drizzle-orm is safe.
+        const { inArray } = await import("drizzle-orm");
+        conditions.push(inArray(shows.id, tagShowIds));
+      } else {
+        return []; // Should have been caught above, but safety check
+      }
+    }
+
+    let result = await db.query.shows.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: [desc(shows.createdAt)],
+      limit: 12, // Limit for landing pages
+      with: {
+        showsToTags: {
+          with: {
+            tag: true
+          }
+        },
+        showArrangements: {
+          orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
+          with: {
+            arrangement: {
+              columns: {
+                id: true,
+                title: true,
+                scene: true,
+              }
+            }
+          }
+        },
+        files: {
+          where: (files, { eq }) => eq(files.fileType, 'image'),
+          limit: 1
+        }
+      }
+    });
+
+    return result.map((s) => {
+      const fallbackImage = s.files && s.files.length > 0 ? s.files[0].storagePath : null;
+      return {
+        id: s.id,
+        title: s.title,
+        slug: s.slug,
+        description: s.description,
+        year: s.year,
+        difficulty: s.difficulty,
+        duration: s.duration,
+        thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
+        graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
+        createdAt: s.createdAt,
+        showsToTags: s.showsToTags.map((st) => ({
+          tag: st.tag
+        })),
+        arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
+      };
+    });
+
+  } catch (error) {
+    console.error('Error fetching collection shows:', error);
+    return [];
+  }
+}
+
+// Cache the collection fetcher
+export async function getShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermediate' | 'Advanced'; tag?: string }): Promise<ShowSummary[]> {
+  const keyParts = [];
+  if (filter.difficulty) keyParts.push(`diff:${filter.difficulty}`);
+  if (filter.tag) keyParts.push(`tag:${filter.tag}`);
+  const cacheKey = `collection-shows-${keyParts.join('-')}`;
+
+  const cachedFn = unstable_cache(
+    () => fetchShowsByFilter(filter),
+    [cacheKey],
+    { revalidate: 3600, tags: ['shows'] }
+  );
+
+  if (shouldSkipSupabase()) {
+    return [];
+  }
+  
+  return cachedFn();
 }

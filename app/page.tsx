@@ -113,7 +113,7 @@ export default async function HomePage() {
           <div className="text-center mb-16">
             <h2 className="plus-h2 mb-4">Featured Shows</h2>
             <p className="plus-body-lg max-w-2xl mx-auto">
-              Explore our collection of award-winning shows.
+              Explore our collection of award-winning marching band shows.
             </p>
           </div>
 

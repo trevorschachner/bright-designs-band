@@ -9,15 +9,31 @@ import { Play, Users } from "lucide-react";
 import { Show } from "@/lib/types/shows";
 import { useRouter } from "next/navigation";
 
+// Define a flexible type that covers both Show (full) and ShowSummary (partial)
+export interface ShowCardItem {
+  id: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  year: number | null;
+  difficulty: string | null;
+  duration: string | null;
+  thumbnailUrl: string | null;
+  graphicUrl: string | null;
+  showsToTags?: { tag: { id: number; name: string } }[];
+  arrangements?: { id: number; title: string | null; scene?: string | null }[];
+  [key: string]: any; // Allow other properties
+}
+
 interface ShowCardProps {
-  item: Show;
+  item: ShowCardItem;
   isLoading?: boolean;
 }
 
 export function ShowCard({ item: show, isLoading }: ShowCardProps) {
   const router = useRouter();
   
-  if (isLoading) {
+  if (isLoading || !show) {
     return <ShowCardSkeleton />;
   }
   const href = `/shows/${(show as any).slug ?? show.id}`;
