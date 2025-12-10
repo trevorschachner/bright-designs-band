@@ -42,8 +42,7 @@ function getPublicUrl(path: string | null): string | null {
   return data.publicUrl;
 }
 
-async function fetchFeaturedShows(): Promise<ShowSummary[]> {
-  try {
+export async function fetchFeaturedShows(): Promise<ShowSummary[]> {
     // Drizzle query for featured shows
     let result = await db.query.shows.findMany({
       where: eq(shows.featured, true),
@@ -102,11 +101,6 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
         arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
       };
     });
-
-  } catch (error) {
-    console.error('Error fetching featured shows:', error);
-    return [];
-  }
 }
 
 const getFeaturedShowsCached = unstable_cache(
@@ -120,12 +114,16 @@ export async function getFeaturedShows(): Promise<ShowSummary[]> {
     console.warn('[getFeaturedShows] Skipping Supabase fetch during masked Netlify build.');
     return [];
   }
-  return getFeaturedShowsCached();
+  try {
+    return await getFeaturedShowsCached();
+  } catch (error) {
+    console.error('Error fetching featured shows (cached):', error);
+    return [];
+  }
 }
 
 // Fetch shows for collections/landing pages
 async function fetchShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermediate' | 'Advanced'; tag?: string }): Promise<ShowSummary[]> {
-  try {
     // Drizzle is type-safe but filtering on relations in findMany 'where' clause is complex.
     // Instead we'll use query builder approach or raw filters if possible.
     
@@ -218,11 +216,6 @@ async function fetchShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermedi
         arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
       };
     });
-
-  } catch (error) {
-    console.error('Error fetching collection shows:', error);
-    return [];
-  }
 }
 
 // Cache the collection fetcher
@@ -242,5 +235,10 @@ export async function getShowsByFilter(filter: { difficulty?: 'Beginner' | 'Inte
     return [];
   }
   
-  return cachedFn();
+  try {
+    return await cachedFn();
+  } catch (error) {
+    console.error('Error fetching collection shows (cached):', error);
+    return [];
+  }
 }

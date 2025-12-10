@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { getCollectionBySlug } from '@/lib/collections'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -6,7 +7,7 @@ import { join } from 'path'
 export const runtime = 'nodejs'
 
 // Image metadata
-export const alt = 'Bright Designs - Custom Marching Band Show Design'
+export const alt = 'Bright Designs Collection'
 export const size = {
   width: 1200,
   height: 630,
@@ -14,8 +15,14 @@ export const size = {
 
 export const contentType = 'image/png'
 
-// Image generation
-export default async function Image() {
+export default async function Image({ params }: { params: { slug: string } }) {
+  const { slug } = await params
+  const collection = getCollectionBySlug(slug)
+  
+  // Fallback values if collection not found (though this page would 404 ideally)
+  const title = collection?.h1 || 'Marching Band Show Collections'
+  const description = collection?.description || 'Curated collections of high-quality marching band shows.'
+  
   const logoPath = join(process.cwd(), 'public/logos/brightdesignslogo-main.png')
   const logoData = readFileSync(logoPath)
   const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
@@ -60,20 +67,20 @@ export default async function Image() {
           <img 
             src={logoBase64}
             alt="Bright Designs Logo"
-            width="120"
-            height="120"
-            style={{ marginRight: '24px' }}
+            width="100"
+            height="100"
+            style={{ marginRight: '20px' }}
           />
           <div
             style={{
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: 600,
               color: accentColor,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
             }}
           >
-            Bright Designs
+            Bright Designs Collection
           </div>
         </div>
 
@@ -90,28 +97,31 @@ export default async function Image() {
         >
           <div
             style={{
-              fontSize: 72,
+              fontSize: 80,
               fontWeight: 800,
               lineHeight: 1.1,
-              marginBottom: '20px',
+              marginBottom: '24px',
               background: 'linear-gradient(to bottom, #ffffff, #cbd5e1)',
               backgroundClip: 'text',
               color: 'transparent',
               textShadow: '0 4px 8px rgba(0,0,0,0.3)',
             }}
           >
-            Premier Marching Band Show Design
+            {title}
           </div>
 
           <div
             style={{
-              fontSize: 36,
+              fontSize: 32,
               color: '#94a3b8',
               lineHeight: 1.4,
               maxWidth: '900px',
+              display: '-webkit-box',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
-            Custom arrangements, drill design, and choreography for competitive bands.
+            {description}
           </div>
         </div>
       </div>
@@ -121,3 +131,4 @@ export default async function Image() {
     }
   )
 }
+

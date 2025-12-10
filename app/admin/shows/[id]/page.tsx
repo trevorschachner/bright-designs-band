@@ -832,7 +832,16 @@ export default function EditShowPage() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Arrangements</h2>
           <Button 
-            onClick={() => setShowAddArrangementForm(!showAddArrangementForm)}
+            onClick={() => {
+              if (!showAddArrangementForm) {
+                setNewArrangement(prev => ({
+                  ...prev,
+                  percussionArranger: show?.percussionArranger || '',
+                  windArranger: show?.windArranger || 'Brighton Barrineau, Trevor Schachner',
+                }));
+              }
+              setShowAddArrangementForm(!showAddArrangementForm);
+            }}
             variant={showAddArrangementForm ? "outline" : "default"}
           >
             {showAddArrangementForm ? 'Cancel' : '+ Add Arrangement'}

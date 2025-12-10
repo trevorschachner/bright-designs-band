@@ -27,6 +27,7 @@ interface AudioPlayerComponentProps {
   onPreviousTrack?: () => void // Callback for previous track navigation
   onNextTrack?: () => void // Callback for next track navigation
   showNavigation?: boolean // Show previous/next buttons
+  allowDownload?: boolean // Allow downloading the audio file
 }
 
 // Custom event for master player control
@@ -41,7 +42,8 @@ export function AudioPlayerComponent({
   onTrackSelect,
   onPreviousTrack,
   onNextTrack,
-  showNavigation = false
+  showNavigation = false,
+  allowDownload = true
 }: AudioPlayerComponentProps) {
   const [currentTrack, setCurrentTrack] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -518,7 +520,7 @@ export function AudioPlayerComponent({
           </div>
 
           {/* Download Button */}
-          {currentTrackData && !compact && (
+          {currentTrackData && !compact && allowDownload && (
             <Button 
               variant="outline" 
               size="sm"

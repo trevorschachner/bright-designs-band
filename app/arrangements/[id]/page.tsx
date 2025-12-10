@@ -351,6 +351,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               }]}
               title="Arrangement Audio Preview"
               className="bg-card/80 backdrop-blur-sm"
+              allowDownload={false}
             />
           </div>
         ) : (

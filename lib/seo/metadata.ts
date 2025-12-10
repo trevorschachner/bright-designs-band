@@ -28,8 +28,7 @@ export const defaultSEOConfig: SEOConfig = {
     "custom drill writing",
     "marching band services",
     "student centered design"
-  ],
-  ogImage: "/og-image.jpg"
+  ]
 }
 
 export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
