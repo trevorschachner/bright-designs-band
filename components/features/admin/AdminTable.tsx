@@ -23,7 +23,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+} from 'lucide-react';
 
 export interface ColumnDef<T> {
   header: string;
@@ -47,33 +51,68 @@ export default function AdminTable<T extends { id: number }>({
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+  });
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(endpoint);
+      
+      // Determine separator for query params
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const url = `${endpoint}${separator}page=${pagination.page}&limit=${pagination.limit}`;
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch ${resourceName}`);
       }
       const result = await response.json();
-      const payload = result?.data;
-      const rows =
-        Array.isArray(payload?.shows) ? payload.shows :
-        Array.isArray(payload?.data) ? payload.data :
-        Array.isArray(payload) ? payload : [];
-      setData(rows as T[]);
+      
+      // Handle different response structures
+      if (result?.data?.pagination) {
+        // New structure with pagination info
+        setData(result.data.data as T[]);
+        setPagination(prev => ({
+          ...prev,
+          total: result.data.pagination.total,
+          totalPages: result.data.pagination.totalPages,
+        }));
+      } else {
+        // Fallback for older/simpler endpoints
+        const payload = result?.data;
+        const rows =
+          Array.isArray(payload?.shows) ? payload.shows :
+          Array.isArray(payload?.data) ? payload.data :
+          Array.isArray(payload) ? payload : [];
+        setData(rows as T[]);
+        
+        // If we received fewer items than limit, we can assume this is the last page
+        // But without total count we can't do proper pagination logic
+        // Just keeping it simple for fallback
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
-  }, [endpoint, resourceName]);
+  }, [endpoint, resourceName, pagination.page, pagination.limit]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
   const handleDelete = async (id: number | string) => {
+
     try {
       setIsDeleting(true);
       // Determine the delete endpoint URL
@@ -199,6 +238,36 @@ export default function AdminTable<T extends { id: number }>({
           ))}
         </TableBody>
       </Table>
+      
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between px-4 py-4 border-t">
+        <div className="text-sm text-muted-foreground">
+          Showing {data.length > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} to {Math.min(pagination.page * pagination.limit, pagination.total || data.length)} of {pagination.total || data.length} entries
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.page - 1)}
+            disabled={pagination.page <= 1 || loading}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Previous</span>
+          </Button>
+          <div className="text-sm font-medium">
+            Page {pagination.page} of {pagination.totalPages || 1}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.page + 1)}
+            disabled={pagination.page >= pagination.totalPages || loading}
+          >
+            <ChevronRight className="h-4 w-4" />
+            <span className="sr-only">Next</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
