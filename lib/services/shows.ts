@@ -42,71 +42,65 @@ function getPublicUrl(path: string | null): string | null {
   return data.publicUrl;
 }
 
-async function fetchFeaturedShows(): Promise<ShowSummary[]> {
-  try {
-    // Drizzle query for featured shows
-    let result = await db.query.shows.findMany({
-      where: eq(shows.featured, true),
-      orderBy: [desc(shows.createdAt)],
-      limit: 6,
-      with: {
-        showsToTags: {
-          with: {
-            tag: true
-          }
-        },
-        showArrangements: {
-          orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
-          with: {
-            arrangement: {
-              columns: {
-                id: true,
-                title: true,
-                scene: true,
-              }
+export async function fetchFeaturedShows(): Promise<ShowSummary[]> {
+  // Drizzle query for featured shows
+  let result = await db.query.shows.findMany({
+    where: eq(shows.featured, true),
+    orderBy: [desc(shows.createdAt)],
+    limit: 6,
+    with: {
+      showsToTags: {
+        with: {
+          tag: true
+        }
+      },
+      showArrangements: {
+        orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
+        with: {
+          arrangement: {
+            columns: {
+              id: true,
+              title: true,
+              scene: true,
             }
           }
-        },
-        files: {
-          where: (files, { eq }) => eq(files.fileType, 'image'),
-          limit: 1
         }
+      },
+      files: {
+        where: (files, { eq }) => eq(files.fileType, 'image'),
+        limit: 1
       }
-    });
-
-    // Map and resolve URLs
-    // Note: getPublicUrl is now synchronous/lightweight
-    // If fewer than 3 featured shows, we consider the section empty
-    if (result.length < 3) {
-      return [];
     }
+  });
 
-    return result.map((s) => {
-      // Fallback to first image file if graphicUrl/thumbnailUrl is missing
-      const fallbackImage = s.files && s.files.length > 0 ? s.files[0].storagePath : null;
-      
-      return {
-        id: s.id,
-        title: s.title,
-        slug: s.slug,
-        description: s.description,
-        year: s.year,
-        difficulty: s.difficulty,
-        duration: s.duration,
-        thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
-        graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
-        createdAt: s.createdAt,
-        showsToTags: s.showsToTags.map((st) => ({
-          tag: st.tag
-        })),
-        arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
-      };
-    });
-
-  } catch (error) {
-    console.error('Error fetching featured shows:', error);
+  // Map and resolve URLs
+  // Note: getPublicUrl is now synchronous/lightweight
+  // If fewer than 3 featured shows, we consider the section empty
+  if (result.length < 3) {
     return [];
   }
+
+  return result.map((s) => {
+    // Fallback to first image file if graphicUrl/thumbnailUrl is missing
+    const fallbackImage = s.files && s.files.length > 0 ? s.files[0].storagePath : null;
+    
+    return {
+      id: s.id,
+      title: s.title,
+      slug: s.slug,
+      description: s.description,
+      year: s.year,
+      difficulty: s.difficulty,
+      duration: s.duration,
+      thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
+      graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
+      createdAt: s.createdAt,
+      showsToTags: s.showsToTags.map((st) => ({
+        tag: st.tag
+      })),
+      arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
+    };
+  });
 }
 
 const getFeaturedShowsCached = unstable_cache(
@@ -120,109 +114,108 @@ export async function getFeaturedShows(): Promise<ShowSummary[]> {
     console.warn('[getFeaturedShows] Skipping Supabase fetch during masked Netlify build.');
     return [];
   }
-  return getFeaturedShowsCached();
+  try {
+    return await getFeaturedShowsCached();
+  } catch (error) {
+    console.error('Error fetching featured shows (cached):', error);
+    return [];
+  }
 }
 
 // Fetch shows for collections/landing pages
 async function fetchShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermediate' | 'Advanced'; tag?: string }): Promise<ShowSummary[]> {
-  try {
-    // Drizzle is type-safe but filtering on relations in findMany 'where' clause is complex.
-    // Instead we'll use query builder approach or raw filters if possible.
+  // Drizzle is type-safe but filtering on relations in findMany 'where' clause is complex.
+  // Instead we'll use query builder approach or raw filters if possible.
+  
+  // Simplest approach: Fetch matches first then join, or use db.query with where clause
+  
+  // If filtering by tag, we need to find showIds that have that tag
+  let tagShowIds: number[] | null = null;
+  if (filter.tag) {
+    const tagRecord = await db.query.tags.findFirst({
+      where: eq(tags.name, filter.tag)
+    });
     
-    // Simplest approach: Fetch matches first then join, or use db.query with where clause
-    
-    // If filtering by tag, we need to find showIds that have that tag
-    let tagShowIds: number[] | null = null;
-    if (filter.tag) {
-      const tagRecord = await db.query.tags.findFirst({
-        where: eq(tags.name, filter.tag)
+    if (tagRecord) {
+      const relations = await db.query.showsToTags.findMany({
+        where: eq(showsToTags.tagId, tagRecord.id)
       });
-      
-      if (tagRecord) {
-        const relations = await db.query.showsToTags.findMany({
-          where: eq(showsToTags.tagId, tagRecord.id)
-        });
-        tagShowIds = relations.map(r => r.showId);
-      } else {
-        // Tag not found, so no shows match
-        return [];
-      }
+      tagShowIds = relations.map(r => r.showId);
+    } else {
+      // Tag not found, so no shows match
+      return [];
     }
+  }
 
-    // Build query conditions
-    const conditions = [];
-    if (filter.difficulty) {
-      conditions.push(eq(shows.difficulty, filter.difficulty));
+  // Build query conditions
+  const conditions = [];
+  if (filter.difficulty) {
+    conditions.push(eq(shows.difficulty, filter.difficulty));
+  }
+  
+  // If tag filter was active
+  if (filter.tag) {
+    // If we found shows with the tag, filter by ID
+    if (tagShowIds && tagShowIds.length > 0) {
+      // Drizzle inArray requires non-empty array
+      // We can't import inArray easily here without potentially breaking types if versions mismatch, 
+      // but let's assume 'inArray' is available from drizzle-orm if we add it to imports.
+      // Actually, importing 'inArray' from drizzle-orm is safe.
+      const { inArray } = await import("drizzle-orm");
+      conditions.push(inArray(shows.id, tagShowIds));
+    } else {
+      return []; // Should have been caught above, but safety check
     }
-    
-    // If tag filter was active
-    if (filter.tag) {
-      // If we found shows with the tag, filter by ID
-      if (tagShowIds && tagShowIds.length > 0) {
-        // Drizzle inArray requires non-empty array
-        // We can't import inArray easily here without potentially breaking types if versions mismatch, 
-        // but let's assume 'inArray' is available from drizzle-orm if we add it to imports.
-        // Actually, importing 'inArray' from drizzle-orm is safe.
-        const { inArray } = await import("drizzle-orm");
-        conditions.push(inArray(shows.id, tagShowIds));
-      } else {
-        return []; // Should have been caught above, but safety check
-      }
-    }
+  }
 
-    let result = await db.query.shows.findMany({
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: [desc(shows.createdAt)],
-      limit: 12, // Limit for landing pages
-      with: {
-        showsToTags: {
-          with: {
-            tag: true
-          }
-        },
-        showArrangements: {
-          orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
-          with: {
-            arrangement: {
-              columns: {
-                id: true,
-                title: true,
-                scene: true,
-              }
+  let result = await db.query.shows.findMany({
+    where: conditions.length > 0 ? and(...conditions) : undefined,
+    orderBy: [desc(shows.createdAt)],
+    limit: 12, // Limit for landing pages
+    with: {
+      showsToTags: {
+        with: {
+          tag: true
+        }
+      },
+      showArrangements: {
+        orderBy: (showArrangements, { asc }) => [asc(showArrangements.orderIndex)],
+        with: {
+          arrangement: {
+            columns: {
+              id: true,
+              title: true,
+              scene: true,
             }
           }
-        },
-        files: {
-          where: (files, { eq }) => eq(files.fileType, 'image'),
-          limit: 1
         }
+      },
+      files: {
+        where: (files, { eq }) => eq(files.fileType, 'image'),
+        limit: 1
       }
-    });
+    }
+  });
 
-    return result.map((s) => {
-      const fallbackImage = s.files && s.files.length > 0 ? s.files[0].storagePath : null;
-      return {
-        id: s.id,
-        title: s.title,
-        slug: s.slug,
-        description: s.description,
-        year: s.year,
-        difficulty: s.difficulty,
-        duration: s.duration,
-        thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
-        graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
-        createdAt: s.createdAt,
-        showsToTags: s.showsToTags.map((st) => ({
-          tag: st.tag
-        })),
-        arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
-      };
-    });
-
-  } catch (error) {
-    console.error('Error fetching collection shows:', error);
-    return [];
-  }
+  return result.map((s) => {
+    const fallbackImage = s.files && s.files.length > 0 ? s.files[0].storagePath : null;
+    return {
+      id: s.id,
+      title: s.title,
+      slug: s.slug,
+      description: s.description,
+      year: s.year,
+      difficulty: s.difficulty,
+      duration: s.duration,
+      thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
+      graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
+      createdAt: s.createdAt,
+      showsToTags: s.showsToTags.map((st) => ({
+        tag: st.tag
+      })),
+      arrangements: s.showArrangements.map(sa => sa.arrangement).filter(Boolean),
+    };
+  });
 }
 
 // Cache the collection fetcher
@@ -242,5 +235,10 @@ export async function getShowsByFilter(filter: { difficulty?: 'Beginner' | 'Inte
     return [];
   }
   
-  return cachedFn();
+  try {
+    return await cachedFn();
+  } catch (error) {
+    console.error('Error fetching collection shows (cached):', error);
+    return [];
+  }
 }
