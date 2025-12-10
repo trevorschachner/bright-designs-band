@@ -188,7 +188,20 @@ export default function NewShowPage() {
       // Then upload thumbnail if provided
       if (thumbnailFile && createdShowId) {
         try {
-          await uploadThumbnail(createdShowId);
+          const uploadedUrl = await uploadThumbnail(createdShowId);
+          
+          if (uploadedUrl) {
+            // Update the show with the thumbnail URL
+            // IMPORTANT: We must include tags again, otherwise the PUT endpoint might wipe them
+            await fetch(`/api/shows/${createdShowId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                thumbnailUrl: uploadedUrl,
+                tags: selectedTags 
+              }),
+            });
+          }
         } catch (thumbnailError) {
           console.warn('Show created but thumbnail upload failed:', thumbnailError);
           // Optional: Set a warning message, but still consider success since show exists
