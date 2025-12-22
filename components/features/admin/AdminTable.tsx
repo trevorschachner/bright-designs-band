@@ -27,7 +27,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface ColumnDef<T> {
   header: string;
@@ -75,26 +85,45 @@ export default function AdminTable<T extends { id: number }>({
       const result = await response.json();
       
       // Handle different response structures
-      if (result?.data?.pagination) {
+      // Response structure: { success: true, data: { data: [...], pagination: {...} } }
+      const responseData = result?.data;
+      if (responseData?.pagination) {
         // New structure with pagination info
-        setData(result.data.data as T[]);
+        setData((responseData.data || []) as T[]);
         setPagination(prev => ({
           ...prev,
-          total: result.data.pagination.total,
-          totalPages: result.data.pagination.totalPages,
+          total: responseData.pagination.total || 0,
+          totalPages: responseData.pagination.totalPages || 1,
         }));
       } else {
         // Fallback for older/simpler endpoints
-        const payload = result?.data;
+        const payload = responseData;
         const rows =
           Array.isArray(payload?.shows) ? payload.shows :
           Array.isArray(payload?.data) ? payload.data :
           Array.isArray(payload) ? payload : [];
         setData(rows as T[]);
         
-        // If we received fewer items than limit, we can assume this is the last page
-        // But without total count we can't do proper pagination logic
-        // Just keeping it simple for fallback
+        // Calculate total and totalPages based on rows returned
+        // If we received fewer items than limit, this is the last page
+        if (rows.length < pagination.limit) {
+          // Last page: total = items on previous pages + items on this page
+          const calculatedTotal = (pagination.page - 1) * pagination.limit + rows.length;
+          setPagination(prev => ({
+            ...prev,
+            total: calculatedTotal,
+            totalPages: pagination.page,
+          }));
+        } else {
+          // Not the last page: we know there are at least (page * limit) items
+          // Set total to a minimum estimate, but we don't know the exact total
+          const minTotal = pagination.page * pagination.limit;
+          setPagination(prev => ({
+            ...prev,
+            total: Math.max(prev.total, minTotal), // Keep existing total if higher, otherwise use minimum
+            totalPages: Math.max(prev.totalPages, pagination.page + 1), // At least one more page exists
+          }));
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An unknown error occurred');
@@ -108,7 +137,20 @@ export default function AdminTable<T extends { id: number }>({
   }, [fetchData]);
 
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
+  };
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value >= 1 && value <= pagination.totalPages) {
+      handlePageChange(value);
+    }
   };
 
   const handleDelete = async (id: number | string) => {
@@ -240,31 +282,91 @@ export default function AdminTable<T extends { id: number }>({
       </Table>
       
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between px-4 py-4 border-t">
-        <div className="text-sm text-muted-foreground">
-          Showing {data.length > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} to {Math.min(pagination.page * pagination.limit, pagination.total || data.length)} of {pagination.total || data.length} entries
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t">
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {data.length > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} to {Math.min(pagination.page * pagination.limit, pagination.total || data.length)} of {pagination.total || data.length} entries
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Show:</span>
+            <Select
+              value={pagination.limit.toString()}
+              onValueChange={(value) => handleLimitChange(parseInt(value, 10))}
+            >
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
+            onClick={() => handlePageChange(1)}
+            disabled={pagination.page <= 1 || loading}
+            title="First page"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+            <span className="sr-only">First</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handlePageChange(pagination.page - 1)}
             disabled={pagination.page <= 1 || loading}
+            title="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Previous</span>
           </Button>
-          <div className="text-sm font-medium">
-            Page {pagination.page} of {pagination.totalPages || 1}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Page</span>
+            <Input
+              type="number"
+              min={1}
+              max={pagination.totalPages || 1}
+              value={pagination.page}
+              onChange={handlePageInputChange}
+              onBlur={(e) => {
+                const value = parseInt(e.target.value, 10);
+                if (isNaN(value) || value < 1) {
+                  e.target.value = '1';
+                  handlePageChange(1);
+                } else if (value > pagination.totalPages) {
+                  e.target.value = pagination.totalPages.toString();
+                  handlePageChange(pagination.totalPages);
+                }
+              }}
+              className="w-16 h-8 text-center"
+            />
+            <span className="text-sm text-muted-foreground">of {pagination.totalPages || 1}</span>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages || loading}
+            title="Next page"
           >
             <ChevronRight className="h-4 w-4" />
             <span className="sr-only">Next</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.totalPages || 1)}
+            disabled={pagination.page >= pagination.totalPages || loading}
+            title="Last page"
+          >
+            <ChevronsRight className="h-4 w-4" />
+            <span className="sr-only">Last</span>
           </Button>
         </div>
       </div>

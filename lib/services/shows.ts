@@ -16,6 +16,7 @@ export type ShowSummary = {
   duration: string | null;
   thumbnailUrl: string | null;
   graphicUrl: string | null;
+  featured: boolean; // Added featured field
   createdAt: Date;
   showsToTags: { tag: { id: number; name: string } }[];
   arrangements: { id: number; title: string | null; scene: string | null }[];
@@ -47,7 +48,7 @@ export async function fetchFeaturedShows(): Promise<ShowSummary[]> {
     let result = await db.query.shows.findMany({
       where: eq(shows.featured, true),
       orderBy: [desc(shows.createdAt)],
-      limit: 6,
+      limit: 6, // Restored limit as per typical homepage design, but after ensuring filter works
       with: {
         showsToTags: {
           with: {
@@ -73,6 +74,20 @@ export async function fetchFeaturedShows(): Promise<ShowSummary[]> {
       }
     });
 
+    // Safeguard: Ensure we only have featured shows
+    // (This handles cases where the DB query might be misbehaving or cache issues)
+    const featuredOnly = result.filter(s => s.featured === true);
+    
+    if (featuredOnly.length !== result.length) {
+      console.warn('getFeaturedShows: DB query returned non-featured shows. Filtered them out.', {
+        total: result.length,
+        featured: featuredOnly.length,
+        nonFeaturedIds: result.filter(s => !s.featured).map(s => s.id)
+      });
+    }
+    
+    result = featuredOnly;
+
     // Map and resolve URLs
     // Note: getPublicUrl is now synchronous/lightweight
     // If fewer than 3 featured shows, we consider the section empty
@@ -94,6 +109,7 @@ export async function fetchFeaturedShows(): Promise<ShowSummary[]> {
         duration: s.duration,
         thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
         graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
+        featured: s.featured,
         createdAt: s.createdAt,
         showsToTags: s.showsToTags.map((st) => ({
           tag: st.tag
@@ -105,7 +121,7 @@ export async function fetchFeaturedShows(): Promise<ShowSummary[]> {
 
 const getFeaturedShowsCached = unstable_cache(
   fetchFeaturedShows,
-  ['featured-shows'],
+  ['featured-shows-v3'],
   { revalidate: 3600, tags: ['shows'] }
 );
 
@@ -209,6 +225,7 @@ async function fetchShowsByFilter(filter: { difficulty?: 'Beginner' | 'Intermedi
         duration: s.duration,
         thumbnailUrl: getPublicUrl(s.thumbnailUrl || fallbackImage),
         graphicUrl: getPublicUrl(s.graphicUrl || fallbackImage),
+        featured: s.featured,
         createdAt: s.createdAt,
         showsToTags: s.showsToTags.map((st) => ({
           tag: st.tag

@@ -28,7 +28,7 @@ export default function EditShowPage() {
   const [newArrangement, setNewArrangement] = useState({
     title: '',
     composer: '',
-    arranger: '',
+    arranger: 'Brighton Barrineau, Trevor Schachner',
     percussionArranger: '',
     description: '',
     grade: '',
@@ -255,7 +255,7 @@ export default function EditShowPage() {
         setNewArrangement({
           title: '',
           composer: '',
-          arranger: '',
+          arranger: 'Brighton Barrineau, Trevor Schachner',
           percussionArranger: '',
           description: '',
           grade: '',
@@ -837,6 +837,7 @@ export default function EditShowPage() {
                 setNewArrangement(prev => ({
                   ...prev,
                   percussionArranger: show?.percussionArranger || '',
+                  arranger: 'Brighton Barrineau, Trevor Schachner',
                   windArranger: show?.windArranger || 'Brighton Barrineau, Trevor Schachner',
                 }));
               }
@@ -1299,7 +1300,7 @@ export default function EditShowPage() {
                           )}
                           {arrangement.grade && (
                             <Badge variant="secondary" className="text-xs">
-                              {arrangement.grade.replace('_', '-').replace('plus', '+')}
+                              {arrangement.grade === '5_plus' ? '5+' : arrangement.grade.replace('_', '-')}
                             </Badge>
                           )}
                         </div>

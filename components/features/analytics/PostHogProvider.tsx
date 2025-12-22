@@ -25,6 +25,7 @@ export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
       capture_pageview: false,
       autocapture: true,
       disable_session_recording: false,
+      person_profiles: 'always',
     })
 
     posthogInitialized = true
