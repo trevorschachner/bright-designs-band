@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -70,32 +70,35 @@ export default function AdminTable<T extends { id: number }>({
     totalPages: 1,
   });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (page: number, limit: number) => {
     try {
       setLoading(true);
+      setError(null);
       
       // Determine separator for query params
       const separator = endpoint.includes('?') ? '&' : '?';
-      const url = `${endpoint}${separator}page=${pagination.page}&limit=${pagination.limit}`;
+      const url = `${endpoint}${separator}page=${page}&limit=${limit}`;
       
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`Failed to fetch ${resourceName}`);
+        throw new Error(`Failed to fetch ${resourceName}: ${response.statusText}`);
       }
       const result = await response.json();
       
       // Handle different response structures
       // Response structure: { success: true, data: { data: [...], pagination: {...} } }
       const responseData = result?.data;
+      
       if (responseData?.pagination) {
         // New structure with pagination info
         setData((responseData.data || []) as T[]);
         setPagination(prev => ({
           ...prev,
+          // Only update total and totalPages, not page/limit (they're controlled by user actions)
           total: responseData.pagination.total || 0,
           totalPages: responseData.pagination.totalPages || 1,
         }));
-      } else {
+      } else if (responseData) {
         // Fallback for older/simpler endpoints
         const payload = responseData;
         const rows =
@@ -106,35 +109,47 @@ export default function AdminTable<T extends { id: number }>({
         
         // Calculate total and totalPages based on rows returned
         // If we received fewer items than limit, this is the last page
-        if (rows.length < pagination.limit) {
+        if (rows.length < limit) {
           // Last page: total = items on previous pages + items on this page
-          const calculatedTotal = (pagination.page - 1) * pagination.limit + rows.length;
+          const calculatedTotal = (page - 1) * limit + rows.length;
           setPagination(prev => ({
             ...prev,
+            // Only update total and totalPages, not page/limit
             total: calculatedTotal,
-            totalPages: pagination.page,
+            totalPages: page,
           }));
         } else {
           // Not the last page: we know there are at least (page * limit) items
           // Set total to a minimum estimate, but we don't know the exact total
-          const minTotal = pagination.page * pagination.limit;
+          const minTotal = page * limit;
           setPagination(prev => ({
             ...prev,
+            // Only update total and totalPages, not page/limit
             total: Math.max(prev.total, minTotal), // Keep existing total if higher, otherwise use minimum
-            totalPages: Math.max(prev.totalPages, pagination.page + 1), // At least one more page exists
+            totalPages: Math.max(prev.totalPages, page + 1), // At least one more page exists
           }));
         }
+      } else {
+        // No data in response
+        setData([]);
+        setPagination(prev => ({
+          ...prev,
+          // Only update total and totalPages, not page/limit
+          total: 0,
+          totalPages: 1,
+        }));
       }
     } catch (e) {
+      console.error('[AdminTable] Fetch error:', e);
       setError(e instanceof Error ? e.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
-  }, [endpoint, resourceName, pagination.page, pagination.limit]);
+  }, [endpoint, resourceName]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchData(pagination.page, pagination.limit);
+  }, [fetchData, pagination.page, pagination.limit]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -170,8 +185,8 @@ export default function AdminTable<T extends { id: number }>({
         throw new Error(errorData.error || `Failed to delete ${resourceName}`);
       }
 
-      // Refresh data
-      await fetchData();
+      // Refresh data - use current pagination values
+      await fetchData(pagination.page, pagination.limit);
       setDeletingId(null);
     } catch (e) {
       console.error('Delete error:', e);
@@ -281,8 +296,9 @@ export default function AdminTable<T extends { id: number }>({
         </TableBody>
       </Table>
       
-      {/* Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t">
+      {/* Pagination Controls - Always visible when there's data */}
+      {data.length > 0 && (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t bg-muted/30 min-h-[60px]">
         <div className="flex items-center gap-4">
           <div className="text-sm text-muted-foreground">
             Showing {data.length > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} to {Math.min(pagination.page * pagination.limit, pagination.total || data.length)} of {pagination.total || data.length} entries
@@ -370,6 +386,7 @@ export default function AdminTable<T extends { id: number }>({
           </Button>
         </div>
       </div>
+      )}
     </div>
   );
 }

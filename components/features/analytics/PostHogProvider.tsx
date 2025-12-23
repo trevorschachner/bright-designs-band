@@ -20,15 +20,28 @@ export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
       return
     }
 
-    posthog.init(apiKey, {
-      api_host: apiHost || 'https://app.posthog.com',
-      capture_pageview: false,
-      autocapture: true,
-      disable_session_recording: false,
-      person_profiles: 'always',
-    })
+    try {
+      posthog.init(apiKey, {
+        api_host: apiHost || 'https://app.posthog.com',
+        capture_pageview: false,
+        autocapture: true,
+        disable_session_recording: false,
+        person_profiles: 'always',
+        loaded: (posthog) => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[PostHogProvider] PostHog initialized successfully');
+          }
+        },
+      })
 
-    posthogInitialized = true
+      posthogInitialized = true
+    } catch (error) {
+      // Silently fail in development, log in production
+      if (process.env.NODE_ENV !== 'development') {
+        console.error('[PostHogProvider] Failed to initialize:', error);
+      }
+      // Don't set posthogInitialized to true if init failed
+    }
   }, [apiKey, apiHost])
 
   useEffect(() => {
