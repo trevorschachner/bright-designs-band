@@ -27,6 +27,9 @@ import { eq } from 'drizzle-orm'
 import { Suspense } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
 
+// Revalidate show detail pages every hour
+export const revalidate = 3600;
+
 interface ShowWithTagsResult {
   show: any
   showsToTags: Array<{ tag: any }>

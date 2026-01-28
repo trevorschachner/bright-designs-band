@@ -7,8 +7,16 @@ interface ApiResponse<T> {
   details?: unknown;
 }
 
-export function SuccessResponse<T>(data: T, status: number = 200): NextResponse<ApiResponse<T>> {
-  return NextResponse.json({ success: true, data }, { status });
+export function SuccessResponse<T>(data: T, status: number = 200, cacheMaxAge: number = 3600): NextResponse<ApiResponse<T>> {
+  return NextResponse.json(
+    { success: true, data },
+    {
+      status,
+      headers: {
+        'Cache-Control': `public, s-maxage=${cacheMaxAge}, stale-while-revalidate=${cacheMaxAge * 2}`,
+      },
+    }
+  );
 }
 
 export function ErrorResponse(

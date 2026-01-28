@@ -5,6 +5,9 @@ import { count } from 'drizzle-orm/sql';
 import { eq, desc, exists, and, inArray } from 'drizzle-orm';
 import { withDb } from '@/lib/utils/db';
 
+// Cache API responses for 1 hour, revalidate in background
+export const revalidate = 3600;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filterState = FilterUrlManager.fromUrlParams(searchParams);
@@ -134,7 +137,11 @@ export async function GET(request: Request) {
         activeFilterState
       );
 
-      return NextResponse.json(response);
+      return NextResponse.json(response, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+        },
+      });
     } catch (error) {
       console.error('Error fetching arrangements:', error);
       return NextResponse.json(

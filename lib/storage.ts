@@ -85,7 +85,8 @@ export class FileStorageService {
       const { data: storageData, error: storageError } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(withRootPrefix(storagePath), file, {
-          cacheControl: '3600',
+          // Encourage CDN caching to reduce repeat egress; long-lived for static assets
+          cacheControl: '2592000', // 30 days
           upsert: false
         })
 

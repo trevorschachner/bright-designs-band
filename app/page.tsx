@@ -9,8 +9,8 @@ import Link from "next/link"
 import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
 
-// Force dynamic to ensure we get fresh data initially, though the service caches it
-export const dynamic = 'force-dynamic';
+// Revalidate every hour - service layer also caches for 1 hour
+export const revalidate = 3600;
 
 export default async function HomePage() {
   // Fetch cached featured shows from the service layer

@@ -4,6 +4,9 @@ import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { withDb } from '@/lib/utils/db';
 
+// Cache show detail responses for 1 hour
+export const revalidate = 3600;
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return withDb(async (db) => {
@@ -79,7 +82,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           };
         }).filter(Boolean),
       };
-      return NextResponse.json(normalized);
+      return NextResponse.json(normalized, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+        },
+      });
     } catch (e) {
       console.error('Failed to fetch show by id:', e);
       return NextResponse.json({ error: 'Failed to fetch show' }, { status: 500 });
