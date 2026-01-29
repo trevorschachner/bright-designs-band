@@ -32,15 +32,15 @@ function validateHTML(html: string): ValidationResult {
     errors.push('Missing DOCTYPE declaration');
   }
 
-  if (!html.includes('<html>') || !html.includes('</html>')) {
+  if (!html.includes('<html') || !html.includes('</html>')) {
     errors.push('Missing or unclosed <html> tag');
   }
 
-  if (!html.includes('<head>') || !html.includes('</head>')) {
+  if (!html.includes('<head') || !html.includes('</head>')) {
     errors.push('Missing or unclosed <head> tag');
   }
 
-  if (!html.includes('<body>') || !html.includes('</body>')) {
+  if (!html.includes('<body') || !html.includes('</body>')) {
     errors.push('Missing or unclosed <body> tag');
   }
 
@@ -60,8 +60,8 @@ function validateHTML(html: string): ValidationResult {
     warnings.push('Brand colors may be missing');
   }
 
-  // Check for "What to Expect Next" section
-  if (!html.includes('What to Expect Next') && !html.includes('What to expect next')) {
+  // Check for "What to Expect Next" section (or "Next Steps" for admin emails)
+  if (!html.includes('What to Expect Next') && !html.includes('What to expect next') && !html.includes('Next Steps')) {
     warnings.push('"What to Expect Next" section may be missing');
   }
 

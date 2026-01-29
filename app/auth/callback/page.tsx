@@ -46,7 +46,6 @@ export default function AuthCallbackPage() {
     }
 
     completeExchange()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, router])
 
   if (status === 'loading') {

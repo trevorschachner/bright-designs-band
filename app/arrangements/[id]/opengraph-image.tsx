@@ -73,7 +73,6 @@ export default async function Image({ params }: { params: { id: string } }) {
 
         {/* Logo/Brand */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '30px' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={logoBase64}
             alt="Bright Designs Logo"
