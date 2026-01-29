@@ -1,6 +1,7 @@
 import { tags } from '@/lib/database/schema';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -43,6 +44,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const body = await request.json();
   const updatedTag = await db.update(tags).set(body).where(eq(tags.id, parseInt(id, 10))).returning();
+  // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+  revalidateTag('tags');
   return NextResponse.json(updatedTag);
 }
 
@@ -70,5 +73,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
   }
   const deletedTag = await db.delete(tags).where(eq(tags.id, parseInt(id, 10))).returning();
+  // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+  revalidateTag('tags');
   return NextResponse.json(deletedTag);
 } 

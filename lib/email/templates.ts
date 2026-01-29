@@ -194,7 +194,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                       <tr>
                         <td style="padding-bottom:12px;">
                           <p style="margin:0 0 4px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Band Size</p>
-                          <div style="background-color:${colors.lightGray};padding:10px 12px;border-radius:4px;color:${colors.charcoal};font-size:14px;">${data.bandSize === '150+' ? '150+ members' : data.bandSize + ' members'}</div>
+                          <div style="background-color:${colors.lightGray};padding:10px 12px;border-radius:4px;color:${colors.charcoal};font-size:14px;">${data.bandSize === '150+' ? '150+ members' : escapeHtmlText(data.bandSize) + ' members'}</div>
                         </td>
                       </tr>
                       ` : ''}
@@ -431,7 +431,7 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
                       <tr>
                         <td style="padding-bottom:12px;">
                           <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Band Size</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${data.bandSize === '150+' ? '150+ members' : data.bandSize + ' members'}</p>
+                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${data.bandSize === '150+' ? '150+ members' : escapeHtmlText(data.bandSize) + ' members'}</p>
                         </td>
                       </tr>
                       ` : ''}

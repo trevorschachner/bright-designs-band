@@ -8,13 +8,19 @@ interface ApiResponse<T> {
 }
 
 export function SuccessResponse<T>(data: T, status: number = 200, cacheMaxAge: number = 3600): NextResponse<ApiResponse<T>> {
+  const headers: Record<string, string> = {};
+  
+  // Only add cache headers for GET requests (status 200) or when explicitly requested
+  // POST/PUT/DELETE responses (201, 204, etc.) should not be cached
+  if (status === 200 && cacheMaxAge > 0) {
+    headers['Cache-Control'] = `public, s-maxage=${cacheMaxAge}, stale-while-revalidate=${cacheMaxAge * 2}`;
+  }
+  
   return NextResponse.json(
     { success: true, data },
     {
       status,
-      headers: {
-        'Cache-Control': `public, s-maxage=${cacheMaxAge}, stale-while-revalidate=${cacheMaxAge * 2}`,
-      },
+      ...(Object.keys(headers).length > 0 && { headers }),
     }
   );
 }

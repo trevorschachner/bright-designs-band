@@ -1,5 +1,6 @@
 import { arrangements, files, showArrangements, arrangementsToTags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
 import { eq, desc, exists, and, inArray } from 'drizzle-orm';
@@ -236,6 +237,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+    revalidateTag('arrangements');
     return NextResponse.json({ id: newId, showId: Number(showId), orderIndex: finalOrder });
   });
 }

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getArrangementById } from '@/lib/database/supabase-queries';
 import { arrangements, arrangementsToTags, showArrangements } from '@/lib/database/schema';
 import { eq, and } from 'drizzle-orm';
@@ -136,6 +137,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       });
 
       console.log('PUT /api/arrangements/' + arrangementId, 'Successfully updated');
+      // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+      revalidateTag('arrangements');
       return NextResponse.json(updatedArrangement);
     } catch (dbError: any) {
       console.error('PUT /api/arrangements/' + arrangementId, 'Database error:', dbError);
@@ -190,6 +193,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       );
     }
 
+    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+    revalidateTag('arrangements');
     return NextResponse.json(deletedArrangement);
   } catch (error) {
     console.error('Error deleting arrangement:', error);

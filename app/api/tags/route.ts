@@ -1,5 +1,6 @@
 import { tags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 
 // Cache tags for 2 hours (tags rarely change)
 export const revalidate = 7200;
@@ -50,5 +51,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const newTag = await db.insert(tags).values(body).returning();
+  // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+  revalidateTag('tags');
   return NextResponse.json(newTag);
 } 
