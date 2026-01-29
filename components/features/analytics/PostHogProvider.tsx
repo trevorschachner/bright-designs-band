@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import posthog from 'posthog-js'
 import { usePathname, useSearchParams } from 'next/navigation'
 
@@ -11,7 +11,7 @@ interface PostHogProviderProps {
   apiHost?: string | null
 }
 
-export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
+function PostHogProviderContent({ apiKey, apiHost }: PostHogProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -55,6 +55,14 @@ export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
   }, [apiKey, pathname, searchParams])
 
   return null
+}
+
+export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
+  return (
+    <Suspense fallback={null}>
+      <PostHogProviderContent apiKey={apiKey} apiHost={apiHost} />
+    </Suspense>
+  )
 }
 
 export default PostHogProvider

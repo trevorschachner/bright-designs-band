@@ -77,7 +77,9 @@ export default function RootLayout({
         <JsonLd data={organizationSchema} />
         <JsonLd data={localBusinessSchema} />
         
-        <PostHogProvider apiKey={posthogKey} apiHost={posthogHost} />
+        <Suspense fallback={null}>
+          <PostHogProvider apiKey={posthogKey} apiHost={posthogHost} />
+        </Suspense>
         
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <GlobalBackground />
