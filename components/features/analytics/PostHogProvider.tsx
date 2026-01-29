@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import posthog from 'posthog-js'
 import { usePathname, useSearchParams } from 'next/navigation'
 
@@ -11,7 +11,7 @@ interface PostHogProviderProps {
   apiHost?: string | null
 }
 
-export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
+function PostHogProviderContent({ apiKey, apiHost }: PostHogProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -20,14 +20,28 @@ export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
       return
     }
 
-    posthog.init(apiKey, {
-      api_host: apiHost || 'https://app.posthog.com',
-      capture_pageview: false,
-      autocapture: true,
-      disable_session_recording: false,
-    })
+    try {
+      posthog.init(apiKey, {
+        api_host: apiHost || 'https://app.posthog.com',
+        capture_pageview: false,
+        autocapture: true,
+        disable_session_recording: false,
+        person_profiles: 'always',
+        loaded: (posthog) => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[PostHogProvider] PostHog initialized successfully');
+          }
+        },
+      })
 
-    posthogInitialized = true
+      posthogInitialized = true
+    } catch (error) {
+      // Silently fail in development, log in production
+      if (process.env.NODE_ENV !== 'development') {
+        console.error('[PostHogProvider] Failed to initialize:', error);
+      }
+      // Don't set posthogInitialized to true if init failed
+    }
   }, [apiKey, apiHost])
 
   useEffect(() => {
@@ -41,6 +55,14 @@ export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
   }, [apiKey, pathname, searchParams])
 
   return null
+}
+
+export function PostHogProvider({ apiKey, apiHost }: PostHogProviderProps) {
+  return (
+    <Suspense fallback={null}>
+      <PostHogProviderContent apiKey={apiKey} apiHost={apiHost} />
+    </Suspense>
+  )
 }
 
 export default PostHogProvider

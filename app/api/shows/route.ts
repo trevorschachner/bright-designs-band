@@ -11,6 +11,9 @@ import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse
 import { fileStorage, STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 import { withDb } from '@/lib/utils/db';
 
+// Cache API responses for 1 hour, revalidate in background
+export const revalidate = 3600;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filterState = FilterUrlManager.fromUrlParams(searchParams);

@@ -18,7 +18,8 @@ import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
 import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
-import { getPublicSiteUrl } from "@/lib/env"
+import { getPublicSiteUrl, getPosthogKey, getPosthogHost } from "@/lib/env"
+import { PostHogProvider } from "@/components/features/analytics/PostHogProvider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,9 +49,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const resourceHints = generateResourceHints()
-  // TODO(posthog): Restore PostHog environment variables when analytics go live.
-  // const posthogKey = getPosthogKey()
-  // const posthogHost = getPosthogHost()
+  const posthogKey = getPosthogKey()
+  const posthogHost = getPosthogHost()
   
   return (
     <html lang="en" suppressHydrationWarning>
@@ -77,10 +77,9 @@ export default function RootLayout({
         <JsonLd data={organizationSchema} />
         <JsonLd data={localBusinessSchema} />
         
-        {/* TODO(posthog): Re-enable PostHogProvider for analytics tracking. */}
-        {/*
-        <PostHogProvider apiKey={posthogKey} apiHost={posthogHost} />
-        */}
+        <Suspense fallback={null}>
+          <PostHogProvider apiKey={posthogKey} apiHost={posthogHost} />
+        </Suspense>
         
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <GlobalBackground />

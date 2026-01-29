@@ -1,9 +1,13 @@
 import { arrangements, files, showArrangements, arrangementsToTags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
 import { eq, desc, exists, and, inArray } from 'drizzle-orm';
 import { withDb } from '@/lib/utils/db';
+
+// Cache API responses for 1 hour, revalidate in background
+export const revalidate = 3600;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -134,7 +138,11 @@ export async function GET(request: Request) {
         activeFilterState
       );
 
-      return NextResponse.json(response);
+      return NextResponse.json(response, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+        },
+      });
     } catch (error) {
       console.error('Error fetching arrangements:', error);
       return NextResponse.json(
@@ -229,6 +237,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+    revalidateTag('arrangements');
     return NextResponse.json({ id: newId, showId: Number(showId), orderIndex: finalOrder });
   });
 }

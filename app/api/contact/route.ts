@@ -84,6 +84,8 @@ export async function POST(request: NextRequest) {
         message: message || '',
         privacyAgreed: true,
         source: submissionSource,
+        referralSource: rest.referralSource,
+        referralBandDirector: rest.referralBandDirector,
       };
 
       const { html, text } = generateContactEmailTemplate(emailData);
@@ -151,6 +153,8 @@ export async function POST(request: NextRequest) {
         message: message || '',
         privacyAgreed: true,
         source: submissionSource,
+        referralSource: rest.referralSource,
+        referralBandDirector: rest.referralBandDirector,
       };
 
       const { html, text } = generateContactEmailTemplate(emailData);

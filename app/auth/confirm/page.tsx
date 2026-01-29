@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/utils/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, XCircle, Mail, Loader2, Music } from 'lucide-react'
 import Link from 'next/link'
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -181,5 +181,41 @@ export default function ConfirmEmailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ConfirmEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-bright-primary/5 via-white to-bright-third/5 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <Card className="frame-card">
+            <CardHeader className="text-center space-y-4 pb-8">
+              <div className="mx-auto w-16 h-16 bg-bright-primary rounded-xl flex items-center justify-center">
+                <Music className="w-8 h-8 text-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bold text-foreground font-primary">
+                  Email Confirmation
+                </CardTitle>
+                <CardDescription className="text-muted-foreground mt-2">
+                  Loading...
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Alert className="border-blue-200 bg-blue-50">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                <AlertDescription className="text-blue-800">
+                  Please wait while we confirm your email address...
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    }>
+      <ConfirmEmailContent />
+    </Suspense>
   )
 } 

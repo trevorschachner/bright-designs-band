@@ -45,8 +45,13 @@ export const getSupabaseConfig = () => ({
 export const getPosthogKey = (): string | null =>
   sanitizeSecretString(process.env.NEXT_PUBLIC_POSTHOG_KEY)
 
-export const getPosthogHost = (fallback = 'https://app.posthog.com'): string =>
-  sanitizePublicUrl(process.env.NEXT_PUBLIC_POSTHOG_HOST) ?? fallback
+export const getPosthogHost = (fallback = '/ingest'): string => {
+  const host = sanitizeSecretString(process.env.NEXT_PUBLIC_POSTHOG_HOST)
+  if (host && (isValidUrl(host) || host.startsWith('/'))) {
+    return host
+  }
+  return fallback
+}
 
 export const getGaMeasurementId = (): string | null =>
   sanitizeSecretString(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)

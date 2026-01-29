@@ -45,6 +45,8 @@ export interface ContactFormData {
   instrumentation?: string;
   showPlan?: string[];
   source?: string;
+  referralSource?: string;
+  referralBandDirector?: string;
 }
 
 export interface EmailNotificationData {

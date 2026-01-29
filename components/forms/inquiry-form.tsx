@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 
 const inquiryFormSchema = z.object({
@@ -37,6 +38,8 @@ const inquiryFormSchema = z.object({
     message: "You have to select at least one service.",
   }),
   message: z.string().optional(),
+  referralSource: z.string().optional(),
+  referralBandDirector: z.string().optional(),
 })
 
 type InquiryFormValues = z.infer<typeof inquiryFormSchema>
@@ -70,8 +73,13 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
       services: [],
       instrumentation: "",
       message: "",
+      referralSource: "",
+      referralBandDirector: "",
     },
   })
+
+  const referralSource = form.watch("referralSource")
+  const showReferralBandDirector = referralSource === "band-director"
 
   const showInterestLabel = isGeneralInquiry ? "Inquiry Topic or Project" : "Show of Interest"
   const showInterestPlaceholder = isGeneralInquiry ? "e.g., Custom Show Inquiry, General Question" : ""
@@ -285,6 +293,63 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="referralSource"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>How did you hear about us?</FormLabel>
+              <FormDescription className="text-[0.8rem] text-muted-foreground">
+                This helps us understand how to reach more band directors like you.
+              </FormDescription>
+              <Select 
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  if (value !== 'band-director') {
+                    form.setValue('referralBandDirector', '');
+                  }
+                }} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an option" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="band-director">Another Band Director</SelectItem>
+                  <SelectItem value="google">Google</SelectItem>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="word-of-mouth">Word of Mouth</SelectItem>
+                  <SelectItem value="conference">Conference/Workshop</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {showReferralBandDirector && (
+          <FormField
+            control={form.control}
+            name="referralBandDirector"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Who referred you?</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Band director's name or school"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <div className="pt-10 mt-2 wireframe-border-dashed border-t">
           <Button type="submit" disabled={isLoading} className="btn-wireframe-primary w-full h-12 text-sm uppercase tracking-wide">
             {isLoading ? (

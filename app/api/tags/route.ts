@@ -1,5 +1,9 @@
 import { tags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+
+// Cache tags for 2 hours (tags rarely change)
+export const revalidate = 7200;
 
 export async function GET() {
   try {
@@ -11,7 +15,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
     const allTags = await db.query.tags.findMany();
-    return NextResponse.json(allTags);
+    return NextResponse.json(allTags, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=7200, stale-while-revalidate=14400',
+      },
+    });
   } catch (error) {
     console.error('Error fetching tags:', error);
     return NextResponse.json({ error: 'Failed to fetch tags' }, { status: 500 });
@@ -43,5 +51,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const newTag = await db.insert(tags).values(body).returning();
+  // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
+  revalidateTag('tags');
   return NextResponse.json(newTag);
 } 
