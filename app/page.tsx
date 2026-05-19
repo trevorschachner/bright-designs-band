@@ -205,7 +205,6 @@ export default async function HomePage() {
       <JsonLd data={marchingBandSchemas.drillService} />
       <JsonLd data={marchingBandSchemas.programCoordination} />
       
-      {/* FAQ Schema targeting customer pain points */}
       <JsonLd data={createFAQSchema([
         {
           question: "How do you ensure music is delivered on time?",
@@ -213,19 +212,59 @@ export default async function HomePage() {
         },
         {
           question: "What makes Bright Designs different from other marching band design companies?",
-          answer: "We specialize in serving state finalists and BOA competitive bands. Our expertise is with bands at this skill level. We also offer exceptional communication, and designs tailored specifically for competitive success. No missed deadlines, no communication gaps."
+          answer: "We specialize in serving state finalists and BOA competitive bands with exceptional communication and designs tailored specifically for competitive success. No missed deadlines, no communication gaps — and we back that with modern engineering that most design companies don't have."
         },
         {
           question: "Do you work with BOA competitive bands and state finalists?",
-          answer: "Yes! We specialize in working with competitive programs including BOA regional and national level bands, state finalists, and 3A/4A programs looking to elevate their competitive standing."
+          answer: "Yes, we specialize in working with competitive programs including BOA regional and national level bands, state finalists, and 3A/4A/5A programs looking to elevate their competitive standing."
         },
         {
           question: "Can you work within our budget and timeline constraints?",
-          answer: "Absolutely. We offer flexible design packages and work within your specific budget and performance timeline requirements. We understand the financial constraints of band programs."
+          answer: "Yes. We offer flexible design packages and work within your specific budget and performance timeline. We understand the financial constraints of band programs and offer payment plans."
         },
         {
           question: "What regions do you serve?",
-          answer: "While we work nationally, we specialize in serving the Southeast region including South Carolina, Georgia, and surrounding BOA circuits where we understand the local competitive landscape."
+          answer: "We work nationally, but specialize in the Southeast — South Carolina, Georgia, North Carolina, and Florida — where we know the local BOA circuits and competitive landscape deeply."
+        },
+        {
+          question: "How much does a custom marching band show cost?",
+          answer: "Custom show design typically ranges from $2,500 to $10,000+ depending on the scope of services — music arrangements, drill writing, visual design, percussion design, and sound design. Pre-written shows are available at lower price points. Contact us for a specific quote based on your program's needs."
+        },
+        {
+          question: "How long does it take to design a custom marching band show?",
+          answer: "A full custom show typically takes 8–16 weeks depending on scope and season start date. We recommend starting conversations 4–6 months before your first performance. Rush timelines are available for programs with tighter windows."
+        },
+        {
+          question: "What is included in a custom marching band show package?",
+          answer: "A full custom show package includes a custom music arrangement, drill design, visual design concepts, and support throughout the competitive season. Additional services like percussion writing, sound design, and program coordination are available. Every deliverable is provided in print-ready and performance-ready formats."
+        },
+        {
+          question: "What is the difference between a custom show and a pre-written show?",
+          answer: "A custom show is designed specifically for your band — your theme, your size, your competitive goals. A pre-written show is an existing design ready for immediate purchase that you can adapt to your instrumentation. Pre-written shows are faster to get and more budget-friendly; custom shows give you a unique production built around your program."
+        },
+        {
+          question: "Can you design a show for a small marching band?",
+          answer: "Yes. We design for bands of all sizes, including smaller programs under 40 members. Our pre-written show catalog includes options specifically for small bands, and we can design custom shows scaled to your ensemble."
+        },
+        {
+          question: "When should we start planning our marching band show?",
+          answer: "Ideally 4–6 months before your first performance. For fall season competitive bands, that means starting conversations in the winter or early spring. The earlier you start, the more revision cycles we can offer and the more refined the final product."
+        },
+        {
+          question: "What difficulty levels do your shows come in?",
+          answer: "Our shows are categorized as Beginner, Intermediate, and Advanced (Grade 5+). We also offer BOA-specific competitive designs for programs aiming at regional and national rankings."
+        },
+        {
+          question: "Do you provide support during the marching season?",
+          answer: "Yes. We stay available throughout your season for questions, adjustments, and guidance. We want your show to succeed on the field, not just look good on paper."
+        },
+        {
+          question: "What files and deliverables do we receive?",
+          answer: "You receive music in PDF and editable formats, drill in your preferred notation software format, and visual design documentation. All files are yours to use for your program."
+        },
+        {
+          question: "What is BOA and how does show design affect scores?",
+          answer: "BOA (Bands of America) is the premier competitive marching band circuit in the United States. Judges score on Music Performance, Music General Effect, Visual Performance, and Visual General Effect. A well-designed show maximizes your score potential across all captions — the design needs to be challenging enough to earn credit but executable enough to be performed cleanly under pressure."
         }
       ])} />
     </div>

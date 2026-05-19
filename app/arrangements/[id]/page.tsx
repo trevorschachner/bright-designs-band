@@ -18,7 +18,7 @@ import { createClient } from '@/lib/utils/supabase/server'
 import { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
-import { createCreativeWorkSchema } from '@/lib/seo/structured-data'
+import { createCreativeWorkSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -77,6 +77,12 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
     difficulty: arr.grade ? `Grade ${arr.grade}` : undefined,
     duration: arr.duration_seconds ? `${Math.floor(arr.duration_seconds / 60)}:${String(arr.duration_seconds % 60).padStart(2, '0')}` : undefined,
   })
+
+  const breadcrumbSchema = createBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Arrangements', url: '/arrangements' },
+    { name: arr.title, url: `/arrangements/${arr.id}` },
+  ])
 
   // Fetch show information if linked
   let parentShow: { id: number; title?: string | null; name?: string | null; thumbnailUrl?: string | null; graphicUrl?: string | null } | null = null;
@@ -157,6 +163,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
     <div className="min-h-screen bg-background">
       <style dangerouslySetInnerHTML={{ __html: audioPlayerStyles }} />
       <JsonLd data={creativeWorkSchema} />
+      <JsonLd data={breadcrumbSchema} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb Navigation */}

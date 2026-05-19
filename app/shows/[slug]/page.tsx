@@ -19,7 +19,7 @@ import { WhatIsIncluded } from '@/components/features/what-is-included'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
-import { createCreativeWorkSchema } from '@/lib/seo/structured-data'
+import { createCreativeWorkSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/database'
 import { shows } from '@/lib/database/schema'
@@ -195,6 +195,12 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     difficulty: displayDifficulty || undefined,
     duration: show.duration || undefined,
   })
+
+  const breadcrumbSchema = createBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Shows', url: '/shows' },
+    { name: show.title, url: `/shows/${show.slug}` },
+  ])
 
   return (
     <div className="min-h-screen bg-background">
@@ -460,8 +466,8 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
         </div>
       </div>
 
-      {/* Structured Data */}
       <JsonLd data={creativeWorkSchema} />
+      <JsonLd data={breadcrumbSchema} />
     </div>
   )
 }
