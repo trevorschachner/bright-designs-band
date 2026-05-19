@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 // Use revalidation instead of force-dynamic for better performance
-export const revalidate = 60; // Revalidate every minute
+export const revalidate = 3600;
 // export const dynamic = 'force-dynamic';
 
 async function getResources() {

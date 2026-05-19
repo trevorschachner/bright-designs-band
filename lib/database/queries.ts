@@ -7,30 +7,6 @@ import { eq, desc, and, or, ilike, count, sql } from 'drizzle-orm';
 // SHOWS QUERIES
 // =======================================
 
-export async function getAllShows() {
-  try {
-    return await db.select().from(shows).orderBy(desc(shows.createdAt));
-  } catch (error) {
-    console.error('Error fetching shows:', error);
-    throw error;
-  }
-}
-
-export async function getShowById(id: number) {
-  try {
-    const result = await db
-      .select()
-      .from(shows)
-      .where(eq(shows.id, id))
-      .limit(1);
-    
-    return result[0] || null;
-  } catch (error) {
-    console.error('Error fetching show by ID:', error);
-    throw error;
-  }
-}
-
 export async function getShowWithTagsBySlug(slug: string) {
   try {
     // Try exact match first (most common case, fastest)
@@ -99,49 +75,6 @@ export async function getShowWithTagsBySlug(slug: string) {
     };
   } catch (error) {
     console.error('Error fetching show by slug:', error);
-    throw error;
-  }
-}
-
-export async function getShowsWithFilters(filters: {
-  difficulty?: string;
-  searchTerm?: string;
-  year?: string;
-}) {
-  try {
-    const conditions = [];
-
-    if (filters.difficulty) {
-      conditions.push(eq(shows.difficulty, filters.difficulty as any));
-    }
-
-    if (filters.year) {
-      conditions.push(eq(shows.year as any, Number(filters.year) as any));
-    }
-
-    if (filters.searchTerm) {
-      conditions.push(
-        or(
-          ilike(shows.title, `%${filters.searchTerm}%`),
-          ilike(shows.description, `%${filters.searchTerm}%`)
-        )
-      );
-    }
-
-    if (conditions.length > 0) {
-      return await db
-        .select()
-        .from(shows)
-        .where(and(...conditions))
-        .orderBy(desc(shows.createdAt));
-    } else {
-      return await db
-        .select()
-        .from(shows)
-        .orderBy(desc(shows.createdAt));
-    }
-  } catch (error) {
-    console.error('Error fetching filtered shows:', error);
     throw error;
   }
 }

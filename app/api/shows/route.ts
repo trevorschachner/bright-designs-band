@@ -70,6 +70,11 @@ async function queryShowsData(params: ShowQueryParams) {
     offset,
     where: finalWhereClause,
     orderBy,
+    columns: {
+      id: true, slug: true, title: true, description: true, year: true,
+      difficulty: true, duration: true, price: true, graphicUrl: true,
+      thumbnailUrl: true, featured: true, displayOrder: true, createdAt: true,
+    },
     with: {
       files: {
         where: (f: any, { eq: feq, and }: any) => and(feq(f.isPublic, true), feq(f.fileType, 'image')),
