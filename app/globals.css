@@ -108,7 +108,7 @@
 
     /* "Lampshade" #F2E9D0 used for muted backgrounds */
     --muted: 44 57% 88%;
-    --muted-foreground: 0 0% 45.1%; /* Keep standard muted text for readability */
+    --muted-foreground: 0 0% 43%; /* Darkened slightly to meet 4.5:1 contrast on muted/30 backgrounds */
 
     /* "Clear Sky" #45D4FF */
     --accent: 194 100% 64%;

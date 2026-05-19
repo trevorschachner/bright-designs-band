@@ -226,6 +226,89 @@ export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string, url: s
   }
 }
 
+// Product Schema for show pricing
+export function createProductSchema({
+  name,
+  description,
+  type,
+  price,
+  url,
+  imageUrl,
+}: {
+  name: string
+  description?: string
+  type: 'custom' | 'pre-written'
+  price?: number | null
+  url: string
+  imageUrl?: string | null
+}) {
+  const minPrice = price ?? (type === 'custom' ? 5000 : 2500)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name,
+    description: description || (type === 'custom'
+      ? `Custom marching band show design — fully tailored to your program's theme, size, and competitive goals.`
+      : `Pre-written marching band show package — ready to purchase and adapt to your instrumentation.`),
+    brand: {
+      '@type': 'Brand',
+      name: 'Bright Designs',
+    },
+    url: `https://www.brightdesigns.band${url}`,
+    ...(imageUrl ? { image: imageUrl } : {}),
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'USD',
+      price: minPrice,
+      priceSpecification: {
+        '@type': 'PriceSpecification',
+        priceCurrency: 'USD',
+        minPrice,
+      },
+      availability: 'https://schema.org/InStock',
+      seller: {
+        '@type': 'Organization',
+        name: 'Bright Designs',
+        url: 'https://www.brightdesigns.band',
+      },
+    },
+  }
+}
+
+// VideoObject Schema for shows with YouTube URLs
+export function createVideoObjectSchema({
+  name,
+  description,
+  youtubeUrl,
+  thumbnailUrl,
+  uploadDate,
+}: {
+  name: string
+  description?: string
+  youtubeUrl: string
+  thumbnailUrl?: string | null
+  uploadDate?: string | null
+}) {
+  const videoId = youtubeUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]
+  const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : youtubeUrl
+  const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : youtubeUrl
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name,
+    description: description || `Marching band show performance: ${name}`,
+    embedUrl,
+    url: watchUrl,
+    ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    ...(uploadDate ? { uploadDate } : {}),
+    publisher: {
+      '@type': 'Organization',
+      name: 'Bright Designs',
+      url: 'https://www.brightdesigns.band',
+    },
+  }
+}
+
 // Local Business Schema for regional SEO
 export const localBusinessSchema = {
   '@context': 'https://schema.org',

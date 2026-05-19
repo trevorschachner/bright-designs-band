@@ -54,7 +54,7 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 					{/* Footer links columns */}
 					{footer?.groups.map(group => (
 						<div key={group.title}>
-							<h4 className="plus-h4 mb-6">{group.title}</h4>
+							<h2 className="plus-h4 mb-6">{group.title}</h2>
 							<ul className="space-y-4">
 								{group.links.map(link => (
 									<li key={link.href}>

@@ -12,9 +12,10 @@ import { Show } from "@/lib/types/shows";
 interface ShowListViewProps {
   item: Show;
   isLoading?: boolean;
+  priority?: boolean;
 }
 
-export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
+export function ShowListView({ item: show, isLoading, priority = false }: ShowListViewProps) {
   if (isLoading) {
     return <ShowListViewSkeleton />;
   }
@@ -41,8 +42,8 @@ export function ShowListView({ item: show, isLoading }: ShowListViewProps) {
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 sizes="(max-width: 640px) 100vw, 256px"
+                priority={priority}
                 onError={(e) => {
-                  // Fallback to placeholder if image fails to load
                   (e.target as HTMLImageElement).src = "/placeholder.svg";
                 }}
               />

@@ -106,7 +106,7 @@ export function Pagination({
             onValueChange={(value) => onLimitChange(parseInt(value, 10))}
             disabled={isLoading}
           >
-            <SelectTrigger className="w-20">
+            <SelectTrigger className="w-20" aria-label="Results per page">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -127,8 +127,9 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(page - 1)}
             disabled={!hasPrev || isLoading}
+            aria-label="Previous page"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           </Button>
 
           {/* Page Numbers */}
@@ -161,8 +162,9 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(page + 1)}
             disabled={!hasNext || isLoading}
+            aria-label="Next page"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
           </Button>
         </div>
       </div>

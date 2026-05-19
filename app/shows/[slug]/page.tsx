@@ -19,7 +19,7 @@ import { WhatIsIncluded } from '@/components/features/what-is-included'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
-import { createCreativeWorkSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
+import { createCreativeWorkSchema, createBreadcrumbSchema, createProductSchema, createVideoObjectSchema } from '@/lib/seo/structured-data'
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/database'
 import { shows } from '@/lib/database/schema'
@@ -201,6 +201,30 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     { name: 'Shows', url: '/shows' },
     { name: show.title, url: `/shows/${show.slug}` },
   ])
+
+  const isCustom = (() => {
+    const tags = showsToTags.map((st: any) => st.tag?.name?.toLowerCase() ?? '')
+    return tags.includes('custom') || !tags.includes('pre-written')
+  })()
+
+  const productSchema = createProductSchema({
+    name: show.title,
+    description: show.description ?? undefined,
+    type: isCustom ? 'custom' : 'pre-written',
+    price: showRow.price ? Number(showRow.price) : null,
+    url: `/shows/${show.slug}`,
+    imageUrl: displayImageUrl,
+  })
+
+  const videoObjectSchema = showRow.youtubeUrl
+    ? createVideoObjectSchema({
+        name: show.title,
+        description: show.description ?? undefined,
+        youtubeUrl: showRow.youtubeUrl,
+        thumbnailUrl: displayImageUrl,
+        uploadDate: show.year ? `${show.year}-01-01` : null,
+      })
+    : null
 
   return (
     <div className="min-h-screen bg-background">
@@ -468,6 +492,8 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
 
       <JsonLd data={creativeWorkSchema} />
       <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={productSchema} />
+      {videoObjectSchema && <JsonLd data={videoObjectSchema} />}
     </div>
   )
 }

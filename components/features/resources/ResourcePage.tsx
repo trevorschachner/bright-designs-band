@@ -14,8 +14,8 @@ interface ResourcePageProps<T> {
   apiEndpoint: string;
   filterFields: FilterField[];
   filterPresets: FilterPreset[];
-  CardComponent: ComponentType<{ item: T; isLoading?: boolean }>;
-  ListComponent?: ComponentType<{ item: T; isLoading?: boolean }>;
+  CardComponent: ComponentType<{ item: T; isLoading?: boolean; priority?: boolean }>;
+  ListComponent?: ComponentType<{ item: T; isLoading?: boolean; priority?: boolean }>;
   initialLimit?: number;
   viewMode?: 'grid' | 'list';
   onViewModeChange?: (mode: 'grid' | 'list') => void;
@@ -236,17 +236,19 @@ export default function ResourcePage<T>({
                       variant={viewMode === 'grid' ? 'default' : 'outline'}
                       size="sm"
                       className="h-8 px-2"
+                      aria-label="Grid view"
                       onClick={() => onViewModeChange && onViewModeChange('grid')}
                     >
-                      <Grid className="w-4 h-4" />
+                      <Grid className="w-4 h-4" aria-hidden="true" />
                     </Button>
                     <Button
                       variant={viewMode === 'list' ? 'default' : 'outline'}
                       size="sm"
                       className="h-8 px-2"
+                      aria-label="List view"
                       onClick={() => onViewModeChange && onViewModeChange('list')}
                     >
-                      <List className="w-4 h-4" />
+                      <List className="w-4 h-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>
@@ -254,14 +256,14 @@ export default function ResourcePage<T>({
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
                     {items.map((item: T, index: number) => (
-                      <CardComponent key={index} item={item} isLoading={isLoading} />
+                      <CardComponent key={index} item={item} isLoading={isLoading} priority={index === 0} />
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-6 mb-8">
                     {items.map((item: T, index: number) => {
                       const Component = ListComponent || CardComponent;
-                      return <Component key={index} item={item} isLoading={isLoading} />;
+                      return <Component key={index} item={item} isLoading={isLoading} priority={index === 0} />;
                     })}
                   </div>
                 )}
@@ -326,7 +328,7 @@ export default function ResourcePage<T>({
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
             {items.map((item: T, index: number) => (
-              <CardComponent key={index} item={item} isLoading={isLoading} />
+              <CardComponent key={index} item={item} isLoading={isLoading} priority={index === 0} />
             ))}
           </div>
 

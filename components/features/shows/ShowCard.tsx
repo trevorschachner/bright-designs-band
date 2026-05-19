@@ -28,9 +28,10 @@ export interface ShowCardItem {
 interface ShowCardProps {
   item: ShowCardItem;
   isLoading?: boolean;
+  priority?: boolean;
 }
 
-export function ShowCard({ item: show, isLoading }: ShowCardProps) {
+export function ShowCard({ item: show, isLoading, priority = false }: ShowCardProps) {
   const router = useRouter();
   
   if (isLoading || !show) {
@@ -68,8 +69,9 @@ export function ShowCard({ item: show, isLoading }: ShowCardProps) {
             width={400}
             height={225}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            priority={priority}
             onError={(e) => {
-              // Fallback to placeholder if image fails to load
               (e.target as HTMLImageElement).src = "/placeholder.svg";
             }}
           />

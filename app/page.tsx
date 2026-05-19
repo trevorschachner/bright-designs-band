@@ -6,6 +6,7 @@ import Testimonials from "@/components/features/testimonials"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import PageHero from "@/components/layout/page-hero"
 import Link from "next/link"
+import Image from "next/image"
 import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
 
@@ -120,15 +121,17 @@ export default async function HomePage() {
           {/* Show Grid - Featured Shows Only */}
           {featuredShows.length > 0 ? (
             <div className="plus-grid-3">
-              {featuredShows.map((show) => (
+              {featuredShows.map((show, index) => (
               <Card key={show.id}>
                 <div className="plus-divider mb-4 pb-4">
-                  <div className="w-full aspect-video plus-border rounded-lg overflow-hidden bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                  <div className="w-full aspect-video plus-border rounded-lg overflow-hidden bg-muted relative">
+                    <Image
                       src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
                       alt={show.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      priority={index === 0}
                     />
                   </div>
                 </div>
