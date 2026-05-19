@@ -27,8 +27,14 @@ import { eq } from 'drizzle-orm'
 import { Suspense } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
 
-// Revalidate show detail pages every hour
 export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const allShows = await db.select({ slug: shows.slug }).from(shows);
+  return allShows
+    .filter(s => s.slug)
+    .map(s => ({ slug: s.slug! }));
+}
 
 interface ShowWithTagsResult {
   show: any
