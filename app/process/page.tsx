@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+import { generateMetadata as buildMetadata, pageSEOConfigs } from '@/lib/seo/metadata'
 import {
   MessageSquare,
   Lightbulb,
@@ -6,6 +8,8 @@ import {
   CheckCircle,
   Headphones,
 } from "lucide-react"
+
+export const metadata: Metadata = buildMetadata(pageSEOConfigs.process)
 
 export default function ProcessPage() {
   return (

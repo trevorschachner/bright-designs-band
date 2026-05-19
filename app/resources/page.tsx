@@ -8,8 +8,9 @@ import Link from "next/link"
 import Image from "next/image"
 
 export const metadata: Metadata = {
-  title: "Resources | Bright Designs Band",
-  description: "Free resources, guides, and tools for marching band directors and educators.",
+  title: "Marching Band Director Resources - Free Guides & Tools | Bright Designs",
+  description: "Free resources, guides, and tools for marching band directors and educators. Show design tips, arrangement guides, competition prep, and more.",
+  keywords: "marching band director resources, marching band show design guide, band director tools, competitive marching band tips, BOA preparation, marching band arrangements guide",
 }
 
 // Use revalidation instead of force-dynamic for better performance

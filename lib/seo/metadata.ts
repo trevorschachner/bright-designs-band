@@ -281,8 +281,33 @@ export const pageSEOConfigs = {
       "marching band program coordination",
       "marching band music design",
       "marching band percussion design",
-      "marching band sound design",
-      "marching band program coordination"
+      "marching band sound design"
+    ]
+  },
+
+  faqs: {
+    title: "Marching Band Design FAQs - Common Questions Answered | Bright Designs",
+    description: "Answers to the most common questions about custom marching band show design, arrangements, timelines, pricing, and working with Bright Designs.",
+    keywords: [
+      "marching band design FAQ",
+      "marching band show design questions",
+      "custom show timeline",
+      "marching band design pricing",
+      "BOA show design process",
+      "marching band arrangement questions"
+    ]
+  },
+
+  process: {
+    title: "Our Design Process - How We Build Your Marching Band Show | Bright Designs",
+    description: "See how Bright Designs takes your vision from concept to competition-ready. Our proven process delivers custom marching band shows on time with full support from first concept to final product.",
+    keywords: [
+      "marching band design process",
+      "custom show design workflow",
+      "marching band show development",
+      "BOA show design timeline",
+      "marching band design consultation",
+      "show design collaboration"
     ]
   }
 } as const

@@ -1,3 +1,8 @@
+import type { Metadata } from 'next'
+import { generateMetadata as buildMetadata, pageSEOConfigs } from '@/lib/seo/metadata'
+
+export const metadata: Metadata = buildMetadata(pageSEOConfigs.faqs)
+
 export default function FaqsPage() {
   return (
     <div className="container mx-auto py-20">

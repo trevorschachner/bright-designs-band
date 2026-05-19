@@ -52,97 +52,47 @@ Allow: /about
 Allow: /contact`
 }
 
-// Static routes for the marching band website
 export const staticRoutes: SitemapURL[] = [
-  {
-    loc: '/',
-    changefreq: 'weekly',
-    priority: 1.0
-  },
-  {
-    loc: '/arrangements',
-    changefreq: 'weekly', 
-    priority: 0.9
-  },
-  {
-    loc: '/shows',
-    changefreq: 'weekly',
-    priority: 0.9
-  },
-  {
-    loc: '/about',
-    changefreq: 'monthly',
-    priority: 0.7
-  },
-  {
-    loc: '/contact',
-    changefreq: 'monthly',
-    priority: 0.7
-  },
-  {
-    loc: '/process',
-    changefreq: 'monthly',
-    priority: 0.6
-  },
-  {
-    loc: '/guide',
-    changefreq: 'monthly',
-    priority: 0.6
-  },
-  {
-    loc: '/faqs',
-    changefreq: 'monthly',
-    priority: 0.6
-  }
+  { loc: '/', changefreq: 'weekly', priority: 1.0 },
+  { loc: '/shows', changefreq: 'weekly', priority: 0.9 },
+  { loc: '/arrangements', changefreq: 'weekly', priority: 0.9 },
+  { loc: '/services', changefreq: 'monthly', priority: 0.8 },
+  { loc: '/about', changefreq: 'monthly', priority: 0.7 },
+  { loc: '/contact', changefreq: 'monthly', priority: 0.7 },
+  { loc: '/process', changefreq: 'monthly', priority: 0.6 },
+  { loc: '/resources', changefreq: 'weekly', priority: 0.6 },
+  { loc: '/faqs', changefreq: 'monthly', priority: 0.6 },
+  { loc: '/collections', changefreq: 'weekly', priority: 0.6 },
 ]
 
-// Function to get dynamic routes (arrangements, shows, etc.)
 export async function getDynamicRoutes(): Promise<SitemapURL[]> {
   const routes: SitemapURL[] = []
-  
+
   try {
-    // Prefer Supabase to avoid bundling DB client in edge contexts
-    const { createClient } = await import('@/lib/utils/supabase/server')
-    const supabase = await createClient()
+    const { db } = await import('@/lib/database')
+    const { shows, arrangements } = await import('@/lib/database/schema')
+    const { desc } = await import('drizzle-orm')
 
-    // Shows (use slug)
-    const { data: showRows } = await supabase
-      .from('shows')
-      .select('slug,updated_at')
-      .order('updated_at', { ascending: false })
-    if (Array.isArray(showRows)) {
-      showRows.forEach((row: any) => {
-        if (row?.slug) {
-          routes.push({
-            loc: `/shows/${row.slug}`,
-            lastmod: row?.updated_at ? String(row.updated_at).split('T')[0] : undefined,
-            changefreq: 'monthly',
-            priority: 0.8,
-          })
-        }
-      })
-    }
+    const [showRows, arrRows] = await Promise.all([
+      db.select({ slug: shows.slug, updatedAt: shows.updatedAt }).from(shows).orderBy(desc(shows.updatedAt)),
+      db.select({ id: arrangements.id }).from(arrangements),
+    ])
 
-    // Arrangements (keep id URLs for now)
-    const { data: arrRows } = await supabase
-      .from('arrangements')
-      .select('id,updated_at')
-      .order('updated_at', { ascending: false })
-    if (Array.isArray(arrRows)) {
-      arrRows.forEach((row: any) => {
-        if (typeof row?.id === 'number') {
-          routes.push({
-            loc: `/arrangements/${row.id}`,
-            lastmod: row?.updated_at ? String(row.updated_at).split('T')[0] : undefined,
-            changefreq: 'monthly',
-            priority: 0.8,
-          })
-        }
+    showRows.forEach(row => {
+      if (row.slug) routes.push({
+        loc: `/shows/${row.slug}`,
+        lastmod: row.updatedAt ? String(row.updatedAt).split('T')[0] : undefined,
+        changefreq: 'monthly',
+        priority: 0.8,
       })
-    }
+    })
+
+    arrRows.forEach(row => {
+      routes.push({ loc: `/arrangements/${row.id}`, changefreq: 'monthly', priority: 0.8 })
+    })
   } catch (error) {
     console.error('Error fetching dynamic routes for sitemap:', error)
   }
-  
+
   return routes
 }

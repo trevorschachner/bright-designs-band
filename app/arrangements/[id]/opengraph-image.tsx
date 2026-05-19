@@ -1,5 +1,7 @@
 import { ImageResponse } from 'next/og'
-import { createClient } from '@/lib/utils/supabase/server'
+import { db } from '@/lib/database'
+import { arrangements } from '@/lib/database/schema'
+import { eq } from 'drizzle-orm'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -15,22 +17,17 @@ export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: { id: string } }) {
   const { id } = await params
-  
-  // Fetch arrangement data using Supabase direct client to reuse logic or just simple query
-  // Since we are in an image route, let's just use the DB directly if possible or Supabase
-  const supabase = await createClient()
-  
-  const { data: arr } = await supabase
-    .from('arrangements')
-    .select('title, composer, grade, ensemble_size')
-    .eq('id', id)
-    .single()
+
+  const arr = await db.query.arrangements.findFirst({
+    where: eq(arrangements.id, parseInt(id, 10)),
+    columns: { title: true, composer: true, grade: true, ensembleSize: true },
+  })
 
   // Fallback values
   const title = arr?.title || 'Custom Arrangement'
   const composer = arr?.composer || 'Bright Designs'
   const grade = arr?.grade ? arr.grade.replace('_', ' ').replace('plus', '+') : ''
-  const ensemble = arr?.ensemble_size || ''
+  const ensemble = arr?.ensembleSize || ''
 
   // Load logo
   const logoPath = join(process.cwd(), 'public/logos/brightdesignslogo-main.png')
