@@ -1,43 +1,32 @@
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
-import { getArrangementById } from '@/lib/database/supabase-queries';
-import { arrangements, arrangementsToTags, showArrangements } from '@/lib/database/schema';
+import { arrangements, arrangementsToTags, showArrangements, files } from '@/lib/database/schema';
 import { eq, and } from 'drizzle-orm';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
-    
-    const { data: arrangement, error } = await supabase
-      .from('arrangements')
-      .select(`
-        *,
-        show:shows(*),
-        files(*)
-      `)
-      .eq('id', parseInt(id, 10))
-      .single();
+    const arrangementId = parseInt(id, 10);
+    const { db } = await import('@/lib/database');
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Arrangement not found' }, { status: 404 });
-      }
-      console.error('Error fetching arrangement:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch arrangement' },
-        { status: 500 }
-      );
+    const arrangement = await db.query.arrangements.findFirst({
+      where: eq(arrangements.id, arrangementId),
+      with: {
+        files: { where: eq(files.isPublic, true), orderBy: files.displayOrder },
+        showArrangements: { with: { show: true } },
+        arrangementsToTags: { with: { tag: true } },
+      },
+    });
+
+    if (!arrangement) {
+      return NextResponse.json({ error: 'Arrangement not found' }, { status: 404 });
     }
 
     return NextResponse.json(arrangement);
   } catch (error) {
     console.error('Error fetching arrangement:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch arrangement' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch arrangement' }, { status: 500 });
   }
 }
 
@@ -172,35 +161,26 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is staff
     const userEmail = session.user?.email;
     if (!userEmail?.endsWith('@brightdesigns.band')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { data: deletedArrangement, error } = await supabase
-      .from('arrangements')
-      .delete()
-      .eq('id', parseInt(id, 10))
-      .select()
-      .single();
+    const { db } = await import('@/lib/database');
+    const [deleted] = await db
+      .delete(arrangements)
+      .where(eq(arrangements.id, parseInt(id, 10)))
+      .returning();
 
-    if (error) {
-      console.error('Error deleting arrangement:', error);
-      return NextResponse.json(
-        { error: 'Failed to delete arrangement' },
-        { status: 500 }
-      );
+    if (!deleted) {
+      return NextResponse.json({ error: 'Arrangement not found' }, { status: 404 });
     }
 
     // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
     revalidateTag('arrangements');
-    return NextResponse.json(deletedArrangement);
+    return NextResponse.json(deleted);
   } catch (error) {
     console.error('Error deleting arrangement:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete arrangement' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete arrangement' }, { status: 500 });
   }
 } 
