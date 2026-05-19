@@ -183,78 +183,43 @@ export async function POST(request: Request) {
     }
 
     const { tags: tagIds, ...showData } = parsedData.data as any;
+    const { db } = await import('@/lib/database');
 
-    // Generate slug from title
-    const generateSlug = (title: string): string => {
-      return title
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, '') // Remove special characters
-        .replace(/\s+/g, '-') // Replace spaces with hyphens
-        .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-    };
+    const generateSlug = (title: string) =>
+      title.toLowerCase().trim()
+        .replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')
+        .replace(/-+/g, '-').replace(/^-+|-+$/g, '');
 
-    // Generate a unique slug
     let slug = generateSlug(showData.title);
-    let slugSuffix = 1;
-    
-    // Check if slug already exists and make it unique
-    while (true) {
-      const { data: existingShow } = await supabase
-        .from('shows')
-        .select('id')
-        .eq('slug', slug)
-        .single();
-      
-      if (!existingShow) break;
-      
-      // If slug exists, append a number
-      slug = `${generateSlug(showData.title)}-${slugSuffix}`;
-      slugSuffix++;
+    let suffix = 1;
+    while (await db.query.shows.findFirst({ where: eq(shows.slug, slug), columns: { id: true } })) {
+      slug = `${generateSlug(showData.title)}-${suffix++}`;
     }
 
-    // Map camelCase -> snake_case for Supabase
-    const insertPayload: any = {};
-    const mapIf = (key: string, value: any) => { if (value !== undefined) insertPayload[key] = value; };
-    mapIf('title', showData.title);
-    mapIf('slug', slug); // Add the generated slug
-    mapIf('year', showData.year);
-    mapIf('difficulty', showData.difficulty);
-    mapIf('duration', showData.duration);
-    mapIf('description', showData.description);
-    mapIf('price', showData.price);
-    mapIf('thumbnail_url', showData.thumbnailUrl ?? showData.thumbnail_url);
-    mapIf('video_url', showData.videoUrl ?? showData.video_url);
-    mapIf('composer', showData.composer);
-    mapIf('song_title', showData.songTitle ?? showData.song_title);
-    mapIf('display_order', showData.displayOrder);
-
-    const { data: inserted, error: insertErr } = await supabase
-      .from('shows')
-      .insert(insertPayload)
-      .select('*')
-      .single();
-
-    if (insertErr) {
-      console.error('Supabase insert error (shows):', insertErr.message);
-      return ErrorResponse('Failed to create show');
-    }
+    const [inserted] = await db.insert(shows).values({
+      title: showData.title,
+      slug,
+      year: showData.year ?? null,
+      difficulty: showData.difficulty ?? null,
+      duration: showData.duration ?? null,
+      description: showData.description ?? null,
+      price: showData.price != null ? String(showData.price) : null,
+      thumbnailUrl: showData.thumbnailUrl ?? null,
+      videoUrl: showData.videoUrl ?? null,
+      displayOrder: showData.displayOrder ?? 0,
+    }).returning();
 
     if (Array.isArray(tagIds) && tagIds.length > 0) {
-      const rows = tagIds.map((tagId: number) => ({ show_id: inserted!.id, tag_id: tagId }));
-      const { error: tagErr } = await supabase.from('shows_to_tags').insert(rows);
-      if (tagErr) {
-        console.warn('Supabase insert warning (shows_to_tags):', tagErr.message);
-        // continue despite tag linking failure
-      }
+      await db.insert(showsToTags).values(
+        tagIds.map((tagId: number) => ({ showId: inserted.id, tagId }))
+      ).onConflictDoNothing();
     }
 
     // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
     revalidateTag('shows');
     return SuccessResponse(inserted, 201);
   } catch (error) {
-    console.error('Error creating show (Supabase):', error);
+    console.error('Error creating show:', error);
     return ErrorResponse('Failed to create show');
   }
 }
