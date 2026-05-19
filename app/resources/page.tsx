@@ -5,6 +5,7 @@ import { GuideDownloadDialog } from "@/components/features/resources/GuideDownlo
 import { FileText, Download, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 
 export const metadata: Metadata = {
   title: "Resources | Bright Designs Band",
@@ -68,11 +69,11 @@ export default async function ResourcesPage() {
                 <Link key={post.slug} href={post.link} className="block h-full group">
                   <Card className="flex flex-col h-full hover:shadow-lg transition-all duration-300 border-t-4 border-t-brand-electric group-hover:-translate-y-1">
                     <div className="h-48 bg-muted flex items-center justify-center border-b overflow-hidden relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={post.image} 
-                          alt={post.title} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        <Image
+                          src={post.image}
+                          alt={post.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                     </div>
                     <CardHeader>
@@ -103,15 +104,15 @@ export default async function ResourcesPage() {
                   <Card key={resource.id} className="flex flex-col h-full">
                     <div className="h-48 bg-muted flex items-center justify-center border-b overflow-hidden relative">
                       {resource.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={resource.imageUrl} alt={resource.title} className="w-full h-full object-cover" />
+                        <Image src={resource.imageUrl} alt={resource.title} fill className="object-cover" />
                       ) : (
                         <div className="flex flex-col items-center justify-center opacity-20">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src="/placeholder-logo.png" 
-                            alt="Bright Designs" 
-                            className="h-24 w-24 object-contain grayscale"
+                          <Image
+                            src="/placeholder-logo.png"
+                            alt="Bright Designs"
+                            width={96}
+                            height={96}
+                            className="object-contain grayscale"
                           />
                         </div>
                       )}

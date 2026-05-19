@@ -5,7 +5,15 @@ const nextConfig = {
   // But to silence the error, we can add an empty turbopack config if we wanted to use it, OR just remove the eslint key
   
   images: {
-    unoptimized: true,
+    deviceSizes: [640, 1080, 1920],
+    formats: ['image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'yibokqolsyxosftcupgz.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
   // eslint key is deprecated in Next.js 15+ in favor of 'next lint' command or separate config
   // Removing it to fix build error
