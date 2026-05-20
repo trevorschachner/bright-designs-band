@@ -177,245 +177,42 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Process Section - Timeline Design */}
+      {/* Process Teaser */}
       <section id="process" className="plus-section bg-background">
         <div className="plus-container">
-          <div className="text-center mb-20">
+          <div className="text-center mb-12">
             <h2 className="plus-h2 mb-4 text-brand-midnight">Our Design Process</h2>
             <p className="plus-body-lg max-w-2xl mx-auto">
-              A proven, collaborative approach to creating championship-caliber shows
+              A proven, collaborative approach — from first consultation to opening night.
             </p>
           </div>
-          {/* Desktop Timeline - Alternating Layout */}
-          <div className="hidden lg:block relative">
-            {/* Timeline Line */}
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-border" />
 
-            <div className="space-y-24">
-              {/* Step 1 - Left */}
-              <div className="relative grid grid-cols-2 gap-8 items-center">
-                <div className="text-right pr-12">
-                  <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow border-l-4 border-l-brand-electric">
-                    <h3 className="plus-h3 mb-3 flex items-center justify-end gap-3 text-brand-midnight">
-                      Consultation
-                      <MessageSquare className="w-6 h-6 text-brand-electric" />
-                    </h3>
-                    <p className="plus-body-sm">
-                      We start by understanding your goals, ensemble strengths, and long-term vision for your program.
-                    </p>
-                  </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+            {[
+              { n: 1, label: 'Consultation', icon: MessageSquare, color: 'text-brand-electric' },
+              { n: 2, label: 'Contracts', icon: FileText, color: 'text-brand-sky' },
+              { n: 3, label: 'Design Concepts', icon: Lightbulb, color: 'text-brand-turf' },
+              { n: 4, label: 'Drafts', icon: PenTool, color: 'text-brand-electric' },
+              { n: 5, label: 'Completion', icon: CheckCircle, color: 'text-brand-sky' },
+              { n: 6, label: 'Support', icon: Headphones, color: 'text-brand-turf' },
+            ].map(({ n, label, icon: Icon, color }) => (
+              <div key={n} className="flex flex-col items-center text-center gap-2 p-4 rounded-xl border bg-card">
+                <div className="w-9 h-9 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  {n}
                 </div>
-                <div className="flex items-center">
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg z-10 border-4 border-background">
-                    1
-                  </div>
-                </div>
+                <Icon className={`w-5 h-5 ${color}`} />
+                <span className="text-sm font-medium text-brand-midnight leading-tight">{label}</span>
               </div>
-
-              {/* Step 2 - Right */}
-              <div className="relative grid grid-cols-2 gap-8 items-center">
-                <div className="flex items-center justify-end">
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg z-10 border-4 border-background">
-                    2
-                  </div>
-                </div>
-                <div className="pl-12">
-                  <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow border-r-4 border-r-brand-sky">
-                    <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                      <FileText className="w-6 h-6 text-brand-sky" />
-                      Contracts
-                    </h3>
-                    <p className="plus-body-sm">
-                      Clear agreements and timelines ensure everyone is aligned and expectations are set for a smooth collaboration.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 3 - Left */}
-              <div className="relative grid grid-cols-2 gap-8 items-center">
-                <div className="text-right pr-12">
-                  <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow border-l-4 border-l-brand-turf">
-                    <h3 className="plus-h3 mb-3 flex items-center justify-end gap-3 text-brand-midnight">
-                      Design Concepts
-                      <Lightbulb className="w-6 h-6 text-brand-turf" />
-                    </h3>
-                    <p className="plus-body-sm">
-                      Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg z-10 border-4 border-background">
-                    3
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 4 - Right */}
-              <div className="relative grid grid-cols-2 gap-8 items-center">
-                <div className="flex items-center justify-end">
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg z-10 border-4 border-background">
-                    4
-                  </div>
-                </div>
-                <div className="pl-12">
-                  <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow border-r-4 border-r-brand-electric">
-                    <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                      <PenTool className="w-6 h-6 text-brand-electric" />
-                      Drafts
-                    </h3>
-                    <p className="plus-body-sm">
-                      Regular draft deliveries with opportunities for feedback ensure the show evolves to meet your vision.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 5 - Left */}
-              <div className="relative grid grid-cols-2 gap-8 items-center">
-                <div className="text-right pr-12">
-                  <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow border-l-4 border-l-brand-sky">
-                    <h3 className="plus-h3 mb-3 flex items-center justify-end gap-3 text-brand-midnight">
-                      Completion
-                      <CheckCircle className="w-6 h-6 text-brand-sky" />
-                    </h3>
-                    <p className="plus-body-sm">
-                      Final delivery of all materials, rehearsal resources, and documentation to prepare your ensemble for success.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg z-10 border-4 border-background">
-                    5
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 6 - Right */}
-              <div className="relative grid grid-cols-2 gap-8 items-center">
-                <div className="flex items-center justify-end">
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg z-10 border-4 border-background">
-                    6
-                  </div>
-                </div>
-                <div className="pl-12">
-                  <div className="inline-block plus-surface-elevated p-6 hover:shadow-md transition-shadow border-r-4 border-r-brand-turf">
-                    <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                      <Headphones className="w-6 h-6 text-brand-turf" />
-                      Support
-                    </h3>
-                    <p className="plus-body-sm">
-                      Ongoing support throughout your season—we&apos;re here to help with questions, adjustments, and guidance.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Mobile Timeline - Vertical Layout */}
-          <div className="lg:hidden relative pl-8">
-            {/* Timeline Line */}
-            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-
-            <div className="space-y-12">
-              {/* Step 1 */}
-              <div className="relative">
-                <div className="absolute -left-8 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg border-4 border-background">
-                  1
-                </div>
-                <div className="plus-surface-elevated p-6 border-l-4 border-l-brand-electric">
-                  <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                    <MessageSquare className="w-6 h-6 text-brand-electric" />
-                    Consultation
-                  </h3>
-                  <p className="plus-body-sm">
-                    We start by understanding your goals, ensemble strengths, and long-term vision for your program.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="relative">
-                <div className="absolute -left-8 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg border-4 border-background">
-                  2
-                </div>
-                <div className="plus-surface-elevated p-6 border-l-4 border-l-brand-sky">
-                  <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                    <FileText className="w-6 h-6 text-brand-sky" />
-                    Contracts
-                  </h3>
-                  <p className="plus-body-sm">
-                    Clear agreements and timelines ensure everyone is aligned and expectations are set for a smooth collaboration.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="relative">
-                <div className="absolute -left-8 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg border-4 border-background">
-                  3
-                </div>
-                <div className="plus-surface-elevated p-6 border-l-4 border-l-brand-turf">
-                  <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                    <Lightbulb className="w-6 h-6 text-brand-turf" />
-                    Design Concepts
-                  </h3>
-                  <p className="plus-body-sm">
-                    Our team develops multiple creative concepts tailored to your ensemble&apos;s unique strengths and competitive goals.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 4 */}
-              <div className="relative">
-                <div className="absolute -left-8 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg border-4 border-background">
-                  4
-                </div>
-                <div className="plus-surface-elevated p-6 border-l-4 border-l-brand-electric">
-                  <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                    <PenTool className="w-6 h-6 text-brand-electric" />
-                    Drafts
-                  </h3>
-                  <p className="plus-body-sm">
-                    Regular draft deliveries with opportunities for feedback ensure the show evolves to meet your vision.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 5 */}
-              <div className="relative">
-                <div className="absolute -left-8 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg border-4 border-background">
-                  5
-                </div>
-                <div className="plus-surface-elevated p-6 border-l-4 border-l-brand-sky">
-                  <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                    <CheckCircle className="w-6 h-6 text-brand-sky" />
-                    Completion
-                  </h3>
-                  <p className="plus-body-sm">
-                    Final delivery of all materials, rehearsal resources, and documentation to prepare your ensemble for success.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 6 */}
-              <div className="relative">
-                <div className="absolute -left-8 w-10 h-10 rounded-full bg-brand-midnight text-white flex items-center justify-center font-bold text-sm shadow-lg border-4 border-background">
-                  6
-                </div>
-                <div className="plus-surface-elevated p-6 border-l-4 border-l-brand-turf">
-                  <h3 className="plus-h3 mb-3 flex items-center gap-3 text-brand-midnight">
-                    <Headphones className="w-6 h-6 text-brand-turf" />
-                    Support
-                  </h3>
-                  <p className="plus-body-sm">
-                    Ongoing support throughout your season—we&apos;re here to help with questions, adjustments, and guidance.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="text-center">
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/process" className="inline-flex items-center gap-2">
+                See the full process
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

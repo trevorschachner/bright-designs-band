@@ -61,7 +61,42 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
       }}
       className="block"
     >
-      <Card className="frame-card group cursor-pointer hover:shadow-lg transition-shadow">
+      {/* Mobile: horizontal compact card */}
+      <Card className="frame-card group cursor-pointer hover:shadow-lg transition-shadow sm:hidden">
+        <div className="flex gap-3 p-3">
+          <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-accent-gradient">
+            <Image
+              src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
+              alt={show.title || 'Show thumbnail'}
+              fill
+              className="object-cover"
+              sizes="80px"
+              priority={priority}
+              onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <p className="font-heading font-bold text-sm leading-tight line-clamp-2">{show.title}</p>
+              <Badge className="text-xs shrink-0">{show.year}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mb-1">{displayDifficulty} · {show.duration || 'TBD'}</p>
+            {show.showsToTags && show.showsToTags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {show.showsToTags.slice(0, 2).map((st) => (
+                  <span key={st.tag.id} className="text-[10px] bg-muted rounded px-1.5 py-0.5">{st.tag.name}</span>
+                ))}
+                {show.showsToTags.length > 2 && (
+                  <span className="text-[10px] text-muted-foreground">+{show.showsToTags.length - 2}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Desktop: full card */}
+      <Card className="frame-card group cursor-pointer hover:shadow-lg transition-shadow hidden sm:block">
         <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient aspect-video">
           <Image
             src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
@@ -69,7 +104,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
             width={400}
             height={225}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 1024px) 50vw, 33vw"
             priority={priority}
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/placeholder.svg";
@@ -83,71 +118,71 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
             Preview
           </Button>
         </div>
-      <CardHeader>
-        <div className="flex justify-between items-start mb-2">
-          <CardTitle className="text-xl transition-colors font-primary">
-            {show.title}
-          </CardTitle>
-          <Badge className="text-xs">
-            {show.year}
-          </Badge>
-        </div>
-        <CardDescription className="text-sm line-clamp-2">
-          {show.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
-          <span className="flex items-center">
-            <Users className="w-4 h-4 mr-1" />
-            {displayDifficulty}
-          </span>
-          <span>{show.duration || 'TBD'}</span>
-        </div>
-        {show.showsToTags && show.showsToTags.length > 0 && (
-          <ul className="list-better mb-4">
-            {show.showsToTags.slice(0, 3).map((st: { tag: { id: number; name: string } }) => (
-              <li key={st.tag.id}>
-                <span className="sr-only">Tag</span>
-                <span className="text-xs">{st.tag.name}</span>
-              </li>
-            ))}
-            {show.showsToTags.length > 3 && (
-              <li>
-                <span className="sr-only">More</span>
-                <span className="text-xs">+{show.showsToTags.length - 3} more</span>
-              </li>
-            )}
-          </ul>
-        )}
-        {show.arrangements && show.arrangements.length > 0 && (
-          <div className="mb-4">
-            <div className="text-xs text-muted-foreground mb-2">
-              {show.arrangements.length} {show.arrangements.length !== 1 ? 'arrangements' : 'arrangement'}:
-            </div>
-            <ul className="space-y-1">
-              {show.arrangements.slice(0, 3).map((a: any) => (
-                <li key={a.id} className="text-sm">
-                  <Link 
-                    href={`/arrangements/${a.id}`} 
-                    className="hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {a.scene ? <Badge variant="outline" className="mr-2 text-[10px]">{String(a.scene)}</Badge> : null}
-                    <span>{a.title || 'Untitled'}</span>
-                  </Link>
+        <CardHeader>
+          <div className="flex justify-between items-start mb-2">
+            <CardTitle className="text-xl transition-colors font-primary">
+              {show.title}
+            </CardTitle>
+            <Badge className="text-xs">
+              {show.year}
+            </Badge>
+          </div>
+          <CardDescription className="text-sm line-clamp-2">
+            {show.description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
+            <span className="flex items-center">
+              <Users className="w-4 h-4 mr-1" />
+              {displayDifficulty}
+            </span>
+            <span>{show.duration || 'TBD'}</span>
+          </div>
+          {show.showsToTags && show.showsToTags.length > 0 && (
+            <ul className="list-better mb-4">
+              {show.showsToTags.slice(0, 3).map((st: { tag: { id: number; name: string } }) => (
+                <li key={st.tag.id}>
+                  <span className="sr-only">Tag</span>
+                  <span className="text-xs">{st.tag.name}</span>
                 </li>
               ))}
+              {show.showsToTags.length > 3 && (
+                <li>
+                  <span className="sr-only">More</span>
+                  <span className="text-xs">+{show.showsToTags.length - 3} more</span>
+                </li>
+              )}
             </ul>
-            {show.arrangements.length > 3 && (
-              <div className="text-[12px] text-muted-foreground mt-1">
-                +{show.arrangements.length - 3} more
+          )}
+          {show.arrangements && show.arrangements.length > 0 && (
+            <div className="mb-4">
+              <div className="text-xs text-muted-foreground mb-2">
+                {show.arrangements.length} {show.arrangements.length !== 1 ? 'arrangements' : 'arrangement'}:
               </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <ul className="space-y-1">
+                {show.arrangements.slice(0, 3).map((a: any) => (
+                  <li key={a.id} className="text-sm">
+                    <Link
+                      href={`/arrangements/${a.id}`}
+                      className="hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {a.scene ? <Badge variant="outline" className="mr-2 text-[10px]">{String(a.scene)}</Badge> : null}
+                      <span>{a.title || 'Untitled'}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {show.arrangements.length > 3 && (
+                <div className="text-[12px] text-muted-foreground mt-1">
+                  +{show.arrangements.length - 3} more
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

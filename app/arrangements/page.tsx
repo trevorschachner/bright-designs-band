@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Music, Loader, FileText, ExternalLink } from "lucide-react";
+import { Music, Loader, FileText, ExternalLink, Play, ChevronDown } from "lucide-react";
 import { FilterBar } from "@/components/features/filters/filter-bar";
 import { Pagination } from "@/components/features/filters/pagination";
 import { useFilterState } from "@/lib/hooks/use-filter-state";
@@ -35,13 +35,22 @@ interface Arrangement {
 export default function ArrangementsPage() {
   const { filterState, setFilterState } = useFilterState({
     defaultState: {
-      limit: 25 // Show more items per page for grid layout
+      limit: 25
     }
   });
 
   const [arrangementsResponse, setArrangementsResponse] = useState<FilteredResponse<Arrangement> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedAudio, setExpandedAudio] = useState<Set<number>>(new Set());
+
+  const toggleAudio = useCallback((id: number) => {
+    setExpandedAudio(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  }, []);
 
   // Fetch arrangements based on filter state
   useEffect(() => {
@@ -248,7 +257,7 @@ export default function ArrangementsPage() {
             </div>
           </div>
 
-          <div className="sm:hidden space-y-4 mb-8">
+          <div className="sm:hidden space-y-2 mb-8">
             {arrangementsResponse.data.map((arrangement) => {
               const title = arrangement.title || 'Arrangement';
               const composer = arrangement.composer;
@@ -257,69 +266,73 @@ export default function ArrangementsPage() {
               const audio = files.find(f => f.fileType === 'audio');
               const sampleScore = (arrangement.sampleScoreUrl ?? (arrangement as any).sample_score_url) as string | undefined;
               const associatedShow = arrangement.showArrangements?.[0]?.show;
+              const audioOpen = expandedAudio.has(arrangement.id);
 
               return (
-                <div key={arrangement.id} className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-4">
-                  <div>
-                    <Link
-                      href={`/arrangements/${arrangement.id}`}
-                      className="text-brand-midnight hover:underline font-primary text-xl"
-                    >
-                      {title}
-                    </Link>
-                    {associatedShow ? (
-                      <Link
-                        href={`/shows/${associatedShow.slug}`}
-                        className="block text-sm text-muted-foreground hover:text-primary hover:underline mt-1"
-                      >
-                        {associatedShow.title}
-                      </Link>
-                    ) : (
-                      <span className="block text-sm text-muted-foreground italic mt-1">Independent</span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Composer</p>
-                      <p className="font-medium">{composer || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Duration</p>
-                      <p className="font-mono text-muted-foreground">{formatSeconds(duration)}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Audio</p>
+                <div key={arrangement.id} className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
+                  {/* Main row */}
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    {/* Listen button */}
                     {audio ? (
-                      <audio
-                        controls
-                        className="w-full"
-                        preload="none"
-                        src={audio.url}
-                      />
+                      <button
+                        onClick={() => toggleAudio(arrangement.id)}
+                        className="shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"
+                        aria-label={audioOpen ? 'Hide audio' : 'Play audio'}
+                      >
+                        {audioOpen ? <ChevronDown className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                      </button>
                     ) : (
-                      <span className="text-xs text-muted-foreground">No audio sample</span>
+                      <div className="shrink-0 w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+                        <Music className="w-4 h-4 text-muted-foreground" />
+                      </div>
                     )}
-                  </div>
 
-                  <div className="flex gap-2">
-                    {sampleScore && (
-                      <Button variant="secondary" size="sm" asChild className="flex-1">
-                        <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score" className="flex items-center justify-center gap-2">
-                          <FileText className="w-4 h-4" />
-                          Sample Score
+                    {/* Title + show + meta */}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/arrangements/${arrangement.id}`}
+                        className="font-semibold text-sm text-brand-midnight hover:underline line-clamp-1"
+                      >
+                        {title}
+                      </Link>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                        {associatedShow ? (
+                          <Link href={`/shows/${associatedShow.slug}`} className="hover:text-primary hover:underline truncate">
+                            {associatedShow.title}
+                          </Link>
+                        ) : (
+                          <span className="italic">Independent</span>
+                        )}
+                        {composer && <><span>·</span><span className="truncate">{composer}</span></>}
+                        {duration && <><span>·</span><span className="font-mono shrink-0">{formatSeconds(duration)}</span></>}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {sampleScore && (
+                        <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                          <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score">
+                            <FileText className="w-4 h-4" />
+                            <span className="sr-only">Sample Score</span>
+                          </Link>
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                        <Link href={`/arrangements/${arrangement.id}`} title="View Details">
+                          <ExternalLink className="w-4 h-4" />
+                          <span className="sr-only">View Details</span>
                         </Link>
                       </Button>
-                    )}
-                    <Button size="sm" asChild className="flex-1">
-                      <Link href={`/arrangements/${arrangement.id}`} title="View Details" className="flex items-center justify-center gap-2">
-                        <ExternalLink className="w-4 h-4" />
-                        Details
-                      </Link>
-                    </Button>
+                    </div>
                   </div>
+
+                  {/* Expandable audio player */}
+                  {audio && audioOpen && (
+                    <div className="px-4 pb-3 border-t pt-3">
+                      <audio controls className="w-full h-8" preload="none" src={audio.url} autoPlay />
+                    </div>
+                  )}
                 </div>
               );
             })}
