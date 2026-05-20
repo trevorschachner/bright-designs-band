@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, X, SortAsc, SortDesc, RotateCcw, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,17 +50,14 @@ export function FilterSidebar({
   const [searchValue, setSearchValue] = useState(filterState.search || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
   const [isFeaturedOnly, setIsFeaturedOnly] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  // Advanced Filters removed
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const filterStateRef = useRef(filterState);
+  filterStateRef.current = filterState;
 
-  // Only sync searchValue with filterState.search when not actively typing
-  // This prevents the input from resetting while the user is typing
+  // Sync input when filterState.search is cleared externally
   useEffect(() => {
-    if (!isTyping && filterState.search !== searchValue) {
-      setSearchValue(filterState.search || '');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterState.search, isTyping]); // Removed searchValue from deps to avoid loops
+    setSearchValue(filterState.search || '');
+  }, [filterState.search]);
 
   useEffect(() => {
     const difficultyCond = filterState.conditions.find(c => c.field === 'difficulty');
@@ -80,39 +77,18 @@ export function FilterSidebar({
     setIsFeaturedOnly(featuredCond?.value === true);
   }, [filterState.conditions]);
 
-  // Debounced search effect
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setIsTyping(false);
-      if (searchValue !== filterState.search) {
-        onFilterStateChange({
-          ...filterState,
-          search: searchValue || undefined,
-          page: 1
-        });
-      }
-    }, 500); // Wait 500ms after user stops typing
-
-    return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchValue]); // Only run when searchValue changes
-
   const handleSearchChange = (value: string) => {
-    setIsTyping(true);
     setSearchValue(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onFilterStateChange({ ...filterStateRef.current, search: value || undefined, page: 1 });
+    }, 400);
   };
 
-  const handleSearchSubmit = () => {
-    onFilterStateChange({
-      ...filterState,
-      search: searchValue || undefined,
-      page: 1
-    });
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleSearchSubmit();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      onFilterStateChange({ ...filterStateRef.current, search: (e.target as HTMLInputElement).value || undefined, page: 1 });
     }
   };
 

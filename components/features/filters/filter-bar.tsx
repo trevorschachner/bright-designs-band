@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, X, SortAsc, SortDesc, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,28 +33,27 @@ export function FilterBar({
   totalResults
 }: FilterBarProps) {
   const [searchValue, setSearchValue] = useState(filterState.search || '');
-  // Advanced Filters removed
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const filterStateRef = useRef(filterState);
+  filterStateRef.current = filterState;
 
-  // Update local search when filterState changes
+  // Sync input when filterState is cleared externally
   useEffect(() => {
     setSearchValue(filterState.search || '');
   }, [filterState.search]);
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onFilterStateChange({ ...filterStateRef.current, search: value || undefined, page: 1 });
+    }, 400);
   };
 
-  const handleSearchSubmit = () => {
-    onFilterStateChange({
-      ...filterState,
-      search: searchValue || undefined,
-      page: 1 // Reset to first page when searching
-    });
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleSearchSubmit();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      onFilterStateChange({ ...filterStateRef.current, search: (e.target as HTMLInputElement).value || undefined, page: 1 });
     }
   };
 
@@ -131,7 +130,6 @@ export function FilterBar({
             value={searchValue}
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
-            onBlur={handleSearchSubmit}
             className="pl-10 pr-10"
           />
           {searchValue && (
