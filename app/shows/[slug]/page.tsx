@@ -30,10 +30,14 @@ import { getPublicSiteUrl } from '@/lib/env'
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const allShows = await db.select({ slug: shows.slug }).from(shows);
-  return allShows
-    .filter(s => s.slug)
-    .map(s => ({ slug: s.slug! }));
+  try {
+    const allShows = await db.select({ slug: shows.slug }).from(shows);
+    return allShows
+      .filter(s => s.slug)
+      .map(s => ({ slug: s.slug! }));
+  } catch {
+    return [];
+  }
 }
 
 interface ShowWithTagsResult {

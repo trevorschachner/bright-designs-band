@@ -40,14 +40,14 @@ export default async function Image({ params }: { params: { slug: string } }) {
         return new ImageResponse(
           (
             <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative' }}>
-              <img src={imgSrc} style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={imgSrc} alt="" style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.25) 55%, transparent 100%)', display: 'flex' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 48px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ color: 'white', fontSize: 68, fontWeight: 800, lineHeight: 1.05, textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
                   {title.length > 40 ? title.slice(0, 40) + '…' : title}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <img src={logoBase64} width="36" height="36" />
+                  <img src={logoBase64} alt="" width="36" height="36" />
                   <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 22, fontWeight: 600, letterSpacing: '0.04em' }}>BRIGHT DESIGNS</span>
                   {show?.year && <span style={{ color: '#60a5fa', fontSize: 22 }}>· {show.year}</span>}
                   {show?.difficulty && <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 22 }}>· {show.difficulty}</span>}
@@ -73,7 +73,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
       <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #1e293b, #0f172a)', color: 'white', padding: '40px', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1, backgroundImage: 'radial-gradient(circle at 25px 25px, white 2%, transparent 0%), radial-gradient(circle at 75px 75px, white 2%, transparent 0%)', backgroundSize: '100px 100px' }} />
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-          <img src={logoBase64} width="80" height="80" style={{ marginRight: '16px' }} />
+          <img src={logoBase64} alt="" width="80" height="80" style={{ marginRight: '16px' }} />
           <div style={{ fontSize: 24, fontWeight: 600, color: '#3b82f6', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Bright Designs</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: '900px' }}>
