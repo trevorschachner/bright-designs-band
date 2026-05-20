@@ -37,15 +37,18 @@ export function FilterBar({
   const filterStateRef = useRef(filterState);
   filterStateRef.current = filterState;
 
-  // Sync input when filterState is cleared externally
+  // Sync input when filterState is cleared externally (not when debounce fires)
   useEffect(() => {
-    setSearchValue(filterState.search || '');
+    if (!debounceRef.current) {
+      setSearchValue(filterState.search || '');
+    }
   }, [filterState.search]);
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
       onFilterStateChange({ ...filterStateRef.current, search: value || undefined, page: 1 });
     }, 400);
   };
