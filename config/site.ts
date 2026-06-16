@@ -39,6 +39,7 @@ export const siteConfig: SiteConfig = {
     { label: "Home", href: "/" },
     { label: "Shows", href: "/shows" },
     { label: "Services", href: "/services" },
+    { label: "Blog", href: "/blog" },
     { label: "About", href: "/about" },
   ],
   // resources: [
@@ -70,9 +71,10 @@ export const siteConfig: SiteConfig = {
       {
         title: "Resources",
         links: [
+          { label: "Blog", href: "/blog" },
           { label: "Free Guides", href: "/resources" },
-          { label: "Design Guide", href: "/resources/blog/how-to-choose-a-designer" },
-          { label: "Success Stories", href: "/resources/blog/case-studies" },
+          { label: "Design Guide", href: "/blog/how-to-choose-a-designer" },
+          { label: "Success Stories", href: "/blog/case-studies" },
           { label: "Contact Form", href: "/contact" },
         ],
       },

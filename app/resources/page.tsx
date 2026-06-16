@@ -41,14 +41,14 @@ export default async function ResourcesPage() {
       title: 'How to Choose a Marching Band Show Designer',
       description: 'The 2025 Guide for Band Directors. Avoid ghosting, missed deadlines, and unplayable parts.',
       image: '/placeholder.svg',
-      link: '/resources/blog/how-to-choose-a-designer'
+      link: '/blog/how-to-choose-a-designer'
     },
     {
       slug: 'case-studies',
       title: 'Success Stories: Travelers Rest, Dorman, & Alpharetta',
       description: 'See how our custom designs helped these programs achieve State Medalist and BOA Finalist status.',
       image: '/placeholder.svg',
-      link: '/resources/blog/case-studies'
+      link: '/blog/case-studies'
     }
   ];
 

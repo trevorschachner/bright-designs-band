@@ -309,5 +309,19 @@ export const pageSEOConfigs = {
       "marching band design consultation",
       "show design collaboration"
     ]
+  },
+
+  blog: {
+    title: "Blog & Resources for Marching Band Directors | Bright Designs",
+    description: "Guides, case studies, and expert insights for competitive marching band directors. Learn how to choose a designer, what to look for in a show package, and see real results.",
+    keywords: [
+      "marching band director blog",
+      "marching band show design tips",
+      "band director resources",
+      "how to choose a marching band designer",
+      "marching band case studies",
+      "BOA marching band guide",
+      "competitive marching band blog"
+    ]
   }
 } as const

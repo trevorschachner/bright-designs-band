@@ -18,6 +18,16 @@ const nextConfig = {
   // eslint key is deprecated in Next.js 15+ in favor of 'next lint' command or separate config
   // Removing it to fix build error
   
+  async redirects() {
+    return [
+      { source: '/resources/blog/how-to-choose-a-designer', destination: '/blog/how-to-choose-a-designer', permanent: true },
+      { source: '/resources/blog/case-studies', destination: '/blog/case-studies', permanent: true },
+      { source: '/resources/blog/case-studies/travelers-rest', destination: '/blog/case-studies/travelers-rest', permanent: true },
+      { source: '/resources/blog/case-studies/dorman', destination: '/blog/case-studies/dorman', permanent: true },
+      { source: '/resources/blog/case-studies/alpharetta', destination: '/blog/case-studies/alpharetta', permanent: true },
+    ];
+  },
+
   async rewrites() {
     return [
       {
