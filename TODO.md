@@ -1,7 +1,9 @@
 # Project Todo List
 
 ## High Priority
-- [ ] 
+- [ ] Clean up the GitHub setup: GitHub Pages is publishing a second indexable site on
+      every push, CI triggers on a branch that does not exist, and `release.yml` has never
+      run. Full audit and checklist in `docs/github-setup-cleanup.md`.
 
 ## Features
 - [ ] 
