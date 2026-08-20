@@ -28,12 +28,13 @@ export async function GET(request: Request) {
       // Add WHERE conditions
       const whereConditions = [];
       
-      // Add search condition (support name/title and composer)
+      // Add search condition. 'name' used to be listed here but arrangements
+      // has no such column, so buildSearchCondition silently discarded it.
       if (filterState.search) {
         const searchCondition = QueryBuilder.buildSearchCondition(
           arrangements,
           filterState.search,
-          ['name', 'title', 'composer']
+          ['title', 'composer', 'arranger']
         );
         if (searchCondition) {
           whereConditions.push(searchCondition);

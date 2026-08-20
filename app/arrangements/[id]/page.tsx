@@ -85,7 +85,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   ])
 
   // Fetch show information if linked
-  let parentShow: { id: number; title?: string | null; name?: string | null; thumbnailUrl?: string | null; graphicUrl?: string | null } | null = null;
+  let parentShow: { id: number; title?: string | null; thumbnailUrl?: string | null; graphicUrl?: string | null } | null = null;
   let showImageFiles: any[] = [];
   
   const { data: showArrData } = await supabase
@@ -96,17 +96,23 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
     .single();
 
   if (showArrData?.show_id) {
-    const { data: showData } = await supabase
+    // `name` was dropped from shows by a migration; selecting it made this
+    // query error, and because the error was discarded the page silently lost
+    // its parent-show context entirely rather than failing visibly.
+    const { data: showData, error: showError } = await supabase
       .from('shows')
-      .select('id, title, name, thumbnail_url, graphic_url')
+      .select('id, title, thumbnail_url, graphic_url')
       .eq('id', showArrData.show_id)
       .single();
-    
+
+    if (showError) {
+      console.error('Failed to load parent show for arrangement:', showError);
+    }
+
     if (showData) {
       parentShow = {
         id: showData.id,
         title: showData.title,
-        name: showData.name,
         thumbnailUrl: showData.thumbnail_url,
         graphicUrl: showData.graphic_url,
       };
@@ -185,7 +191,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link href={`/shows/${parentShow.id}`}>{parentShow.title || parentShow.name}</Link>
+                    <Link href={`/shows/${parentShow.id}`}>{parentShow.title}</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -263,7 +269,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               <p className="text-lg text-primary mb-4">
                 From:{" "}
                 <Link href={`/shows/${parentShow.id}`} className="hover:underline">
-                  {parentShow.title || parentShow.name}
+                  {parentShow.title}
                 </Link>
               </p>
             )}
