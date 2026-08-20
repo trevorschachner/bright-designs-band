@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
 import { revalidateTag } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
+import { buildTableQuery, UnknownFilterFieldError } from '@/lib/filters/table-query';
 import { count } from 'drizzle-orm/sql';
 import { eq, desc, exists, and, inArray } from 'drizzle-orm';
 import { withDb } from '@/lib/utils/db';
@@ -21,82 +22,36 @@ export async function GET(request: Request) {
       const limit = filterState.limit || 25;
       const offset = (page - 1) * limit;
 
-      // Build base query with conditional chaining
-      let queryBuilder = db.select().from(arrangements);
-      let countQueryBuilder = db.select({ count: count() }).from(arrangements);
-
-      // Add WHERE conditions
-      const whereConditions = [];
-      
-      // Add search condition. 'name' used to be listed here but arrangements
-      // has no such column, so buildSearchCondition silently discarded it.
-      if (filterState.search) {
-        const searchCondition = QueryBuilder.buildSearchCondition(
-          arrangements,
-          filterState.search,
-          ['title', 'composer', 'arranger']
-        );
-        if (searchCondition) {
-          whereConditions.push(searchCondition);
-        }
-      }
-
-      // Separate tag conditions from other conditions
-      const tagConditions = filterState.conditions.filter(c => c.field === 'tags');
-      const otherConditions = filterState.conditions.filter(c => c.field !== 'tags');
-
-      // Add standard filter conditions
-      if (otherConditions.length > 0) {
-        const filterCondition = QueryBuilder.buildWhereClause(arrangements, otherConditions);
-        if (filterCondition) {
-          whereConditions.push(filterCondition);
-        }
-      }
-
-      // Add tag filter conditions
-      if (tagConditions.length > 0) {
-        const tagIds = tagConditions.flatMap(c => c.values || [c.value]).filter(Boolean).map(Number);
-        
-        if (tagIds.length > 0) {
-          whereConditions.push(
-            exists(
-              db.select()
-                .from(arrangementsToTags)
-                .where(
-                  and(
-                    eq(arrangementsToTags.arrangementId, arrangements.id),
-                    inArray(arrangementsToTags.tagId, tagIds)
+      const { where: finalWhereClause, orderBy } = buildTableQuery(
+        arrangements,
+        filterState,
+        {
+          // 'name' used to be listed here but arrangements has no such column,
+          // so buildSearchCondition silently discarded it.
+          searchable: ['title', 'composer', 'arranger'],
+          relations: {
+            tags: (tagIds) =>
+              exists(
+                db
+                  .select()
+                  .from(arrangementsToTags)
+                  .where(
+                    and(
+                      eq(arrangementsToTags.arrangementId, arrangements.id),
+                      inArray(arrangementsToTags.tagId, tagIds)
+                    )
                   )
-                )
-            )
-          );
+              ),
+          },
+          defaultOrderBy: [arrangements.title],
         }
+      );
+
+      let countQueryBuilder = db.select({ count: count() }).from(arrangements);
+      if (finalWhereClause) {
+        countQueryBuilder = countQueryBuilder.where(finalWhereClause) as typeof countQueryBuilder;
       }
 
-      // Build final WHERE clause
-      let finalWhereClause;
-      if (whereConditions.length > 0) {
-        finalWhereClause = whereConditions.length === 1 
-          ? whereConditions[0] 
-          : and(...whereConditions); // Use imported 'and'
-        
-        if (finalWhereClause) {
-          queryBuilder = queryBuilder.where(finalWhereClause) as typeof queryBuilder;
-          countQueryBuilder = countQueryBuilder.where(finalWhereClause) as typeof countQueryBuilder;
-        }
-      }
-
-      // Add ORDER BY
-      if (filterState.sort.length > 0) {
-        const orderByClause = QueryBuilder.buildOrderByClause(arrangements, filterState.sort);
-        queryBuilder = queryBuilder.orderBy(...orderByClause) as typeof queryBuilder;
-      } else {
-        // Default sort by title
-        queryBuilder = queryBuilder.orderBy(arrangements.title) as typeof queryBuilder;
-      }
-
-      // Add pagination
-      const query = queryBuilder.limit(limit).offset(offset);
       const countQuery = countQueryBuilder;
 
       // Execute count query and optimized single query with public files relation (audio/sample score)
@@ -106,9 +61,7 @@ export async function GET(request: Request) {
           limit,
           offset,
           where: finalWhereClause,
-          orderBy: filterState.sort?.length > 0
-            ? QueryBuilder.buildOrderByClause(arrangements, filterState.sort)
-            : [arrangements.title],
+          orderBy,
           with: {
             files: {
               where: (files: any, { eq }: any) => eq(files.isPublic, true),
@@ -146,6 +99,12 @@ export async function GET(request: Request) {
         },
       });
     } catch (error) {
+      // A filter naming a column the table does not have is the caller's
+      // mistake, not a server fault. It used to land in the 500 below, which is
+      // how the dead `type` and `price` filters presented.
+      if (error instanceof UnknownFilterFieldError) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
       console.error('Error fetching arrangements:', error);
       return NextResponse.json(
         { error: 'Failed to fetch arrangements' },

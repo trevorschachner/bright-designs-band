@@ -128,16 +128,14 @@ export const SHOWS_SCHEMA: TableSchema = {
     description: { key: 'description', type: 'text', nullable: true },
     createdAt: { key: 'createdAt', type: 'timestamp' }
   },
+  // Only relations a route can actually resolve belong here. `arrangements` was
+  // offered as a filter with no defined meaning ("shows whose arrangements are
+  // what?"), and reached the query builder as an unknown column.
   relations: {
     tags: {
       type: 'many',
       table: 'tags',
       fields: ['showsToTags', 'tag', 'name']
-    },
-    arrangements: {
-      type: 'many', 
-      table: 'arrangements',
-      fields: ['title', 'scene']
     }
   }
 };
@@ -156,12 +154,9 @@ export const ARRANGEMENTS_SCHEMA: TableSchema = {
     title: { key: 'title', type: 'text' },
     scene: { key: 'scene', type: 'enum', enumValues: ['Opener', 'Ballad', 'Closer'] }
   },
+  // `show` was offered as a filter but the link lives in the showArrangements
+  // join table and no route ever resolved it.
   relations: {
-    show: {
-      type: 'one',
-      table: 'shows', 
-      fields: ['title', 'year', 'difficulty']
-    },
     tags: {
       type: 'many',
       table: 'tags',
