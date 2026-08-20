@@ -96,6 +96,10 @@ export async function GET(request: Request) {
       return NextResponse.json(response, {
         headers: {
           'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+          // Without this the edge caches one body per path: a search for
+          // something with no matches was served to every visitor as an empty
+          // catalogue until the hour expired. See lib/utils/api-helpers.ts.
+          'Netlify-Vary': 'query',
         },
       });
     } catch (error) {
