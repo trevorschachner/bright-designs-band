@@ -12,7 +12,7 @@ This project is built with a modern, full-stack TypeScript architecture.
 *   **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
 *   **Authentication**: [Supabase Auth](https://supabase.com/auth) (with Magic Links)
 *   **Transactional Emails**: [Resend](https://resend.com/)
-*   **Deployment**: [Vercel](https://vercel.com/)
+*   **Deployment**: [Netlify](https://www.netlify.com/) (`netlify.toml`, Node 20, `@netlify/plugin-nextjs`)
 
 ## Getting Started
 

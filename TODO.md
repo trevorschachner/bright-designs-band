@@ -1,9 +1,10 @@
 # Project Todo List
 
 ## High Priority
-- [ ] Clean up the GitHub setup: GitHub Pages is publishing a second indexable site on
-      every push, CI triggers on a branch that does not exist, and `release.yml` has never
-      run. Full audit and checklist in `docs/github-setup-cleanup.md`.
+- [ ] Finish the GitHub cleanup: 18 of 21 items done 2026-08-20. Left are Netlify commit
+      statuses (needs the Netlify dashboard) and three decisions: branch protection on
+      `main`, whether the issue workflow in `docs/agents/` is real, and repo visibility.
+      See `docs/github-setup-cleanup.md`.
 
 ## Features
 - [ ] 

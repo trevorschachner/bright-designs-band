@@ -1,164 +1,148 @@
 # GitHub setup cleanup
 
-Audited 2026-08-20. Production is Netlify (`brightdesigns.band` → `bright-designs-band.netlify.app`,
-confirmed by `server: Netlify` and `x-nf-request-id` headers). Everything below is
-GitHub-side drift that accumulated around that fact.
+Audited and largely executed 2026-08-20. Production is Netlify (`brightdesigns.band` →
+`bright-designs-band.netlify.app`, confirmed by `server: Netlify` and `x-nf-request-id`
+headers). Everything below was GitHub-side drift that accumulated around that fact.
 
-Work top-down. Tier 1 is live and costing something today; Tier 5 is hygiene.
-
----
-
-## Tier 1: a second public site is deploying on every push
-
-- [ ] **Turn off GitHub Pages.**
-
-  `gh api repos/trevorschachner/bright-designs-band/pages` reports `status: built`,
-  `build_type: legacy`, source `main` at `/`, serving
-  https://trevorschachner.github.io/bright-designs-band/ with `https_enforced` and
-  `public: true`. It rebuilds on every push to main: the last run
-  (`pages build and deployment`, 2026-08-20T02:46:57Z) fired seconds before the Test Suite.
-
-  Jekyll is rendering `README.md` as the homepage, and it ships a full SEO payload:
-  `<title>Bright Designs Band</title>`, `<link rel="canonical">`, `og:site_name`,
-  and JSON-LD `{"@type":"WebSite","name":"Bright Designs Band"}`. A public, indexable,
-  8.7KB page claiming the brand name, competing with the real site. This repo carries a
-  whole `lib/seo/` module, `lib/seo/structured-data.ts`, a sitemap generator, and a blog
-  added specifically for search in June. Pages is undercutting all of it.
-
-  Fix: Settings → Pages → Source: **None**. Then delete the `github-pages` environment
-  (Settings → Environments).
-
-- [ ] **Delete `archived-jekyll/`.** It is Font Awesome webfonts and nothing else
-  (`find archived-jekyll -type f` returns only `css/font-awesome/fonts/*`). It is the
-  leftover that explains why Pages was ever on.
+**Status: 18 of 21 done.** What is left is one Netlify dashboard change and three
+decisions.
 
 ---
 
-## Tier 2: CI that does not do what it looks like it does
+## Done
 
-All in `.github/workflows/test.yml`.
+### Tier 1: a second public site was deploying on every push
 
-- [ ] **The `develop` trigger matches no branch.** Triggers are
-      `branches: [main, develop]`. The branches are `main` and `dev`. Nothing pushed to
-      `dev` has ever run CI. Either fix the trigger to `dev` or delete the branch:
-      `git log --oneline main..origin/dev` is empty, so `dev` is fully merged and its last
-      commit is 2026-05-19. Deleting is the cleaner call.
+- [x] **GitHub Pages disabled.** It had been building from `main` root with legacy Jekyll
+      on every push, serving https://trevorschachner.github.io/bright-designs-band/ with
+      `https_enforced` and `public: true`. Jekyll rendered `README.md` as the homepage and
+      shipped a full SEO payload: `<title>Bright Designs Band</title>`, a canonical link,
+      `og:site_name`, and JSON-LD `{"@type":"WebSite","name":"Bright Designs Band"}`. A
+      public indexable page claiming the brand, competing with the real site while
+      `lib/seo/`, the sitemap generator and the June blog worked to rank it.
+      The URL now returns 404.
 
-- [ ] **Drop Node 18 from the matrix.** Matrix is `[18.x, 20.x]`. Node 18 went EOL in
-      April 2025, and `netlify.toml` pins `NODE_VERSION = "20"`. Every run spends a full
-      job testing a runtime production never executes. Use `[20.x]`, or `[20.x, 22.x]` if
-      you want forward cover.
+- [x] **`archived-jekyll/` deleted.** It held Font Awesome webfonts and nothing else. It
+      was the leftover that explained why Pages was ever on.
 
-- [ ] **Stop handing the production database URL to CI.** `build-check` sets
-      `DATABASE_URL: ${{ secrets.DATABASE_URL }}` while using dummy values for
-      `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. `next build` does not
-      need a live database. The secret was added 2025-11-19 and is the real connection
-      string. Remove the env line; if nothing else needs it, delete the secret.
+- [x] **`github-pages` environment deleted.**
 
-- [ ] **Collapse the duplicated jobs.** Three jobs each run `checkout` + `setup-node` +
-      `npm ci`. `npm run test:email` runs in both `test` and `email-tests`. `needs: []` on
-      `email-tests` is a no-op. `build-check` needs `[email-tests]` but not `test`, so the
-      build can pass while the actual test suite is failing.
+### Tier 2: CI that did not do what it looked like it did
 
-- [ ] **Add a typecheck step.** There is no `tsc --noEmit` anywhere in CI on a TypeScript
-      codebase. `npm run lint` is `next lint` and does not typecheck.
+All in `.github/workflows/test.yml`, rewritten.
 
-- [ ] **Add a `concurrency` group** keyed on the ref, with `cancel-in-progress: true`.
-      Consecutive pushes currently stack full matrix runs.
+- [x] **The `develop` trigger matched no branch.** Triggers were `[main, develop]`; the
+      branches are `main` and `dev`. Nothing pushed to `dev` had ever run CI. Triggers are
+      now `[main]` only, since `dev` is fully merged and slated for deletion.
 
-- [ ] **Bump the pinned actions.** The 2026-08-20 run warns that
-      `actions/checkout@v4`, `actions/setup-node@v4` and `actions/upload-artifact@v4` all
-      target Node 20, which is deprecated on runners and is being force-run on Node 24.
-      Move to `@v5`/current before the forced fallback is removed.
+- [x] **Node 18 dropped from the matrix.** It went EOL in April 2025 while `netlify.toml`
+      pins `NODE_VERSION = "20"`, so every run spent a full job on a runtime production
+      never executes. Now a single Node 20 job.
 
-- [ ] **Fix or drop the artifact upload.** It uploads `coverage/` and `test-results/`.
-      `npm run test` is plain `vitest run` and generates neither. The 2026-08-20 run
-      confirms it: "No files were found with the provided path: coverage/ test-results/.
-      No artifacts will be uploaded." Either add `--coverage` or delete the step.
+- [x] **The production database URL is out of CI.** `build-check` set
+      `DATABASE_URL: ${{ secrets.DATABASE_URL }}` while using dummy Supabase values.
+      Verified locally that the variable has to be *set* (lib/database throws at import
+      time, and Next collects page data for `/shows/[slug]` and `/arrangements/[id]`) but
+      does not have to *reach* anything: with `postgresql://ci:ci@127.0.0.1:5432/ci` the
+      queries fail, the pages fall back, and `next build` still exits 0. CI now uses that
+      dummy string.
+
+- [x] **Duplicated jobs collapsed.** Three jobs each ran checkout + setup-node + `npm ci`,
+      and `npm run test:email` (which is just `vitest run lib/email/__tests__`, a subset of
+      `npm run test`) ran in two of them. `needs: []` on `email-tests` was a no-op, and
+      `build-check` depended on `email-tests` but not on `test`, so a build could pass
+      while the real suite failed. Now two jobs: `test`, then `build` which needs it.
+
+- [x] **Typecheck added.** There was no `tsc --noEmit` anywhere in CI on a TypeScript
+      codebase; `npm run lint` is eslint and does not typecheck. Added a `typecheck`
+      script to `package.json` and a step that runs it.
+
+- [x] **`concurrency` group added**, keyed on the ref with `cancel-in-progress`.
+      Consecutive pushes used to stack full matrix runs.
+
+- [x] **Artifact upload dropped.** It uploaded `coverage/` and `test-results/`;
+      `npm run test` is plain `vitest run` and generates neither, so every run logged
+      "No files were found with the provided path." Nothing consumed the artifacts.
+
+- [x] **Pinned actions bumped** from `@v4` to `@v5`. The v4 tags target Node 20, which is
+      deprecated on runners and was being force-run on Node 24.
+
+### Tier 3: `release.yml` was fiction
+
+- [x] **Deleted.** Zero runs ever, and it could not have succeeded: it cut
+      `release/<version>` from main and opened a PR from that branch back into main, which
+      is an empty diff, so `peter-evans/create-pull-request` would exit with nothing to
+      commit. It also assumed a release-branch flow while Netlify deploys continuously from
+      main, pinned `create-pull-request@v5` (two majors behind), and needed the "Allow
+      GitHub Actions to create and approve pull requests" setting to be on.
+
+### Tier 5: hygiene
+
+- [x] **Merge settings tightened.** All four merge types had been enabled with
+      `delete_branch_on_merge: false`. Now squash-only with auto-delete.
+
+- [x] **Default Actions token permissions lowered** from `write` to `read`, and
+      `can_approve_pull_request_reviews` turned off. Workflows escalate per job where
+      needed; `test.yml` declares `permissions: contents: read`.
+
+- [x] **Stale repo name fixed in `CLAUDE.md`.** It pointed the issue tracker at
+      `trevorschachner/schachner-designs`, this repo's former name. GitHub redirects it, so
+      every `gh` call had been working by accident.
+
+- [x] **`README.md` deployment line corrected** from Vercel to Netlify.
+
+- [x] **Wiki and Projects turned off.** Both were enabled and empty.
+
+- [x] **`dev` branch deleted.** `git merge-base --is-ancestor origin/dev main` confirmed it
+      was fully merged, zero unique commits, last commit 2026-05-19. `main` is now the only
+      branch.
+
+- [x] **All three environments deleted.** `github-pages`, `dev` (2025-10-09) and
+      `Production` (2025-08-05). The latter two had zero protection rules and zero
+      deployments.
 
 ---
 
-## Tier 3: `release.yml` is fiction
+## Left to do
 
-- [ ] **Delete `.github/workflows/release.yml`.**
+### Needs the Netlify dashboard
 
-  `gh run list --workflow=release.yml` returns zero runs. It has never executed, and it
-  could not succeed if it did:
+- [ ] **Turn on Netlify commit statuses and deploy previews.** Every check run on HEAD
+      comes from the `github-actions` app; zero from Netlify, and the only deployments
+      GitHub knew about were `github-pages`. So a failed production build leaves no mark on
+      the commit or on any PR. Netlify → Site configuration → Build & deploy → the GitHub
+      App settings.
 
-  - It cuts `release/<version>` from main and opens a PR from that branch back into main.
-    The branch has no commits added, so the diff is empty and
-    `peter-evans/create-pull-request` exits with nothing to commit.
-  - It assumes a release-branch flow. Netlify deploys continuously from main.
-  - `peter-evans/create-pull-request@v5` is two majors behind (v7).
-  - Opening a PR with `GITHUB_TOKEN` requires "Allow GitHub Actions to create and approve
-    pull requests," which is a separate org/repo setting.
+### Decisions, not fixes
 
----
+- [ ] **Branch protection on `main`.** Still none (`.../branches/main/protection` is 404,
+      `rulesets` is `[]`), so everything lands by direct push. Requiring the Test Suite
+      check to pass is cheap; requiring pull requests is a real workflow change. Worth
+      deciding rather than inheriting.
 
-## Tier 4: Netlify reports nothing back to GitHub
-
-- [ ] **Enable Netlify commit statuses and deploy previews.**
-
-  `gh api .../commits/727db83/check-runs` returns seven checks, all from the
-  `github-actions` app (including Pages' `build`, `deploy`, `report-build-status`). Zero
-  from Netlify. `gh api .../deployments` shows only `github-pages` entries. `.../commits/727db83/status`
-  is `pending` with an empty `statuses` array.
-
-  So a failed production build leaves no mark on the commit or on any PR. Netlify Site
-  configuration → Build & deploy → Deploy notifications / GitHub App: turn on commit
-  statuses and deploy previews for pull requests.
-
-- [ ] **Delete the empty `dev` and `Production` environments.** Created 2025-10-09 and
-      2025-08-05, zero protection rules, zero deployments. `github-pages` goes with Tier 1.
-
----
-
-## Tier 5: hygiene and conventions
-
-- [ ] **Protect `main`.** `gh api .../branches/main/protection` returns 404 Branch not
-      protected, and `.../rulesets` is `[]`. Everything lands by direct push. Minimum
-      worth having: require the Test Suite check to pass before a push lands. Requiring
-      PRs is a bigger workflow change; decide separately.
-
-- [ ] **Tighten merge settings.** All four merge types are on
-      (`allow_squash_merge`, `allow_merge_commit`, `allow_rebase_merge`, `allow_auto_merge`)
-      and `delete_branch_on_merge` is `false`. Squash-only plus auto-delete keeps history
-      readable.
-
-- [ ] **Lower default Actions token permissions.** `default_workflow_permissions` is
-      `write` and `can_approve_pull_request_reviews` is `true`. Set the default to `read`
-      and escalate per job where a workflow actually needs to write.
-
-- [ ] **Fix the stale repo name in `CLAUDE.md`.** It points the issue tracker at
-      `trevorschachner/schachner-designs`. That is this repo's former name. GitHub
-      redirects it, so every `gh` call works by accident.
-
-- [ ] **Decide whether the documented issue workflow is real.** `docs/agents/issue-tracker.md`
-      and `docs/agents/triage-labels.md` describe GitHub issues, five triage labels
+- [ ] **Is the documented issue workflow real?** `docs/agents/issue-tracker.md` and
+      `docs/agents/triage-labels.md` describe GitHub issues, five triage labels
       (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`),
-      wayfinder maps, sub-issues, and native issue dependencies. Reality: zero issues ever
-      opened, and `gh label list` returns only GitHub's nine stock labels. Either create
-      the labels and start using issues, or delete the docs so they stop describing a
-      system that does not exist.
+      wayfinder maps, sub-issues and native dependencies. Reality: zero issues ever opened,
+      and `gh label list` returns only GitHub's nine stock labels. Either create the labels
+      and start using issues, or delete the docs.
 
-- [ ] **`README.md` says the project deploys to Vercel.** It deploys to Netlify.
+- [ ] **Repo visibility.** Public, containing the admin dashboard source, `lib/auth/`
+      guards and role logic, and `drizzle/migrations/2026-08-19_restrict_rls_writes_to_staff.sql`,
+      which spells out every RLS policy. The 2026-08-19 commit message notes the Supabase
+      anon key ships in the client bundle. Public source means anyone can read exactly how
+      authorization is enforced and which policies were just patched. Fine as a deliberate
+      choice; worth not being an inherited default.
 
-- [ ] **Turn off Wiki and Projects** (`has_wiki` and `has_projects` are true, both empty).
-
-- [ ] **Decide on repo visibility.** The repo is public. It contains the admin dashboard
-      source, `lib/auth/` guards and role logic, and `drizzle/migrations/` including
-      `2026-08-19_restrict_rls_writes_to_staff.sql`, which spells out every RLS policy.
-      Last session's own commit message notes the Supabase anon key ships in the client
-      bundle. Public source means anyone can read exactly how authorization is enforced
-      and which policies were just patched. This is a real decision either way, but it
-      should be a decision rather than an inherited default.
+- [ ] **The `DATABASE_URL` repo secret.** Added 2025-11-19, no longer referenced by any
+      workflow now that `build-check` is gone. Delete it unless something else needs it:
+      `gh secret delete DATABASE_URL -R trevorschachner/bright-designs-band`.
 
 ---
 
-## Not a problem, checked anyway
+## Checked, not a problem
 
 - `www.brightdesigns.band` 301s to the apex on Netlify. Correct.
 - `SHOWS_SCHEMA` in `lib/filters/schema-analyzer.ts` matches its Drizzle table. Only the
-  arrangements one had drifted.
-- No stray repo webhooks (`gh api .../hooks` is empty). Netlify connects through the
-  GitHub App, which is expected.
+  arrangements one had drifted (fixed in `efeb37a`).
+- No stray repo webhooks. Netlify connects through the GitHub App, which is expected.

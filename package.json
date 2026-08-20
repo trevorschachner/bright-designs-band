@@ -21,7 +21,8 @@
     "seo:lighthouse": "lighthouse http://localhost:3000 --output json html --output-path ./lighthouse-report",
     "seo:test": "npm run seo:audit && npm run seo:lighthouse",
     "media:optimize": "tsx scripts/optimize-media.ts",
-    "db:migrate:status": "tsx scripts/apply-sql-migrations.ts"
+    "db:migrate:status": "tsx scripts/apply-sql-migrations.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.5",

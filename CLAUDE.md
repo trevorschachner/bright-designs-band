@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues live as GitHub issues in `trevorschachner/schachner-designs`, managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live as GitHub issues in `trevorschachner/bright-designs-band`, managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
