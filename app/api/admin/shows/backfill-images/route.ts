@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { requirePermission } from '@/lib/auth/roles';
-import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
+import { guard } from '@/lib/auth/guard';
+import { SuccessResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { files, shows } from '@/lib/database/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
@@ -28,23 +28,14 @@ function chooseThumbnail(candidates: { name: string; url: string; storagePath: s
 }
 
 export async function POST(request: Request) {
-  try {
-    let createClient: any;
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'));
-    } catch (e) {
-      console.error('Supabase client import failed.', e);
-      return ErrorResponse('Auth provider not configured');
-    }
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+  const gate = await guard('canManageShows');
+  if (gate.denied) return gate.denied;
 
-    if (!session) {
-      return UnauthorizedResponse();
-    }
-    if (!requirePermission(session.user.email, 'canManageShows')) {
-      return ForbiddenResponse();
-    }
+  try {
+    // Needed for storage, not for auth: guard() has already established
+    // identity and permission.
+    const { createClient } = await import('@/lib/utils/supabase/server');
+    const supabase = await createClient();
 
     let payload: any = {};
     try {

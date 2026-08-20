@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { files, fileTypeEnum } from '@/lib/database/schema';
 import { fileStorage, withRootPrefix, STORAGE_BUCKET } from '@/lib/storage';
-import { requirePermission } from '@/lib/auth/roles';
+import { guard } from '@/lib/auth/guard';
 import { and, eq } from 'drizzle-orm';
 import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { fileUploadSchema } from '@/lib/validation/files';
@@ -24,24 +24,14 @@ const fileRecordSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const gate = await guard('canUploadFiles');
+  if (gate.denied) return gate.denied;
+
   try {
-    let createClient: any;
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'));
-    } catch (e) {
-      console.error('Supabase client import failed.', e);
-      return ErrorResponse('Auth provider not configured');
-    }
+    // Needed for storage, not for auth: guard() has already established
+    // identity and permission.
+    const { createClient } = await import('@/lib/utils/supabase/server');
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return UnauthorizedResponse();
-    }
-
-    if (!requirePermission(user.email, 'canUploadFiles')) {
-      return ForbiddenResponse();
-    }
 
     // Determine request type: JSON (Record Mode) or Multipart (Legacy/Server Upload)
     const contentType = request.headers.get('content-type') || '';
