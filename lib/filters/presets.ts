@@ -8,76 +8,12 @@ import { FilterPreset, FilterState } from './types';
 export const SHOWS_PRESETS: FilterPreset[] = [];
 
 // Arrangements presets
-export const ARRANGEMENTS_PRESETS: FilterPreset[] = [
-  {
-    id: 'orchestral',
-    name: 'Orchestral Arrangements',
-    description: 'Full orchestral arrangements',
-    filters: {
-      conditions: [
-        {
-          field: 'type',
-          operator: 'contains',
-          value: 'orchestral'
-        }
-      ],
-      sort: [
-        { field: 'title', direction: 'asc' }
-      ]
-    }
-  },
-  {
-    id: 'marching-band',
-    name: 'Marching Band',
-    description: 'Marching band arrangements',
-    filters: {
-      conditions: [
-        {
-          field: 'type',
-          operator: 'contains',
-          value: 'marching'
-        }
-      ],
-      sort: [
-        { field: 'title', direction: 'asc' }
-      ]
-    }
-  },
-  {
-    id: 'affordable-arrangements',
-    name: 'Budget Arrangements',
-    description: 'Arrangements under $100',
-    filters: {
-      conditions: [
-        {
-          field: 'price',
-          operator: 'lte',
-          value: 100
-        }
-      ],
-      sort: [
-        { field: 'price', direction: 'asc' }
-      ]
-    }
-  },
-  {
-    id: 'premium',
-    name: 'Premium Arrangements', 
-    description: 'High-end arrangements over $200',
-    filters: {
-      conditions: [
-        {
-          field: 'price',
-          operator: 'gte',
-          value: 200
-        }
-      ],
-      sort: [
-        { field: 'price', direction: 'desc' }
-      ]
-    }
-  }
-];
+// Emptied for the same reason SHOWS_PRESETS is empty: nothing renders these
+// (only SHOWS_PRESETS is passed to a FilterBar), and all four presets filtered
+// or sorted on `type` and `price`, neither of which is a column on
+// arrangements. Applying one would have thrown in QueryBuilder and surfaced as
+// a 500. Rebuild from ARRANGEMENTS_FILTER_FIELDS if presets are wanted.
+export const ARRANGEMENTS_PRESETS: FilterPreset[] = [];
 
 /**
  * Get presets for a specific entity type

@@ -142,14 +142,18 @@ export const SHOWS_SCHEMA: TableSchema = {
   }
 };
 
+// Only columns that exist on the arrangements table belong here. Every scalar
+// field is offered as a filter in the UI and resolved against the Drizzle table
+// server-side, so a field naming a column that is not there is a 500 waiting for
+// a user to click it. `type`, `price` and `showId` were all fictional: `type`
+// was a legacy column superseded by `scene`, `price` never existed on
+// arrangements (shows has one; arrangements has copyright_amount_usd), and the
+// show link lives in the showArrangements join table.
 export const ARRANGEMENTS_SCHEMA: TableSchema = {
   name: 'arrangements',
   fields: {
     id: { key: 'id', type: 'serial' },
     title: { key: 'title', type: 'text' },
-    type: { key: 'type', type: 'text', nullable: true },
-    price: { key: 'price', type: 'numeric' },
-    showId: { key: 'showId', type: 'integer' },
     scene: { key: 'scene', type: 'enum', enumValues: ['Opener', 'Ballad', 'Closer'] }
   },
   relations: {
@@ -219,7 +223,7 @@ export const SHOWS_FILTER_FIELDS: FilterField[] = baseShowsFields.map(field => {
 
 const baseArrangementsFields = SchemaAnalyzer.generateFilterFields(
   ARRANGEMENTS_SCHEMA,
-  ['id', 'showId'] // Exclude technical fields
+  ['id'] // Exclude technical fields
 );
 
 export const ARRANGEMENTS_FILTER_FIELDS: FilterField[] = baseArrangementsFields.map(field => {
