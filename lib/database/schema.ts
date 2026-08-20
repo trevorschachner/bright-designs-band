@@ -13,7 +13,11 @@ export const shows = pgTable('shows', {
   id: serial('id').primaryKey(),
   // title is the canonical show name
   title: text('title').notNull(),
-  slug: text('slug').notNull(),
+  // Unique in the database via shows_slug_unique_idx. Declared here so
+  // drizzle-kit stops proposing to drop it: the constraint previously existed
+  // only in hand-written SQL that was never applied, leaving uniqueness to
+  // three separate application-level collision loops.
+  slug: text('slug').notNull().unique(),
   description: text('description'),
   lengthSeconds: integer('length_seconds'),
   difficulty: showDifficultyEnum('difficulty'),
@@ -52,8 +56,12 @@ export const arrangements = pgTable('arrangements', {
   youtubeUrl: text('youtube_url'),
   commissioned: text('commissioned'),
   sampleScoreUrl: text('sample_score_url'),
-  // Legacy fields retained temporarily
-  title: text('title'),
+  // Marked "legacy" but universally required: every consumer treats title as
+  // the display name and interpolates it unguarded. Zero nulls exist, so the
+  // constraint matches how the column is actually used.
+  title: text('title').notNull(),
+  // Written by the arrangements API but never read for ordering — reads use
+  // showArrangements.orderIndex. Retained because 50 rows carry real values.
   displayOrder: integer('display_order').default(0).notNull(),
 });
 

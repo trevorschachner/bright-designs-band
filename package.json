@@ -15,12 +15,13 @@
     "test:email:preview": "tsx scripts/preview-emails.ts",
     "test:ci": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node scripts/migrate-db.js",
+    "db:migrate": "node scripts/migrate-db.js && tsx scripts/apply-sql-migrations.ts --apply",
     "db:push": "node scripts/push-db.js",
     "seo:audit": "node scripts/seo-audit.js",
     "seo:lighthouse": "lighthouse http://localhost:3000 --output json html --output-path ./lighthouse-report",
     "seo:test": "npm run seo:audit && npm run seo:lighthouse",
-    "media:optimize": "tsx scripts/optimize-media.ts"
+    "media:optimize": "tsx scripts/optimize-media.ts",
+    "db:migrate:status": "tsx scripts/apply-sql-migrations.ts"
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.5",

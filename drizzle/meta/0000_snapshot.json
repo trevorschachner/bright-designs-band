@@ -1,5 +1,5 @@
 {
-  "id": "38312409-fb08-40ac-8144-54a508b3a44c",
+  "id": "aa42e3a1-be7a-4a81-acc0-ea17670373b4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -14,55 +14,147 @@
           "primaryKey": true,
           "notNull": true
         },
+        "composer": {
+          "name": "composer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "arranger": {
+          "name": "arranger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grade": {
+          "name": "grade",
+          "type": "grade_band",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year": {
+          "name": "year",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_seconds": {
+          "name": "duration_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "percussion_arranger": {
+          "name": "percussion_arranger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "copyright_amount_usd": {
+          "name": "copyright_amount_usd",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ensemble_size": {
+          "name": "ensemble_size",
+          "type": "ensemble_size",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scene": {
+          "name": "scene",
+          "type": "arrangement_scene",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "youtube_url": {
+          "name": "youtube_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commissioned": {
+          "name": "commissioned",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sample_score_url": {
+          "name": "sample_score_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "title": {
           "name": "title",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "type": {
-          "name": "type",
-          "type": "text",
+        "display_order": {
+          "name": "display_order",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": false
-        },
-        "price": {
-          "name": "price",
-          "type": "numeric(10, 2)",
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.arrangements_to_tags": {
+      "name": "arrangements_to_tags",
+      "schema": "",
+      "columns": {
+        "arrangement_id": {
+          "name": "arrangement_id",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "show_id": {
-          "name": "show_id",
+        "tag_id": {
+          "name": "tag_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
       },
-      "indexes": {
-        "arrangements_show_id_idx": {
-          "name": "arrangements_show_id_idx",
-          "columns": [
-            {
-              "expression": "show_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
-        "arrangements_show_id_shows_id_fk": {
-          "name": "arrangements_show_id_shows_id_fk",
-          "tableFrom": "arrangements",
-          "tableTo": "shows",
+        "arrangements_to_tags_arrangement_id_arrangements_id_fk": {
+          "name": "arrangements_to_tags_arrangement_id_arrangements_id_fk",
+          "tableFrom": "arrangements_to_tags",
+          "tableTo": "arrangements",
           "columnsFrom": [
-            "show_id"
+            "arrangement_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "arrangements_to_tags_tag_id_tags_id_fk": {
+          "name": "arrangements_to_tags_tag_id_tags_id_fk",
+          "tableFrom": "arrangements_to_tags",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_id"
           ],
           "columnsTo": [
             "id"
@@ -71,8 +163,19 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "compositePrimaryKeys": {
+        "arrangements_to_tags_arrangement_id_tag_id_pk": {
+          "name": "arrangements_to_tags_arrangement_id_tag_id_pk",
+          "columns": [
+            "arrangement_id",
+            "tag_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.contact_submissions": {
       "name": "contact_submissions",
@@ -119,6 +222,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'contact'"
         },
         "privacy_agreed": {
           "name": "privacy_agreed",
@@ -228,7 +338,10 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.files": {
       "name": "files",
@@ -391,7 +504,199 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.resources": {
+      "name": "resources",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_url": {
+          "name": "file_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "requires_contact_form": {
+          "name": "requires_contact_form",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "download_count": {
+          "name": "download_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "resources_slug_unique": {
+          "name": "resources_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.show_arrangements": {
+      "name": "show_arrangements",
+      "schema": "",
+      "columns": {
+        "show_id": {
+          "name": "show_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "arrangement_id": {
+          "name": "arrangement_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order_index": {
+          "name": "order_index",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "show_arrangements_show_idx": {
+          "name": "show_arrangements_show_idx",
+          "columns": [
+            {
+              "expression": "show_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "show_arrangements_arr_idx": {
+          "name": "show_arrangements_arr_idx",
+          "columns": [
+            {
+              "expression": "arrangement_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "show_arrangements_show_id_shows_id_fk": {
+          "name": "show_arrangements_show_id_shows_id_fk",
+          "tableFrom": "show_arrangements",
+          "tableTo": "shows",
+          "columnsFrom": [
+            "show_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "show_arrangements_arrangement_id_arrangements_id_fk": {
+          "name": "show_arrangements_arrangement_id_arrangements_id_fk",
+          "tableFrom": "show_arrangements",
+          "tableTo": "arrangements",
+          "columnsFrom": [
+            "arrangement_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "show_arrangements_show_id_arrangement_id_pk": {
+          "name": "show_arrangements_show_id_arrangement_id_pk",
+          "columns": [
+            "show_id",
+            "arrangement_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.shows": {
       "name": "shows",
@@ -409,8 +714,20 @@
           "primaryKey": false,
           "notNull": true
         },
-        "year": {
-          "name": "year",
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "length_seconds": {
+          "name": "length_seconds",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -422,14 +739,76 @@
           "primaryKey": false,
           "notNull": false
         },
-        "duration": {
-          "name": "duration",
+        "graphic_url": {
+          "name": "graphic_url",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "description": {
-          "name": "description",
+        "youtube_url": {
+          "name": "youtube_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year": {
+          "name": "year",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "featured": {
+          "name": "featured",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "commissioned": {
+          "name": "commissioned",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "program_coordinator": {
+          "name": "program_coordinator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "percussion_arranger": {
+          "name": "percussion_arranger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sound_designer": {
+          "name": "sound_designer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wind_arranger": {
+          "name": "wind_arranger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drill_writer": {
+          "name": "drill_writer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "name": "duration",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -452,18 +831,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "composer": {
-          "name": "composer",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "song_title": {
-          "name": "song_title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -482,7 +849,18 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "shows_slug_unique": {
+          "name": "shows_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.shows_to_tags": {
       "name": "shows_to_tags",
@@ -539,7 +917,10 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.tags": {
       "name": "tags",
@@ -569,17 +950,29 @@
             "name"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
-    "public.difficulty": {
-      "name": "difficulty",
+    "public.arrangement_scene": {
+      "name": "arrangement_scene",
       "schema": "public",
       "values": [
-        "Beginner",
-        "Intermediate",
-        "Advanced"
+        "Opener",
+        "Ballad",
+        "Closer"
+      ]
+    },
+    "public.ensemble_size": {
+      "name": "ensemble_size",
+      "schema": "public",
+      "values": [
+        "small",
+        "medium",
+        "large"
       ]
     },
     "public.file_type": {
@@ -593,10 +986,31 @@
         "score",
         "other"
       ]
+    },
+    "public.grade_band": {
+      "name": "grade_band",
+      "schema": "public",
+      "values": [
+        "1_2",
+        "3_4",
+        "5_plus"
+      ]
+    },
+    "public.difficulty": {
+      "name": "difficulty",
+      "schema": "public",
+      "values": [
+        "Beginner",
+        "Intermediate",
+        "Advanced"
+      ]
     }
   },
   "schemas": {},
   "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
