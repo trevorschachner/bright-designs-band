@@ -1,6 +1,7 @@
 import { shows, showsToTags, showArrangements, arrangementsToTags } from '@/lib/database/schema';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/auth/guard';
 import { revalidateTag } from 'next/cache';
 import { withDb } from '@/lib/utils/db';
 
@@ -96,19 +97,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let createClient: any;
-  try {
-    ({ createClient } = await import('@/lib/utils/supabase/server'));
-  } catch (e) {
-    console.error('Supabase client import failed.', e);
-    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
-  }
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await guard('canManageShows');
+  if (gate.denied) return gate.denied;
 
   const body = await request.json();
   const { tags: tagIds, ...showData } = body;
@@ -256,19 +246,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let createClient: any;
-  try {
-    ({ createClient } = await import('@/lib/utils/supabase/server'));
-  } catch (e) {
-    console.error('Supabase client import failed.', e);
-    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
-  }
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await guard('canManageShows');
+  if (gate.denied) return gate.denied;
 
   return withDb(async (db) => {
     const idNum = Number.parseInt(id, 10);

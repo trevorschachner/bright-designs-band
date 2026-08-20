@@ -1,5 +1,6 @@
 import { arrangements, files, showArrangements, arrangementsToTags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/auth/guard';
 import { revalidateTag } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
@@ -154,21 +155,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  // Lazy-import supabase client; it may depend on env vars
-  let createClient: any;
-  try {
-    ({ createClient } = await import('@/lib/utils/supabase/server'));
-  } catch (e) {
-    console.error('Supabase client import failed.', e);
-    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
-  }
-
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await guard('canCreateArrangements');
+  if (gate.denied) return gate.denied;
 
   const body = await request.json();
   const { showId, displayOrder, tags: tagIds, ...rest } = body as any;

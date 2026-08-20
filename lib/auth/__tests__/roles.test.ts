@@ -19,7 +19,14 @@ describe('getUserPermissions', () => {
   it('treats @brightdesigns.band emails as staff with file delete rights', () => {
     const permissions = getUserPermissions('designer@brightdesigns.band')
     expect(permissions.canDeleteFiles).toBe(true)
-    expect(permissions.canDeleteArrangements).toBe(false)
+  })
+
+  it('lets staff delete arrangements', () => {
+    // The route previously gated deletion on an inline @brightdesigns.band
+    // check, so staff could always do this; the role map said otherwise.
+    // The map was wrong — it is the code that described real intent.
+    expect(getUserPermissions('designer@brightdesigns.band').canDeleteArrangements).toBe(true)
+    expect(getUserPermissions('guest@example.com').canDeleteArrangements).toBe(false)
   })
 
   it('treats other emails as regular users without file delete rights', () => {
@@ -41,3 +48,12 @@ describe('permission helpers', () => {
   })
 })
 
+describe('canManageResources', () => {
+  it('is granted to staff and admin but not regular users', () => {
+    // Resources were previously gated only by an inline @brightdesigns.band
+    // check, with no corresponding entry in the role map.
+    expect(ROLE_PERMISSIONS.admin.canManageResources).toBe(true)
+    expect(ROLE_PERMISSIONS.staff.canManageResources).toBe(true)
+    expect(ROLE_PERMISSIONS.user.canManageResources).toBe(false)
+  })
+})

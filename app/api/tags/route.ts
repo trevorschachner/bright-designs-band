@@ -1,5 +1,7 @@
 import { tags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/auth/guard';
+import { tagInputSchema } from '@/lib/validation/tags';
 import { revalidateTag } from 'next/cache';
 
 // Cache tags for 2 hours (tags rarely change)
@@ -27,19 +29,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let createClient: any;
-  try {
-    ({ createClient } = await import('@/lib/utils/supabase/server'));
-  } catch (e) {
-    console.error('Supabase client import failed.', e);
-    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
-  }
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await guard('canManageTags');
+  if (gate.denied) return gate.denied;
 
   let db: any;
   try {
@@ -49,8 +40,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
   }
 
-  const body = await request.json();
-  const newTag = await db.insert(tags).values(body).returning();
+  const parsed = tagInputSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Bad request', details: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const newTag = await db.insert(tags).values(parsed.data).returning();
   // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
   revalidateTag('tags');
   return NextResponse.json(newTag);

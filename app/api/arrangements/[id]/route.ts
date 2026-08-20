@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/auth/guard';
 import { revalidateTag } from 'next/cache';
 import { arrangements, arrangementsToTags, showArrangements, files } from '@/lib/database/schema';
 import { eq, and } from 'drizzle-orm';
@@ -34,18 +35,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const arrangementId = parseInt(id, 10);
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user is staff
-    const userEmail = session.user?.email;
-    if (!userEmail?.endsWith('@brightdesigns.band')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const gate = await guard('canEditArrangements');
+    if (gate.denied) return gate.denied;
 
     const body = await request.json();
     console.log('PUT /api/arrangements/' + arrangementId, 'Received data:', JSON.stringify(body, null, 2));
@@ -154,17 +145,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userEmail = session.user?.email;
-    if (!userEmail?.endsWith('@brightdesigns.band')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const gate = await guard('canDeleteArrangements');
+    if (gate.denied) return gate.denied;
 
     const { db } = await import('@/lib/database');
     const [deleted] = await db

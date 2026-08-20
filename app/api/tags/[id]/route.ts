@@ -1,6 +1,8 @@
 import { tags } from '@/lib/database/schema';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/auth/guard';
+import { tagInputSchema } from '@/lib/validation/tags';
 import { revalidateTag } from 'next/cache';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,19 +22,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let createClient: any;
-  try {
-    ({ createClient } = await import('@/lib/utils/supabase/server'));
-  } catch (e) {
-    console.error('Supabase client import failed.', e);
-    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
-  }
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await guard('canManageTags');
+  if (gate.denied) return gate.denied;
 
   let db: any;
   try {
@@ -42,8 +33,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
   }
 
-  const body = await request.json();
-  const updatedTag = await db.update(tags).set(body).where(eq(tags.id, parseInt(id, 10))).returning();
+  const parsed = tagInputSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Bad request', details: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const updatedTag = await db.update(tags).set(parsed.data).where(eq(tags.id, parseInt(id, 10))).returning();
   // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
   revalidateTag('tags');
   return NextResponse.json(updatedTag);
@@ -51,19 +46,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let createClient: any;
-  try {
-    ({ createClient } = await import('@/lib/utils/supabase/server'));
-  } catch (e) {
-    console.error('Supabase client import failed.', e);
-    return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
-  }
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await guard('canManageTags');
+  if (gate.denied) return gate.denied;
 
   let db: any;
   try {

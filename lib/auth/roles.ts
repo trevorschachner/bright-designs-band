@@ -4,6 +4,7 @@ export interface UserPermissions {
   canAccessAdmin: boolean
   canManageShows: boolean
   canManageTags: boolean
+  canManageResources: boolean
   canManageUsers: boolean
   canViewAnalytics: boolean
   canCreateArrangements: boolean
@@ -18,6 +19,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     canAccessAdmin: true,
     canManageShows: true,
     canManageTags: true,
+    canManageResources: true,
     canManageUsers: true,
     canViewAnalytics: true,
     canCreateArrangements: true,
@@ -30,11 +32,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     canAccessAdmin: true,
     canManageShows: true,
     canManageTags: true,
+    canManageResources: true,
     canManageUsers: false,
     canViewAnalytics: true,
     canCreateArrangements: true,
     canEditArrangements: true,
-    canDeleteArrangements: false,
+    canDeleteArrangements: true,
     canUploadFiles: true,
     canDeleteFiles: true,
   },
@@ -42,6 +45,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     canAccessAdmin: false,
     canManageShows: false,
     canManageTags: false,
+    canManageResources: false,
     canManageUsers: false,
     canViewAnalytics: false,
     canCreateArrangements: false,

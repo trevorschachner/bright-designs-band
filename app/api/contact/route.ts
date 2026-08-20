@@ -3,6 +3,7 @@ import { sendEmail } from '@/lib/email/service';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '@/lib/email/templates';
 import { contactSubmissions } from '@/lib/database/schema';
 import type { ServiceCategory } from '@/lib/email/types';
+import { contactSubmissionSchema } from '@/lib/validation/contact';
 
 const ADMIN_EMAIL_FALLBACK = 'hello@brightdesigns.band';
 const ADMIN_EMAIL_ADDRESS = 'hello@brightdesigns.band';
@@ -34,7 +35,19 @@ async function sendEmailOrThrow(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, message, type, ...rest } = body as Record<string, any>;
+    // Validate the fields that leave this process: `email` reaches both a DB
+    // insert and sendEmail's `to:`. The remaining passthrough fields stay on
+    // `rest` because the templates below read arrays (services, showPlan)
+    // that this schema deliberately does not model.
+    const validated = contactSubmissionSchema.safeParse(body);
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: 'Bad request', details: validated.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const { name, email, message, type } = validated.data;
+    const rest = body as Record<string, any>;
     const formSource = typeof rest.source === 'string' ? rest.source : undefined;
     const submissionSource =
       formSource ||

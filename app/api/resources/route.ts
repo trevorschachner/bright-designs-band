@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/auth/guard';
 import { resources, files } from '@/lib/database/schema';
 import { desc, eq } from 'drizzle-orm';
 
@@ -32,25 +33,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    let createClient: any;
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 });
-    }
-    
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user is staff
-    const userEmail = user?.email;
-    if (!userEmail?.endsWith('@brightdesigns.band')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const gate = await guard('canManageResources');
+    if (gate.denied) return gate.denied;
 
     const body = await request.json();
     
