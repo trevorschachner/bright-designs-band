@@ -75,7 +75,9 @@ The result is 236 lines of orchestration across two callers, and they have diver
 `app/api/arrangements/route.ts` filters `tags` conditions out and handles them with an
 `exists` subquery. `app/api/shows/route.ts` passes every condition straight through, so
 filtering shows by `tags` or `arrangements`, both of which `SHOWS_FILTER_FIELDS` offers in
-the UI, throws and returns a 500.
+the UI, throws. Arrangements reports that as a 500. Shows does not: its `GET` catch
+returns an empty 200, so a broken filter came back as "no shows match" and was
+indistinguishable from a genuine no-match.
 
 Deleting `QueryBuilder` would move very little complexity into its callers, because the
 complexity is already sitting in the callers. That is the definition of a pass-through.
