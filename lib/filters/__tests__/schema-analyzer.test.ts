@@ -40,3 +40,21 @@ describe('filter schemas match the Drizzle tables they filter', () => {
     expect(scalarKeys(ARRANGEMENTS_FILTER_FIELDS).filter(k => !columns.includes(k))).toEqual([]);
   });
 });
+
+// Relation fields name no column, so they only work if a route hands
+// buildTableQuery a handler for them. `tags` is the only one both routes
+// resolve; anything else offered here reaches the query builder as an unknown
+// field and comes back a 400.
+const RESOLVED_RELATIONS = ['tags']
+
+describe('relation filter fields are ones a route can resolve', () => {
+  it('shows offers only resolved relations', () => {
+    const relations = SHOWS_FILTER_FIELDS.filter(f => f.type === 'relation').map(f => f.key)
+    expect(relations).toEqual(RESOLVED_RELATIONS)
+  })
+
+  it('arrangements offers only resolved relations', () => {
+    const relations = ARRANGEMENTS_FILTER_FIELDS.filter(f => f.type === 'relation').map(f => f.key)
+    expect(relations).toEqual(RESOLVED_RELATIONS)
+  })
+})

@@ -2,8 +2,9 @@ import { shows, showArrangements, showsToTags, files } from '@/lib/database/sche
 import { NextResponse } from 'next/server';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
+import { buildTableQuery, UnknownFilterFieldError } from '@/lib/filters/table-query';
 import { count } from 'drizzle-orm/sql';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, exists, inArray } from 'drizzle-orm';
 import { guard } from '@/lib/auth/guard';
 import { showSchema } from '@/lib/validation/shows';
 import { SuccessResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
@@ -37,31 +38,24 @@ async function queryShowsData(params: ShowQueryParams) {
   const { search, conditions, sort, page, limit, featured } = params;
   const offset = (page - 1) * limit;
 
-  const whereConditions: any[] = [];
-
-  if (search) {
-    const searchCondition = QueryBuilder.buildSearchCondition(shows, search, ['title', 'description']);
-    if (searchCondition) whereConditions.push(searchCondition);
-  }
-
-  if (conditions.length > 0) {
-    const filterCondition = QueryBuilder.buildWhereClause(shows, conditions);
-    if (filterCondition) whereConditions.push(filterCondition);
-  }
-
-  if (featured) {
-    whereConditions.push(eq(shows.featured, true));
-  }
-
-  let finalWhereClause: any;
-  if (whereConditions.length > 0) {
-    const { and } = await import('drizzle-orm');
-    finalWhereClause = whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions);
-  }
-
-  const orderBy = sort?.length > 0
-    ? QueryBuilder.buildOrderByClause(shows, sort)
-    : [shows.displayOrder, desc(shows.createdAt)];
+  const { where: finalWhereClause, orderBy } = buildTableQuery(
+    shows,
+    { search, conditions, sort },
+    {
+      searchable: ['title', 'description'],
+      relations: {
+        tags: (tagIds) =>
+          exists(
+            db
+              .select()
+              .from(showsToTags)
+              .where(and(eq(showsToTags.showId, shows.id), inArray(showsToTags.tagId, tagIds)))
+          ),
+      },
+      extra: featured ? [eq(shows.featured, true)] : [],
+      defaultOrderBy: [shows.displayOrder, desc(shows.createdAt)],
+    }
+  );
 
   const countQuery = db.select({ count: count() }).from(shows);
   const dataQuery = db.query.shows.findMany({
@@ -152,6 +146,12 @@ export async function GET(request: Request) {
     const response = QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit });
     return SuccessResponse(response);
   } catch (error) {
+    // A filter naming something the table does not have is the caller's
+    // mistake. It used to fall into the branch below and come back as an empty
+    // 200, so a broken filter was indistinguishable from a genuine no-match.
+    if (error instanceof UnknownFilterFieldError) {
+      return BadRequestResponse(`Unknown filter field: ${error.field}`);
+    }
     console.error('Error fetching shows:', error);
     return SuccessResponse({
       data: [],
