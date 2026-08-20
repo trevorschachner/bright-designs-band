@@ -90,6 +90,7 @@ describe('planUrlRewrites', () => {
     expect(rewrites.map((r) => `${r.table}.${r.column}`)).toEqual([
       'shows.thumbnail_url',
       'shows.graphic_url',
+      'shows.video_url',
       'resources.image_url',
       'resources.file_url',
       'arrangements.sample_score_url',

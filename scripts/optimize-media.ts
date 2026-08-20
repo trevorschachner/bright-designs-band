@@ -147,10 +147,16 @@ async function applyPlan(db: Client, entry: ManifestEntry): Promise<void> {
        entry.newFileName, entry.newOriginalName, entry.id]
     )
     for (const rewrite of planUrlRewrites(entry.oldUrl, entry.newUrl)) {
-      await db.query(
+      const result = await db.query(
         `update ${rewrite.table} set ${rewrite.column} = $1 where ${rewrite.column} = $2`,
         [rewrite.newValue, rewrite.oldValue]
       )
+      // Exact-equality match: any stored variant (cache-buster, different
+      // percent-encoding) matches nothing and would otherwise leave the page
+      // pointing at the heavy original while this run still reports success.
+      if (result.rowCount) {
+        console.log(`   rewrote ${rewrite.table}.${rewrite.column} (${result.rowCount} row(s))`)
+      }
     }
     await db.query('commit')
   } catch (error) {
@@ -229,6 +235,18 @@ async function main() {
     let totalBefore = 0
     let totalAfter = 0
 
+    // Each file commits its own transaction, so the manifest has to be durable
+    // after every file — not after the loop. A crash midway through otherwise
+    // leaves rows migrated with no way to revert them, which is exactly when
+    // the revert path matters most.
+    const manifestPath = resolve(process.cwd(), `scripts/.media-migration-${Date.now()}.json`)
+    const persistManifest = async () => {
+      if (!apply || entries.length === 0) return
+      const manifest: Manifest = { createdAt: new Date().toISOString(), entries }
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
+    }
+
+    try {
     for (const plan of plans) {
       totalBefore += plan.oldFileSize
       console.log(`#${plan.id} ${plan.oldStoragePath}`)
@@ -259,16 +277,17 @@ async function main() {
       const entry: ManifestEntry = { ...plan, newFileSize: encoded.length }
       await applyPlan(db, entry)
       entries.push(entry)
+      await persistManifest()
       totalAfter += encoded.length
 
       const saved = ((1 - encoded.length / plan.oldFileSize) * 100).toFixed(1)
       console.log(`   size ${formatBytes(plan.oldFileSize)} -> ${formatBytes(encoded.length)}  (-${saved}%)\n`)
     }
+    } finally {
+      await persistManifest()
+    }
 
     if (apply && entries.length > 0) {
-      const manifestPath = resolve(process.cwd(), `scripts/.media-migration-${Date.now()}.json`)
-      const manifest: Manifest = { createdAt: new Date().toISOString(), entries }
-      await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
       console.log(`Total: ${formatBytes(totalBefore)} -> ${formatBytes(totalAfter)}`)
       console.log(`Manifest: ${manifestPath}`)
       console.log(`Revert with: npx tsx scripts/optimize-media.ts --revert ${manifestPath}`)

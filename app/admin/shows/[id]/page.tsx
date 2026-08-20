@@ -593,6 +593,10 @@ export default function EditShowPage() {
                       fill
                       className="object-cover"
                       sizes="160px"
+                      // thumbnailUrl is a free-text field, so the host is not
+                      // guaranteed to be in next.config remotePatterns. Keep
+                      // this unoptimized or an arbitrary URL crashes the page.
+                      unoptimized
                     />
                   </div>
                 </div>

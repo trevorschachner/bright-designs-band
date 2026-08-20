@@ -43,7 +43,13 @@ export default async function Image({ params }: { params: { slug: string } }) {
       const res = await fetch(graphicUrl, { next: { revalidate } })
       if (res.ok) {
         const buf = await res.arrayBuffer()
-        const ext = graphicUrl.includes('.png') ? 'png' : 'jpeg'
+        // Derive from the response, not the URL. Guessing from the path meant
+        // WebP art (post media-migration) was labelled image/jpeg, which
+        // ImageResponse rejects — and the catch below hides that silently.
+        const contentTypeHeader = res.headers.get('content-type')?.split(';')[0]?.trim()
+        const ext = contentTypeHeader?.startsWith('image/')
+          ? contentTypeHeader.slice('image/'.length)
+          : graphicUrl.match(/\.(webp|png|jpe?g|gif|avif)(?:[?#]|$)/i)?.[1]?.toLowerCase() ?? 'jpeg'
         const imgSrc = `data:image/${ext};base64,${Buffer.from(buf).toString('base64')}`
 
         return new ImageResponse(

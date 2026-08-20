@@ -1,3 +1,15 @@
+// Fall back to the production project ref so a missing env var at build time
+// degrades to today's behaviour rather than breaking every remote image.
+const supabaseHostname = (() => {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!raw) return 'yibokqolsyxosftcupgz.supabase.co';
+  try {
+    return new URL(raw).hostname;
+  } catch {
+    return 'yibokqolsyxosftcupgz.supabase.co';
+  }
+})();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Explicitly disable Turbopack as we have custom webpack config
@@ -7,10 +19,13 @@ const nextConfig = {
   images: {
     deviceSizes: [640, 1080, 1920],
     formats: ['image/webp'],
+    // Derive the Storage host from the same env var the app uses at runtime.
+    // Hardcoding one project ref meant any other environment (staging, preview,
+    // a restored project) threw on every remote image instead of loading it.
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'yibokqolsyxosftcupgz.supabase.co',
+        hostname: supabaseHostname,
         pathname: '/storage/v1/object/public/**',
       },
     ],

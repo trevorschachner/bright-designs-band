@@ -46,6 +46,7 @@ export const AUDIO_TARGET: OptimizationTarget = {
 export const REFERENCING_COLUMNS: { table: string; column: string }[] = [
   { table: 'shows', column: 'thumbnail_url' },
   { table: 'shows', column: 'graphic_url' },
+  { table: 'shows', column: 'video_url' },
   { table: 'resources', column: 'image_url' },
   { table: 'resources', column: 'file_url' },
   { table: 'arrangements', column: 'sample_score_url' },
