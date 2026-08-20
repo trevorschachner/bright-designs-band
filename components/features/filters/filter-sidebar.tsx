@@ -205,7 +205,12 @@ export function FilterSidebar({
     });
   };
 
-  const SidebarContent = () => (
+  // Held as an element, not declared as a component. Declaring it as a component
+  // here gave it a new function identity on every render, so React saw a new
+  // type, tore down the whole sidebar and rebuilt it. The search input was
+  // destroyed and re-created on the first keystroke, which dropped focus and
+  // sent every character after it to the document body.
+  const sidebarContent = (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-6 py-4">
@@ -520,7 +525,7 @@ export function FilterSidebar({
           <SheetHeader className="px-4 pt-6 pb-4">
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
-          <SidebarContent />
+          {sidebarContent}
         </SheetContent>
       </Sheet>
     );
@@ -529,7 +534,7 @@ export function FilterSidebar({
   // Desktop: Render as fixed sidebar
   return (
     <aside className="w-80 flex-shrink-0 border-r border-border bg-muted/30 sticky top-0 h-screen">
-      <SidebarContent />
+      {sidebarContent}
     </aside>
   );
 }
