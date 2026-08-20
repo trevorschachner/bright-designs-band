@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fileStorage } from '@/lib/storage';
-import { requirePermission } from '@/lib/auth/roles';
+import { guard } from '@/lib/auth/guard';
 import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { z } from 'zod';
 
@@ -13,24 +13,14 @@ const signUrlSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const gate = await guard('canUploadFiles');
+  if (gate.denied) return gate.denied;
+
   try {
-    let createClient: any;
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'));
-    } catch (e) {
-      console.error('Supabase client import failed.', e);
-      return ErrorResponse('Auth provider not configured');
-    }
+    // Needed for storage, not for auth: guard() has already established
+    // identity and permission.
+    const { createClient } = await import('@/lib/utils/supabase/server');
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return UnauthorizedResponse();
-    }
-
-    if (!requirePermission(user.email, 'canUploadFiles')) {
-      return ForbiddenResponse();
-    }
 
     const json = await request.json();
     const parsed = signUrlSchema.safeParse(json);

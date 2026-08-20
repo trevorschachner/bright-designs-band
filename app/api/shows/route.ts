@@ -4,10 +4,9 @@ import { revalidateTag, unstable_cache } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { count } from 'drizzle-orm/sql';
 import { eq, desc } from 'drizzle-orm';
-import { createClient as createServerClient } from '@/lib/utils/supabase/server';
-import { requirePermission } from '@/lib/auth/roles';
+import { guard } from '@/lib/auth/guard';
 import { showSchema } from '@/lib/validation/shows';
-import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
+import { SuccessResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
@@ -163,16 +162,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return UnauthorizedResponse();
-  }
-
-  if (!requirePermission(session.user.email, 'canManageShows')) {
-    return ForbiddenResponse();
-  }
+  const gate = await guard('canManageShows');
+  if (gate.denied) return gate.denied;
 
   try {
     const body = await request.json();

@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { files } from '@/lib/database/schema'
-import { getUserPermissions } from '@/lib/auth/roles'
+import { guard } from '@/lib/auth/guard'
 import { isValidYouTubeUrl } from '@/components/features/youtube-player'
 
 export async function POST(request: NextRequest) {
+  // canCreateArrangements, not canUploadFiles, is what this route has always
+  // required. Preserved on purpose: changing which permission gates attaching a
+  // YouTube file is a product decision, not part of this migration.
+  const gate = await guard('canCreateArrangements')
+  if (gate.denied) return gate.denied
+
   try {
-    let createClient: any
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'))
-    } catch (e) {
-      console.error('Supabase client import failed.', e)
-      return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 })
-    }
-    const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const userPermissions = getUserPermissions(session.user.email || '')
-    if (!userPermissions.canCreateArrangements) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const body = await request.json()
     const { 

@@ -2,37 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { files } from '@/lib/database/schema'
 import { eq } from 'drizzle-orm'
 import { fileStorage } from '@/lib/storage'
-import { getUserPermissions } from '@/lib/auth/roles'
+import { guard } from '@/lib/auth/guard'
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Authorize before parsing anything: an unauthenticated caller should not be
+  // able to tell a malformed id from a well-formed one.
+  const gate = await guard('canDeleteFiles')
+  if (gate.denied) return gate.denied
+
   try {
     const { id } = await params
     const fileId = parseInt(id, 10)
 
     if (isNaN(fileId)) {
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
-    }
-
-    let createClient: any
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'))
-    } catch (e) {
-      console.error('Supabase client import failed.', e)
-      return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 })
-    }
-    const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const userPermissions = getUserPermissions(session.user.email || '')
-    if (!userPermissions.canDeleteFiles) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     const { db } = await import('@/lib/database')
