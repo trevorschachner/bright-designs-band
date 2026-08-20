@@ -66,9 +66,15 @@ All in `.github/workflows/test.yml`.
 - [ ] **Add a `concurrency` group** keyed on the ref, with `cancel-in-progress: true`.
       Consecutive pushes currently stack full matrix runs.
 
+- [ ] **Bump the pinned actions.** The 2026-08-20 run warns that
+      `actions/checkout@v4`, `actions/setup-node@v4` and `actions/upload-artifact@v4` all
+      target Node 20, which is deprecated on runners and is being force-run on Node 24.
+      Move to `@v5`/current before the forced fallback is removed.
+
 - [ ] **Fix or drop the artifact upload.** It uploads `coverage/` and `test-results/`.
-      `npm run test` is plain `vitest run` and generates neither, so the step warns on
-      every run. Either add `--coverage` or delete the step.
+      `npm run test` is plain `vitest run` and generates neither. The 2026-08-20 run
+      confirms it: "No files were found with the provided path: coverage/ test-results/.
+      No artifacts will be uploaded." Either add `--coverage` or delete the step.
 
 ---
 
