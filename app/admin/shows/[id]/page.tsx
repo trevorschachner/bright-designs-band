@@ -592,7 +592,7 @@ export default function EditShowPage() {
                       alt="Thumbnail preview"
                       fill
                       className="object-cover"
-                      unoptimized
+                      sizes="160px"
                     />
                   </div>
                 </div>

@@ -6,6 +6,11 @@ import { join } from 'path'
 // Route segment config
 export const runtime = 'nodejs'
 
+// Cache the rendered OG image for a week. Without this every crawler, social
+// unfurl, and link preview re-renders it and re-fetches the source art from
+// Supabase Storage, which was a large share of our cached egress.
+export const revalidate = 604800
+
 // Image metadata
 export const alt = 'Bright Designs Collection'
 export const size = {

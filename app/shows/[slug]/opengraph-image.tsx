@@ -7,6 +7,11 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 export const runtime = 'nodejs'
+
+// Cache the rendered OG image for a week. Without this every crawler, social
+// unfurl, and link preview re-renders it and re-fetches the source art from
+// Supabase Storage, which was a large share of our cached egress.
+export const revalidate = 604800
 export const alt = 'Bright Designs Show'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -31,7 +36,11 @@ export default async function Image({ params }: { params: { slug: string } }) {
   // Use actual show art when available
   if (graphicUrl) {
     try {
-      const res = await fetch(graphicUrl)
+      // Next's data cache silently declines entries over 2MB, so this caching
+      // only holds while show art stays small — which it is post-migration
+      // (~200-500KB WebP). The route-level `revalidate` above is the real
+      // protection; this just avoids a redundant origin fetch on re-render.
+      const res = await fetch(graphicUrl, { next: { revalidate } })
       if (res.ok) {
         const buf = await res.arrayBuffer()
         const ext = graphicUrl.includes('.png') ? 'png' : 'jpeg'

@@ -162,7 +162,7 @@ export function FileGallery({
                 alt={file.originalName}
                 fill
                 className="object-cover rounded-lg"
-                unoptimized
+                sizes="(max-width: 768px) 100vw, 33vw"
               />
             </AspectRatio>
             {editable && onSetAsThumbnail && (
