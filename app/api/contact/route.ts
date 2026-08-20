@@ -3,7 +3,7 @@ import { sendEmail } from '@/lib/email/service';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '@/lib/email/templates';
 import { contactSubmissions } from '@/lib/database/schema';
 import type { ServiceCategory } from '@/lib/email/types';
-import { contactSubmissionSchema } from '@/lib/validation/contact';
+import { contactSubmissionSchema, toServiceCategories } from '@/lib/validation/contact';
 
 const ADMIN_EMAIL_FALLBACK = 'hello@brightdesigns.band';
 const ADMIN_EMAIL_ADDRESS = 'hello@brightdesigns.band';
@@ -35,10 +35,8 @@ async function sendEmailOrThrow(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    // Validate the fields that leave this process: `email` reaches both a DB
-    // insert and sendEmail's `to:`. The remaining passthrough fields stay on
-    // `rest` because the templates below read arrays (services, showPlan)
-    // that this schema deliberately does not model.
+    // Validate everything before it leaves this process: `email` reaches both
+    // a DB insert and sendEmail's `to:`.
     const validated = contactSubmissionSchema.safeParse(body);
     if (!validated.success) {
       return NextResponse.json(
@@ -46,8 +44,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { name, email, message, type } = validated.data;
-    const rest = body as Record<string, any>;
+    // Read every field from the validated payload — reading passthrough
+    // fields off the raw body is what made the schema's constraints decorative.
+    const rest = validated.data;
+    const { name, email, message, type } = rest;
     const formSource = typeof rest.source === 'string' ? rest.source : undefined;
     const submissionSource =
       formSource ||
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         lastName: name?.split(' ')?.slice(1).join(' ') || '',
         email,
         phone: rest.phone || null,
-        service: type === 'resource_download' ? 'Visual Technique Guide Download' : (Array.isArray(rest.services) ? rest.services.join(', ') : (type || 'General Contact')),
+        service: type === 'resource_download' ? 'Visual Technique Guide Download' : ((rest.services?.length ? rest.services.join(', ') : (type || 'General Contact'))),
         message: message || (type === 'resource_download' ? 'Resource Download Request' : ''),
         privacyAgreed: true, // Assuming consent is given by submitting
         source: submissionSource,
@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
     if (type === 'inquiry') {
       // Build a plain email using our templates module
       const subject = `New Show Inquiry from ${name || 'Unknown'}`;
-      const services = Array.isArray(rest.services) ? rest.services : [];
-      const showPlan = Array.isArray(rest.showPlan) ? rest.showPlan : [];
+      const services = toServiceCategories(rest.services);
+      const showPlan = rest.showPlan ?? [];
 
       const emailData = {
         firstName: name?.split(' ')?.[0] || name || 'Friend',
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     } else {
       // General contact: use same templates
       const subject = `New Contact from ${name || 'Unknown'}`;
-      const services = Array.isArray(rest.services) ? rest.services : ['other'];
+      const services = toServiceCategories(rest.services);
 
       const emailData = {
         firstName: name?.split(' ')?.[0] || name || 'Friend',

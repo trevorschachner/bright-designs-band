@@ -29,15 +29,24 @@ export async function guard(permission: keyof UserPermissions): Promise<GuardRes
     }
   }
 
-  const supabase = await createClient()
   // getUser revalidates against the auth server; getSession trusts the cookie.
   // The routes were split between the two, so standardise on the safer one.
-  const { data, error } = await supabase.auth.getUser()
-  if (error) {
+  // Failing closed here is deliberate: an identity we cannot establish must
+  // never fall through to the handler.
+  let email: string | undefined
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.getUser()
+    if (error) {
+      return { denied: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+    }
+    email = data?.user?.email
+  } catch (error) {
+    console.error('Auth lookup failed.', error)
     return { denied: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
 
-  const result = resolveAuthorization(data?.user?.email, permission)
+  const result = resolveAuthorization(email, permission)
   if (result.status === 'unauthenticated') {
     return { denied: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }

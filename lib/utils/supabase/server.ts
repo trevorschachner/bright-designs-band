@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseConfig } from "@/lib/env";
+import { createSupabaseMock } from "./mock-client";
 
 const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 
@@ -14,13 +15,7 @@ export const createClient = async () => {
       );
     }
 
-    const supabaseMock = {
-      auth: {
-        getSession: async () => ({ data: { session: null }, error: null }),
-      },
-    } as unknown as ReturnType<typeof createServerClient>;
-
-    return supabaseMock;
+    return createSupabaseMock() as unknown as ReturnType<typeof createServerClient>;
   }
 
   return createServerClient(

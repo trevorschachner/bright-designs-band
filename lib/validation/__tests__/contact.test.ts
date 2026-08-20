@@ -37,3 +37,26 @@ describe('contactSubmissionSchema', () => {
     expect(parsed.source).toBe('blog')
   })
 })
+
+describe('scalar passthrough fields', () => {
+  it('rejects a non-string phone that would otherwise reach the insert', () => {
+    // POST {email, phone:{x:1}} previously threw inside the insert, was
+    // swallowed, and still returned success with nothing persisted.
+    expect(contactSubmissionSchema.safeParse({ ...valid, phone: { x: 1 } }).success).toBe(false)
+    expect(contactSubmissionSchema.safeParse({ ...valid, school: 42 }).success).toBe(false)
+  })
+
+  it('accepts the scalar fields the handler actually reads', () => {
+    const parsed = contactSubmissionSchema.parse({
+      ...valid, phone: '555-0100', school: 'Rock Canyon HS', role: 'Director',
+      bandSize: '80', abilityLevel: 'Advanced', referralSource: 'Google',
+    })
+    expect(parsed.phone).toBe('555-0100')
+    expect(parsed.role).toBe('Director')
+  })
+
+  it('rejects a non-array services field', () => {
+    expect(contactSubmissionSchema.safeParse({ ...valid, services: 'drill' }).success).toBe(false)
+    expect(contactSubmissionSchema.safeParse({ ...valid, services: ['drill'] }).success).toBe(true)
+  })
+})

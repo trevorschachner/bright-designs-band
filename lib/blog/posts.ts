@@ -130,6 +130,10 @@ export function formatDate(dateString: string): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    // Date-only strings parse as UTC midnight. Without this the rendered date
+    // slips a day behind the adjacent <time dateTime> attribute on any host
+    // in a negative UTC offset.
+    timeZone: 'UTC',
   })
 }
 

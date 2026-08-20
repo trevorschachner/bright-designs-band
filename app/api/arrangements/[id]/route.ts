@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
 import { revalidateTag } from 'next/cache';

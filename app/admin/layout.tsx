@@ -19,11 +19,21 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { createClient } = await import('@/lib/utils/supabase/server')
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
+  let email: string | undefined
+  try {
+    const { createClient } = await import('@/lib/utils/supabase/server')
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.getUser()
+    // Distinguish "not signed in" from "auth server unreachable": treating the
+    // latter as unauthenticated would bounce signed-in staff to /login.
+    if (error) throw error
+    email = data?.user?.email
+  } catch (error) {
+    console.error('Admin auth lookup failed.', error)
+    redirect('/login')
+  }
 
-  const result = resolveAuthorization(data?.user?.email, 'canAccessAdmin')
+  const result = resolveAuthorization(email, 'canAccessAdmin')
   if (result.status === 'unauthenticated') redirect('/login')
   if (result.status === 'forbidden') redirect('/')
 

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { createArticleSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
-import { getCaseStudyBySlug, formatDate, CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/blog/posts'
+import { getCaseStudyBySlug, formatDate, CATEGORY_COLORS, CATEGORY_LABELS, CASE_STUDIES } from '@/lib/blog/posts'
 
 interface Props {
   params: Promise<{ school: string }>
@@ -27,7 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export function generateStaticParams() {
-  return [{ school: 'travelers-rest' }, { school: 'dorman' }, { school: 'alpharetta' }]
+  // Derived from CASE_STUDIES so adding one there cannot leave this list stale.
+  return CASE_STUDIES.map((study) => ({ school: study.slug }))
 }
 
 // Content per school
@@ -271,7 +272,10 @@ export default async function CaseStudyPage({ params }: Props) {
   const study = getCaseStudyBySlug(school)
   if (!study) notFound()
 
+  // CASE_STUDIES and CONTENT_MAP are separate lists; a study without prose
+  // should 404 rather than render `undefined` and throw a 500.
   const ContentComponent = CONTENT_MAP[school]
+  if (!ContentComponent) notFound()
   const stats = STATS_MAP[school] ?? []
 
   const articleSchema = createArticleSchema({
