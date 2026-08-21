@@ -14,6 +14,13 @@ export function SuccessResponse<T>(data: T, status: number = 200, cacheMaxAge: n
   // POST/PUT/DELETE responses (201, 204, etc.) should not be cached
   if (status === 200 && cacheMaxAge > 0) {
     headers['Cache-Control'] = `public, s-maxage=${cacheMaxAge}, stale-while-revalidate=${cacheMaxAge * 2}`;
+    // Netlify keys its edge cache on the path plus whatever Netlify-Vary names.
+    // The Next adapter emits `query=__nextDataReq|_rsc`, so without this every
+    // query string on a path collapsed into one entry: /api/shows?search=apex
+    // and ?search=times shared a body, and whichever request arrived first
+    // served every visitor for an hour. `query` with no list varies on the
+    // whole query string, which is what a filtered endpoint needs.
+    headers['Netlify-Vary'] = 'query';
   }
   
   return NextResponse.json(
