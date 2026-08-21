@@ -16,7 +16,7 @@ import { Music, Loader, FileText, ExternalLink, Play, ChevronDown } from "lucide
 import { FilterBar } from "@/components/features/filters/filter-bar";
 import { Pagination } from "@/components/features/filters/pagination";
 import { useFilterState } from "@/lib/hooks/use-filter-state";
-import { ARRANGEMENTS_FILTER_FIELDS } from "@/lib/filters/schema-analyzer";
+import { ARRANGEMENTS_FILTER_FIELDS } from "@/lib/filters/filter-definitions";
 import { FilteredResponse } from "@/lib/filters/types";
 
 interface ArrangementFile { id: number; fileType: string; url: string }

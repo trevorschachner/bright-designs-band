@@ -5,7 +5,7 @@ import ResourcePage from "@/components/features/resources/ResourcePage";
 import { ShowCard } from "@/components/features/shows/ShowCard";
 import { ShowListView } from "@/components/features/shows/ShowListView";
 import { ShowCatalogHero } from "@/components/features/shows/ShowCatalogHero";
-import { SHOWS_FILTER_FIELDS } from "@/lib/filters/schema-analyzer";
+import { SHOWS_FILTER_FIELDS } from "@/lib/filters/filter-definitions";
 import { SHOWS_PRESETS } from "@/lib/filters/presets";
 import { Show } from "@/lib/types/shows";
 
