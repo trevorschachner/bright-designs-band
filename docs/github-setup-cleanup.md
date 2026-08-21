@@ -103,36 +103,45 @@ All in `.github/workflows/test.yml`, rewritten.
 
 ---
 
+## Resolved 2026-08-21
+
+- [x] **Branch protection on `main`.** Enabled: required status checks `Lint, typecheck and
+      test` and `Build`, strict (branch must be up to date), required linear history,
+      `enforce_admins` on, force-pushes and deletions blocked, zero required reviews. Direct
+      pushes to `main` no longer land; everything goes through a PR.
+
+      **Caution if visibility ever changes.** Making the repo private on the current free
+      plan *deletes* these rules — GitHub offers neither branch protection nor rulesets on
+      private repos below Pro, and it removes them silently rather than suspending them.
+      This was tried and reverted on 2026-08-21; the rules had to be recreated by hand.
+      Keeping both private and protected requires GitHub Pro.
+
+- [x] **The documented issue workflow is real.** The five triage labels (`needs-triage`,
+      `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) now exist, and the
+      backlog was seeded as issues #31-#35. `docs/agents/` stays. `TODO.md` was collapsed
+      into a pointer at the issue tracker so there is one backlog, not two.
+
+- [x] **Repo visibility: public, deliberately.** Weighed against branch protection, which
+      the free plan does not offer on private repos, and protection won. This is now a
+      decision rather than an inherited default.
+
+- [x] **`dev` branch.** Confirmed dead a second time — zero unique commits, 39 behind
+      `main`. A `dev` → `main` workflow was considered and rejected: per-PR Netlify deploy
+      previews plus required checks already provide the gate a shared integration branch
+      would, without the second merge hop or the drift. Short-lived feature branches squash
+      into `main`. Stale local refs deleted.
+
+---
+
 ## Left to do
 
 ### Needs the Netlify dashboard
 
-- [ ] **Turn on Netlify commit statuses and deploy previews.** Every check run on HEAD
-      comes from the `github-actions` app; zero from Netlify, and the only deployments
-      GitHub knew about were `github-pages`. So a failed production build leaves no mark on
-      the commit or on any PR. Netlify → Site configuration → Build & deploy → the GitHub
-      App settings.
-
-### Decisions, not fixes
-
-- [ ] **Branch protection on `main`.** Still none (`.../branches/main/protection` is 404,
-      `rulesets` is `[]`), so everything lands by direct push. Requiring the Test Suite
-      check to pass is cheap; requiring pull requests is a real workflow change. Worth
-      deciding rather than inheriting.
-
-- [ ] **Is the documented issue workflow real?** `docs/agents/issue-tracker.md` and
-      `docs/agents/triage-labels.md` describe GitHub issues, five triage labels
-      (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`),
-      wayfinder maps, sub-issues and native dependencies. Reality: zero issues ever opened,
-      and `gh label list` returns only GitHub's nine stock labels. Either create the labels
-      and start using issues, or delete the docs.
-
-- [ ] **Repo visibility.** Public, containing the admin dashboard source, `lib/auth/`
-      guards and role logic, and `drizzle/migrations/2026-08-19_restrict_rls_writes_to_staff.sql`,
-      which spells out every RLS policy. The 2026-08-19 commit message notes the Supabase
-      anon key ships in the client bundle. Public source means anyone can read exactly how
-      authorization is enforced and which policies were just patched. Fine as a deliberate
-      choice; worth not being an inherited default.
+- [ ] **Turn on Netlify commit statuses for production deploys.** Tracked as issue #35.
+      Netlify *does* report on pull requests — `deploy-preview`, `Header rules`, `Redirect
+      rules` and `Pages changed` all appear as checks. It does not report on `main`, so a
+      failed production build leaves no mark on the commit. Netlify → Site configuration →
+      Build & deploy → the GitHub App settings.
 
 - [ ] **The `DATABASE_URL` repo secret.** Added 2025-11-19, no longer referenced by any
       workflow now that `build-check` is gone. Delete it unless something else needs it:
