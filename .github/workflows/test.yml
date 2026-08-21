@@ -3,8 +3,10 @@ name: Test Suite
 on:
   push:
     branches: [main]
+  # No branch filter: a pull request stacked on another feature branch got no
+  # checks at all under `branches: [main]`, which is exactly when review needs
+  # them. Pushes stay limited to main so work in progress does not run twice.
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 # Consecutive pushes used to stack full runs on top of each other.
