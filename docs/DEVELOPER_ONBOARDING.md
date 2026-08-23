@@ -156,7 +156,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 ### Schema Location
 - `lib/database/schema.ts` - Table definitions
 - `lib/database/queries.ts` - Common queries
-- `supabase/migrations/` - Database migrations
+- `drizzle/` - drizzle-kit generated migrations
+- `drizzle/migrations/` - hand-written SQL (RLS policies, backfills); see `drizzle/README.md`
 
 ### Query Pattern
 ```tsx
