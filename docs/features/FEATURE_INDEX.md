@@ -9,15 +9,19 @@
 ### ✅ [Filtering System](./filtering-system.md)
 **Dynamic sorting and filtering for shows and arrangements**
 
-Advanced filtering system with automatic schema detection, multiple operators, and URL state management.
+Filtering built on field types derived from the Drizzle schema, with an explicit allowlist of which columns are filterable, multiple operators, and URL state management.
 
 **Key Capabilities:**
-- Dynamic field detection from database schema
+- Field types, operators and enum members derived from the Drizzle column
+- Filterable columns declared in an allowlist typed against the table, so a
+  field naming a nonexistent column is a compile error
 - Advanced filtering with multiple operators (equals, contains, gt, lt, in, etc.)
 - Multi-column sorting
 - URL state management for shareable filtered views
 - Server-side performance optimization
-- Preset filters for common use cases
+
+**Not currently used**: preset filters. `SHOWS_PRESETS` and `ARRANGEMENTS_PRESETS`
+are both empty — see the filtering doc for why.
 
 **Used In**: Shows page, Arrangements page, Admin dashboard
 
