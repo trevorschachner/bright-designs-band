@@ -173,7 +173,7 @@ export async function POST(request: Request) {
       return BadRequestResponse(parsedData.error.errors);
     }
 
-    const { tags: tagIds, ...showData } = parsedData.data as any;
+    const { tags: tagIds, ...showData } = parsedData.data;
     const { db } = await import('@/lib/database');
 
     const generateSlug = (title: string) =>
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       difficulty: showData.difficulty ?? null,
       duration: showData.duration ?? null,
       description: showData.description ?? null,
-      price: showData.price != null ? String(showData.price) : null,
+      price: showData.price ?? null,
       thumbnailUrl: showData.thumbnailUrl ?? null,
       videoUrl: showData.videoUrl ?? null,
       displayOrder: showData.displayOrder ?? 0,

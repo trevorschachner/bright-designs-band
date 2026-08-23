@@ -1,0 +1,3 @@
+-- No rollback. Trimming discards the original whitespace, which was not
+-- recorded anywhere, so the prior values cannot be reconstructed. The change is
+-- safe to leave in place: no code depends on a title having stray whitespace.
