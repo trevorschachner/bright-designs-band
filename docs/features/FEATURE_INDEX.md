@@ -6,6 +6,20 @@
 
 ## Available Features
 
+### ✅ [Validation Schemas](./validation.md)
+**Zod schemas guarding every API write**
+
+Generated from Drizzle where a schema mirrors a table; hand-written where it is a wire contract that differs from storage by design.
+
+**Key Capabilities:**
+- `showSchema` generated with `drizzle-zod` — a nonexistent column is a compile error
+- Titles trimmed at the boundary
+- Create deliberately narrower than update
+
+**Used In**: `app/api/shows/route.ts`, `app/api/contact/route.ts`
+
+---
+
 ### ✅ [Filtering System](./filtering-system.md)
 **Dynamic sorting and filtering for shows and arrangements**
 
