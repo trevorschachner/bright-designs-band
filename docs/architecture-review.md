@@ -1,5 +1,11 @@
 # Architecture review
 
+> **Status: all four recommendations are done as of 2026-08-23.** This document is
+> kept as the reasoning behind the changes, not as open work. See the resolution
+> log at the end for what landed where. The findings below describe the codebase
+> *as it was on 2026-08-20*, so code snippets and file names in the body may no
+> longer match the tree.
+
 2026-08-20. Reviewed with the deep-module lens: a module is **deep** when a lot of
 behaviour sits behind a small interface, **shallow** when the interface is nearly as
 complex as what it hides. "Interface" here means everything a caller has to know to use
@@ -134,11 +140,36 @@ Two things weaken the interface:
 
 ---
 
-## Suggested order
+## Suggested order, and how it resolved
 
-1. **Finish the `guard()` migration** (six routes). Smallest change, highest value, closes
-   the `getSession()` gap, and needs no design work because the design already exists.
-2. **Collapse `QueryBuilder` into one `queryTable` module.** Fixes the shows relation-filter
-   500 as a side effect rather than as a separate patch.
-3. **Derive filter fields from Drizzle.** Retires the parallel schema.
+1. **Finish the `guard()` migration** (six routes).
+   Done in `24df3b0`. Every API route now goes through `guard()` except `contact`,
+   `robots` and `sitemap`, which are public by design. No production `getSession()`
+   calls remain.
+
+2. **Collapse `QueryBuilder` into one `queryTable` module.**
+   Done in `c6f2099` as `lib/filters/table-query.ts`. Filtering shows by `tags`,
+   which used to 500, works; an unknown field is now a 400 rather than an empty
+   200. `QueryBuilder` survives for the response envelope and URL handling.
+
+3. **Derive filter fields from Drizzle.**
+   Done in #37. `schema-analyzer.ts` split into `filter-fields.ts` (derivation)
+   and `filter-definitions.ts` (the allowlist). Allowlist keys are typed against
+   the table, so the parallel schema cannot drift again — a nonexistent column is
+   a compile error. The same treatment was applied to `showSchema` in #43, which
+   had drifted the same way with seven phantom columns.
+
 4. **Delete the dead tutorial block** and decide the `queries.ts` / `services/` split.
+   Tutorial deleted in #28. The split was resolved in #44 by naming it rather than
+   merging the modules: `services/` is the cached, build-guarded, error-tolerant
+   read layer for public pages; `queries.ts` is raw and throws. `fetchFeaturedShows`
+   is no longer exported alongside its cached wrapper, and the swallowed errors it
+   mentions are now reported rather than silent.
+
+### Also resolved
+
+- **§5's error swallowing.** `getX` still degrades to `[]` on failure, deliberately,
+  but the failure is now reported to PostHog instead of a `console.error` nobody
+  read. See `lib/observability/report-error.ts`.
+- **§6's `admin/shows/[id]/page.tsx`.** Tracked as #34, retitled away from line
+  count toward the actual defect: the write path is untyped.

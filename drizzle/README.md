@@ -47,6 +47,23 @@ references a `name` column that a later migration dropped.
 
 ## Known pending
 
-`2025-11-11_remove_arrangement_type.sql` is genuinely unapplied — `arrangements.type`
-still exists and holds 3 rows ('ballad', 'opener', 'Closer'). It overlaps with
-`arrangements.scene`. Decide which is canonical before applying it.
+`2025-11-11_remove_arrangement_type.sql` is unapplied and **safe to apply**.
+
+`arrangements.type` still exists and holds 3 rows. The question was whether it
+carried information `scene` did not. It does not — checked against production on
+2026-08-23:
+
+| id | `type` | `scene` |
+|----|--------|---------|
+| 14 | `opener` | `Opener` |
+| 15 | `ballad` | `Ballad` |
+| 16 | `Closer` | `Closer` |
+
+Every row with `type` set also has `scene` set, and the values agree. `scene` is
+the canonical column: it is in the Drizzle schema, the filter UI offers it, and
+`type` is not modelled at all, so the application cannot read it. Dropping the
+column loses nothing. The inconsistent casing that made this look risky exists
+only in the column being dropped.
+
+Separately, 3 arrangements (ids 51, 53, 58) have no `scene` at all. Unrelated to
+this migration, and not a blocker.
