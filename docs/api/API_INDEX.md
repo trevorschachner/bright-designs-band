@@ -24,6 +24,15 @@ Most endpoints require authentication via Supabase session tokens.
 - `GET /api/arrangements/[id]` - Get specific arrangement
 - `POST /api/arrangements` - Create new arrangement (auth required)
 - `PUT /api/arrangements/[id]` - Update arrangement (auth required)
+- `GET /api/arrangements/[id]/pieces` - Ordered source pieces of a part (staff only)
+- `PUT /api/arrangements/[id]/pieces` - Replace a part's ordered pieces, body `{ "pieceIds": [3, 1] }` (staff only)
+
+### Pieces
+Source works a part is built from. Staff only, reads included (copyright cost is internal).
+- `GET /api/pieces` - List pieces with how many parts use each
+- `POST /api/pieces` - Create a piece
+- `PUT /api/pieces/[id]` - Update a piece
+- `DELETE /api/pieces/[id]` - Delete a piece (unlinks it from every part)
 
 ### Tags
 - `GET /api/tags` - List all tags

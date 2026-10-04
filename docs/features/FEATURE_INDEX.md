@@ -6,6 +6,13 @@
 
 ## Available Features
 
+### ✅ [Show Data Model](./show-data-model.md)
+**Shows, parts and source pieces, and how they map to the Show Database sheet**
+
+Documents the show → part → piece hierarchy, which image column the UI reads, and `npm run export:shows`.
+
+---
+
 ### ✅ [Validation Schemas](./validation.md)
 **Zod schemas guarding every API write**
 
