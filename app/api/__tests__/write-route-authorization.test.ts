@@ -62,6 +62,13 @@ const WRITE_HANDLERS: { name: string; load: () => Promise<Handler>; hasParams?: 
   { name: 'POST /api/files/sign', load: async () => (await import('@/app/api/files/sign/route')).POST as unknown as Handler },
   { name: 'POST /api/files/youtube', load: async () => (await import('@/app/api/files/youtube/route')).POST as unknown as Handler },
   { name: 'POST /api/admin/shows/backfill-images', load: async () => (await import('@/app/api/admin/shows/backfill-images/route')).POST as unknown as Handler },
+  { name: 'POST /api/pieces', load: async () => (await import('@/app/api/pieces/route')).POST as unknown as Handler },
+  { name: 'PUT /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).PUT as unknown as Handler, hasParams: true },
+  { name: 'DELETE /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).DELETE as unknown as Handler, hasParams: true },
+  { name: 'PUT /api/arrangements/[id]/pieces', load: async () => (await import('@/app/api/arrangements/[id]/pieces/route')).PUT as unknown as Handler, hasParams: true },
+  // Reads, but gated: pieces carry copyright cost and licensing status (#51).
+  { name: 'GET /api/pieces', load: async () => (await import('@/app/api/pieces/route')).GET as unknown as Handler },
+  { name: 'GET /api/arrangements/[id]/pieces', load: async () => (await import('@/app/api/arrangements/[id]/pieces/route')).GET as unknown as Handler, hasParams: true },
 ]
 
 // /api/contact POST is deliberately absent: it serves the public contact form.

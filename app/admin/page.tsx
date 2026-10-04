@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle, FileText } from 'lucide-react';
+import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle, FileText, ListMusic } from 'lucide-react';
 import { getUserRole, getUserPermissions } from '@/lib/auth/roles';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -137,6 +137,24 @@ export default async function AdminPage() {
               <Link href="/admin/tags" className="mt-4 inline-block w-full">
                 <Button className="w-full">
                   View Tags
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        {permissions.canEditArrangements && (
+          <Card className="frame-card cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Manage Pieces</CardTitle>
+              <ListMusic className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">-</div>
+              <p className="text-xs text-muted-foreground">Source works, composers and copyright</p>
+              <Link href="/admin/pieces" className="mt-4 inline-block w-full">
+                <Button className="w-full">
+                  View Pieces
                 </Button>
               </Link>
             </CardContent>

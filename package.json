@@ -22,6 +22,7 @@
     "seo:test": "npm run seo:audit && npm run seo:lighthouse",
     "media:optimize": "tsx scripts/optimize-media.ts",
     "db:migrate:status": "tsx scripts/apply-sql-migrations.ts",
+    "export:shows": "tsx scripts/export-shows.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
