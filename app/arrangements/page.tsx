@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Music, Loader, FileText, ExternalLink, Play, ChevronDown } from "lucide-react";
+import { Music, Loader, FileText, ExternalLink, Play, ChevronDown, MessageSquare } from "lucide-react";
 import { FilterBar } from "@/components/features/filters/filter-bar";
 import { Pagination } from "@/components/features/filters/pagination";
 import { useFilterState } from "@/lib/hooks/use-filter-state";
 import { ARRANGEMENTS_FILTER_FIELDS } from "@/lib/filters/filter-definitions";
 import { FilteredResponse } from "@/lib/filters/types";
+import { arrangementContactHref } from "@/lib/contact-link";
+import { ResaleCallout } from "@/components/features/resale-callout";
 
 interface ArrangementFile { id: number; fileType: string; url: string }
 interface Arrangement {
@@ -141,6 +143,8 @@ export default function ArrangementsPage() {
     <div className="container mx-auto py-20">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-center mb-8">Arrangements</h1>
+
+        <ResaleCallout kind="catalog" className="mb-8" />
         
         {/* Filter Bar */}
         <FilterBar
@@ -242,6 +246,12 @@ export default function ArrangementsPage() {
                               </Button>
                             )}
                             <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                              <Link href={arrangementContactHref(title)} title="Ask about this arrangement">
+                                <MessageSquare className="w-4 h-4" />
+                                <span className="sr-only">Ask about this arrangement</span>
+                              </Link>
+                            </Button>
+                            <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
                               <Link href={`/arrangements/${arrangement.id}`} title="View Details">
                                 <ExternalLink className="w-4 h-4" />
                                 <span className="sr-only">View Details</span>
@@ -318,6 +328,12 @@ export default function ArrangementsPage() {
                           </Link>
                         </Button>
                       )}
+                      <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                        <Link href={arrangementContactHref(title)} title="Ask about this arrangement">
+                          <MessageSquare className="w-4 h-4" />
+                          <span className="sr-only">Ask about this arrangement</span>
+                        </Link>
+                      </Button>
                       <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
                         <Link href={`/arrangements/${arrangement.id}`} title="View Details">
                           <ExternalLink className="w-4 h-4" />

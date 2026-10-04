@@ -41,8 +41,8 @@ const faqs = [
         a: 'Yes. Our arrangements scale from small bands to large programs. We write specifically to your instrumentation and ability level — not a one-size-fits-all template.',
       },
       {
-        q: 'Do you offer pre-written shows, or is everything custom?',
-        a: 'Both. You can browse our show catalog and license an existing production, or commission a completely original custom show built around your students. Catalog shows are a great option if you want a proven design with faster turnaround.',
+        q: 'Can we buy a show or arrangement from your site?',
+        a: 'Yes. Every show and every arrangement on our site is for sale. There are three ways to buy: a full show, as it is on the site; build your own show by mixing arrangements from different shows; or partial custom, where we write a few new pieces for your band and pair them with existing arrangements. Talk to us and we\'ll help you pick.',
       },
       {
         q: 'Can multiple bands perform the same catalog show?',
@@ -88,8 +88,8 @@ const faqs = [
     category: 'Pricing & Availability',
     items: [
       {
-        q: 'How much does a custom show cost?',
-        a: 'Pricing varies based on scope, the number of arrangements, your band size, and what services are included. We\'re flexible and work with programs at all budget levels. Reach out for a quote — we\'ll find something that works.',
+        q: 'How much does a show cost?',
+        a: 'We don\'t list prices. It depends on how you buy (a full show, your own mix of arrangements, or partial custom with new pieces), your band size, and what services you need. Reach out and we\'ll put together a quote that fits your budget.',
       },
       {
         q: 'What competitive circuits do you have experience with?',
