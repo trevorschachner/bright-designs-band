@@ -20,6 +20,20 @@ Generated from Drizzle where a schema mirrors a table; hand-written where it is 
 
 ---
 
+### ✅ [Server-side Error Reporting](./error-reporting.md)
+**Makes deliberately-swallowed server errors visible**
+
+Read paths that degrade to an empty result on failure report the error to PostHog instead of failing silently in a log nobody reads.
+
+**Key Capabilities:**
+- `reportError(error, context)` with the operation name and what it degraded to
+- Contained failures — reporting can never escalate a degraded read into a crash
+- No-op when no PostHog key is configured (local dev, CI, previews)
+
+**Used In**: `lib/services/shows.ts`
+
+---
+
 ### ✅ [Filtering System](./filtering-system.md)
 **Dynamic sorting and filtering for shows and arrangements**
 

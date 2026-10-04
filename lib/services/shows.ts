@@ -1,3 +1,25 @@
+/**
+ * Cached read layer for public pages.
+ *
+ * Two layers live here, and the distinction is load-bearing:
+ *
+ * - `fetchX` is the raw query. Uncached, unguarded, throws on failure. Module
+ *   private, because calling it directly bypasses both the cache and the build
+ *   guard without any indication that you have done so.
+ * - `getX` is what pages call. Cached via `unstable_cache`, guarded against
+ *   running during a masked Netlify build, and degrades to an empty list on
+ *   failure rather than taking the page down.
+ *
+ * `lib/database/queries.ts` is the other half of the split: raw, uncached
+ * reads that throw, used by detail and admin pages that want failures to
+ * surface. A new query belongs here if a public page reads it on every request
+ * and can tolerate stale or missing data; it belongs in queries.ts otherwise.
+ *
+ * The empty list returned on failure is deliberate -- a database blip should
+ * cost the featured section, not the whole homepage -- but it used to be
+ * indistinguishable from a genuine empty result. Failures are now reported.
+ */
+
 import { db } from "@/lib/database";
 import { shows, showsToTags, files, tags } from "@/lib/database/schema";
 import { eq, desc, notInArray, and } from "drizzle-orm";
@@ -5,6 +27,7 @@ import { unstable_cache } from "next/cache";
 import { STORAGE_BUCKET, withRootPrefix } from "@/lib/storage";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseConfig, shouldSkipSupabase } from "@/lib/env";
+import { reportError } from "@/lib/observability/report-error";
 
 export type ShowSummary = {
   id: number;
@@ -43,7 +66,7 @@ function getPublicUrl(path: string | null): string | null {
   return data.publicUrl;
 }
 
-export async function fetchFeaturedShows(): Promise<ShowSummary[]> {
+async function fetchFeaturedShows(): Promise<ShowSummary[]> {
     // Drizzle query for featured shows
     let result = await db.query.shows.findMany({
       where: eq(shows.featured, true),
@@ -133,7 +156,7 @@ export async function getFeaturedShows(): Promise<ShowSummary[]> {
   try {
     return await getFeaturedShowsCached();
   } catch (error) {
-    console.error('Error fetching featured shows (cached):', error);
+    reportError(error, { operation: 'getFeaturedShows', degradedTo: 'empty list' });
     return [];
   }
 }
@@ -255,7 +278,11 @@ export async function getShowsByFilter(filter: { difficulty?: 'Beginner' | 'Inte
   try {
     return await cachedFn();
   } catch (error) {
-    console.error('Error fetching collection shows (cached):', error);
+    reportError(error, {
+      operation: 'getShowsByFilter',
+      degradedTo: 'empty list',
+      filter: JSON.stringify(filter),
+    });
     return [];
   }
 }
