@@ -18,6 +18,7 @@ import { createClient } from '@/lib/utils/supabase/server'
 import { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
+import { ResaleCallout } from '@/components/features/resale-callout'
 import { createCreativeWorkSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -378,6 +379,8 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
             </Card>
           </div>
         )}
+
+        <ResaleCallout kind="arrangement" title={arr.title || 'this arrangement'} className="mb-12" />
 
         {/* Additional Files Section */}
         {files && files.length > 1 && (
