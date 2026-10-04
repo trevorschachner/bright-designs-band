@@ -230,8 +230,8 @@ export default async function HomePage() {
           answer: "We work nationally, but specialize in the Southeast — South Carolina, Georgia, North Carolina, and Florida — where we know the local BOA circuits and competitive landscape deeply."
         },
         {
-          question: "How much does a custom marching band show cost?",
-          answer: "Custom show design typically ranges from $2,500 to $10,000+ depending on the scope of services — music arrangements, drill writing, visual design, percussion design, and sound design. Pre-written shows are available at lower price points. Contact us for a specific quote based on your program's needs."
+          question: "How much does a marching band show cost?",
+          answer: "We don't list prices because it depends on what you need. You can buy a full show from our site, build your own from arrangements in different shows, or have us write a few new pieces to go with existing arrangements. Tell us about your band and we'll put together a quote."
         },
         {
           question: "How long does it take to design a custom marching band show?",
@@ -242,12 +242,12 @@ export default async function HomePage() {
           answer: "A full custom show package includes a custom music arrangement, drill design, visual design concepts, and support throughout the competitive season. Additional services like percussion writing, sound design, and program coordination are available. Every deliverable is provided in print-ready and performance-ready formats."
         },
         {
-          question: "What is the difference between a custom show and a pre-written show?",
-          answer: "A custom show is designed specifically for your band — your theme, your size, your competitive goals. A pre-written show is an existing design ready for immediate purchase that you can adapt to your instrumentation. Pre-written shows are faster to get and more budget-friendly; custom shows give you a unique production built around your program."
+          question: "Can we buy a show or arrangement from your site?",
+          answer: "Yes. Every show and every arrangement on our site is for sale. There are three ways to buy: 1) a full show, as it is on the site; 2) build your own show by mixing arrangements from different shows; 3) partial custom, where we write a few new pieces for your band and pair them with existing arrangements. Talk to us and we'll help you pick."
         },
         {
           question: "Can you design a show for a small marching band?",
-          answer: "Yes. We design for bands of all sizes, including smaller programs under 40 members. Our pre-written show catalog includes options specifically for small bands, and we can design custom shows scaled to your ensemble."
+          answer: "Yes. We work with bands of all sizes, including programs under 40 members. Any show or arrangement on our site can be fitted to your instrumentation, and any new music we write is scaled to your ensemble."
         },
         {
           question: "When should we start planning our marching band show?",
