@@ -226,52 +226,30 @@ export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string, url: s
   }
 }
 
-// Product Schema for show pricing
+// Product Schema for shows. Every show is for sale, but pricing is by
+// conversation, so no Offer is emitted: we never publish a price we don't charge.
 export function createProductSchema({
   name,
   description,
-  type,
-  price,
   url,
   imageUrl,
 }: {
   name: string
   description?: string
-  type: 'custom' | 'pre-written'
-  price?: number | null
   url: string
   imageUrl?: string | null
 }) {
-  const minPrice = price ?? (type === 'custom' ? 5000 : 2500)
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name,
-    description: description || (type === 'custom'
-      ? `Custom marching band show design — fully tailored to your program's theme, size, and competitive goals.`
-      : `Pre-written marching band show package — ready to purchase and adapt to your instrumentation.`),
+    description: description || `Marching band show by Bright Designs. Use it as-is, swap parts, or mix in new music. Contact us for pricing.`,
     brand: {
       '@type': 'Brand',
       name: 'Bright Designs',
     },
     url: `https://www.brightdesigns.band${url}`,
     ...(imageUrl ? { image: imageUrl } : {}),
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'USD',
-      price: minPrice,
-      priceSpecification: {
-        '@type': 'PriceSpecification',
-        priceCurrency: 'USD',
-        minPrice,
-      },
-      availability: 'https://schema.org/InStock',
-      seller: {
-        '@type': 'Organization',
-        name: 'Bright Designs',
-        url: 'https://www.brightdesigns.band',
-      },
-    },
   }
 }
 

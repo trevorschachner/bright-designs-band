@@ -9,13 +9,15 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
-import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText } from 'lucide-react'
+import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText, MessageSquare } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
 import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles, getPublicFilesByShowId } from '@/lib/database/queries'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
+import { ResaleCallout } from '@/components/features/resale-callout'
+import { arrangementContactHref } from '@/lib/contact-link'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
@@ -206,16 +208,10 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     { name: show.title, url: `/shows/${show.slug}` },
   ])
 
-  const isCustom = (() => {
-    const tags = showsToTags.map((st: any) => st.tag?.name?.toLowerCase() ?? '')
-    return tags.includes('custom') || !tags.includes('pre-written')
-  })()
-
+  // Every show is for sale; pricing is by conversation, so no price is published.
   const productSchema = createProductSchema({
     name: show.title,
     description: show.description ?? undefined,
-    type: isCustom ? 'custom' : 'pre-written',
-    price: showRow.price ? Number(showRow.price) : null,
     url: `/shows/${show.slug}`,
     imageUrl: displayImageUrl,
   })
@@ -366,6 +362,8 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           )}
         </div>
 
+        <ResaleCallout kind="show" title={show.title} className="mb-8" />
+
         {/* Show Arrangements Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-6">
@@ -484,6 +482,12 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       <Link href={`/arrangements/${arrangement.id}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                         View Details
                         <ArrowLeft className="w-4 h-4 ml-2 rotate-180" aria-hidden="true" />
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={arrangementContactHref(arrangement.title ?? `${show.title}, part ${index + 1}`)} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        <MessageSquare className="w-4 h-4 mr-2" aria-hidden="true" />
+                        Ask about this arrangement
                       </Link>
                     </Button>
                   </div>

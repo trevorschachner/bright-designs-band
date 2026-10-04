@@ -1,12 +1,14 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { Suspense, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { InquiryForm } from '@/components/forms/inquiry-form'
 import { toast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Mail } from 'lucide-react'
 import confetti from 'canvas-confetti'
+import { CONTACT_INTEREST_PARAM, readContactInterest } from '@/lib/contact-link'
 
 interface ContactPayload {
   type: 'inquiry' | 'contact';
@@ -16,7 +18,24 @@ interface ContactPayload {
   [key: string]: unknown;
 }
 
+// Show and arrangement pages link here with ?interest=<title> so the inquiry
+// topic arrives prefilled. useSearchParams needs a Suspense boundary for the
+// static build; the fallback renders the same page without the prefill.
 export default function ContactPage() {
+  return (
+    <Suspense fallback={<ContactPageContent interest="" />}>
+      <ContactPageWithParams />
+    </Suspense>
+  );
+}
+
+function ContactPageWithParams() {
+  const searchParams = useSearchParams();
+  const interest = readContactInterest(searchParams.get(CONTACT_INTEREST_PARAM));
+  return <ContactPageContent interest={interest} />;
+}
+
+function ContactPageContent({ interest }: { interest: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -122,6 +141,8 @@ export default function ContactPage() {
             </div>
           ) : (
             <InquiryForm
+              key={interest}
+              showTitle={interest || undefined}
               onSubmit={handleSubmit as any}
               isLoading={isLoading}
               isGeneralInquiry={true}
