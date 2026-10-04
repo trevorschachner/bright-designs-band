@@ -55,22 +55,36 @@ Defines TypeScript interfaces for the entire filtering system:
 - `FilterField` - Field metadata for UI generation
 - `FilteredResponse` - API response format
 
-#### 2. **Schema Analyzer** (`lib/filters/schema-analyzer.ts`)
-Automatically generates filterable fields from database schema:
-- `SchemaAnalyzer.generateFilterFields()` - Creates filter fields from table definitions
-- Pre-configured schemas for Shows and Arrangements
-- Dynamic operator assignment based on field types
+#### 2. **Field derivation** (`lib/filters/filter-fields.ts`)
+Builds `FilterField[]` from a Drizzle table plus an explicit allowlist:
+- `deriveFilterFields(table, spec)` - the only way filter fields are made
+- Field type, operators and enum members are read off the Drizzle column
+- Allowlist keys are typed as the table's own columns, so naming a column that
+  does not exist is a compile error
 
-#### 3. **Query Builder** (`lib/filters/query-builder.ts`)
-Converts filter conditions to database queries:
-- `QueryBuilder.buildWhereClause()` - Generates WHERE conditions
-- `QueryBuilder.buildOrderByClause()` - Generates ORDER BY clauses
-- `FilterUrlManager` - URL parameter serialization/deserialization
+Field type is derived from Drizzle's `columnType`, **not** `dataType`. Numeric
+columns report `dataType: 'string'` because Drizzle carries them as strings to
+avoid float precision loss, so keying off `dataType` would silently turn `price`
+into a text filter and strip its range operators.
 
-#### 4. **Filter Presets** (`lib/filters/presets.ts`)
-Pre-defined filter combinations for common use cases:
-- Shows: Recent, Beginner Friendly, Advanced, Budget Friendly
-- Arrangements: Orchestral, Marching Band, Budget, Premium
+#### 3. **Field definitions** (`lib/filters/filter-definitions.ts`)
+The allowlist itself — which columns users may filter on, in what order, and how
+each is described. `SHOWS_FILTER_FIELDS` and `ARRANGEMENTS_FILTER_FIELDS` are
+the only exports pages consume.
+
+#### 4. **Query building** (`lib/filters/table-query.ts`, `lib/filters/query-builder.ts`)
+- `buildTableQuery(table, options)` - what API routes call. Absorbs the where
+  clause, search, relation handling and ordering, and throws
+  `UnknownFilterFieldError` for a field the table does not have.
+- `QueryBuilder` - lower-level pieces. Routes still use
+  `QueryBuilder.buildFilteredResponse()` to shape the response envelope, and
+  `FilterUrlManager` for URL parameter serialization.
+
+#### 5. **Filter Presets** (`lib/filters/presets.ts`)
+`SHOWS_PRESETS` and `ARRANGEMENTS_PRESETS` are both **empty**. Nothing rendered
+them, and all four original arrangement presets filtered on `type` and `price`,
+neither of which is a column on `arrangements`, so applying one would have
+thrown. Rebuild from the `*_FILTER_FIELDS` lists if presets are wanted.
 
 ### UI Components
 
@@ -137,42 +151,41 @@ export default function ShowsPage() {
 
 ### API Integration
 
+Routes hand the whole filter state to `buildTableQuery` rather than assembling
+conditions themselves. The two routes used to do that assembly independently and
+had diverged; `shows` threw on any relation filter while `arrangements` handled
+it, and the shows `catch` turned the failure into an empty `200`, making a broken
+filter indistinguishable from a genuine no-match.
+
 ```tsx
-// Enhanced API route with filtering support
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filterState = FilterUrlManager.fromUrlParams(searchParams);
-  
-  let query = db.select().from(shows);
-  
-  // Add search conditions
-  if (filterState.search) {
-    const searchCondition = QueryBuilder.buildSearchCondition(
-      shows, filterState.search, ['title', 'description']
+  const page = filterState.page || 1;
+  const limit = filterState.limit || 20;
+
+  try {
+    const { where, orderBy } = buildTableQuery(shows, {
+      search: filterState.search,
+      searchable: ['title', 'description'],
+      conditions: filterState.conditions,
+      sort: filterState.sort,
+      relations: { tags: tagsSubquery },
+    });
+
+    // ... run the count and rows queries with `where` and `orderBy`
+
+    return SuccessResponse(
+      QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit })
     );
-    if (searchCondition) query = query.where(searchCondition);
+  } catch (error) {
+    // A filter naming a column the table does not have is the caller's mistake
+    // and must surface as a 400, not an empty 200.
+    if (error instanceof UnknownFilterFieldError) {
+      return BadRequestResponse(`Unknown filter field: ${error.field}`);
+    }
+    throw error;
   }
-  
-  // Add filter conditions
-  if (filterState.conditions.length > 0) {
-    const whereClause = QueryBuilder.buildWhereClause(shows, filterState.conditions);
-    if (whereClause) query = query.where(whereClause);
-  }
-  
-  // Add sorting
-  if (filterState.sort.length > 0) {
-    const orderBy = QueryBuilder.buildOrderByClause(shows, filterState.sort);
-    query = query.orderBy(...orderBy);
-  }
-  
-  // Add pagination
-  query = query.limit(filterState.limit || 20)
-               .offset(((filterState.page || 1) - 1) * (filterState.limit || 20));
-  
-  const data = await query;
-  const total = await db.select({ count: count() }).from(shows);
-  
-  return NextResponse.json(QueryBuilder.buildFilteredResponse(data, total, filterState));
 }
 ```
 
@@ -180,20 +193,40 @@ export async function GET(request: Request) {
 
 ### Adding New Filter Fields
 
-When you add a new column to your database:
+Adding a column to the database does **not** make it filterable, and that is
+deliberate. "Which columns exist" is Drizzle's to answer; "which columns a user
+may filter on" is a product decision nothing can infer.
 
-1. **Update the schema definition** in `lib/filters/schema-analyzer.ts`:
+Add an entry to the allowlist in `lib/filters/filter-definitions.ts`:
+
 ```tsx
-export const SHOWS_SCHEMA: TableSchema = {
-  // ... existing fields
-  fields: {
-    // ... existing fields
-    newField: { key: 'newField', type: 'text' }, // Add your new field
-  }
-};
+export const SHOWS_FILTER_FIELDS: FilterField[] = deriveFilterFields(shows, {
+  columns: [
+    // ... existing entries
+    {
+      key: 'newField',                        // must be a real column, or it will not compile
+      description: 'What this field means',   // shown in the UI
+      placeholder: 'Filter by new field...',  // optional; defaults from the key
+    },
+  ],
+  relations: [ /* ... */ ],
+});
 ```
 
-2. **The filter system automatically detects and supports the new field!**
+Type, operators and enum members are derived from the Drizzle column. You only
+supply intent: order, label, description, and any `min`/`max` bounds.
+
+> **Do not reintroduce a hand-written field list.** `type`, `price` and `showId`
+> sat in the old `ARRANGEMENTS_SCHEMA` for nine months after those columns
+> stopped existing. Every one was a filter the UI offered and the server
+> answered with a 500. The allowlist is typed against the table specifically so
+> that cannot happen again.
+
+**Relation fields are the exception.** They name no column, so the type system
+cannot check them, and they only work if the route passes `buildTableQuery` a
+handler for the key. `tags` is currently the only relation either route
+resolves; adding another without a handler produces a 400 at query time. There
+is a test pinning this.
 
 ### Adding Custom Operators
 
@@ -206,7 +239,7 @@ export type FilterOperator =
   | 'myCustomOperator'; // Add your operator
 ```
 
-2. **Implement the logic** in `QueryBuilder.buildCondition()`:
+2. **Implement the logic** in `QueryBuilder.buildCondition()` (`lib/filters/query-builder.ts`):
 ```tsx
 case 'myCustomOperator':
   return myCustomCondition(column, value);
