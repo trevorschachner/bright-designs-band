@@ -19,7 +19,6 @@ export const shows = pgTable('shows', {
   // three separate application-level collision loops.
   slug: text('slug').notNull().unique(),
   description: text('description'),
-  lengthSeconds: integer('length_seconds'),
   difficulty: showDifficultyEnum('difficulty'),
   graphicUrl: text('graphic_url'),
   youtubeUrl: text('youtube_url'),
@@ -117,6 +116,34 @@ export const showArrangements = pgTable('show_arrangements', {
   idxArrangement: index('show_arrangements_arr_idx').on(table.arrangementId),
 }));
 
+// Pieces: the source works a part is built from ("Libertango", composer,
+// copyright cost). Distinct from `arrangements`, which are show parts (Part 1–4,
+// each with its own audio). One part draws on one or more pieces, and a piece
+// can appear in several parts. Mirrors the "Pieces" tab of the Show Database
+// sheet. See issue #51.
+export const pieces = pgTable('pieces', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  composer: text('composer'),
+  copyrightAmountUsd: numeric('copyright_amount_usd', { precision: 10, scale: 2 }),
+  // Free text on purpose: the sheet uses values like "NYA" (not yet acquired),
+  // "licensed" and "public domain", and the set is not settled yet.
+  licensingStatus: text('licensing_status'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Arrangement (part) ↔ Pieces (ordered join)
+export const arrangementPieces = pgTable('arrangement_pieces', {
+  arrangementId: integer('arrangement_id').references(() => arrangements.id, { onDelete: 'cascade' }).notNull(),
+  pieceId: integer('piece_id').references(() => pieces.id, { onDelete: 'cascade' }).notNull(),
+  orderIndex: smallint('order_index').notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.arrangementId, table.pieceId] }),
+  idxArrangement: index('arrangement_pieces_arr_idx').on(table.arrangementId),
+  idxPiece: index('arrangement_pieces_piece_idx').on(table.pieceId),
+}));
+
 export const resources = pgTable('resources', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
@@ -143,6 +170,22 @@ export const arrangementsRelations = relations(arrangements, ({ many }) => ({
   files: many(files),
   showArrangements: many(showArrangements),
   arrangementsToTags: many(arrangementsToTags),
+  arrangementPieces: many(arrangementPieces),
+}));
+
+export const piecesRelations = relations(pieces, ({ many }) => ({
+  arrangementPieces: many(arrangementPieces),
+}));
+
+export const arrangementPiecesRelations = relations(arrangementPieces, ({ one }) => ({
+  arrangement: one(arrangements, {
+    fields: [arrangementPieces.arrangementId],
+    references: [arrangements.id],
+  }),
+  piece: one(pieces, {
+    fields: [arrangementPieces.pieceId],
+    references: [pieces.id],
+  }),
 }));
 
 export const filesRelations = relations(files, ({ one }) => ({

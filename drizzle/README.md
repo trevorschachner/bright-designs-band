@@ -47,23 +47,34 @@ references a `name` column that a later migration dropped.
 
 ## Known pending
 
-`2025-11-11_remove_arrangement_type.sql` is unapplied and **safe to apply**.
+As of 2026-10-04, nothing from #51 is applied. In order:
 
-`arrangements.type` still exists and holds 3 rows. The question was whether it
-carried information `scene` did not. It does not — checked against production on
-2026-08-23:
+1. **Track 1** `0001_pieces_and_drop_length_seconds.sql`: creates `pieces` and
+   `arrangement_pieces`, drops `shows.length_seconds` (0 of 22 rows set, no code
+   reads it).
+2. **Track 2**, all pending:
+   - `2026-08-23_trim_title_whitespace.sql` (from #43, still unapplied).
+   - `2026-10-04_arrangement_type_into_scene.sql`: copies `arrangements.type`
+     into `scene` where `scene` is null, then drops `type`. Replaces
+     `2025-11-11_remove_arrangement_type.sql`, which was never applied and
+     dropped the column without copying. The 3 rows with `type` set already
+     have a matching `scene`, so the copy touches nothing today; it stops
+     with an error if a value does not map or disagrees. The 3 arrangements
+     with no scene at all (51, 53, 58) are #49 and are not touched.
+   - `2026-10-04_delete_placeholder_tag.sql`: deletes tag id 1 `'tag'` only
+     if no show or arrangement uses it (none did on 2026-10-04).
+   - `2026-10-04_pieces_rls.sql`: staff-only RLS on the two new tables. Needs
+     track 1 first.
 
-| id | `type` | `scene` |
-|----|--------|---------|
-| 14 | `opener` | `Opener` |
-| 15 | `ballad` | `Ballad` |
-| 16 | `Closer` | `Closer` |
+**Before the first `drizzle-kit migrate` against production:**
+`drizzle.__drizzle_migrations` still holds the three rows of the pre-squash
+lineage (latest `created_at` 1755921791974). drizzle-kit applies every journal
+entry newer than the latest row, so it would try to run `0000_baseline` and
+fail on `CREATE TYPE ... already exists`. Record the baseline as applied
+first:
 
-Every row with `type` set also has `scene` set, and the values agree. `scene` is
-the canonical column: it is in the Drizzle schema, the filter UI offers it, and
-`type` is not modelled at all, so the application cannot read it. Dropping the
-column loses nothing. The inconsistent casing that made this look risky exists
-only in the column being dropped.
+    insert into drizzle.__drizzle_migrations (hash, created_at)
+    values ('3bda43589e3a583326c53611d0657e5c5d7bbd85b6526d00bc62f82ae06bcb7f', 1787193232973);
 
-Separately, 3 arrangements (ids 51, 53, 58) have no `scene` at all. Unrelated to
-this migration, and not a blocker.
+The hash is `sha256` of `drizzle/0000_baseline.sql`; `created_at` is its
+`when` in `meta/_journal.json`.
