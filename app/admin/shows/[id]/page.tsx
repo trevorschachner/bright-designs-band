@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { FileUpload } from '@/components/features/file-upload';
 import { FileGallery } from '@/components/features/file-gallery';
 import { YouTubeUpload } from '@/components/features/youtube-upload';
+import { ArrangementPiecesEditor } from '@/components/features/admin/ArrangementPiecesEditor';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1359,6 +1360,11 @@ export default function EditShowPage() {
                       </div>
                     </div>
                     
+                    {/* Source pieces this part is built from (#51) */}
+                    <div className="mt-3 pt-3 border-t">
+                      <ArrangementPiecesEditor arrangementId={arrangement.id} />
+                    </div>
+
                     {/* File Upload for this Arrangement */}
                     <div className="mt-3 pt-3 border-t space-y-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
