@@ -68,20 +68,24 @@ export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
       siteName: 'Bright Designs',
       title: config.title,
       description: config.description,
-      images: config.ogImage ? [
-        {
-          url: config.ogImage,
-          width: 1200,
-          height: 630,
-          alt: config.title,
-        }
-      ] : undefined,
+      // Only set `images` when we have one. Next skips a route's
+      // opengraph-image.tsx whenever this key exists, even as `undefined`.
+      ...(config.ogImage && {
+        images: [
+          {
+            url: config.ogImage,
+            width: 1200,
+            height: 630,
+            alt: config.title,
+          }
+        ],
+      }),
     },
     twitter: {
       card: 'summary_large_image',
       title: config.title,
       description: config.description,
-      images: config.ogImage ? [config.ogImage] : undefined,
+      ...(config.ogImage && { images: [config.ogImage] }),
     },
     alternates: {
       canonical: config.canonical,

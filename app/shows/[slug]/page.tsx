@@ -120,8 +120,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return buildMetadata({
       title: `${showRow.title} | Bright Designs`,
       description: showRow.description ?? 'Award-winning marching band show from Bright Designs.',
-      // Explicitly prioritize graphic/thumb if available, otherwise let opengraph-image.tsx handle it (by passing undefined)
-      ogImage: showRow.graphicUrl ?? showRow.thumbnailUrl ?? undefined,
+      // No ogImage: opengraph-image.tsx renders a 1200x630 PNG card (show art
+      // + title + logo), which unfurls more reliably than raw WebP art.
       canonical: `${baseUrl}/shows/${canonicalSlug}`,
       keywords: [...defaultKeywords, ...tagKeywords]
     })
