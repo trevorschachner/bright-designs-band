@@ -634,7 +634,7 @@ export default function EditShowPage() {
               )}
               {show.windArranger && (
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Wind Arranger</div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Winds Arranger</div>
                   <div className="text-base">{show.windArranger}</div>
                 </div>
               )}
@@ -782,7 +782,7 @@ export default function EditShowPage() {
                 <input className="w-full p-2 border rounded" type="text" id="soundDesigner" value={show.soundDesigner} onChange={(e) => setShow({ ...show, soundDesigner: e.target.value })} />
               </div>
               <div>
-                <label className="block mb-2 text-sm font-medium" htmlFor="windArranger">Wind Arranger</label>
+                <label className="block mb-2 text-sm font-medium" htmlFor="windArranger">Winds Arranger</label>
                 <input className="w-full p-2 border rounded" type="text" id="windArranger" value={show.windArranger} onChange={(e) => setShow({ ...show, windArranger: e.target.value })} />
               </div>
               <div>

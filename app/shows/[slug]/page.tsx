@@ -339,7 +339,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                   .filter((a: any) => a.audioUrl)
                   .map((arrangement: any, index: number) => {
                     const parts = [];
-                    if (arrangement.arranger) parts.push(`${arrangement.arranger} (Wind)`);
+                    if (arrangement.arranger) parts.push(`${arrangement.arranger} (Winds)`);
                     if (arrangement.percussionArranger) parts.push(`${arrangement.percussionArranger} (Percussion)`);
                     
                     const description = parts.length > 0 
