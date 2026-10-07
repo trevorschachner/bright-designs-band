@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { contactSubmissionSchema } from '../contact'
 
-const valid = { name: 'Jane Doe', email: 'jane@example.com', message: 'Hello there' }
+const valid = { name: 'Jane Doe', email: 'jane@example.com', message: 'Hello there', turnstileToken: 'tok' }
 
 describe('contactSubmissionSchema', () => {
   it('accepts a well-formed submission', () => {
@@ -22,7 +22,7 @@ describe('contactSubmissionSchema', () => {
   })
 
   it('allows name and message to be absent, as the resource-download flow posts', () => {
-    expect(contactSubmissionSchema.safeParse({ email: 'jane@example.com' }).success).toBe(true)
+    expect(contactSubmissionSchema.safeParse({ email: 'jane@example.com', turnstileToken: 'tok' }).success).toBe(true)
     expect(contactSubmissionSchema.safeParse({ ...valid, type: 'resource_download', message: undefined }).success).toBe(true)
   })
 
@@ -35,6 +35,19 @@ describe('contactSubmissionSchema', () => {
     const parsed = contactSubmissionSchema.parse({ ...valid, type: 'resource_download', source: 'blog' })
     expect(parsed.type).toBe('resource_download')
     expect(parsed.source).toBe('blog')
+  })
+})
+
+describe('turnstileToken', () => {
+  it('is required on every submission', () => {
+    const { turnstileToken: _omit, ...withoutToken } = valid
+    expect(contactSubmissionSchema.safeParse(withoutToken).success).toBe(false)
+    expect(contactSubmissionSchema.safeParse({ ...valid, turnstileToken: '' }).success).toBe(false)
+  })
+
+  it('is bounded in length', () => {
+    expect(contactSubmissionSchema.safeParse({ ...valid, turnstileToken: 'x'.repeat(2048) }).success).toBe(true)
+    expect(contactSubmissionSchema.safeParse({ ...valid, turnstileToken: 'x'.repeat(2049) }).success).toBe(false)
   })
 })
 

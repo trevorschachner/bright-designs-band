@@ -343,6 +343,11 @@ Please respond within 24 hours.
   return { html, text };
 }
 
+const capConfirmationText = (value: string | undefined, max: number): string => {
+  const trimmed = (value ?? '').replace(/\s+/g, ' ').trim();
+  return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
+};
+
 export function generateCustomerConfirmationTemplate(data: ContactFormData): { html: string; text: string } {
   const serviceLabels: Record<string, string> = {
     'existing-show-purchase': 'Purchase Existing Show',
@@ -372,6 +377,14 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
     .map(s => serviceLabels[s] || s)
     .join(', ');
 
+  // This email goes to whatever address was submitted, so it must not carry
+  // the submitter's free text: echoing `message`, notes, school or referral
+  // fields would turn the form into a relay for arbitrary content sent from
+  // our domain. Only the first name and the inquiry topic (the show title on
+  // show pages) appear, both length-capped; services are fixed labels.
+  const firstName = capConfirmationText(data.firstName, 50) || 'there';
+  const topic = capConfirmationText(data.showInterest, 120);
+
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -390,94 +403,18 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
           <tr>
             <td align="center" style="background-color:${colors.white};padding:30px 20px;border-bottom:4px solid ${colors.electric};">
               <img src="${LOGO_URL}" alt="Bright Designs Band" width="200" style="display:block;max-width:200px;height:auto;background-color:${colors.white};">
-              <h1 style="margin:20px 0 0;font-size:24px;color:${colors.midnight};font-weight:600;">Thank You, ${escapeHtmlText(data.firstName)}!</h1>
+              <h1 style="margin:20px 0 0;font-size:24px;color:${colors.midnight};font-weight:600;">Thank You, ${escapeHtmlText(firstName)}!</h1>
             </td>
           </tr>
           <!-- Content -->
           <tr>
             <td style="padding:30px 20px;">
               <!-- Intro Message -->
-              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">We've received your inquiry and are excited to help bring your musical vision to life!</p>
-              
-              <!-- Submission Summary -->
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${colors.lightGray};border-radius:8px;margin-bottom:24px;">
-                <tr>
-                  <td style="padding:20px;">
-                    <h2 style="margin:0 0 16px;font-size:16px;color:${colors.midnight};font-weight:600;">Your Submission Summary</h2>
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                      ${data.showInterest ? `
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${getInquiryLabel(data)}</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${escapeHtmlText(data.showInterest)}</p>
-                        </td>
-                      </tr>
-                      ` : ''}
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Your Name</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${escapeHtmlText(data.firstName)} ${escapeHtmlText(data.lastName)}</p>
-                        </td>
-                      </tr>
-                      ${data.school ? `
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">School or Organization</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${escapeHtmlText(data.school)}</p>
-                        </td>
-                      </tr>
-                      ` : ''}
-                      ${data.bandSize ? `
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Band Size</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${data.bandSize === '150+' ? '150+ members' : escapeHtmlText(data.bandSize) + ' members'}</p>
-                        </td>
-                      </tr>
-                      ` : ''}
-                      ${data.abilityLevel ? `
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Ability Level</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${escapeHtmlText(abilityLevelLabels[data.abilityLevel] || data.abilityLevel)}</p>
-                        </td>
-                      </tr>
-                      ` : ''}
-                      ${data.instrumentation ? `
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${escapeHtmlText(additionalNotesLabel)}</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};white-space:pre-wrap;">${escapeHtmlText(data.instrumentation)}</p>
-                        </td>
-                      </tr>
-                      ` : ''}
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Services</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${escapeHtmlText(selectedServices) || 'None selected'}</p>
-                        </td>
-                      </tr>
-                      ${data.referralSource ? `
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">How did you hear about us?</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};">${escapeHtmlText(data.referralSource === 'band-director' ? 'Another Band Director' : data.referralSource === 'word-of-mouth' ? 'Word of Mouth' : data.referralSource === 'google' ? 'Google' : data.referralSource === 'instagram' ? 'Instagram' : data.referralSource === 'facebook' ? 'Facebook' : data.referralSource === 'youtube' ? 'YouTube' : data.referralSource === 'tiktok' ? 'TikTok' : data.referralSource === 'conference' ? 'Conference/Workshop' : data.referralSource === 'other' ? 'Other' : data.referralSource)}${data.referralBandDirector ? ` (Referred by: ${escapeHtmlText(data.referralBandDirector)})` : ''}</p>
-                        </td>
-                      </tr>
-                      ` : ''}
-                      ${data.message ? `
-                      <tr>
-                        <td>
-                          <p style="margin:0 0 2px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Message</p>
-                          <p style="margin:0;font-size:14px;color:${colors.charcoal};white-space:pre-wrap;">${escapeHtmlText(data.message)}</p>
-                        </td>
-                      </tr>
-                      ` : ''}
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">We've received your inquiry${topic ? ` about <strong>${escapeHtmlText(topic)}</strong>` : ''} and will reply within 24 hours.</p>
+              ${selectedServices ? `
+              <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${colors.charcoal};">Services you selected: ${escapeHtmlText(selectedServices)}</p>
+              ` : ''}
+
               <!-- What to Expect -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${colors.lightBlue};border-radius:8px;margin-bottom:24px;">
                 <tr>
@@ -530,23 +467,10 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
 
   const text = `Thank you for contacting Bright Designs Band!
 
-Hi ${data.firstName},
+Hi ${firstName},
 
-We've received your inquiry and are excited to help bring your musical vision to life!
-
-What happens next?
-Our team will review your request and respond within 24 hours during business days. We'll reach out to discuss your project and how we can best support your band.
-
-YOUR SUBMISSION SUMMARY
-Name: ${data.firstName} ${data.lastName}
-${data.school ? `School: ${data.school}` : ''}
-${data.showInterest ? `${getInquiryLabel(data)}: ${data.showInterest}` : ''}
-${data.bandSize ? `Band Size: ${data.bandSize}` : ''}
-${data.abilityLevel ? `Ability Level: ${formatAbilityLevel(data.abilityLevel)}` : ''}
-Services: ${selectedServices}
-${data.referralSource ? `How did you hear about us?: ${data.referralSource === 'band-director' ? 'Another Band Director' : data.referralSource === 'word-of-mouth' ? 'Word of Mouth' : data.referralSource === 'google' ? 'Google' : data.referralSource === 'instagram' ? 'Instagram' : data.referralSource === 'facebook' ? 'Facebook' : data.referralSource === 'youtube' ? 'YouTube' : data.referralSource === 'tiktok' ? 'TikTok' : data.referralSource === 'conference' ? 'Conference/Workshop' : data.referralSource === 'other' ? 'Other' : data.referralSource}${data.referralBandDirector ? ` (Referred by: ${data.referralBandDirector})` : ''}` : ''}
-${data.message ? `\nMessage:\n${data.message}` : ''}
-
+We've received your inquiry${topic ? ` about ${topic}` : ''} and will reply within 24 hours.
+${selectedServices ? `\nServices you selected: ${selectedServices}\n` : ''}
 In the meantime, feel free to browse our website at https://brightdesigns.band
 
 Contact Information:

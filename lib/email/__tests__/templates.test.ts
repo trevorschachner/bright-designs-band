@@ -110,10 +110,60 @@ describe('Email Templates', () => {
 
       const result = generateCustomerConfirmationTemplate(data);
       
-      // Check that name is present
+      // The first name is the only part of the name the confirmation uses
       expect(result.html).toContain('John');
-      expect(result.html).toContain('Doe');
       expect(result.text).toContain('John');
+    });
+
+    it('does not echo the submitter\'s free text back to them', () => {
+      // This email goes to whatever address was submitted. Anything the
+      // submitter typed beyond their name and topic would make it a relay.
+      const data: ContactFormData = {
+        firstName: 'Jane',
+        lastName: 'Smith',
+        email: 'jane@example.com',
+        services: ['drill-design'],
+        message: 'BUY CHEAP PILLS at spam.example',
+        instrumentation: 'NOTES-SPAM-PAYLOAD',
+        school: 'SCHOOL-SPAM-PAYLOAD',
+        referralSource: 'REFERRAL-SPAM-PAYLOAD',
+        referralBandDirector: 'DIRECTOR-SPAM-PAYLOAD',
+        bandSize: 'BANDSIZE-SPAM-PAYLOAD',
+        abilityLevel: 'ABILITY-SPAM-PAYLOAD',
+        showInterest: 'Starlight',
+        privacyAgreed: true,
+      };
+
+      const result = generateCustomerConfirmationTemplate(data);
+
+      for (const payload of [
+        'BUY CHEAP PILLS', 'NOTES-SPAM-PAYLOAD', 'SCHOOL-SPAM-PAYLOAD', 'REFERRAL-SPAM-PAYLOAD',
+        'DIRECTOR-SPAM-PAYLOAD', 'BANDSIZE-SPAM-PAYLOAD', 'ABILITY-SPAM-PAYLOAD',
+      ]) {
+        expect(result.html).not.toContain(payload);
+        expect(result.text).not.toContain(payload);
+      }
+      expect(result.html).toContain('Starlight');
+      expect(result.text).toContain('Starlight');
+      expect(result.text).toContain('24 hours');
+      expect(result.html).toContain('Drill Design');
+    });
+
+    it('caps the name and topic it does include', () => {
+      const data: ContactFormData = {
+        firstName: 'N'.repeat(300),
+        lastName: '',
+        email: 'jane@example.com',
+        services: [],
+        message: '',
+        showInterest: 'T'.repeat(500),
+        privacyAgreed: true,
+      };
+
+      const result = generateCustomerConfirmationTemplate(data);
+
+      expect(result.text).not.toContain('N'.repeat(51));
+      expect(result.text).not.toContain('T'.repeat(121));
     });
 
     it('should handle minimal required data without crashing', () => {

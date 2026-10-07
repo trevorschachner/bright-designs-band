@@ -159,24 +159,3 @@ export async function sendEmail(data: EmailNotificationData): Promise<EmailServi
       }
   }
 }
-
-// Rate limiting for contact form submissions
-const submissionTimes = new Map<string, number[]>();
-
-export function checkRateLimit(email: string, maxSubmissions = 3, windowMs = 60000): boolean {
-  const now = Date.now();
-  const submissions = submissionTimes.get(email) || [];
-  
-  // Remove old submissions outside the window
-  const recentSubmissions = submissions.filter(time => now - time < windowMs);
-  
-  if (recentSubmissions.length >= maxSubmissions) {
-    return false; // Rate limit exceeded
-  }
-  
-  // Add current submission
-  recentSubmissions.push(now);
-  submissionTimes.set(email, recentSubmissions);
-  
-  return true; // Within rate limit
-}
