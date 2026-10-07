@@ -50,7 +50,7 @@ vi.mock('@/lib/database', () => ({
   },
 }))
 vi.mock('@/lib/storage', () => ({
-  fileStorage: { getFileUrl: (p: string) => `/u/${p}` },
+  fileStorage: { getFileUrl: (f: { storagePath: string }) => `/u/${f.storagePath}` },
   withRootPrefix: (p: string) => p,
   STORAGE_BUCKET: 'test',
 }))

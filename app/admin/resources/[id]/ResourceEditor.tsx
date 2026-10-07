@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { deleteResource, updateResource } from '@/lib/actions/resources';
 import type { ResourceRow } from '@/lib/services/resources';
 import { resourceErrorMessage } from '../resource-errors';
+import { resourceFileType, uploadFileDirect } from '@/lib/uploads/direct-upload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,31 +42,9 @@ export function ResourceEditor({ resource }: { resource: ResourceRow }) {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      // Dynamically determine fileType for API based on MIME
-      const mime = file.type;
-      let type = 'other';
-      if (mime.startsWith('image/')) type = 'image';
-      else if (mime.startsWith('audio/')) type = 'audio';
-      else if (mime === 'application/pdf') type = 'pdf';
-      
-      formData.append('fileType', type);
-      formData.append('isPublic', 'true');
-      formData.append('description', 'Resource File Update');
-
-      const response = await fetch('/api/files', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Upload failed');
-      }
-
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, fileUrl: data.data.url }));
+      // Resource attachments are public and belong to no show (stored under resources/).
+      const uploaded = await uploadFileDirect({ file, fileType: resourceFileType(file), isPublic: true, description: 'Resource File Update' });
+      setFormData(prev => ({ ...prev, fileUrl: uploaded.url }));
     } catch (err) {
       console.error('Upload error:', err);
       setError(err instanceof Error && err.message ? err.message : 'Failed to upload file');
@@ -82,24 +61,8 @@ export function ResourceEditor({ resource }: { resource: ResourceRow }) {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileType', 'image');
-      formData.append('isPublic', 'true');
-      formData.append('description', 'Resource Image Update');
-
-      const response = await fetch('/api/files', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Upload failed');
-      }
-
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, imageUrl: data.data.url }));
+      const uploaded = await uploadFileDirect({ file, fileType: 'image', isPublic: true, description: 'Resource Image Update' });
+      setFormData(prev => ({ ...prev, imageUrl: uploaded.url }));
     } catch (err) {
       console.error('Upload error:', err);
       setError(err instanceof Error && err.message ? err.message : 'Failed to upload image');

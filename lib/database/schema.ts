@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check, uuid, bigint } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, FILE_TYPES, GRADE_BANDS, SHOW_DIFFICULTIES } from '../validation/enums';
 
@@ -308,6 +308,40 @@ export const adminUsers = pgTable('admin_users', {
 }, () => [
   check('admin_users_email_lower', sql`email = lower(email)`),
   check('admin_users_role_check', sql`role in ('owner','editor')`),
+]);
+
+// Signed-but-not-yet-recorded uploads. lib/actions/uploads.ts signUpload
+// inserts one (the server decides bucket, path, MIME and size), the browser
+// PUTs the object, and completeUpload checks the object against this row
+// before it writes the `files` row and deletes this one. Rows that never
+// complete expire after 24 h (scripts/cleanup-pending-uploads.ts). Server-only:
+// the app reaches it over DATABASE_URL; RLS is enabled with no policies, so
+// PostgREST sees nothing. Table from drizzle/0004.
+//
+// `path` is the full object key inside `bucket` (root prefix included).
+// show_id / arrangement_id carry no foreign keys: a show deleted mid-upload
+// leaves the row for the cleanup script rather than cascading it away and
+// orphaning the object.
+export const pendingUploads = pgTable('pending_uploads', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  bucket: text('bucket').notNull(),
+  path: text('path').notNull(),
+  expectedMime: text('expected_mime').notNull(),
+  expectedSize: bigint('expected_size', { mode: 'number' }).notNull(),
+  showId: integer('show_id'),
+  arrangementId: integer('arrangement_id'),
+  kind: text('kind').notNull(),
+  isPublic: boolean('is_public').notNull(),
+  // Display only: never used to build the path.
+  originalName: text('original_name').notNull(),
+  description: text('description'),
+  displayOrder: integer('display_order').default(0).notNull(),
+  // Admin emails are stored lower-case (admin_users), so text suffices.
+  createdBy: text('created_by').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).default(sql`now() + interval '24 hours'`).notNull(),
+}, (table) => [
+  index('pending_uploads_expires_at_idx').on(table.expiresAt),
 ]);
 
 export const contactSubmissionsRelations = relations(contactSubmissions, ({ one }) => ({

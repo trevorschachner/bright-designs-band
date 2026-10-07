@@ -1,15 +1,20 @@
+import { completeUpload, signUpload } from '@/lib/actions/uploads'
+import type { ActionResult } from '@/lib/actions/result'
+import type { UploadKind } from '@/lib/validation/files'
+
 /**
- * Browser-side direct upload: sign → PUT to Storage → record the row.
+ * Browser-side direct upload: signUpload → PUT to Storage → completeUpload.
  *
- * The two API routes (`POST /api/files/sign`, `POST /api/files`) stay until
- * SP3 Task 4 moves them to Server Actions; this is the one place that calls
- * them, so the show editor, the new-show page and `useFileUpload` share it.
+ * The one place uploads start, so the show editor, the new-show page, the
+ * resources admin and `useFileUpload` share it. The browser sends only the
+ * file's name (display), type and size; the server builds the path, picks the
+ * bucket, and records the row after checking the stored object.
  */
 
 export type UploadFileType = 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other'
 
-/** The recorded file row, as POST /api/files returns it (id and url are what callers use). */
-export type UploadedFile = { id: number; url: string } & Record<string, unknown>
+/** The recorded file row (id and url are what callers use). */
+export type UploadedFile = { id: number; url: string; showId: number | null; arrangementId: number | null }
 
 export type DirectUploadOptions = {
   file: File
@@ -23,18 +28,37 @@ export type DirectUploadOptions = {
   onProgress?: (percent: number) => void
 }
 
-type Envelope<T> = { success?: boolean; data?: T; error?: string }
-
-async function readEnvelope<T>(response: Response, fallback: string): Promise<T> {
-  const text = await response.text()
-  let body: Envelope<T> | null = null
-  try {
-    body = text ? (JSON.parse(text) as Envelope<T>) : null
-  } catch {
-    body = null
+/** Upload kinds the server knows. A PDF is stored as a score (same limits and types). */
+export function uploadKindFor(fileType: UploadFileType): UploadKind {
+  switch (fileType) {
+    case 'image':
+    case 'audio':
+    case 'score':
+    case 'other':
+      return fileType
+    case 'pdf':
+      return 'score'
+    case 'youtube':
+      throw new Error('A YouTube link is not a file upload')
   }
-  if (!response.ok || !body?.data) throw new Error(body?.error || text || fallback)
-  return body.data
+}
+
+/** The upload type for a resource attachment, from its MIME type. */
+export function resourceFileType(file: File): UploadFileType {
+  if (file.type.startsWith('image/')) return 'image'
+  if (file.type.startsWith('audio/')) return 'audio'
+  return 'other'
+}
+
+const MESSAGES: Record<string, string> = {
+  forbidden: 'You do not have permission to upload files',
+  not_found: 'The upload expired or was not found. Try again.',
+  failed: 'The upload failed. Try again.',
+}
+
+function unwrap<T>(result: ActionResult<T>, fallback: string): T {
+  if (result.ok) return result.data
+  throw new Error(result.issues?.[0]?.message ?? MESSAGES[result.error] ?? fallback)
 }
 
 export async function uploadFileDirect({
@@ -48,39 +72,33 @@ export async function uploadFileDirect({
   onProgress,
 }: DirectUploadOptions): Promise<UploadedFile> {
   onProgress?.(10)
-  const signed = await readEnvelope<{ signedUrl: string; storagePath: string }>(
-    await fetch('/api/files/sign', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileName: file.name, fileType, showId, arrangementId, isPublic }),
+  const signed = unwrap(
+    await signUpload({
+      showId,
+      arrangementId,
+      fileName: file.name,
+      mimeType: file.type,
+      size: file.size,
+      kind: uploadKindFor(fileType),
+      isPublic,
+      description: description || null,
+      displayOrder,
     }),
     'Failed to get upload URL'
   )
 
   onProgress?.(20)
-  const put = await fetch(signed.signedUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file })
+  // The signed URL carries its token. Content-Type becomes the object's
+  // mimetype, which completeUpload checks against what was signed.
+  const put = await fetch(signed.signedUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type, 'Cache-Control': 'max-age=2592000', 'x-upsert': 'false' },
+    body: file,
+  })
   if (!put.ok) throw new Error(`Storage upload failed: ${put.statusText} ${await put.text()}`)
 
   onProgress?.(80)
-  const recorded = await readEnvelope<UploadedFile>(
-    await fetch('/api/files', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        storagePath: signed.storagePath,
-        fileName: file.name,
-        fileType,
-        fileSize: file.size,
-        mimeType: file.type,
-        showId,
-        arrangementId,
-        isPublic,
-        description,
-        displayOrder,
-      }),
-    }),
-    'Failed to record file upload'
-  )
+  const recorded = unwrap(await completeUpload({ pendingId: signed.pendingId }), 'Failed to record file upload')
   onProgress?.(100)
   return recorded
 }

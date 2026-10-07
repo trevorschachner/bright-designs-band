@@ -19,9 +19,7 @@ import { guarded, InvalidError, NotFoundError } from './_guarded'
 import type { ActionResult } from './result'
 
 /**
- * File writes other than uploading. Uploads still go through
- * POST /api/files/sign + POST /api/files (direct-to-Storage, SP3 Task 4).
- * See ./README.md.
+ * File writes other than uploading (uploads: ./uploads.ts). See ./README.md.
  */
 
 export type ShowThumbnailResult = {
@@ -153,7 +151,7 @@ const runDeleteFile = guarded(
     // A YouTube link has no Storage object. Anything else: remove the object
     // first, and keep the row if Storage refuses, so a retry can finish.
     if (file.fileType !== 'youtube') {
-      const removed = await fileStorage.deleteFile(file.storagePath, await createClient())
+      const removed = await fileStorage.deleteFile(file, await createClient())
       if (!removed.success) throw new StorageRemoveError(removed.error)
     }
 

@@ -12,6 +12,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { createResource } from '@/lib/actions/resources';
 import { resourceErrorMessage } from '../resource-errors';
+import { resourceFileType, uploadFileDirect } from '@/lib/uploads/direct-upload';
 
 export default function NewResourcePage() {
   const router = useRouter();
@@ -36,38 +37,9 @@ export default function NewResourcePage() {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      // Dynamically determine fileType for API based on MIME
-      const mime = file.type;
-      let type = 'other';
-      if (mime.startsWith('image/')) type = 'image';
-      else if (mime.startsWith('audio/')) type = 'audio';
-      else if (mime === 'application/pdf') type = 'pdf';
-      
-      formData.append('fileType', type);
-      formData.append('isPublic', 'true');
-      formData.append('description', 'Resource File');
-
-      const response = await fetch('/api/files', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        // Try to parse JSON, but handle if it fails
-        let errorMessage = 'Upload failed';
-        try {
-            const data = await response.json();
-            errorMessage = data.error || errorMessage;
-        } catch (e) {
-            errorMessage = response.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, fileUrl: data.data.url }));
+      // Resource attachments are public and belong to no show (stored under resources/).
+      const uploaded = await uploadFileDirect({ file, fileType: resourceFileType(file), isPublic: true, description: 'Resource File' });
+      setFormData(prev => ({ ...prev, fileUrl: uploaded.url }));
     } catch (err) {
       console.error('Upload error:', err);
       setError(err instanceof Error && err.message ? err.message : 'Failed to upload file');
@@ -84,24 +56,8 @@ export default function NewResourcePage() {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileType', 'image');
-      formData.append('isPublic', 'true');
-      formData.append('description', 'Resource Image');
-
-      const response = await fetch('/api/files', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Upload failed');
-      }
-
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, imageUrl: data.data.url }));
+      const uploaded = await uploadFileDirect({ file, fileType: 'image', isPublic: true, description: 'Resource Image' });
+      setFormData(prev => ({ ...prev, imageUrl: uploaded.url }));
     } catch (err) {
       console.error('Upload error:', err);
       setError(err instanceof Error && err.message ? err.message : 'Failed to upload image');

@@ -31,7 +31,7 @@ export async function GET(
       return NextResponse.json({ error: 'File not found' }, { status: 404, headers: noStore })
     }
 
-    const computedUrl = fileStorage.getFileUrl(f.storagePath, f.isPublic)
+    const computedUrl = fileStorage.getFileUrl(f)
 
     return NextResponse.json({ success: true, file: { ...f, url: computedUrl } }, { headers: noStore })
 
