@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       }, 'customer inquiry confirmation');
 
     } else if (type === 'resource_download') {
-      const subject = `Resource Download: Visual Technique Guide - ${name || 'Unknown'}`;
+      const subject = `Guide request: Visual Technique Guide - ${name || 'Unknown'}`;
       const resourceServices: ServiceCategory[] = ['visual-technique-guide'];
       
       const emailData = {
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
         school: rest.school,
         role: rest.role, // Capture role if provided
         services: resourceServices,
-        message: 'User downloaded the Visual Technique Guide.',
+        message: 'Requested the Visual Technique Guide — please send it to them.',
         privacyAgreed: true,
         source: submissionSource,
       };
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
         html,
         text,
         replyTo: email,
-      }, 'admin resource download notification');
+      }, 'admin guide request notification');
 
       // We could send a specific confirmation/download link email to the user here if we wanted
       // For now, we'll stick to just the notification to admin as requested ("get an internal notification")

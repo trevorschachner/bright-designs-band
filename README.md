@@ -44,7 +44,7 @@ Open http://localhost:3000.
 | `npm run db:migrate` | Run the drizzle-kit migration, then apply pending hand-written SQL migrations. Refuses `NODE_ENV=production` unless `ALLOW_DB_MIGRATE=true`. |
 | `npm run db:migrate:status` | Show which hand-written SQL migrations are pending (dry run). |
 | `npm run db:push` | Push the schema directly with drizzle-kit. Refuses unless `ALLOW_DB_PUSH=true`, and never in production. |
-| `npm run media:optimize` | Optimize local media files (`scripts/optimize-media.ts`, see `docs/media-optimization.md`). |
+| `npm run media:optimize` | Re-encodes Supabase Storage media and, with `--apply`, rewrites production DB rows. Production; read its header first. |
 | `npm run export:shows` | Export shows, parts and pieces as CSVs for the Show Database sheet. Read-only. |
 | `npm run perf:ci` | Lighthouse CI against `lighthouserc.json`: starts `npm run start` (build first) and checks the performance budget. |
 
@@ -61,7 +61,7 @@ CI runs lint, typecheck and tests, then the build, in one job on every pull requ
 
 ### Performance budget
 
-`lighthouserc.json` sets the budget for `/`, `/shows` and `/shows/true-north` under Lighthouse's mobile emulation: performance score at least 0.95, Largest Contentful Paint at most 2 s, and at most 180 KiB of script. The `lighthouse` job in `.github/workflows/test.yml` builds the site on the runner with dummy env and runs `npm run perf:ci` on every pull request. It is advisory (`continue-on-error`) until SP2 (#59) lands, then it becomes required. With dummy env the catalog pages render their fallback state, so the real check is against production.
+`lighthouserc.json` sets the budget for `/`, `/shows` and `/about` under Lighthouse's mobile emulation: performance score at least 0.95, Largest Contentful Paint at most 2 s, and at most 180 KiB of script. The `lighthouse` job in `.github/workflows/test.yml` builds the site on the runner with dummy env and runs `npm run perf:ci` on every pull request. It is advisory (`continue-on-error`) until SP2 (#59) lands, then it becomes required. With dummy env the catalog pages render their fallback state, so the real check is against production.
 
 ## Database migrations
 

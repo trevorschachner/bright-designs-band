@@ -49,7 +49,7 @@ All deployments require the following environment variables. See `.env.example` 
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics measurement ID |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project key (analytics) |
 
 ## Step 1: Create Netlify Account
 
@@ -89,7 +89,7 @@ EMAIL_SERVICE=resend
 RESEND_API_KEY=<your-resend-key>
 EMAIL_FROM=hello@transactional.brightdesigns.band
 ADMIN_EMAIL=<your-admin-email>
-NEXT_PUBLIC_GA_MEASUREMENT_ID=<your-ga-id>
+NEXT_PUBLIC_POSTHOG_KEY=<your-posthog-key>
 ```
 
 **Getting Supabase Credentials:**

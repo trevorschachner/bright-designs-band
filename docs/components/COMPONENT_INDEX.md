@@ -129,22 +129,14 @@ Following Tailwind's spacing scale (4px base unit).
 
 ## Import Pattern
 
-**Always use the component index for imports:**
+There is no `@/components` barrel. Import each component directly from the file that defines it:
 
 ```tsx
-// ✅ Correct - Use component index
-import { Button, Card, ShowCard, InquiryForm } from '@/components'
-
-// ❌ Avoid - Direct imports
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ShowCard } from '@/components/features/shows/ShowCard'
+import { InquiryForm } from '@/components/forms/inquiry-form'
 ```
-
-This provides:
-- Single import location
-- Better tree-shaking
-- Easier refactoring
-- Consistent patterns
 
 ---
 

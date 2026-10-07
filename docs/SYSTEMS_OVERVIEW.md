@@ -80,7 +80,7 @@ NEXT_PUBLIC_SUPABASE_URL="https://xxx.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your-key"
 ```
 
-**Client Location**: `/lib/supabase.ts`
+**Client Location**: `lib/utils/supabase/server.ts` (server) and `lib/utils/supabase/client.ts` (browser)
 
 ### ORM Layer
 **Drizzle ORM**
@@ -239,9 +239,9 @@ ADMIN_EMAIL="your-email@brightdesigns.band"
   - `transactional.brightdesigns.band` - Email subdomain
 
 ### Analytics (Optional)
-**Google Analytics**
-- **Purpose**: Website traffic and user behavior analytics
-- **Configuration**: `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+**PostHog**
+- **Purpose**: Website traffic, product analytics and error capture
+- **Configuration**: `NEXT_PUBLIC_POSTHOG_KEY` (optional `NEXT_PUBLIC_POSTHOG_HOST`); client traffic is proxied through the `/ingest` rewrite
 
 ---
 
@@ -343,8 +343,8 @@ NEXT_PUBLIC_SITE_URL="https://brightdesigns.band"
 
 ### Optional Variables
 ```bash
-# Analytics
-NEXT_PUBLIC_GA_MEASUREMENT_ID="G-XXXXXXXXXX"
+# Analytics (PostHog)
+NEXT_PUBLIC_POSTHOG_KEY="phc_..."
 ```
 
 **Location**: `.env.local` (not committed to git)
@@ -468,7 +468,7 @@ HTML to User
 - **Netlify Logs**: Deployment and function logs
 - **Resend Dashboard**: Email delivery tracking
 - **Supabase Logs**: Database query logs, auth events
-- **Analytics**: Google Analytics (if configured)
+- **Analytics**: PostHog (if configured)
 
 ---
 

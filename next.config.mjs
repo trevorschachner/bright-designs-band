@@ -1,9 +1,10 @@
 import { securityHeaders } from './lib/security-headers.mjs';
 
 // Derive the Storage host from the same env var the app uses at runtime.
-// Netlify masks secrets as `****` during the build step, and the build must
-// still succeed, so a missing/masked/invalid value warns once and omits the
-// Supabase image pattern and CSP origin instead of throwing.
+// Netlify masks secrets as `****` during the build step. Outside a Netlify
+// production build (CONTEXT !== 'production': deploy previews, branch deploys,
+// local), a missing/masked/invalid value warns once and omits the Supabase
+// image pattern and CSP origin. In production it throws.
 const supabaseHostname = (() => {
   const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   if (raw && raw !== '****') {
@@ -12,6 +13,15 @@ const supabaseHostname = (() => {
     } catch {
       // fall through to the warning
     }
+  }
+  // On a Netlify production deploy (CONTEXT=production) a missing value would
+  // ship a site whose next/image rejects every Supabase poster, so fail fast.
+  if (process.env.CONTEXT === 'production') {
+    throw new Error(
+      '[next.config] NEXT_PUBLIC_SUPABASE_URL is missing, masked or invalid in a ' +
+        'production build. Set it in Netlify (production context) so Supabase ' +
+        'images are allowed by next/image.'
+    );
   }
   console.warn(
     '[next.config] NEXT_PUBLIC_SUPABASE_URL is missing, masked or invalid; ' +

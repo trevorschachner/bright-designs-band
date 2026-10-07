@@ -70,7 +70,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
 
   # Performance budget (lighthouserc.json): performance >= 0.95, LCP <= 2 s,
-  # script <= 180 KiB, mobile emulation, on /, /shows and /shows/true-north.
+  # script <= 180 KiB, mobile emulation, on /, /shows and /about.
   # Builds and serves the site on the runner instead of waiting on the Netlify
   # deploy preview, so the result does not depend on Netlify timing. With the
   # dummy env the catalog pages render their empty/fallback state, so these

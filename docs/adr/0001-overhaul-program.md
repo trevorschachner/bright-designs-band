@@ -17,7 +17,7 @@ The site grew quickly across many sessions and tools. By August 2026 an architec
 ## Consequences
 
 - Less code and fewer dependencies to maintain; one way to do each thing (one Supabase client pair, one toast hook, one env module).
-- Owners add and remove people in `/admin/users` without a deploy.
+- Once SP3 (#60) lands, owners will add and remove people in `/admin/users` without a deploy.
 - Site-owned columns in the sheet are replaced by each export; sheet-only columns are untouched. Do not edit site-owned columns in the sheet; edit them in the admin.
 - Server errors that are not caught are reported to PostHog through `instrumentation.ts` `onRequestError` (an SP0 implementation detail, not one of the five decisions).
 - Cache invalidation on admin writes must be completed (SP2, #59) before the catalog can be fully server-rendered.

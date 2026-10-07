@@ -6,7 +6,7 @@
       "url": [
         "http://localhost:3000/",
         "http://localhost:3000/shows",
-        "http://localhost:3000/shows/true-north"
+        "http://localhost:3000/about"
       ],
       "numberOfRuns": 2
     },
