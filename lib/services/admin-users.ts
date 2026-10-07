@@ -49,7 +49,7 @@ export async function mutateAdminUsers<T>(
 ): Promise<T> {
   return db.transaction(async (tx) => {
     const current = (await tx.select(columns).from(adminUsers).for('update')).map(toRow)
-    const byEmail = sql`lower(${adminUsers.email}::text)`
+    const byEmail = sql`lower(${adminUsers.email})`
     const writer: AdminUsersWriter = {
       async insert(row) {
         const inserted = await tx

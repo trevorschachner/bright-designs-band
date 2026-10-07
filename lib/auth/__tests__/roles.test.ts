@@ -80,7 +80,7 @@ describe('getUserRole', () => {
     rows = [{ role: 'editor' }]
     expect(await getUserRole('  Trevor@BrightDesigns.Band ')).toBe('editor')
     const query = dialect.sqlToQuery(whereArgs[0])
-    expect(query.sql).toMatch(/lower\(.*"email"::text\)/)
+    expect(query.sql).toMatch(/lower\(.*"email"\)/)
     expect(query.params).toEqual(['trevor@brightdesigns.band'])
   })
 

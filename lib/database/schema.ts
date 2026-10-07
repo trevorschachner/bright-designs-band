@@ -1,5 +1,5 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, customType } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
 
 // Enums
 export const gradeBandEnum = pgEnum('grade_band', ['1_2', '3_4', '5_plus']);
@@ -270,24 +270,24 @@ export const contactRateLimits = pgTable('contact_rate_limits', {
   pk: primaryKey({ columns: [table.ip, table.windowStart] }),
 }));
 
-// Postgres `citext` (case-insensitive text). Drizzle has no built-in type for
-// it; the driver returns it as a string. Queries still compare
-// lower(email) = <lower-cased input> so they never rely on citext operators.
-const citext = customType<{ data: string }>({
-  dataType() {
-    return 'citext';
-  },
-});
-
-// Named admin allowlist (drizzle/migrations/2026-10-08_admin_users.sql). A row
-// here is what grants admin access: lib/auth/roles.ts getUserRole() reads it
-// per request, and RLS policies call public.is_admin_user() over it.
+// Named admin allowlist. Created by drizzle migration 0002; the seed, the RLS
+// helper functions and the policies live in
+// drizzle/migrations/2026-10-08_admin_users.sql. A row here is what grants
+// admin access: lib/auth/roles.ts getUserRole() reads it per request, and RLS
+// policies call public.is_admin_user() over it.
+//
+// Emails are stored lower-case (enforced by admin_users_email_lower) and every
+// lookup compares against lower(<input>), so plain text equality is
+// case-insensitive in effect.
 export const adminUsers = pgTable('admin_users', {
-  email: citext('email').primaryKey(),
+  email: text('email').primaryKey(),
   role: text('role', { enum: ['owner', 'editor'] }).notNull(),
-  addedBy: citext('added_by'),
+  addedBy: text('added_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, () => [
+  check('admin_users_email_lower', sql`email = lower(email)`),
+  check('admin_users_role_check', sql`role in ('owner','editor')`),
+]);
 
 export const contactSubmissionsRelations = relations(contactSubmissions, ({ one }) => ({
   interestedShow: one(shows, {

@@ -52,7 +52,7 @@ const lookupRole = cache(async (normalizedEmail: string): Promise<AdminRole | nu
     rows = await db
       .select({ role: adminUsers.role })
       .from(adminUsers)
-      .where(sql`lower(${adminUsers.email}::text) = ${normalizedEmail}`)
+      .where(sql`lower(${adminUsers.email}) = ${normalizedEmail}`)
       .limit(1)
   } catch (error) {
     if (isUndefinedTable(error)) {

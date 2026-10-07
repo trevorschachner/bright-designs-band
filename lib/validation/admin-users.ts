@@ -5,7 +5,7 @@ import { ADMIN_ROLES, type AdminRole } from '@/lib/auth/permissions'
  * Admin allowlist payloads and the rules that protect it.
  *
  * Emails are trimmed and lower-cased before validation, so the table never
- * holds two spellings of one address (the column is citext as well).
+ * holds two spellings of one address (a CHECK constraint on the column enforces lower case too).
  */
 const email = z.preprocess(
   (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
