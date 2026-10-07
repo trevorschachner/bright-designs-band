@@ -1,28 +1,29 @@
-'use client';
-
+import { Suspense, type ReactNode } from 'react';
+import Link from 'next/link';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { PaginationInfo } from '@/lib/filters/types';
+import { LimitSelect } from './limit-select';
 
 interface PaginationProps {
   pagination: PaginationInfo;
-  onPageChange: (page: number) => void;
-  onLimitChange: (limit: number) => void;
-  isLoading?: boolean;
+  /** Href of a given page, filters included. Pages are plain links. */
+  hrefForPage: (page: number) => string;
+  /** Page sizes offered by the "Show:" select. */
+  limitOptions: readonly number[];
+  defaultLimit: number;
 }
 
+/**
+ * Server-rendered pagination. Every page is a real <Link> carrying the current
+ * filters in its query string (`?page=`), so it prefetches, works without
+ * JavaScript and is crawlable. Only the page-size select is a client island.
+ */
 export function Pagination({
   pagination,
-  onPageChange,
-  onLimitChange,
-  isLoading = false
+  hrefForPage,
+  limitOptions,
+  defaultLimit,
 }: PaginationProps) {
   const { page, limit, total, totalPages, hasNext, hasPrev } = pagination;
 
@@ -101,36 +102,18 @@ export function Pagination({
         {/* Items per page */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Show:</span>
-          <Select 
-            value={limit.toString()} 
-            onValueChange={(value) => onLimitChange(parseInt(value, 10))}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-20" aria-label="Results per page">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Reads useSearchParams: its own boundary keeps the page from bailing out. */}
+          <Suspense fallback={null}>
+            <LimitSelect limit={limit} options={limitOptions} defaultLimit={defaultLimit} />
+          </Suspense>
         </div>
 
         {/* Page Navigation */}
         <div className="flex items-center gap-1">
           {/* Previous Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page - 1)}
-            disabled={!hasPrev || isLoading}
-            aria-label="Previous page"
-          >
+          <PageLink href={hasPrev ? hrefForPage(page - 1) : undefined} label="Previous page">
             <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-          </Button>
+          </PageLink>
 
           {/* Page Numbers */}
           {pageNumbers.map((pageNum, index) => {
@@ -147,27 +130,43 @@ export function Pagination({
                 key={pageNum}
                 variant={pageNum === page ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => onPageChange(pageNum)}
-                disabled={isLoading}
                 className="min-w-[2.5rem]"
+                asChild
               >
-                {pageNum}
+                <Link
+                  href={hrefForPage(pageNum)}
+                  aria-current={pageNum === page ? 'page' : undefined}
+                >
+                  {pageNum}
+                </Link>
               </Button>
             );
           })}
 
           {/* Next Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page + 1)}
-            disabled={!hasNext || isLoading}
-            aria-label="Next page"
-          >
+          <PageLink href={hasNext ? hrefForPage(page + 1) : undefined} label="Next page">
             <ChevronRight className="w-4 h-4" aria-hidden="true" />
-          </Button>
+          </PageLink>
         </div>
       </div>
     </div>
+  );
+}
+
+/** Previous/next: a link when there is somewhere to go, a disabled button otherwise. */
+function PageLink({ href, label, children }: { href?: string; label: string; children: ReactNode }) {
+  if (!href) {
+    return (
+      <Button variant="outline" size="sm" disabled aria-label={label}>
+        {children}
+      </Button>
+    );
+  }
+  return (
+    <Button variant="outline" size="sm" asChild>
+      <Link href={href} aria-label={label}>
+        {children}
+      </Link>
+    </Button>
   );
 }

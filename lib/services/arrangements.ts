@@ -10,7 +10,7 @@ import { and, asc, eq, exists, inArray, sql, count } from 'drizzle-orm';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterState } from '@/lib/filters/types';
 import { TAGS } from '@/lib/cache-tags';
-import { cachedRead } from './cache';
+import { cachedRead, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
 import { PUBLIC_FILE_COLUMNS, type PublicFile } from './shows';
 
 type TagRef = { id: number; name: string };
@@ -47,16 +47,10 @@ export type ArrangementListItem = {
   id: number;
   title: string;
   composer: string | null;
-  arranger: string | null;
-  scene: string | null;
-  grade: string | null;
-  year: number | null;
   durationSeconds: number | null;
-  ensembleSize: string | null;
   sampleScoreUrl: string | null;
   files: { id: number; fileType: string; url: string }[];
-  showArrangements: { show: { id: number; title: string; slug: string; thumbnailUrl: string | null } | null }[];
-  tags: TagRef[];
+  showArrangements: { show: { id: number; title: string; slug: string } | null }[];
 };
 
 /**
@@ -99,16 +93,13 @@ async function fetchArrangementsPage(
       offset,
       where,
       orderBy,
+      // Only what a catalog row renders. Search and filters still cover
+      // arranger and scene; they act in SQL and need no projection.
       columns: {
         id: true,
         title: true,
         composer: true,
-        arranger: true,
-        scene: true,
-        grade: true,
-        year: true,
         durationSeconds: true,
-        ensembleSize: true,
         sampleScoreUrl: true,
       },
       with: {
@@ -122,26 +113,26 @@ async function fetchArrangementsPage(
         showArrangements: {
           columns: {},
           limit: 1,
-          with: { show: { columns: { id: true, title: true, slug: true, thumbnailUrl: true } } },
+          with: { show: { columns: { id: true, title: true, slug: true } } },
         },
-        arrangementsToTags: { columns: {}, with: { tag: { columns: { id: true, name: true } } } },
       },
     }),
   ]);
 
-  const data: ArrangementListItem[] = rows.map(({ arrangementsToTags: at, ...row }) => ({
+  const data: ArrangementListItem[] = rows.map((row) => ({
     ...row,
     files: row.files ?? [],
     showArrangements: row.showArrangements ?? [],
-    tags: (at ?? []).map((r) => r.tag).filter((t): t is TagRef => Boolean(t)),
   }));
 
   return { data, total: Number(totalResult[0]?.count ?? 0) };
 }
 
-export const getArrangementsPage = cachedRead('arrangements-page-v2', fetchArrangementsPage, {
+/** Cached per serialised filter; call it through `queryArrangements` (./catalog.ts). */
+export const getArrangementsPage = cachedRead('arrangements-page-v3', fetchArrangementsPage, {
   tags: () => [TAGS.arrangements, TAGS.shows, TAGS.tags],
   atBuildWithoutDb: { data: [] as ArrangementListItem[], total: 0 },
+  revalidate: (filterState) => (filterState.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
 });
 
 // ---------------------------------------------------------------------------

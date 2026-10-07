@@ -6,6 +6,9 @@ import { shouldSkipSupabase } from '@/lib/env';
 /** How long a cached public read lives before it is refreshed in the background. */
 export const REVALIDATE_SECONDS = 3600;
 
+/** Lifetime of a catalog page read with a free-text search (see README). */
+export const SEARCH_REVALIDATE_SECONDS = 300;
+
 /**
  * True while `next build` runs without a usable database: CI, and Netlify
  * builds where the env is masked. Pages prerendered then (/, /resources,
@@ -24,12 +27,14 @@ interface CachedReadOptions<A extends unknown[], R> {
   tags: (...args: A) => string[];
   /** What to return during a build that has no database. */
   atBuildWithoutDb: R;
+  /** Seconds this entry lives, per call. Defaults to REVALIDATE_SECONDS. */
+  revalidate?: (...args: A) => number;
 }
 
 /**
  * A public read: cached with `unstable_cache` under `key` (plus the
  * JSON-serialised arguments, which unstable_cache appends itself), tagged,
- * revalidated hourly. Errors are not caught: they propagate to the caller and
+ * revalidated hourly (or per `options.revalidate`). Errors are not caught: they propagate to the caller and
  * are never cached.
  *
  * Results pass through JSON on a cache hit, so `fn` must return JSON-safe
@@ -44,7 +49,7 @@ export function cachedRead<A extends unknown[], R>(
   return (...args: A) => {
     if (databaseUnavailableAtBuild()) return Promise.resolve(options.atBuildWithoutDb);
     return unstable_cache(fn, [key], {
-      revalidate: REVALIDATE_SECONDS,
+      revalidate: options.revalidate?.(...args) ?? REVALIDATE_SECONDS,
       tags: options.tags(...args),
     })(...args);
   };

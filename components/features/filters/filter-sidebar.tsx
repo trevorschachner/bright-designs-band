@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Search, X, SortAsc, SortDesc, RotateCcw, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,40 +26,69 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
-import { FilterState, FilterField, SortCondition, FilterPreset } from '@/lib/filters/types';
+import { FilterField, FilterState, SortCondition, FilterPreset } from '@/lib/filters/types';
+import { useCatalogUrlState } from '@/lib/hooks/use-catalog-url-state';
 
 interface FilterSidebarProps {
-  filterState: FilterState;
-  onFilterStateChange: (state: FilterState) => void;
+  /** The allowlist from lib/filters/filter-definitions.ts, passed from the server page. */
   filterFields: FilterField[];
   presets?: FilterPreset[];
-  isLoading?: boolean;
+  /**
+   * The result count, rendered by the server inside its own Suspense boundary
+   * (the sidebar renders before the list's data is in).
+   */
+  resultCount?: ReactNode;
+  defaultLimit?: number;
+  /**
+   * Legacy controlled mode, kept only for the unused
+   * components/features/resources/ResourcePage.tsx. When both are given the
+   * component reports changes instead of writing the URL.
+   */
+  filterState?: FilterState;
+  onFilterStateChange?: (state: FilterState) => void;
+  /** Legacy: a plain count instead of `resultCount`. */
   totalResults?: number;
+  isLoading?: boolean;
   isMobile?: boolean;
 }
 
+/**
+ * The catalog's filter controls. State lives in the URL (useCatalogUrlState):
+ * every control writes there, after one 300 ms debounce, and the server page
+ * re-renders the list. Reads useSearchParams, so the page must render it
+ * inside a <Suspense> boundary.
+ */
 export function FilterSidebar({
-  filterState,
-  onFilterStateChange,
   filterFields,
   presets = [],
-  isLoading = false,
+  resultCount,
+  defaultLimit,
+  filterState: controlledState,
+  onFilterStateChange: controlledChange,
   totalResults,
+  isLoading = false,
   isMobile = false
 }: FilterSidebarProps) {
+  const url = useCatalogUrlState({ filterFields, defaultLimit });
+  const controlled = Boolean(controlledState && controlledChange);
+  const filterState = controlled ? controlledState! : url.filterState;
+  const onFilterStateChange = (next: FilterState, options?: { immediate?: boolean }) =>
+    controlled ? controlledChange!(next) : url.setFilterState(next, options);
+  const { hasPendingChange } = url;
+  const isPending = url.isPending || isLoading;
+  const countLabel =
+    resultCount ?? (totalResults !== undefined ? `${totalResults} result${totalResults !== 1 ? 's' : ''} found` : undefined);
   const [searchValue, setSearchValue] = useState(filterState.search || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
   const [isFeaturedOnly, setIsFeaturedOnly] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const filterStateRef = useRef(filterState);
-  filterStateRef.current = filterState;
 
-  // Sync input when filterState.search is cleared externally (not when debounce fires)
+  // Follow the URL (back/forward, a chip removed elsewhere) unless the user is
+  // mid-edit: then the box keeps what they typed.
   useEffect(() => {
-    if (!debounceRef.current) {
+    if (!hasPendingChange()) {
       setSearchValue(filterState.search || '');
     }
-  }, [filterState.search]);
+  }, [filterState.search, hasPendingChange]);
 
   useEffect(() => {
     const difficultyCond = filterState.conditions.find(c => c.field === 'difficulty');
@@ -79,19 +108,19 @@ export function FilterSidebar({
     setIsFeaturedOnly(featuredCond?.value === true);
   }, [filterState.conditions]);
 
+  // One debounce, in useCatalogUrlState. The box used to add its own 400 ms
+  // on top of the URL hook's 300 ms.
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      debounceRef.current = null;
-      onFilterStateChange({ ...filterStateRef.current, search: value || undefined, page: 1 });
-    }, 400);
+    onFilterStateChange({ ...filterState, search: value || undefined, page: 1 });
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      onFilterStateChange({ ...filterStateRef.current, search: (e.target as HTMLInputElement).value || undefined, page: 1 });
+      onFilterStateChange(
+        { ...filterState, search: (e.target as HTMLInputElement).value || undefined, page: 1 },
+        { immediate: true }
+      );
     }
   };
 
@@ -101,7 +130,7 @@ export function FilterSidebar({
       ...filterState,
       search: undefined,
       page: 1
-    });
+    }, { immediate: true });
   };
 
   const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
@@ -175,7 +204,7 @@ export function FilterSidebar({
       sort: [],
       page: 1,
       limit: filterState.limit
-    });
+    }, { immediate: true });
     setSearchValue('');
     setSelectedDifficulty([]);
     setIsFeaturedOnly(false);
@@ -482,13 +511,9 @@ export function FilterSidebar({
           )}
 
           {/* Results Summary */}
-          {totalResults !== undefined && (
+          {countLabel !== undefined && (
             <div className="text-sm text-muted-foreground">
-              {isLoading ? (
-                'Loading...'
-              ) : (
-                `${totalResults} result${totalResults !== 1 ? 's' : ''} found`
-              )}
+              {isPending ? 'Loading...' : countLabel}
             </div>
           )}
         </div>

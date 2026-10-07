@@ -8,6 +8,7 @@ Writes stay in the API routes, and each one ends by calling one helper from
 | --- | --- |
 | `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs |
 | `arrangements.ts` | The `/api/arrangements` page, arrangement detail, an arrangement's public files |
+| `catalog.ts` | `queryShows` / `queryArrangements`: parse + bound the catalog query, then one paged read (below) |
 | `pieces.ts` | Public source-piece credits; admin piece lists |
 | `resources.ts` | Active resources; admin list including drafts |
 | `tags.ts` | All tags |
@@ -60,6 +61,30 @@ We use `unstable_cache`, not `'use cache'`. Decided once for the whole layer.
    The admin UI asks for them with `?admin=true` (shows, tags) or `?all=true`
    (resources), so it sees its own writes. These routes are dynamic route
    handlers, so no `connection()` or `noStore()` call is needed.
+
+## The catalog (`catalog.ts`)
+
+`/shows`, `/arrangements`, `GET /api/shows` and `GET /api/arrangements` all
+read one page through `queryShows(filters)` / `queryArrangements(filters)`.
+These are not a second cache: they parse and bound the filters, then call
+`getShowsPage` (`shows-page-v2`) or `getArrangementsPage`
+(`arrangements-page-v3`), so there is one cache entry per (entity,
+serialised filters).
+
+- **Parsing** (`lib/filters/catalog-params.ts`, client-safe): a condition or
+  sort naming a field outside `filter-definitions.ts`, or an operator that
+  field does not offer, is dropped, not rejected. `limit` is capped at 48,
+  `page` floored at 1, `search` trimmed, whitespace-collapsed and cut to 80
+  characters. `queryShows` re-applies the bounds and a fixed key order, so a
+  caller that skipped parsing cannot mint extra entries.
+- **Searched reads are cached too, but for 300 s** (`SEARCH_REVALIDATE_SECONDS`)
+  instead of 3600. Free text is the only input with a long tail of one-off
+  values; a shorter life lets those entries age out. Same key and tags.
+- **Admin is exempt.** `GET /api/shows?admin=true` from staff still calls the
+  uncached `getShowsPageForAdmin` with the admin table's own page sizes (up to
+  100).
+- `queryShows` is wrapped in React `cache`, so the list and the sidebar's
+  result count share one call per render.
 
 ## Invalidation
 

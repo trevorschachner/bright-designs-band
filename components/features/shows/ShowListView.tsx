@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
-import { Show } from "@/lib/types/shows";
+import type { ShowCardItem } from "./ShowCard";
 
 interface ShowListViewProps {
-  item: Show;
+  item: ShowCardItem;
   isLoading?: boolean;
   priority?: boolean;
 }
@@ -30,7 +30,7 @@ export function ShowListView({ item: show, isLoading, priority = false }: ShowLi
   })();
 
   return (
-    <Link href={`/shows/${(show as any).slug ?? show.id}`} className="block">
+    <Link href={`/shows/${show.slug ?? show.id}`} className="block">
       <Card className="frame-card group overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
         <div className="flex flex-col sm:flex-row">
           {/* Thumbnail */}

@@ -1,18 +1,6 @@
-'use client';
-
-// View toggle controls have moved into the results table toolbar
-
-interface ShowCatalogHeroProps {
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
-  totalShows?: number;
-}
-
-export function ShowCatalogHero({ 
-  viewMode: _viewMode, 
-  onViewModeChange: _onViewModeChange,
-  totalShows: _totalShows 
-}: ShowCatalogHeroProps) {
+// Static copy: a server component. The grid/list toggle lives with the
+// results (components/features/catalog/ShowResults.tsx).
+export function ShowCatalogHero() {
   return (
     <section className="relative bg-gradient-to-br from-primary/10 via-background to-primary/5 border-b border-border">
       <div className="container mx-auto px-4 py-16 sm:py-20">

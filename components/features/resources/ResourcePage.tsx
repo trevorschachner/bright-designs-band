@@ -1,6 +1,17 @@
 'use client';
 
+/**
+ * @deprecated Unused. /shows is now server-rendered from
+ * components/features/catalog/ (ShowsList) and nothing imports this; the
+ * admin pages' `NewResourcePage` / `EditResourcePage` are unrelated
+ * same-named functions. Kept compiling until it is deleted. It still fetches
+ * on mount, which is the path the public catalog no longer takes.
+ */
+
 import { useState, useEffect, ComponentType } from "react";
+import { usePathname } from "next/navigation";
+import { FilterUrlManager } from "@/lib/filters/query-builder";
+import { CATALOG_LIMIT_OPTIONS } from "@/lib/filters/catalog-params";
 import { FilterBar } from "@/components/features/filters/filter-bar";
 import { FilterSidebar } from "@/components/features/filters/filter-sidebar";
 import { Pagination } from "@/components/features/filters/pagination";
@@ -97,8 +108,8 @@ export default function ResourcePage<T>({
     fetchData();
   }, [filterState, apiEndpoint, resourceName]);
 
-  const handlePageChange = (page: number) => setFilterState({ ...filterState, page });
-  const handleLimitChange = (limit: number) => setFilterState({ ...filterState, limit, page: 1 });
+  const pathname = usePathname();
+  const hrefForPage = (page: number) => FilterUrlManager.getUrl(pathname, { ...filterState, page });
 
   if (error) {
     return (
@@ -290,9 +301,9 @@ export default function ResourcePage<T>({
                 {items.length > 0 && response.pagination && (
                   <Pagination
                     pagination={response.pagination}
-                    onPageChange={handlePageChange}
-                    onLimitChange={handleLimitChange}
-                    isLoading={isLoading}
+                    hrefForPage={hrefForPage}
+                    limitOptions={CATALOG_LIMIT_OPTIONS}
+                    defaultLimit={initialLimit}
                   />
                 )}
               </>
@@ -354,9 +365,9 @@ export default function ResourcePage<T>({
           {items.length > 0 && response.pagination && (
             <Pagination
               pagination={response.pagination}
-              onPageChange={handlePageChange}
-              onLimitChange={handleLimitChange}
-              isLoading={isLoading}
+              hrefForPage={hrefForPage}
+              limitOptions={CATALOG_LIMIT_OPTIONS}
+              defaultLimit={initialLimit}
             />
           )}
         </>

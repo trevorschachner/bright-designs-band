@@ -15,7 +15,7 @@ import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 import { shouldSkipSupabase } from '@/lib/env';
 import { publicStorageUrl } from '@/lib/media/public-url';
 import { TAGS } from '@/lib/cache-tags';
-import { cachedRead, toIso } from './cache';
+import { cachedRead, toIso, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
 
 // ---------------------------------------------------------------------------
 // Shared shapes and helpers
@@ -342,9 +342,16 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
   return { data, total: Number(totalResult[0]?.count ?? 0) };
 }
 
+/**
+ * Cached per serialised params. Call it through lib/services/catalog.ts
+ * (`queryShows`), which bounds and canonicalises the params first. A searched
+ * page lives 5 minutes instead of an hour: free text is the one input with a
+ * long tail of one-off values.
+ */
 export const getShowsPage = cachedRead('shows-page-v2', fetchShowsPage, {
   tags: LIST_TAGS,
   atBuildWithoutDb: { data: [] as ShowListItem[], total: 0 },
+  revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
 });
 
 /** The same page, uncached, for the admin shows table. */

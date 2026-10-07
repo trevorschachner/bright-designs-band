@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Search, X, SortAsc, SortDesc, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,50 +13,73 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { FilterState, FilterField, SortCondition, FilterPreset } from '@/lib/filters/types';
+import { FilterField, FilterState, SortCondition, FilterPreset } from '@/lib/filters/types';
+import { useCatalogUrlState } from '@/lib/hooks/use-catalog-url-state';
 
 interface FilterBarProps {
-  filterState: FilterState;
-  onFilterStateChange: (state: FilterState) => void;
+  /** The allowlist from lib/filters/filter-definitions.ts, passed from the server page. */
   filterFields: FilterField[];
   presets?: FilterPreset[];
-  isLoading?: boolean;
+  /** The result count, server-rendered in its own Suspense boundary. */
+  resultCount?: ReactNode;
+  defaultLimit?: number;
+  /**
+   * Legacy controlled mode, kept only for the unused
+   * components/features/resources/ResourcePage.tsx. When both are given the
+   * component reports changes instead of writing the URL.
+   */
+  filterState?: FilterState;
+  onFilterStateChange?: (state: FilterState) => void;
+  /** Legacy: a plain count instead of `resultCount`. */
   totalResults?: number;
+  isLoading?: boolean;
 }
 
+/**
+ * Inline catalog filters (search, sort, active chips). Same URL contract as
+ * FilterSidebar: one 300 ms debounce, then router.replace. Reads
+ * useSearchParams, so render it inside a <Suspense> boundary.
+ */
 export function FilterBar({
-  filterState,
-  onFilterStateChange,
   filterFields,
   presets = [],
+  resultCount,
+  defaultLimit,
+  filterState: controlledState,
+  onFilterStateChange: controlledChange,
+  totalResults,
   isLoading = false,
-  totalResults
 }: FilterBarProps) {
+  const url = useCatalogUrlState({ filterFields, defaultLimit });
+  const controlled = Boolean(controlledState && controlledChange);
+  const filterState = controlled ? controlledState! : url.filterState;
+  const onFilterStateChange = (next: FilterState, options?: { immediate?: boolean }) =>
+    controlled ? controlledChange!(next) : url.setFilterState(next, options);
+  const { hasPendingChange } = url;
+  const isPending = url.isPending || isLoading;
+  const countLabel =
+    resultCount ?? (totalResults !== undefined ? `${totalResults} result${totalResults !== 1 ? 's' : ''} found` : undefined);
   const [searchValue, setSearchValue] = useState(filterState.search || '');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const filterStateRef = useRef(filterState);
-  filterStateRef.current = filterState;
 
-  // Sync input when filterState is cleared externally (not when debounce fires)
+  // Follow the URL unless the user is mid-edit.
   useEffect(() => {
-    if (!debounceRef.current) {
+    if (!hasPendingChange()) {
       setSearchValue(filterState.search || '');
     }
-  }, [filterState.search]);
+  }, [filterState.search, hasPendingChange]);
 
+  // One debounce, in useCatalogUrlState (the box used to add its own 400 ms).
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      debounceRef.current = null;
-      onFilterStateChange({ ...filterStateRef.current, search: value || undefined, page: 1 });
-    }, 400);
+    onFilterStateChange({ ...filterState, search: value || undefined, page: 1 });
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      onFilterStateChange({ ...filterStateRef.current, search: (e.target as HTMLInputElement).value || undefined, page: 1 });
+      onFilterStateChange(
+        { ...filterState, search: (e.target as HTMLInputElement).value || undefined, page: 1 },
+        { immediate: true }
+      );
     }
   };
 
@@ -66,7 +89,7 @@ export function FilterBar({
       ...filterState,
       search: undefined,
       page: 1
-    });
+    }, { immediate: true });
   };
 
   const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
@@ -95,7 +118,7 @@ export function FilterBar({
       sort: [],
       page: 1,
       limit: filterState.limit
-    });
+    }, { immediate: true });
     setSearchValue('');
   };
 
@@ -268,13 +291,9 @@ export function FilterBar({
       )}
 
       {/* Results Summary */}
-      {totalResults !== undefined && (
+      {countLabel !== undefined && (
         <div className="text-sm text-muted-foreground">
-          {isLoading ? (
-            'Loading...'
-          ) : (
-            `${totalResults} result${totalResults !== 1 ? 's' : ''} found`
-          )}
+          {isPending ? 'Loading...' : countLabel}
         </div>
       )}
     </div>

@@ -1,53 +1,69 @@
-'use client';
+import { Suspense } from 'react';
+import { ShowCatalogHero } from '@/components/features/shows/ShowCatalogHero';
+import { FilterSidebar } from '@/components/features/filters/filter-sidebar';
+import { ActiveFilterChips } from '@/components/features/catalog/ActiveFilterChips';
+import { CatalogSkeleton } from '@/components/features/catalog/CatalogSkeleton';
+import { ShowsList, ShowsResultCount } from '@/components/features/catalog/ShowsList';
+import { SHOWS_FILTER_FIELDS } from '@/lib/filters/filter-definitions';
+import { SHOWS_PRESETS } from '@/lib/filters/presets';
+import { parseShowsQuery, SHOWS_DEFAULT_LIMIT } from '@/lib/services/catalog';
 
-import { useState, useEffect } from "react";
-import ResourcePage from "@/components/features/resources/ResourcePage";
-import { ShowCard } from "@/components/features/shows/ShowCard";
-import { ShowListView } from "@/components/features/shows/ShowListView";
-import { ShowCatalogHero } from "@/components/features/shows/ShowCatalogHero";
-import { SHOWS_FILTER_FIELDS } from "@/lib/filters/filter-definitions";
-import { SHOWS_PRESETS } from "@/lib/filters/presets";
-import { Show } from "@/lib/types/shows";
+// The data is tag-cached (lib/services/catalog.ts) and expires on every show
+// write; this keeps the rendered HTML from outliving it by more than a minute.
+export const revalidate = 60;
 
-export default function ShowsPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [totalShows, setTotalShows] = useState<number | undefined>(undefined);
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-  // Load view mode preference from localStorage
-  useEffect(() => {
-    const savedViewMode = localStorage.getItem('showsViewMode') as 'grid' | 'list' | null;
-    if (savedViewMode) {
-      setViewMode(savedViewMode);
-    }
-  }, []);
-
-  // Save view mode preference to localStorage
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
-    setViewMode(mode);
-    localStorage.setItem('showsViewMode', mode);
+/**
+ * The show catalog, rendered on the server. The URL is the filter state:
+ * `?search=&filters=&sort=&page=&limit=` (lib/filters/catalog-params.ts;
+ * unknown fields are ignored). The filter controls are client islands that
+ * rewrite the URL; the list below re-renders here from the new query.
+ */
+export default async function ShowsPage({ searchParams }: { searchParams: SearchParams }) {
+  const filters = parseShowsQuery(await searchParams);
+  const sidebarProps = {
+    filterFields: SHOWS_FILTER_FIELDS,
+    presets: SHOWS_PRESETS,
+    defaultLimit: SHOWS_DEFAULT_LIMIT,
+    resultCount: (
+      <Suspense fallback="Loading...">
+        <ShowsResultCount filters={filters} />
+      </Suspense>
+    ),
   };
 
   return (
     <div>
-      {/* Hero Section */}
-      <ShowCatalogHero 
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-        totalShows={totalShows}
-      />
+      <ShowCatalogHero />
 
-      {/* Main Content with Sidebar Layout */}
-      <ResourcePage<Show>
-        resourceName="shows"
-        apiEndpoint="/api/shows"
-        filterFields={SHOWS_FILTER_FIELDS}
-        filterPresets={SHOWS_PRESETS}
-        CardComponent={ShowCard}
-        ListComponent={ShowListView}
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-        useSidebar={true}
-      />
+      <div className="flex min-h-screen">
+        {/* Desktop sidebar. A CSS breakpoint, not a measured window width. */}
+        <div className="hidden lg:block flex-shrink-0">
+          <Suspense fallback={<aside className="w-80 border-r border-border bg-muted/30 h-screen" />}>
+            <FilterSidebar {...sidebarProps} />
+          </Suspense>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="container mx-auto px-4 py-8">
+            <Suspense fallback={null}>
+              <ActiveFilterChips filterFields={SHOWS_FILTER_FIELDS} defaultLimit={SHOWS_DEFAULT_LIMIT} />
+            </Suspense>
+
+            {/* Mobile filter button (opens the sidebar as a sheet) */}
+            <div className="mb-6 lg:hidden">
+              <Suspense fallback={null}>
+                <FilterSidebar {...sidebarProps} isMobile />
+              </Suspense>
+            </div>
+
+            <Suspense fallback={<CatalogSkeleton />}>
+              <ShowsList filters={filters} />
+            </Suspense>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -6,27 +6,21 @@ import { guard } from '@/lib/auth/guard';
 import { showSchema } from '@/lib/validation/shows';
 import { SuccessResponse, PrivateResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { reportError } from '@/lib/observability/report-error';
-import { getShowsPage, getShowsPageForAdmin, type ShowsPageParams } from '@/lib/services/shows';
+import { getShowsPageForAdmin, type ShowsPageParams } from '@/lib/services/shows';
+import { parseShowsQuery, queryShows } from '@/lib/services/catalog';
 import { invalidateShow } from '@/lib/services/invalidate';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * A page of the public catalog: the same `queryShows` the /shows page renders
+ * from, so the two answer identically. Envelope unchanged:
+ * `{ success, data: { data, pagination, appliedFilters } }`. Unknown filter
+ * fields and operators are dropped, `limit` is capped at 48 and `search` at 80
+ * characters (lib/filters/catalog-params.ts).
+ */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const filterState = FilterUrlManager.fromUrlParams(searchParams);
-
-  const page = filterState.page || 1;
-  const limit = filterState.limit || 20;
-  const featuredParam = searchParams.get('featured');
-
-  const params: ShowsPageParams = {
-    search: filterState.search,
-    conditions: filterState.conditions || [],
-    sort: filterState.sort || [],
-    page,
-    limit,
-    featured: featuredParam && ['true', '1'].includes(featuredParam.toLowerCase()) ? true : undefined,
-  };
 
   try {
     // The admin shows table asks with ?admin=true and must see its own writes
@@ -35,13 +29,30 @@ export async function GET(request: Request) {
     // a body under the URL the admin UI reads.
     if (searchParams.get('admin') === 'true') {
       const gate = await guard('canManageShows');
-      const { data, total } = gate.denied ? await getShowsPage(params) : await getShowsPageForAdmin(params);
+      if (gate.denied) {
+        const filters = parseShowsQuery(searchParams);
+        const { rows, total } = await queryShows(filters);
+        return PrivateResponse(QueryBuilder.buildFilteredResponse(rows, total, filters));
+      }
+      // Staff keep the unbounded page sizes the admin table offers (up to 100).
+      const filterState = FilterUrlManager.fromUrlParams(searchParams);
+      const limit = filterState.limit || 20;
+      const featuredParam = searchParams.get('featured');
+      const params: ShowsPageParams = {
+        search: filterState.search,
+        conditions: filterState.conditions || [],
+        sort: filterState.sort || [],
+        page: filterState.page || 1,
+        limit,
+        featured: featuredParam && ['true', '1'].includes(featuredParam.toLowerCase()) ? true : undefined,
+      };
+      const { data, total } = await getShowsPageForAdmin(params);
       return PrivateResponse(QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit }));
     }
 
-    const { data, total } = await getShowsPage(params);
-    const response = QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit });
-    return SuccessResponse(response);
+    const filters = parseShowsQuery(searchParams);
+    const { rows, total } = await queryShows(filters);
+    return SuccessResponse(QueryBuilder.buildFilteredResponse(rows, total, filters));
   } catch (error) {
     // A filter naming something the table does not have is the caller's
     // mistake. It used to fall into the branch below and come back as an empty

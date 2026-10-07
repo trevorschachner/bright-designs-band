@@ -1,29 +1,31 @@
 import { arrangements, showArrangements, arrangementsToTags, shows } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
-import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
+import { QueryBuilder } from '@/lib/filters/query-builder';
 import { UnknownFilterFieldError } from '@/lib/filters/table-query';
 import { eq, desc } from 'drizzle-orm';
 import { withDb } from '@/lib/utils/db';
 import { PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';
-import { getArrangementsPage } from '@/lib/services/arrangements';
+import { parseArrangementsQuery, queryArrangements } from '@/lib/services/catalog';
 import { invalidateArrangement } from '@/lib/services/invalidate';
 
+/**
+ * A page of the arrangements catalog via `queryArrangements`, the same read
+ * /arrangements renders from. Raw body (no envelope), unchanged:
+ * `{ data, pagination, appliedFilters }`. Filters are parsed and bounded by
+ * lib/filters/catalog-params.ts.
+ */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const filterState = FilterUrlManager.fromUrlParams(searchParams);
-  // Default pagination; the response reflects the limit actually used.
-  const activeFilterState = { ...filterState, page: filterState.page || 1, limit: filterState.limit || 25 };
+  const filters = parseArrangementsQuery(searchParams);
 
   try {
-    const { data, total } = await getArrangementsPage(activeFilterState);
-    const response = QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit: activeFilterState.limit });
-    // Raw body (no envelope) on purpose: app/arrangements/page.tsx reads it as-is.
+    const { rows, total } = await queryArrangements(filters);
+    const response = QueryBuilder.buildFilteredResponse(rows, total, filters);
     return NextResponse.json(response, { headers: PUBLIC_CACHE_HEADERS });
   } catch (error) {
     // A filter naming a column the table does not have is the caller's
-    // mistake, not a server fault. It used to land in the 500 below, which is
-    // how the dead `type` and `price` filters presented.
+    // mistake, not a server fault.
     if (error instanceof UnknownFilterFieldError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
