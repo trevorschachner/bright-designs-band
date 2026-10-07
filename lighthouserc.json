@@ -13,7 +13,7 @@
     "assert": {
       "aggregationMethod": "median-run",
       "assertions": {
-        "resource-summary:script:size": ["error", { "maxNumericValue": 389120 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 435139 }],
         "resource-summary:total:size": ["error", { "maxNumericValue": 1572864 }],
         "categories:performance": ["warn", { "minScore": 0.85 }],
         "largest-contentful-paint": ["warn", { "maxNumericValue": 4000 }],

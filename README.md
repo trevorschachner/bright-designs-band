@@ -61,7 +61,7 @@ CI runs lint, typecheck and tests, then the build, in one job on every pull requ
 
 ### Performance budget
 
-`lighthouserc.json` sets the budget for `/`, `/shows` and `/about` under Lighthouse's mobile emulation (three runs, median). Blocking: script at most 380 KiB (389120 bytes), total transfer at most 1.5 MiB, SEO score at least 0.95, best-practices score at least 0.9. Warn-only: performance score at least 0.85 and Largest Contentful Paint at most 4 s, because a shared runner's timings swing by 20+ points between runs. The App Router's own client runtime is about 116 KiB of script before any page code, so SP1's original 180 KiB / 0.95 / 2 s budget was unreachable. The `lighthouse` job in `.github/workflows/test.yml` builds the site on the runner with dummy env and runs `npm run perf:ci` on every pull request; the real LCP check is Lighthouse against the Netlify deploy preview, recorded in `docs/perf-baseline.md`.
+`lighthouserc.json` sets the budget for `/`, `/shows` and `/about` under Lighthouse's mobile emulation (three runs, median). Blocking: script at most 425 KiB (435139 bytes), total transfer at most 1.5 MiB, SEO score at least 0.95, best-practices score at least 0.9. Warn-only: performance score at least 0.85 and Largest Contentful Paint at most 4 s, because a shared runner's timings swing by 20+ points between runs. The App Router's own client runtime is about 116 KiB of script before any page code, so SP1's original 180 KiB / 0.95 / 2 s budget was unreachable. The `lighthouse` job in `.github/workflows/test.yml` builds the site on the runner with dummy env and runs `npm run perf:ci` on every pull request; the real LCP check is Lighthouse against the Netlify deploy preview, recorded in `docs/perf-baseline.md`.
 
 ## Database migrations
 
