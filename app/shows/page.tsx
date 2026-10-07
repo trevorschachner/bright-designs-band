@@ -8,9 +8,7 @@ import { SHOWS_FILTER_FIELDS } from '@/lib/filters/filter-definitions';
 import { SHOWS_PRESETS } from '@/lib/filters/presets';
 import { parseShowsQuery, SHOWS_DEFAULT_LIMIT } from '@/lib/services/catalog';
 
-// The data is tag-cached (lib/services/catalog.ts) and expires on every show
-// write; this keeps the rendered HTML from outliving it by more than a minute.
-export const revalidate = 60;
+// Dynamic (it reads searchParams); the data itself is tag-cached in lib/services/catalog.ts.
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

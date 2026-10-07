@@ -22,19 +22,20 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  try {
-    // The admin shows table asks with ?admin=true and must see its own writes
-    // at once, so staff get an uncached read. Anyone else gets the public
-    // data, but every ?admin=true answer is private: the edge must never store
-    // a body under the URL the admin UI reads.
-    if (searchParams.get('admin') === 'true') {
+  // The admin shows table asks with ?admin=true and must see its own writes
+  // at once, so staff get an uncached read. Anyone else gets the public
+  // data, but every ?admin=true answer is private: the edge must never store
+  // a body under the URL the admin UI reads.
+  if (searchParams.get('admin') === 'true') {
+    try {
       const gate = await guard('canManageShows');
       if (gate.denied) {
         const filters = parseShowsQuery(searchParams);
         const { rows, total } = await queryShows(filters);
         return PrivateResponse(QueryBuilder.buildFilteredResponse(rows, total, filters));
       }
-      // Staff keep the unbounded page sizes the admin table offers (up to 100).
+      // Staff keep the unparsed filters and the admin table's page sizes (up
+      // to 100), so a bad field can still reach buildTableQuery: answer 400.
       const filterState = FilterUrlManager.fromUrlParams(searchParams);
       const limit = filterState.limit || 20;
       const featuredParam = searchParams.get('featured');
@@ -48,18 +49,22 @@ export async function GET(request: Request) {
       };
       const { data, total } = await getShowsPageForAdmin(params);
       return PrivateResponse(QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit }));
+    } catch (error) {
+      if (error instanceof UnknownFilterFieldError) {
+        return BadRequestResponse(`Unknown filter field: ${error.field}`);
+      }
+      await reportError(error, { operation: 'GET /api/shows' });
+      return ErrorResponse('Failed to load shows', 500);
     }
+  }
 
+  // Public: parseShowsQuery drops unknown fields, so no filter error can
+  // reach the query; a failure here is a server fault.
+  try {
     const filters = parseShowsQuery(searchParams);
     const { rows, total } = await queryShows(filters);
     return SuccessResponse(QueryBuilder.buildFilteredResponse(rows, total, filters));
   } catch (error) {
-    // A filter naming something the table does not have is the caller's
-    // mistake. It used to fall into the branch below and come back as an empty
-    // 200, so a broken filter was indistinguishable from a genuine no-match.
-    if (error instanceof UnknownFilterFieldError) {
-      return BadRequestResponse(`Unknown filter field: ${error.field}`);
-    }
     await reportError(error, { operation: 'GET /api/shows' });
     return ErrorResponse('Failed to load shows', 500);
   }

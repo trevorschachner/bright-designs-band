@@ -6,9 +6,7 @@ import { ArrangementsList, ArrangementsResultCount } from '@/components/features
 import { ARRANGEMENTS_FILTER_FIELDS } from '@/lib/filters/filter-definitions';
 import { ARRANGEMENTS_DEFAULT_LIMIT, parseArrangementsQuery } from '@/lib/services/catalog';
 
-// Data is tag-cached and expires on every arrangement write; this bounds how
-// long the rendered HTML can trail it.
-export const revalidate = 60;
+// Dynamic (it reads searchParams); the data itself is tag-cached in lib/services/catalog.ts.
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

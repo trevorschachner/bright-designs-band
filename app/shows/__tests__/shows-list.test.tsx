@@ -17,6 +17,8 @@ vi.mock('next/navigation', () => ({
 }))
 
 import { ShowsList } from '@/components/features/catalog/ShowsList'
+import { ShowListView } from '@/components/features/shows/ShowListView'
+import { ShowCard } from '@/components/features/shows/ShowCard'
 
 const show = (id: number) => ({
   id,
@@ -93,5 +95,16 @@ describe('ShowsList', () => {
     await renderList()
     expect(screen.getByText('No shows found')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Clear All Filters' })).toHaveAttribute('href', '/shows')
+  })
+
+  it('puts no button or nested link inside a card link (grid and list views)', () => {
+    render(
+      <>
+        <ShowCard item={show(1)} />
+        <ShowListView item={show(2)} />
+      </>
+    )
+    expect(document.querySelectorAll('a button, a a')).toHaveLength(0)
+    expect(document.querySelector('a[href="/shows/show-2"]')).not.toBeNull()
   })
 })

@@ -97,4 +97,44 @@ describe('FilterSidebar', () => {
     act(() => vi.advanceTimersByTime(300))
     expect(replace).not.toHaveBeenCalled()
   })
+
+  it('keeps a trailing space while typing, after the URL lands without it', () => {
+    const { rerender } = render(<FilterSidebar filterFields={fields} />)
+    fireEvent.change(searchBox(), { target: { value: 'gold ' } })
+    act(() => vi.advanceTimersByTime(300))
+    expect(replace).toHaveBeenCalledWith('/shows?search=gold', { scroll: false })
+
+    // The navigation lands: the URL now says search=gold.
+    search.value = 'search=gold'
+    rerender(<FilterSidebar filterFields={fields} />)
+    expect(searchBox()).toHaveValue('gold ')
+
+    fireEvent.change(searchBox(), { target: { value: 'gold r' } })
+    act(() => vi.advanceTimersByTime(300))
+    expect(replace).toHaveBeenLastCalledWith('/shows?search=gold+r', { scroll: false })
+  })
+
+  it('still follows the URL when it changes to a different search', () => {
+    const { rerender } = render(<FilterSidebar filterFields={fields} />)
+    expect(searchBox()).toHaveValue('')
+    search.value = 'search=apex'
+    rerender(<FilterSidebar filterFields={fields} />)
+    expect(searchBox()).toHaveValue('apex')
+  })
+
+  it('gives two mounted sidebars (desktop + mobile sheet) distinct ids', () => {
+    render(
+      <>
+        <FilterSidebar filterFields={fields} />
+        <FilterSidebar filterFields={fields} />
+      </>
+    )
+    const ids = [...document.querySelectorAll('[id]')].map((el) => el.id)
+    expect(ids.length).toBeGreaterThan(4)
+    expect(new Set(ids).size).toBe(ids.length)
+    // Each label still points at its own control.
+    const boxes = screen.getAllByRole('checkbox', { name: 'Beginner' })
+    expect(boxes).toHaveLength(2)
+    expect(boxes[0].id).not.toBe(boxes[1].id)
+  })
 })

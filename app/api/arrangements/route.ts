@@ -2,7 +2,6 @@ import { arrangements, showArrangements, arrangementsToTags, shows } from '@/lib
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
 import { QueryBuilder } from '@/lib/filters/query-builder';
-import { UnknownFilterFieldError } from '@/lib/filters/table-query';
 import { eq, desc } from 'drizzle-orm';
 import { withDb } from '@/lib/utils/db';
 import { PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';
@@ -24,11 +23,7 @@ export async function GET(request: Request) {
     const response = QueryBuilder.buildFilteredResponse(rows, total, filters);
     return NextResponse.json(response, { headers: PUBLIC_CACHE_HEADERS });
   } catch (error) {
-    // A filter naming a column the table does not have is the caller's
-    // mistake, not a server fault.
-    if (error instanceof UnknownFilterFieldError) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    // parseArrangementsQuery drops unknown fields, so this is a server fault.
     console.error('Error fetching arrangements:', error);
     return NextResponse.json({ error: 'Failed to fetch arrangements' }, { status: 500 });
   }

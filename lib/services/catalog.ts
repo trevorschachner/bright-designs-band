@@ -95,14 +95,26 @@ function toPage<T>(rows: T[], total: number, page: number, pageSize: number): Ca
 // serialised params because `cache` compares arguments by identity.
 const showsPageOnce = cache(async (key: string) => {
   const params = JSON.parse(key) as ShowsPageParams;
-  const { data, total } = await getShowsPage(params);
-  return toPage(data, total, params.page, params.limit);
+  const first = await getShowsPage(params);
+  const last = totalPagesFor(first.total, params.limit);
+  // A page past the end (a stale `?page=99`) shows the last page, never an
+  // empty "No shows found" while there are results.
+  if (last > 0 && params.page > last) {
+    const { data, total } = await getShowsPage({ ...params, page: last });
+    return toPage(data, total, last, params.limit);
+  }
+  return toPage(first.data, first.total, params.page, params.limit);
 });
 
 const arrangementsPageOnce = cache(async (key: string) => {
   const params = JSON.parse(key) as ReturnType<typeof canonicalArrangementsParams>;
-  const { data, total } = await getArrangementsPage(params);
-  return toPage(data, total, params.page, params.limit);
+  const first = await getArrangementsPage(params);
+  const last = totalPagesFor(first.total, params.limit);
+  if (last > 0 && params.page > last) {
+    const { data, total } = await getArrangementsPage({ ...params, page: last });
+    return toPage(data, total, last, params.limit);
+  }
+  return toPage(first.data, first.total, params.page, params.limit);
 });
 
 /** One page of shows. Throws UnknownFilterFieldError only for unparsed input naming a missing column. */

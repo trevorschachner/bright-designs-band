@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useId, type ReactNode } from 'react';
 import { Search, X, SortAsc, SortDesc, RotateCcw, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Info } from 'lucide-react';
 import { FilterField, FilterState, SortCondition, FilterPreset } from '@/lib/filters/types';
 import { useCatalogUrlState } from '@/lib/hooks/use-catalog-url-state';
+import { normalizeSearch } from '@/lib/filters/catalog-params';
 
 interface FilterSidebarProps {
   /** The allowlist from lib/filters/filter-definitions.ts, passed from the server page. */
@@ -81,13 +82,24 @@ export function FilterSidebar({
   const [searchValue, setSearchValue] = useState(filterState.search || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
   const [isFeaturedOnly, setIsFeaturedOnly] = useState(false);
+  // The desktop sidebar and the mobile sheet are both mounted (a CSS
+  // breakpoint picks one), so every id is prefixed per instance.
+  const idPrefix = useId();
+  const ids = {
+    search: `${idPrefix}-search`,
+    sort: `${idPrefix}-sort`,
+    difficulty: (level: string) => `${idPrefix}-difficulty-${level}`,
+  };
 
   // Follow the URL (back/forward, a chip removed elsewhere) unless the user is
   // mid-edit: then the box keeps what they typed.
+  // Compare normalised: the URL stores `gold` for a box reading `gold `, and
+  // overwriting the box with it would eat the space the user just typed.
   useEffect(() => {
-    if (!hasPendingChange()) {
-      setSearchValue(filterState.search || '');
-    }
+    if (hasPendingChange()) return;
+    setSearchValue((current) =>
+      (normalizeSearch(current) ?? '') === (filterState.search ?? '') ? current : filterState.search || ''
+    );
   }, [filterState.search, hasPendingChange]);
 
   useEffect(() => {
@@ -257,13 +269,13 @@ export function FilterSidebar({
 
           {/* Search */}
           <div className="space-y-2">
-            <Label htmlFor="search" className="text-sm font-medium">
+            <Label htmlFor={ids.search} className="text-sm font-medium">
               Search
             </Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                id="search"
+                id={ids.search}
                 placeholder="Search shows..."
                 value={searchValue}
                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -326,11 +338,11 @@ export function FilterSidebar({
                           >
                             <Checkbox
                               checked={checked}
-                              id={`difficulty-${level}`}
+                              id={ids.difficulty(level)}
                               onCheckedChange={() => handleDifficultyToggle(level)}
                             />
                             <label
-                              htmlFor={`difficulty-${level}`}
+                              htmlFor={ids.difficulty(level)}
                               className="flex-1 select-none cursor-pointer"
                             >
                               {level}
@@ -394,7 +406,7 @@ export function FilterSidebar({
 
           {/* Sort */}
           <div className="space-y-2">
-            <Label htmlFor="sort" className="text-sm font-medium">
+            <Label htmlFor={ids.sort} className="text-sm font-medium">
               Sort By
             </Label>
             <Select
@@ -406,7 +418,7 @@ export function FilterSidebar({
                 }
               }}
             >
-              <SelectTrigger id="sort">
+              <SelectTrigger id={ids.sort}>
                 <SelectValue placeholder="Select sort order...">
                   {filterState.sort.length > 0 ? (
                     <div className="flex items-center gap-2">

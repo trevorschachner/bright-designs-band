@@ -180,4 +180,19 @@ describe('pagination', () => {
     const opts = showsFindMany.mock.calls[0][0] as { limit: number; offset: number }
     expect(opts).toMatchObject({ limit: 12, offset: 24 })
   })
+
+  it('serves the last page for a page past the end, never an empty page with results', async () => {
+    total.value = 30
+    const page = await queryShows(parseShowsQuery(q({ page: '99', limit: '12' })))
+    expect(page).toMatchObject({ total: 30, page: 3, pageSize: 12, totalPages: 3 })
+    const offsets = showsFindMany.mock.calls.map((c) => (c[0] as { offset: number }).offset)
+    expect(offsets).toEqual([99 * 12 - 12, 24])
+  })
+
+  it('leaves page 1 of an empty result alone', async () => {
+    total.value = 0
+    const page = await queryArrangements(parseArrangementsQuery(q({ page: '5' })))
+    expect(page).toMatchObject({ total: 0, page: 5, totalPages: 0 })
+    expect(arrangementsFindMany).toHaveBeenCalledTimes(1)
+  })
 })

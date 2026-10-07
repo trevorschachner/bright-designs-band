@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { FilterField, FilterState, SortCondition, FilterPreset } from '@/lib/filters/types';
 import { useCatalogUrlState } from '@/lib/hooks/use-catalog-url-state';
+import { normalizeSearch } from '@/lib/filters/catalog-params';
 
 interface FilterBarProps {
   /** The allowlist from lib/filters/filter-definitions.ts, passed from the server page. */
@@ -62,10 +63,12 @@ export function FilterBar({
   const [searchValue, setSearchValue] = useState(filterState.search || '');
 
   // Follow the URL unless the user is mid-edit.
+  // Normalised compare keeps a trailing space the URL dropped.
   useEffect(() => {
-    if (!hasPendingChange()) {
-      setSearchValue(filterState.search || '');
-    }
+    if (hasPendingChange()) return;
+    setSearchValue((current) =>
+      (normalizeSearch(current) ?? '') === (filterState.search ?? '') ? current : filterState.search || ''
+    );
   }, [filterState.search, hasPendingChange]);
 
   // One debounce, in useCatalogUrlState (the box used to add its own 400 ms).

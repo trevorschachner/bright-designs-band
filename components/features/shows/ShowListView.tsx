@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
 import type { ShowCardItem } from "./ShowCard";
@@ -48,13 +49,17 @@ export function ShowListView({ item: show, isLoading, priority = false }: ShowLi
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <Button
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
-                size="sm"
+              {/* Decorative: the whole card is the link, so no <button> inside it. */}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  buttonVariants({ size: "sm" }),
+                  "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
+                )}
               >
                 <Play className="w-4 h-4 mr-2" />
                 Preview
-              </Button>
+              </span>
             </div>
           </div>
 
