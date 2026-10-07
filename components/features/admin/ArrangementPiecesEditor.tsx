@@ -1,54 +1,46 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ArrowDown, ArrowUp, Loader2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { setArrangementPieces } from '@/lib/actions/arrangements';
+import { createPiece } from '@/lib/actions/pieces';
+import type { ActionResult } from '@/lib/actions/result';
 import { canCreatePiece, moveItem, suggestPieces, type PieceSummary } from '@/lib/pieces/editor';
 
 /**
  * Add, remove and reorder the source pieces an arrangement (show part) is
- * built from (#51). Each change saves immediately, the same way the Files
- * panel beside it does, so there is no separate Save step to forget.
+ * built from (#51). Each change saves immediately (`setArrangementPieces`),
+ * the same way the Files panel beside it does, so there is no separate Save
+ * step to forget. The linked list and the catalogue come from the server
+ * page (getShowForEdit).
  */
 
 type LinkedPiece = PieceSummary & { orderIndex: number };
 
-async function readJson<T>(res: Response): Promise<T> {
-  const body = await res.json().catch(() => null);
-  if (!res.ok || !body?.success) {
-    const detail = body?.details ? ` (${JSON.stringify(body.details)})` : '';
-    throw new Error(`${body?.error || `Request failed (${res.status})`}${detail}`);
-  }
-  return body.data as T;
+function failure(result: Extract<ActionResult<unknown>, { ok: false }>): string {
+  if (result.issues?.length) return result.issues.map((issue) => issue.message).join('; ');
+  if (result.error === 'forbidden') return 'You do not have permission to edit pieces.';
+  if (result.error === 'not_found') return 'This part was deleted. Reload the page.';
+  return 'Could not save the pieces. Try again.';
 }
 
-export function ArrangementPiecesEditor({ arrangementId }: { arrangementId: number }) {
-  const [linked, setLinked] = useState<LinkedPiece[]>([]);
-  const [allPieces, setAllPieces] = useState<PieceSummary[] | null>(null);
-  const [loading, setLoading] = useState(true);
+export function ArrangementPiecesEditor({
+  arrangementId,
+  initialPieces,
+  allPieces: catalogue,
+}: {
+  arrangementId: number;
+  initialPieces: LinkedPiece[];
+  allPieces: PieceSummary[];
+}) {
+  const [linked, setLinked] = useState<LinkedPiece[]>(initialPieces);
+  const [allPieces, setAllPieces] = useState<PieceSummary[]>(catalogue);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [newComposer, setNewComposer] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/arrangements/${arrangementId}/pieces`)
-      .then(res => readJson<LinkedPiece[]>(res))
-      .then(rows => { if (!cancelled) setLinked(rows); })
-      .catch(err => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [arrangementId]);
-
-  const loadAllPieces = useCallback(() => {
-    if (allPieces) return;
-    fetch('/api/pieces')
-      .then(res => readJson<PieceSummary[]>(res))
-      .then(setAllPieces)
-      .catch(err => setError(err.message));
-  }, [allPieces]);
 
   const save = async (next: PieceSummary[]) => {
     const previous = linked;
@@ -56,15 +48,16 @@ export function ArrangementPiecesEditor({ arrangementId }: { arrangementId: numb
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/arrangements/${arrangementId}/pieces`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pieceIds: next.map(p => p.id) }),
-      });
-      setLinked(await readJson<LinkedPiece[]>(res));
-    } catch (err) {
+      const result = await setArrangementPieces({ arrangementId, pieceIds: next.map(p => p.id) });
+      if (result.ok) {
+        setLinked(result.data);
+      } else {
+        setLinked(previous);
+        setError(failure(result));
+      }
+    } catch {
       setLinked(previous);
-      setError(err instanceof Error ? err.message : String(err));
+      setError('Could not save the pieces. Try again.');
     } finally {
       setSaving(false);
     }
@@ -82,24 +75,25 @@ export function ArrangementPiecesEditor({ arrangementId }: { arrangementId: numb
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch('/api/pieces', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, composer: newComposer }),
-      });
-      const created = await readJson<PieceSummary>(res);
-      setAllPieces(prev => (prev ? [...prev, created] : prev));
+      const result = await createPiece({ title, composer: newComposer });
+      if (!result.ok) {
+        setError(failure(result));
+        setSaving(false);
+        return;
+      }
+      const created: PieceSummary = { id: result.data.id, title: result.data.title, composer: result.data.composer };
+      setAllPieces(prev => [...prev, created]);
       setQuery('');
       setNewComposer('');
       await save([...linked, created]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+    } catch {
+      setError('Could not create the piece. Try again.');
       setSaving(false);
     }
   };
 
-  const suggestions = suggestPieces(allPieces ?? [], linked.map(p => p.id), query);
-  const offerCreate = allPieces !== null && canCreatePiece(allPieces, query);
+  const suggestions = suggestPieces(allPieces, linked.map(p => p.id), query);
+  const offerCreate = canCreatePiece(allPieces, query);
 
   return (
     <div className="space-y-3">
@@ -114,9 +108,7 @@ export function ArrangementPiecesEditor({ arrangementId }: { arrangementId: numb
         </div>
       )}
 
-      {loading ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
-      ) : linked.length === 0 ? (
+      {linked.length === 0 ? (
         <p className="text-xs text-muted-foreground">No source pieces linked yet.</p>
       ) : (
         <ol className="divide-y rounded border border-border bg-background">
@@ -168,17 +160,13 @@ export function ArrangementPiecesEditor({ arrangementId }: { arrangementId: numb
           type="text"
           placeholder="Add a piece: search by title or composer"
           value={query}
-          onFocus={loadAllPieces}
           onChange={e => setQuery(e.target.value)}
           disabled={saving}
           aria-label="Search pieces to add"
         />
         {query.trim() && (
           <div className="rounded border border-border bg-background">
-            {allPieces === null ? (
-              <p className="px-3 py-2 text-xs text-muted-foreground">Loading pieces…</p>
-            ) : (
-              <>
+            <>
                 {suggestions.map(piece => (
                   <button
                     key={piece.id}
@@ -214,8 +202,7 @@ export function ArrangementPiecesEditor({ arrangementId }: { arrangementId: numb
                 {suggestions.length === 0 && !offerCreate && (
                   <p className="px-3 py-2 text-xs text-muted-foreground">Already on this part.</p>
                 )}
-              </>
-            )}
+            </>
           </div>
         )}
       </div>

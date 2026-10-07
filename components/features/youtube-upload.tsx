@@ -10,11 +10,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Video, AlertCircle, CheckCircle, Plus } from 'lucide-react'
 import { YouTubePlayer, isValidYouTubeUrl } from './youtube-player'
+import { attachYouTube, type AttachedFile } from '@/lib/actions/files'
 
 interface YouTubeUploadProps {
   showId?: number
   arrangementId?: number
-  onUploadSuccess?: (file: any) => void
+  onUploadSuccess?: (file: AttachedFile) => void
   onUploadError?: (error: string) => void
 }
 
@@ -49,32 +50,23 @@ export function YouTubeUpload({
     setSuccess(null)
 
     try {
-      const response = await fetch('/api/files/youtube', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url,
-          fileType: 'youtube',
-          isPublic,
-          description,
-          displayOrder: 0,
-          showId,
-          arrangementId,
-        }),
+      const result = await attachYouTube({
+        url,
+        isPublic,
+        description: description || null,
+        displayOrder: 0,
+        showId,
+        arrangementId,
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Upload failed')
+      if (!result.ok) {
+        throw new Error(result.issues?.[0]?.message ?? 'Could not add the YouTube link')
       }
 
       setSuccess('YouTube video added successfully!')
       setUrl('')
       setDescription('')
-      onUploadSuccess?.(result.file)
+      onUploadSuccess?.(result.data)
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed'
