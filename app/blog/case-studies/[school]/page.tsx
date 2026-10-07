@@ -243,7 +243,7 @@ function AlpharettaContent() {
   )
 }
 
-const CONTENT_MAP: Record<string, () => JSX.Element> = {
+const CONTENT_MAP: Record<string, () => React.JSX.Element> = {
   'travelers-rest': TravelersRestContent,
   dorman: DormanContent,
   alpharetta: AlpharettaContent,
