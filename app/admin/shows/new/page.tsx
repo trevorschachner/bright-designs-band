@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import { createShowWithThumbnail } from '@/lib/admin/create-show';
 
 export default function NewShowPage() {
   const router = useRouter();
@@ -35,7 +36,6 @@ export default function NewShowPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
 
   useEffect(() => {
     fetch('/api/tags')
@@ -62,90 +62,6 @@ export default function NewShowPage() {
     }
   };
 
-  // Helper to safely parse JSON response
-  const parseJsonResponse = async (response: Response): Promise<{ data: any; rawText: string }> => {
-    const rawText = await response.text();
-    if (!rawText) return { data: null, rawText };
-    try {
-      return { data: JSON.parse(rawText), rawText };
-    } catch {
-      return { data: null, rawText };
-    }
-  };
-
-  const uploadThumbnail = async (showId: number): Promise<string | null> => {
-    if (!thumbnailFile) return null;
-
-    setIsUploadingThumbnail(true);
-    try {
-      // 1. Get Signed Upload URL
-      const signResponse = await fetch('/api/files/sign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: thumbnailFile.name,
-          fileType: 'image',
-          showId: showId,
-          isPublic: true,
-        }),
-      });
-
-      const { data: signResult, rawText: signRaw } = await parseJsonResponse(signResponse);
-
-      if (!signResponse.ok || !signResult) {
-         throw new Error(signResult?.error || signRaw || 'Failed to get upload URL');
-      }
-
-      const { signedUrl, storagePath } = signResult.data;
-
-      // 2. Upload to Supabase Storage directly
-      const uploadResponse = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': thumbnailFile.type,
-        },
-        body: thumbnailFile,
-      });
-
-      if (!uploadResponse.ok) {
-        const errText = await uploadResponse.text();
-        throw new Error(`Storage upload failed: ${uploadResponse.statusText} ${errText}`);
-      }
-
-      // 3. Record Metadata in DB
-      const recordResponse = await fetch('/api/files', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storagePath,
-          fileName: thumbnailFile.name,
-          fileType: 'image',
-          fileSize: thumbnailFile.size,
-          mimeType: thumbnailFile.type,
-          showId: showId,
-          isPublic: true,
-          description: 'Show thumbnail',
-          displayOrder: 0,
-        }),
-      });
-
-      const { data: recordResult, rawText: recordRaw } = await parseJsonResponse(recordResponse);
-
-      if (!recordResponse.ok) {
-         throw new Error(recordResult?.error || recordRaw || 'Failed to record file upload');
-      }
-
-      return recordResult?.data?.url || null;
-
-    } catch (error) {
-      console.error('Error uploading thumbnail:', error);
-      // Propagate error so we know it failed, but don't stop the whole flow if show was created
-      throw error;
-    } finally {
-      setIsUploadingThumbnail(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -153,13 +69,12 @@ export default function NewShowPage() {
     setSubmitSuccess(false);
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         title,
         difficulty,
         duration,
         displayOrder: parseInt(displayOrder) || 0,
         description,
-        tags: selectedTags,
       };
 
       // Add year if provided
@@ -170,50 +85,26 @@ export default function NewShowPage() {
         }
       }
 
-      // First create the show
-      const response = await fetch('/api/shows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const result = await createShowWithThumbnail({
+        payload,
+        tags: selectedTags,
+        thumbnail: thumbnailFile,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create show');
+      if (result.status === 'created_without_thumbnail') {
+        console.warn('Show created but thumbnail upload failed:', result.error);
+        setSubmitError(
+          `Show created, but the thumbnail was not saved: ${result.error}. Opening the editor so you can retry.`
+        );
+      } else {
+        setSubmitSuccess(true);
       }
 
-      const createdShowId = result.id;
-
-      // Then upload thumbnail if provided
-      if (thumbnailFile && createdShowId) {
-        try {
-          const uploadedUrl = await uploadThumbnail(createdShowId);
-          
-          if (uploadedUrl) {
-            // Update the show with the thumbnail URL
-            // IMPORTANT: We must include tags again, otherwise the PUT endpoint might wipe them
-            await fetch(`/api/shows/${createdShowId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                thumbnailUrl: uploadedUrl,
-                tags: selectedTags 
-              }),
-            });
-          }
-        } catch (thumbnailError) {
-          console.warn('Show created but thumbnail upload failed:', thumbnailError);
-          // Optional: Set a warning message, but still consider success since show exists
-          setSubmitError('Show created, but thumbnail upload failed. You can retry uploading it on the edit page.');
-        }
-      }
-
-      setSubmitSuccess(true);
-      // Redirect after a short delay to show success message
+      // Open the new show's editor, which is the one admin screen that shows
+      // the thumbnail, after a short delay so the message above is readable.
       setTimeout(() => {
-        router.push('/admin/shows');
-      }, 1500);
+        router.push(`/admin/shows/${result.showId}`);
+      }, result.status === 'created' ? 1500 : 4000);
     } catch (error) {
       console.error('Error creating show:', error);
       setSubmitError(error instanceof Error ? error.message : 'Failed to create show');
