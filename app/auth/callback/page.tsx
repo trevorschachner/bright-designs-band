@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/utils/supabase/client'
 import { getUserRole } from '@/lib/auth/roles'
+import { safeNext } from '@/lib/auth/safe-next'
 import { Loader2, AlertCircle } from 'lucide-react'
 
 function AuthCallbackContent() {
@@ -14,8 +15,7 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const code = searchParams.get('code')
-    const nextParam = searchParams.get('next') ?? '/'
-    const nextPath = nextParam.startsWith('/') ? nextParam : '/'
+    const nextPath = safeNext(searchParams.get('next'))
     const supabase = createClient()
 
     const completeExchange = async () => {
