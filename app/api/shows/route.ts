@@ -8,6 +8,7 @@ import { eq, desc, and, exists, inArray } from 'drizzle-orm';
 import { guard } from '@/lib/auth/guard';
 import { showSchema } from '@/lib/validation/shows';
 import { SuccessResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
+import { reportError } from '@/lib/observability/report-error';
 import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
@@ -153,11 +154,8 @@ export async function GET(request: Request) {
       return BadRequestResponse(`Unknown filter field: ${error.field}`);
     }
     console.error('Error fetching shows:', error);
-    return SuccessResponse({
-      data: [],
-      pagination: { page, limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
-      appliedFilters: filterState,
-    });
+    await reportError(error, { operation: 'GET /api/shows' });
+    return ErrorResponse('Failed to load shows', 500);
   }
 }
 

@@ -142,20 +142,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     } catch (dbError: any) {
       console.error('PUT /api/arrangements/' + arrangementId, 'Database error:', dbError);
       return NextResponse.json(
-        { 
-          error: 'Failed to update arrangement',
-          details: dbError?.message || String(dbError)
-        },
+        { error: 'Failed to update arrangement' },
         { status: 500 }
       );
     }
   } catch (error: any) {
     console.error('PUT /api/arrangements/', 'Error updating arrangement:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to update arrangement',
-        details: error?.message || String(error)
-      },
+      { error: 'Failed to update arrangement' },
       { status: 500 }
     );
   }
