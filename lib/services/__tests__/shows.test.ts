@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, onTestFinished, vi } from 'vitest'
 
 /**
  * The shows service: explicit column lists, null (not an exception, not an
@@ -138,6 +138,8 @@ describe('during a build without a database', () => {
   })
 
   it('answers the build fallback without touching the database', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warn.mockRestore())
     vi.resetModules()
     vi.doMock('@/lib/database', () => ({ isDatabaseConfigured: () => false, db: {} }))
     process.env.NEXT_PHASE = 'phase-production-build'

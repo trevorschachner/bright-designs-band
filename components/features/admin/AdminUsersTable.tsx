@@ -106,6 +106,10 @@ export function AdminUsersTable({
           {pending ? 'Saving…' : 'Add user'}
         </Button>
       </form>
+      <p className="-mt-4 text-sm text-muted-foreground">
+        Listing an address here grants admin access. The person must also have a Supabase Auth account: invite them in
+        Supabase → Authentication → Users, then they can request a magic link.
+      </p>
 
       {error && (
         <p role="alert" className="text-sm text-destructive">

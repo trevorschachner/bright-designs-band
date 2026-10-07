@@ -26,6 +26,22 @@ import {
 
 const { shows, arrangements, showArrangements, files, pieces, arrangementPieces } = schema
 
+/** The arrangement columns parts.csv needs; all in the pre-SP3 base schema. */
+export const ARRANGEMENT_EXPORT_COLUMNS = {
+  id: arrangements.id,
+  title: arrangements.title,
+  scene: arrangements.scene,
+  durationSeconds: arrangements.durationSeconds,
+  grade: arrangements.grade,
+  ensembleSize: arrangements.ensembleSize,
+  arranger: arrangements.arranger,
+  percussionArranger: arrangements.percussionArranger,
+  year: arrangements.year,
+  commissioned: arrangements.commissioned,
+  youtubeUrl: arrangements.youtubeUrl,
+  sampleScoreUrl: arrangements.sampleScoreUrl,
+}
+
 export const LINK_COLUMNS = ['show_id', 'arrangement_id', 'order_index'] as const
 
 export type ShowSheetTables = {
@@ -69,7 +85,9 @@ export async function readShowSheetTables(
 
       const showRows = await tx.query.shows.findMany({
         orderBy: [asc(shows.displayOrder), asc(shows.id)],
-        with: { showsToTags: { with: { tag: true } } },
+        // Tag name only: tags.updated_at arrives with drizzle 0003, and the
+        // export must keep working on a database that has not run it yet.
+        with: { showsToTags: { with: { tag: { columns: { name: true } } } } },
       })
 
       const links = await tx
@@ -83,7 +101,12 @@ export async function readShowSheetTables(
         .innerJoin(shows, eq(shows.id, showArrangements.showId))
         .orderBy(asc(shows.displayOrder), asc(shows.id), asc(showArrangements.orderIndex))
 
-      const arrangementRows = await tx.select().from(arrangements).orderBy(asc(arrangements.id))
+      // Explicit columns, only what parts.csv writes: a bare select() would
+      // name arrangements.updated_at (drizzle 0003) and fail before it runs.
+      const arrangementRows = await tx
+        .select(ARRANGEMENT_EXPORT_COLUMNS)
+        .from(arrangements)
+        .orderBy(asc(arrangements.id))
 
       const audioRows = await tx
         .select({ arrangementId: files.arrangementId, url: files.url })

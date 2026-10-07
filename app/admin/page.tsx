@@ -1,12 +1,11 @@
-import { createClient } from '@/lib/utils/supabase/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle, FileText, ListMusic } from 'lucide-react';
-import { getUserRole, permissionsFor } from '@/lib/auth/roles';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, FileText, ListMusic } from 'lucide-react';
+import { permissionsFor } from '@/lib/auth/roles';
+import { guard } from '@/lib/auth/guard';
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -18,9 +17,10 @@ import { NeedsAttentionCard, RecentEditsCard } from '@/components/features/admin
 import { getPosthogHost, getPosthogKey } from '@/lib/env';
 
 export default async function AdminPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  // Access first: nothing is read for someone who is not (or no longer) an admin.
+  const gate = await guard('canAccessAdmin');
+  if (gate.denied) redirect('/');
+
   // Fetch actual stats
   let stats;
   try {
@@ -36,10 +36,6 @@ export default async function AdminPage() {
     };
   }
 
-  if (!user) {
-    return redirect('/login');
-  }
-
   // Each list fails on its own: a broken check must not take the dashboard down.
   const [recentEdits, attention] = await Promise.all([
     getRecentEdits(10).catch((error: unknown) => {
@@ -52,31 +48,12 @@ export default async function AdminPage() {
     }),
   ]);
 
-  const role = await getUserRole(user.email);
-  const userRole = role ?? 'none';
-  const permissions = permissionsFor(role);
+  const user = { email: gate.email };
+  const userRole = gate.role;
+  const permissions = permissionsFor(gate.role);
   const posthogKey = getPosthogKey()
   const analyticsConfigured = Boolean(posthogKey);
   const posthogHost = getPosthogHost();
-
-  // Check if user has admin access
-  if (!permissions.canAccessAdmin) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <Alert className="max-w-md mx-auto">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            You don&apos;t have permission to access the admin dashboard. Contact an administrator if you believe this is an error.
-          </AlertDescription>
-        </Alert>
-        <div className="text-center mt-4">
-          <Button asChild>
-            <Link href="/">Return to Home</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {

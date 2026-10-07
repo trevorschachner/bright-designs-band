@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createFakeDb, opsOn, type Op, type Respond } from './fake-db'
 
 /**
@@ -94,7 +94,13 @@ function use(respond: Respond) {
   return state.fake
 }
 
+// Storage failures are logged by lib/storage.ts on purpose; keep them out of
+// the test output.
+let consoleError: ReturnType<typeof vi.spyOn>
+afterEach(() => consoleError.mockRestore())
+
 beforeEach(() => {
+  consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
   state.email = 'editor@example.com'
   state.removeError = null
   state.removeReports = 'all'

@@ -1,4 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { afterAll, describe, it, expect, vi } from 'vitest';
+
+// next.config warns once at load when NEXT_PUBLIC_SUPABASE_URL is unset (as
+// here); silence it for the import, restore afterwards.
+const configWarn = vi.hoisted(() => vi.spyOn(console, 'warn').mockImplementation(() => {}));
+afterAll(() => configWarn.mockRestore());
 import nextConfig from '../../next.config.mjs';
 import { buildCsp } from '../security-headers.mjs';
 

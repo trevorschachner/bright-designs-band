@@ -62,7 +62,7 @@ type Action = (...args: unknown[]) => Promise<unknown>
 async function allActions(): Promise<[string, Action][]> {
   const entries: [string, Action][] = []
   for (const file of ACTION_FILES) {
-    const mod: Record<string, unknown> = await import(`@/lib/actions/${file.replace(/\.ts$/, '')}`)
+    const mod: Record<string, unknown> = await import(/* @vite-ignore */ `@/lib/actions/${file.replace(/\.ts$/, '')}`)
     for (const [name, value] of Object.entries(mod)) {
       if (typeof value === 'function') entries.push([`${file.replace(/\.ts$/, '')}.${name}`, value as Action])
     }
