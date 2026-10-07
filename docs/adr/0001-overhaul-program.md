@@ -8,17 +8,18 @@ The site grew quickly across many sessions and tools. By August 2026 an architec
 
 ## Decisions
 
-1. **Keep the stack.** Next.js App Router, Supabase (Postgres, Auth, Storage), Drizzle, Netlify, Tailwind with shadcn/ui. Upgrade in place (Next 16, React 19, Turbopack) instead of rewriting.
-2. **Admin access is an allowlist with roles.** Replace "any `@brightdesigns.band` address is staff" with an explicit allowlist and roles, enforced through the single `guard()` gate (SP3, #60).
-3. **Turnstile plus a Postgres rate limit on the contact form.** Cloudflare Turnstile verifies humans; `contact_rate_limits` throttles per client. No third-party limiter service (SP0, done).
-4. **PostHog is initialised once.** One client-side init and one server error-reporting path (`instrumentation.ts` `onRequestError`), replacing scattered snippets [inferred].
-5. **The site database is the editing surface; the Show Database sheet is a nightly export.** Owners edit shows in `/admin`. A nightly job exports shows, parts and pieces to the Show Database Google Sheet (SP4, #61; `npm run export:shows` is the read-only exporter). The sheet stays the shared reference but is not edited back into the site.
+1. **Keep Next.js, Supabase and Netlify.** Overhaul in place, no rewrite; the site stays live throughout. Upgrades (Next 16, React 19, Turbopack) happen on the existing stack.
+2. **Admin access is a named allowlist.** A table, `admin_users`, with roles `owner` and `editor`. Self sign-up is closed. Initial owners are Trevor, Brighton and Ryan; new hires are added when ready. This replaces the `@brightdesigns.band` email-suffix rule (SP3, #60).
+3. **Contact form: Cloudflare Turnstile plus a per-IP rate limit.** The limit is backed by the `contact_rate_limits` table in Postgres. The confirmation email no longer echoes anything the submitter typed (SP0, done).
+4. **PostHog stays, initialised once.** It had been initialised twice. Session recording is off, and PostHog loads after the page is interactive.
+5. **The website database is where shows are edited; the admin is the editing surface.** A nightly export, plus an on-demand button, keeps the Show Database Google Sheet complete, so the sheet remains the business record. Sheet-only columns (for example YouTube posting status) stay in the sheet and are never overwritten by the export. The sheet is not imported back into the site (SP4, #61; `npm run export:shows` is the read-only exporter).
 
 ## Consequences
 
 - Less code and fewer dependencies to maintain; one way to do each thing (one Supabase client pair, one toast hook, one env module).
-- Admin changes need a deploy-free allowlist edit path (to be designed in SP3).
-- Two sources of the same data exist for a day at a time. Edits made directly in the sheet will be overwritten by the next export.
+- Owners add and remove people in `/admin/users` without a deploy.
+- Site-owned columns in the sheet are replaced by each export; sheet-only columns are untouched. Do not edit site-owned columns in the sheet; edit them in the admin.
+- Server errors that are not caught are reported to PostHog through `instrumentation.ts` `onRequestError` (an SP0 implementation detail, not one of the five decisions).
 - Cache invalidation on admin writes must be completed (SP2, #59) before the catalog can be fully server-rendered.
 - Docs are kept small: `README.md`, `CONTEXT.md`, ADRs, and the guides under `docs/`.
 

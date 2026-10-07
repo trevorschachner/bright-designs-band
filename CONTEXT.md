@@ -40,5 +40,5 @@ Decisions behind it are in `docs/adr/0001-overhaul-program.md`.
 - #58 SP1: codebase diet and toolchain (dead UI and deps, one client each, Turbopack, React 19, env schema, docs).
 - #59 SP2: public performance and SEO (server-rendered catalog, tag caching and invalidation, JSON-LD, sitemap).
 - #60 SP3: admin overhaul (allowlist roles, Server Actions, editor split, safe uploads, private bucket).
-- #61 SP4: sheet sync and observability (nightly export to the Show Database, deploy status, error flush).
+- #61 SP4: sheet sync and observability (nightly export plus on-demand button to the Show Database, deploy status, error flush).
 - #62 SP5: content and GEO (llms.txt, AI crawlers, program notes, articles, case studies).
