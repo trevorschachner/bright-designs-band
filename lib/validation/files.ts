@@ -75,3 +75,38 @@ export const fileUploadSchema = z.object({
     return { message: `Max file size is ${maxSizeMB}MB for ${data.fileType} files.`, path: ['file'] };
   }
 );
+
+// ---------------------------------------------------------------------------
+// Server Action payloads (lib/actions/files.ts). Strict: unknown keys rejected.
+// ---------------------------------------------------------------------------
+
+const fileRowId = z.number().int().positive();
+
+/**
+ * `setShowThumbnail`: point the show's thumbnail at one of its image files
+ * (`fileId`), at a URL (`url`), or clear it (`url: null`). Exactly one of
+ * `fileId` / `url` is required (checked by the action).
+ */
+export const setShowThumbnailSchema = z
+  .object({
+    showId: fileRowId,
+    fileId: fileRowId.optional(),
+    url: z.string().trim().max(2000, 'URL is too long').nullable().optional(),
+  })
+  .strict();
+export type SetShowThumbnailInput = z.input<typeof setShowThumbnailSchema>;
+
+/** `attachYouTube`: a YouTube link stored as a file row on a show and/or a part. */
+export const attachYouTubeSchema = z
+  .object({
+    showId: fileRowId.optional(),
+    arrangementId: fileRowId.optional(),
+    url: z.string().trim().min(1, 'YouTube URL is required').max(500, 'URL is too long'),
+    description: z.string().trim().max(500).nullable().optional(),
+    isPublic: z.boolean().optional(),
+    displayOrder: z.number().int().min(0).max(10_000).optional(),
+  })
+  .strict();
+export type AttachYouTubeInput = z.input<typeof attachYouTubeSchema>;
+
+export const fileIdSchema = z.object({ id: fileRowId }).strict();

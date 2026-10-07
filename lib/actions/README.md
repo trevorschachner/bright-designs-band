@@ -1,13 +1,17 @@
 # lib/actions: Server Actions for the admin
 
-Admin writes are Server Actions here. The API write routes they replace are
-still in `app/api/` until the admin UI moves over (SP3 Task 3), then deleted.
+Admin writes are Server Actions here. The API write routes they replaced were
+deleted in SP3 Task 3. File uploads still use `POST /api/files/sign` +
+`POST /api/files` (direct-to-Storage) until Task 4.
 
 | File | Actions | Permission | Invalidates |
 | --- | --- | --- | --- |
 | `shows.ts` | `createShow`, `updateShow`, `deleteShow`, `setShowTags`, `setFeatured` | `canManageShows` | `invalidateShow(id, slug, previousSlug?)` |
 | `tags.ts` | `createTag`, `updateTag`, `deleteTag` | `canManageTags` | `invalidateTags()` |
 | `resources.ts` | `createResource`, `updateResource`, `setResourceActive`, `deleteResource` | `canManageResources` | `invalidateResources()` |
+| `arrangements.ts` | `createArrangement`, `updateArrangement`, `deleteArrangement`, `reorderArrangements`, `setArrangementTags`, `setArrangementPieces` | `canCreateArrangements` / `canEditArrangements` / `canDeleteArrangements` | `invalidateArrangement(id, showSlug)`; reorder: `invalidateShow` |
+| `pieces.ts` | `listPieces`, `createPiece`, `updatePiece`, `deletePiece` | `canEditArrangements` | `invalidatePieces()` |
+| `files.ts` | `setShowThumbnail`, `attachYouTube`, `deleteFile` | `canManageShows` / `canCreateArrangements` / `canDeleteFiles` | `invalidateShow` / `invalidateFileOwner(file)` |
 | `admin-users.ts` | `listAdminUsers`, `addAdminUser`, `setAdminUserRole`, `removeAdminUser` | `canManageUsers` | (none: not public) |
 
 ## Writing an action
@@ -93,6 +97,16 @@ writer must set it too.
 
 Tables: `shows`, `resources` (existing `updated_at`), `tags`, `arrangements`
 (added in `drizzle/0003_slug_redirects_updated_at.sql`).
+
+`setShowThumbnail` and `deleteFile` (when it clears the show's art) bump the
+show's `updated_at` and return it, so the editor that called them keeps
+saving without a `stale`. `reorderArrangements` and `setArrangementPieces` do
+not bump anything: the order lives in `show_arrangements`, the credits in
+`arrangement_pieces`.
+
+`deleteFile` removes the Storage object first and deletes the row only if
+Storage accepted the remove; a refusal is `failed` and the row stays, so the
+object is never orphaned by a half-done delete.
 
 ## Slugs and redirects
 
