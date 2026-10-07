@@ -43,7 +43,7 @@ const columns: ColumnDef<Resource>[] = [
 export default function ResourcesTable() {
   return (
     <AdminTable<Resource>
-      endpoint="/api/resources"
+      endpoint="/api/resources?all=true"
       columns={columns}
       resourceName="resources"
     />

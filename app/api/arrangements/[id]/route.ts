@@ -12,9 +12,30 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const arrangement = await db.query.arrangements.findFirst({
       where: eq(arrangements.id, arrangementId),
+      columns: {
+        id: true,
+        title: true,
+        composer: true,
+        arranger: true,
+        percussionArranger: true,
+        description: true,
+        grade: true,
+        year: true,
+        durationSeconds: true,
+        scene: true,
+        ensembleSize: true,
+        youtubeUrl: true,
+        commissioned: true,
+        sampleScoreUrl: true,
+        displayOrder: true,
+      },
       with: {
         files: { where: eq(files.isPublic, true), orderBy: files.displayOrder },
-        showArrangements: { with: { show: true } },
+        showArrangements: {
+          with: {
+            show: { columns: { id: true, title: true, thumbnailUrl: true, graphicUrl: true } },
+          },
+        },
         arrangementsToTags: { with: { tag: true } },
       },
     });
@@ -64,7 +85,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (body.youtube_url !== undefined) drizzlePayload.youtubeUrl = body.youtube_url;
     if (body.commissioned !== undefined) drizzlePayload.commissioned = body.commissioned;
     if (body.sample_score_url !== undefined) drizzlePayload.sampleScoreUrl = body.sample_score_url;
-    if (body.copyright_amount_usd !== undefined) drizzlePayload.copyrightAmountUsd = body.copyright_amount_usd;
     if (body.display_order !== undefined) drizzlePayload.displayOrder = body.display_order;
 
     console.log('PUT /api/arrangements/' + arrangementId, 'Drizzle payload:', JSON.stringify(drizzlePayload, null, 2));
