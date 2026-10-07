@@ -61,3 +61,24 @@ Writes `shows.csv`, `parts.csv` and `pieces.csv` in the sheet's column order
 so it is safe against production. `ensemble_size` and `includes` on shows
 export blank until those columns exist. A part linked to two shows appears
 once per show.
+
+## Live mirror: "Active Assets on Website" sheet
+
+The [Active Assets on Website](https://docs.google.com/spreadsheets/d/1KG86ojOiA8DgD2hISiyJVumnjmWe-6TDNcy4nSSHqPY/edit)
+sheet mirrors the site with no job or credentials: cell A1 of each tab is an
+`IMPORTDATA` formula pointing at a public CSV.
+
+| Tab | A1 |
+|---|---|
+| Shows | `=IMPORTDATA("https://brightdesigns.band/api/export/shows.csv")` |
+| Arrangements | `=IMPORTDATA("https://brightdesigns.band/api/export/parts.csv")` |
+| Pieces | `=IMPORTDATA("https://brightdesigns.band/api/export/pieces.csv")` |
+| links | `=IMPORTDATA("https://brightdesigns.band/api/export/links.csv")` |
+
+`app/api/export/[file]/route.ts` serves them with the same reader and column
+order as `export:shows`, except Pieces is public-safe: `id, title, composer`
+only (copyright cost and licensing status stay in /admin and `export:shows`).
+The route caches for an hour and drops the cache when an admin edit
+revalidates `shows` or `arrangements`. Google refreshes IMPORTDATA on its own
+schedule, roughly hourly. The tabs are formula output: edit in /admin, not in
+the sheet.
