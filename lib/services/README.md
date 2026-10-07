@@ -14,6 +14,7 @@ Writes stay in the API routes, and each one ends by calling one helper from
 | `tags.ts` | All tags; one tag (`/api/tags/[id]`) |
 | `sitemap.ts` | Show slugs and arrangement ids for `/sitemap.xml` (`app/sitemap.ts`) |
 | `admin.ts` | Dashboard counts |
+| `admin-users.ts` | The admin allowlist (`admin_users`) for `/admin/users`, uncached; `mutateAdminUsers()` locks the rows for the owner-protection rules |
 | `files.ts` | No reads: `invalidateFileOwner()` routes a file write to its show or arrangement |
 | `cache.ts` | `cachedRead()`, the build fallback, `toIso()` |
 | `invalidate.ts` | One invalidation helper per entity |
