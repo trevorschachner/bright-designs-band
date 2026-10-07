@@ -65,18 +65,33 @@ As of 2026-10-04, nothing from #51 is applied. In order:
      if no show or arrangement uses it (none did on 2026-10-04).
    - `2026-10-04_pieces_rls.sql`: staff-only RLS on the two new tables. Needs
      track 1 first.
-3. **SP3, admin allowlist** (added 2026-10-07):
+3. **SP3, admin overhaul** (added 2026-10-07; pending until the SP3 deploy,
+   README "Deploying"). `npm run db:migrate` applies all of these except the
+   held one; `db:migrate:status` shows track 2 only.
    - Track 1 `0002_clear_silhouette.sql`: creates `admin_users` (text key,
      CHECK lower-case email, CHECK role) with RLS on. It also carries two
      changes the hand track already made and the snapshot never recorded:
      `contact_rate_limits` (`CREATE TABLE IF NOT EXISTS`) and dropping
      `arrangements.copyright_amount_usd` (`DROP COLUMN IF EXISTS`), so it is
      correct whether or not those hand migrations have run.
+   - Track 1 `0003_slug_redirects_updated_at.sql`: creates `slug_redirects`
+     (RLS on) and adds `updated_at` to `arrangements` and `tags`. The admin
+     tag pages need it; the public CSV export does not.
+   - Track 1 `0004_pending_uploads.sql`: creates `pending_uploads` (RLS on,
+     no policies; server only). Needed by `signUpload` / `completeUpload`.
    - Track 2 `2026-10-08_admin_users.sql`: seeds the three owners, adds
      `is_admin_user()` / `is_admin_owner()`, rewrites every domain-suffix RLS
      policy to use them, and aborts if any policy in any schema still mentions
      the domain. Needs 0002 first. After it runs, only listed addresses are
      admins.
+   - Track 2 `2026-10-08_slug_redirects_rls.sql`: RLS on `slug_redirects`
+     (public read, admin-only writes). Needs 0003 first.
+   - Track 2 `2026-10-08_storage_policies_admin.sql`: admin access to both
+     buckets; raises (and aborts) if the `private` bucket is missing.
+   - Track 2 `2026-10-09_storage_public_select.sql`: **held**
+     (`-- migrate: manual`). Lets anyone list the public bucket; apply with
+     `--only` only after `scripts/migrate-private-files.ts` dry-runs clean
+     (`0 to move`, `skipped: 0`).
 
 **Before the first `drizzle-kit migrate` against production:**
 `drizzle.__drizzle_migrations` still holds the three rows of the pre-squash

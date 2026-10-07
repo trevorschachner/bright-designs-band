@@ -141,22 +141,22 @@ pending row. A mismatch removes the object and is `invalid`. Private rows'
 `url` is `/api/files/<id>/download` (staff, 302 to a 60 s signed URL).
 `drizzle/0004_pending_uploads.sql` must be applied with this code.
 
-### Deploying the file changes (in this order)
+### Deploying the file changes
 
-1. Create the `private` bucket (not public) in the Supabase dashboard. The
-   policy SQL hard-codes `'private'` and `'Bright Designs'`; keep
-   `STORAGE_PRIVATE_BUCKET` / `NEXT_PUBLIC_STORAGE_BUCKET` at those values or
-   edit the SQL.
-2. `npm run db:migrate`: applies `drizzle/0004_pending_uploads.sql` and
-   `drizzle/migrations/2026-10-08_storage_policies_admin.sql` (admin access to
-   both buckets; it raises and aborts if a bucket is missing).
-   `2026-10-09_storage_public_select.sql` is marked `-- migrate: manual`, so
-   it is held back and stays pending in `npm run db:migrate:status`.
-3. `npx tsx scripts/migrate-private-files.ts` (dry run), then `--apply`:
-   moves every `is_public = false` object to the private bucket.
-4. Only then: `npx tsx scripts/apply-sql-migrations.ts --apply --only
-   2026-10-09_storage_public_select.sql` (anyone can list the public bucket;
-   before step 3 that would expose the legacy private objects).
+The full, ordered checklist is the README's "Deploying" section; follow that
+one. Two notes specific to the file changes:
+
+- The policy SQL (`2026-10-08_storage_policies_admin.sql`) hard-codes the
+  bucket names `'private'` and `'Bright Designs'` and raises (aborting the
+  migration) if either bucket is missing, so create the `private` bucket
+  first and leave `STORAGE_PRIVATE_BUCKET` / `NEXT_PUBLIC_STORAGE_BUCKET`
+  unset (their defaults are those names), or edit the SQL.
+- `2026-10-09_storage_public_select.sql` is `-- migrate: manual`: held back by
+  `npm run db:migrate` and listed as held by `db:migrate:status`. It lets
+  anyone list the public bucket, so apply it only after
+  `scripts/migrate-private-files.ts` has moved every private object; a dry
+  run must say "0 to move" and end `skipped: 0` (the script exits 2 when
+  anything was skipped).
 
 ## Slugs and redirects
 
@@ -170,12 +170,43 @@ this order: exact slug → `getSlugRedirect` (308) → normalised form (308) →
 
 ## Deploying
 
-`drizzle/0003_slug_redirects_updated_at.sql` (and
-`drizzle/migrations/2026-10-08_slug_redirects_rls.sql`) must be applied with
-this code.
+The same checklist as the README's "Deploying" section (keep the two in step):
+
+**Before merging (Supabase dashboard / SQL editor, production):**
+
+- [ ] Auth → Users: trevor@, brighton@ and ryan@brightdesigns.band all exist (these are the seeded owners). Auth → Providers: "Allow new users to sign up" is OFF.
+- [ ] `select schemaname, tablename, policyname, roles, cmd, qual, with_check from pg_policies where schemaname = 'storage';`
+      Drop any policy that mentions brightdesigns.band (the migration stops if one remains) and any policy not limited by bucket_id (it would open the private bucket to every signed-in account).
+- [ ] Storage: create bucket "private", NOT public. Leave `STORAGE_PRIVATE_BUCKET` and `NEXT_PUBLIC_STORAGE_BUCKET` unset in Netlify.
+- [ ] `npm run db:migrate:status` → only SP3 files pending (0002–0004, admin_users, slug_redirects_rls, storage_policies_admin, plus storage_public_select listed as held). If anything older is pending, or the drizzle baseline row (`drizzle/README.md`) is missing, sort that out first.
+- [ ] `ALLOW_DB_MIGRATE=true npm run db:migrate`. It must finish with every file applied. If it stops, do NOT merge; fix and re-run.
+
+**Merge / deploy:**
+
+- [ ] Merge. After the deploy, each owner signs in: /admin loads, and /admin/users lists three owners.
+      Locked out? Run in the SQL editor: `insert into public.admin_users (email, role) values ('<you>@brightdesigns.band','owner') on conflict do nothing;`
+- [ ] `/api/export/shows.csv` returns 200. A renamed show's old `/shows/<slug>` gives a 308.
+
+**Same day:**
+
+- [ ] `npx tsx scripts/migrate-private-files.ts` (dry run), then `--apply`. Keep the manifest it prints.
+- [ ] Dry run again: "0 to move" and no "skip" lines (resolve or accept each one).
+
+**Optional, only after a clean dry run:**
+
+- [ ] `npx tsx scripts/apply-sql-migrations.ts --apply --only 2026-10-09_storage_public_select.sql`
+
+To add an editor: add them at /admin/users AND invite them in Supabase → Authentication → Users.
+
+`drizzle/0003_slug_redirects_updated_at.sql` and
+`drizzle/migrations/2026-10-08_slug_redirects_rls.sql` are in it. If the code
+lands before 0003:
 
 - `getSlugRedirect` tolerates a missing `slug_redirects` table (42P01): no
   redirect, one console.error per process, so public `/shows/<miss>` still 404s.
+- The public CSV export (`lib/export/load-show-sheet.ts`) names its
+  arrangement and tag columns, so it never reads `updated_at` and works either
+  way.
 - `getTagsForAdmin` selects `tags.updated_at`: **the admin tag pages error
   until 0003 is applied.** So do `updateTag` and every action that writes or
   reads `updated_at` on tags.

@@ -14,7 +14,10 @@
  *
  * Skipped (printed): YouTube rows (no object), rows whose public URL is used
  * by a show / resource / arrangement column (moving would break that page),
- * and rows whose object is missing from the public bucket.
+ * and rows whose object is missing from the public bucket. YouTube rows are
+ * not counted; every other skip is, and the run ends with `skipped: N` and
+ * exit code 2 when N > 0 (1 if anything failed), so "zero skips" can be
+ * checked mechanically before the public-select policy is applied.
  *
  * Usage (not run by agents):
  *   npx tsx scripts/migrate-private-files.ts                 # dry run: print the plan
@@ -143,6 +146,12 @@ async function main() {
     const rows = await candidates(db)
     const todo: Candidate[] = []
     let alreadyMoved = 0
+    let skipped = 0
+    const finish = (failed = 0) => {
+      console.log(`skipped: ${skipped}`)
+      if (failed > 0) process.exitCode = 1
+      else if (skipped > 0) process.exitCode = 2
+    }
     for (const row of rows) {
       if (row.fileType === 'youtube') continue
       if (isDownloadRoute(row.url)) {
@@ -151,6 +160,7 @@ async function main() {
       }
       const refs = await referencedBy(db, row.url)
       if (refs.length > 0) {
+        skipped++
         console.log(`  skip #${row.id} ${row.storagePath}: its public URL is used by ${refs.join(', ')}`)
         continue
       }
@@ -162,9 +172,9 @@ async function main() {
 
     if (!apply) {
       console.log('\nDry run. Re-run with --apply to move them.')
-      return
+      return finish()
     }
-    if (todo.length === 0) return
+    if (todo.length === 0) return finish()
 
     const client = serviceClient()
     const manifestPath = resolve(process.cwd(), `scripts/.private-files-migration-${Date.now()}.json`)
@@ -179,6 +189,7 @@ async function main() {
       try {
         const source = await objectExists(client, PUBLIC_BUCKET, key)
         if (!source.present) {
+          skipped++
           console.log(`  skip #${row.id}: not in "${PUBLIC_BUCKET}" (see find-orphan-files)`)
           continue
         }
@@ -214,6 +225,7 @@ async function main() {
     console.log(`\nMoved ${moved}, failed ${failed}.`)
     console.log(`Manifest: ${manifestPath}`)
     console.log(`Revert with: npx tsx scripts/migrate-private-files.ts --revert ${manifestPath} --apply`)
+    finish(failed)
   } finally {
     await db.end()
   }
