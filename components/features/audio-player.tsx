@@ -1,12 +1,17 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, Volume2, VolumeX, Download, SkipBack, SkipForward } from "lucide-react"
 import { Waveform } from "@/components/ui/waveform"
-import { useAudio, type AudioTrack as PlayableTrack } from "@/components/features/audio/AudioProvider"
+import {
+  useAudioActions,
+  useAudioState,
+  useAudioTime,
+  type AudioTrack as PlayableTrack,
+} from "@/components/features/audio/AudioProvider"
 
 export interface AudioTrack {
   id: string
@@ -38,6 +43,43 @@ const toPlayable = (track: AudioTrack, showTitle?: string): PlayableTrack => ({
   imageUrl: track.imageUrl,
 })
 
+const formatTime = (seconds: number) => {
+  if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+function Progress({ currentTime, duration, compact, onSeek }: {
+  currentTime: number
+  duration: number
+  compact: boolean
+  onSeek?: (time: number) => void
+}) {
+  return (
+    <div className={compact ? "mb-2" : "mb-4"}>
+      <Slider
+        value={[currentTime]}
+        max={duration || 100}
+        step={0.1}
+        onValueChange={(value) => onSeek?.(value[0])}
+        className="w-full cursor-pointer"
+      />
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+        <span>{formatTime(currentTime)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+    </div>
+  )
+}
+
+/** The only part of a page player that re-renders on `timeupdate`. */
+function LiveProgress({ compact }: { compact: boolean }) {
+  const { currentTime, duration } = useAudioTime()
+  const { seek } = useAudioActions()
+  return <Progress currentTime={currentTime} duration={duration} compact={compact} onSeek={seek} />
+}
+
 /**
  * Track list and controls for one page's audio. Playback happens in the
  * site-wide AudioProvider (one <audio> element in the root layout), so this
@@ -54,7 +96,8 @@ export function AudioPlayerComponent({
   allowDownload = true,
   showTitle,
 }: AudioPlayerComponentProps) {
-  const audio = useAudio()
+  const actions = useAudioActions()
+  const audio = useAudioState()
   const [selectedTrack, setSelectedTrack] = useState(0)
 
   const queue = useMemo(() => tracks.map((t) => toPlayable(t, showTitle)), [tracks, showTitle])
@@ -63,61 +106,57 @@ export function AudioPlayerComponent({
   const currentTrack = isMine ? loadedIndex : selectedTrack
   const currentTrackData = tracks[currentTrack]
   const isPlaying = isMine && audio.playing
-  const currentTime = isMine ? audio.currentTime : 0
-  const duration = isMine ? audio.duration : 0
   const volume = audio.volume
   const isMuted = audio.muted
 
   // Until anything has played, the global bar shows this page's first track,
   // as it did when it scanned the page for <audio> elements. The cue is
   // released when the player unmounts so the next page can cue its own.
-  const { started, cue, release } = audio
+  const { started } = audio
+  const { cue, release } = actions
   const hasLoaded = audio.track !== null
+  // The track this player last cued (not played); released on unmount.
+  const cuedSrc = useRef<string | null>(null)
+  const cueTrack = (index: number) => {
+    cuedSrc.current = queue[index].src
+    cue(queue[index], queue)
+  }
   useEffect(() => {
     if (started || hasLoaded || !queue[0]) return
+    cuedSrc.current = queue[0].src
     cue(queue[0], queue)
   }, [started, hasLoaded, queue, cue])
-  const firstSrc = queue[0]?.src
   useEffect(() => {
-    if (!firstSrc) return
-    return () => release(firstSrc)
-  }, [firstSrc, release])
+    const cued = cuedSrc
+    return () => {
+      if (cued.current) release(cued.current)
+    }
+  }, [release])
 
   const togglePlayPause = () => {
     if (isMine) {
-      audio.toggle()
+      actions.toggle()
     } else if (currentTrackData) {
-      audio.play(queue[currentTrack], queue)
+      actions.play(queue[currentTrack], queue)
     }
-  }
-
-  const handleProgressChange = (value: number[]) => {
-    if (isMine) audio.seek(value[0])
   }
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0]
-    audio.setVolume(newVolume)
-    audio.setMuted(newVolume === 0)
+    actions.setVolume(newVolume)
+    actions.setMuted(newVolume === 0)
   }
 
   const toggleMute = () => {
-    audio.setMuted(!isMuted)
-  }
-
-  const formatTime = (seconds: number) => {
-    if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    actions.setMuted(!isMuted)
   }
 
   const handleTrackChange = (index: number, autoPlay: boolean = false) => {
     setSelectedTrack(index)
     if (autoPlay) {
-      audio.play(queue[index], queue)
+      actions.play(queue[index], queue)
     } else if (isMine) {
-      audio.cue(queue[index], queue)
+      cueTrack(index)
     }
   }
 
@@ -258,19 +297,11 @@ export function AudioPlayerComponent({
         )}
 
         {/* Progress Bar */}
-        <div className={compact ? "mb-2" : "mb-4"}>
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={0.1}
-            onValueChange={handleProgressChange}
-            className="w-full cursor-pointer"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
+        {isMine ? (
+          <LiveProgress compact={compact} />
+        ) : (
+          <Progress currentTime={0} duration={0} compact={compact} />
+        )}
 
         {/* Main Controls Row */}
         <div className={`flex items-center ${compact ? 'gap-2' : 'gap-4'} ${compact ? 'justify-between' : 'justify-between'}`}>

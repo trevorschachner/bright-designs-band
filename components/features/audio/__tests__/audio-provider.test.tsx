@@ -2,7 +2,15 @@ import { useEffect } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AudioProvider, useAudio, type AudioTrack } from '@/components/features/audio/AudioProvider';
+import {
+  AudioProvider,
+  useAudioActions,
+  useAudioState,
+  useAudioTime,
+  type AudioTrack,
+} from '@/components/features/audio/AudioProvider';
+import { ArrangementResults } from '@/components/features/catalog/ArrangementResults';
+import type { ArrangementListItem } from '@/lib/services/arrangements';
 import { AudioPlayerComponent } from '@/components/features/audio-player';
 import { GlobalAudioPlayerBar } from '@/components/features/global-audio-player-bar';
 
@@ -55,33 +63,98 @@ afterEach(() => {
 const intro: AudioTrack = { src: '/audio/intro.mp3', title: 'Intro', showTitle: 'True North', arrangementId: 1 };
 const ballad: AudioTrack = { src: '/audio/ballad.mp3', title: 'Ballad', showTitle: 'True North', arrangementId: 2 };
 
-// The probe hands the latest context value to the test after each commit.
-const probe: { api?: ReturnType<typeof useAudio> } = {};
+type Actions = ReturnType<typeof useAudioActions>;
+// The probe hands the actions to the test after each commit and prints the
+// state and time it sees.
+const probe: { api?: Actions } = {};
 function Probe() {
-  const ctx = useAudio();
+  const actions = useAudioActions();
+  const state = useAudioState();
+  const time = useAudioTime();
   useEffect(() => {
-    probe.api = ctx;
+    probe.api = actions;
   });
   return (
     <output data-testid="state">
-      {JSON.stringify({ src: ctx.track?.src ?? null, playing: ctx.playing, time: ctx.currentTime, duration: ctx.duration })}
+      {JSON.stringify({ src: state.track?.src ?? null, playing: state.playing, time: time.currentTime, duration: time.duration })}
     </output>
   );
 }
-const api = new Proxy({} as ReturnType<typeof useAudio>, { get: (_, key) => probe.api![key as keyof typeof probe.api] });
+const api = new Proxy({} as Actions, { get: (_, key) => probe.api![key as keyof Actions] });
+
+const catalogRow = (id: number, title: string, url: string): ArrangementListItem => ({
+  id, title, composer: null, durationSeconds: 120, sampleScoreUrl: null,
+  files: [{ id, fileType: 'audio', url }], showArrangements: [],
+});
 const state = () => JSON.parse(screen.getByTestId('state').textContent!);
 const audioEl = () => document.querySelector('audio') as HTMLAudioElement;
 
 describe('AudioProvider', () => {
-  it('renders exactly one <audio> element for the provider, two players and the bar', () => {
+  it('renders exactly one <audio> element for the provider, two players, catalog rows and the bar', () => {
     render(
       <AudioProvider>
         <AudioPlayerComponent tracks={[{ id: '1', title: 'Intro', url: intro.src }]} />
         <AudioPlayerComponent tracks={[{ id: '2', title: 'Ballad', url: ballad.src }]} compact />
+        <ArrangementResults items={[catalogRow(7, 'Finale', '/audio/finale.mp3'), catalogRow(8, 'Opener', '/audio/opener.mp3')]} />
         <GlobalAudioPlayerBar />
       </AudioProvider>,
     );
     expect(document.querySelectorAll('audio')).toHaveLength(1);
+  });
+
+  it('plays catalog rows through the shared element', () => {
+    render(
+      <AudioProvider>
+        <Probe />
+        <ArrangementResults items={[catalogRow(7, 'Finale', '/audio/finale.mp3')]} />
+      </AudioProvider>,
+    );
+    // The table (sm and up) and the compact row both render a button.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Play Finale' })[0]);
+    expect(audioEl().getAttribute('src')).toBe('/audio/finale.mp3');
+    expect(state().playing).toBe(true);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Pause Finale' })[0]);
+    expect(state().playing).toBe(false);
+    expect(document.querySelectorAll('audio')).toHaveLength(1);
+  });
+
+  it('does not re-render action/state-only consumers on timeupdate', () => {
+    // Counted in effects: each committed render of the consumer runs one.
+    const renders = { slow: 0, time: 0 };
+    function SlowConsumer() {
+      useAudioActions();
+      useAudioState();
+      useEffect(() => {
+        renders.slow += 1;
+      });
+      return null;
+    }
+    function TimeConsumer() {
+      useAudioTime();
+      useEffect(() => {
+        renders.time += 1;
+      });
+      return null;
+    }
+    render(
+      <AudioProvider>
+        <Probe />
+        <SlowConsumer />
+        <TimeConsumer />
+      </AudioProvider>,
+    );
+    act(() => api.play(intro));
+    const slowBefore = renders.slow;
+    const timeBefore = renders.time;
+    act(() => {
+      for (const t of [1, 2, 3]) {
+        stateOf(audioEl()).time = t;
+        audioEl().dispatchEvent(new Event('timeupdate'));
+      }
+    });
+    expect(state().time).toBe(3);
+    expect(renders.slow).toBe(slowBefore);
+    expect(renders.time).toBeGreaterThan(timeBefore);
   });
 
   it('moves through play, pause and seek', () => {
@@ -108,7 +181,11 @@ describe('AudioProvider', () => {
 
     // Switching tracks reuses the same element.
     const before = audioEl();
-    act(() => api.play(ballad));
+    act(() => {
+      api.play(ballad);
+      stateOf(audioEl()).time = 0;
+      audioEl().dispatchEvent(new Event('emptied'));
+    });
     expect(audioEl()).toBe(before);
     expect(audioEl().getAttribute('src')).toBe(ballad.src);
     expect(state()).toMatchObject({ src: ballad.src, playing: true, time: 0 });
@@ -173,8 +250,32 @@ describe('AudioProvider', () => {
     expect(state().playing).toBe(false);
   });
 
+  it('releases the track a player cued, not just its first one, when it unmounts', () => {
+    const tracks = [
+      { id: '1', title: 'Intro', url: intro.src },
+      { id: '2', title: 'Ballad', url: ballad.src },
+    ];
+    const { rerender } = render(
+      <AudioProvider>
+        <Probe />
+        <AudioPlayerComponent tracks={tracks} />
+      </AudioProvider>,
+    );
+    expect(state().src).toBe(intro.src);
+    // Picking a track in the (non-compact) list cues it without playing.
+    fireEvent.click(screen.getByRole('button', { name: /Ballad/ }));
+    expect(state()).toMatchObject({ src: ballad.src, playing: false });
+    rerender(
+      <AudioProvider>
+        <Probe />
+      </AudioProvider>,
+    );
+    expect(state().src).toBeNull();
+    expect(audioEl().hasAttribute('src')).toBe(false);
+  });
+
   it('throws a clear error outside the provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<Probe />)).toThrow(/within an AudioProvider/);
+    expect(() => render(<Probe />)).toThrow(/must be used within an AudioProvider/);
   });
 });

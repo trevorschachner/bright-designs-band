@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useSyncExternalStore } from "react"
-import { useAudio } from "@/components/features/audio/AudioProvider"
+import { useAudioActions, useAudioState, useAudioTime } from "@/components/features/audio/AudioProvider"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X } from "lucide-react"
@@ -24,8 +24,9 @@ function useIsMobile() {
 
 /** Fixed bottom bar for the site-wide audio (AudioProvider). */
 export function GlobalAudioPlayerBar() {
-  const audio = useAudio()
-  const { track, playing: isPlaying, currentTime, duration, volume, muted: isMuted, playId } = audio
+  const audio = useAudioActions()
+  const { track, playing: isPlaying, volume, muted: isMuted, playId } = useAudioState()
+  const { currentTime, duration } = useAudioTime()
   const isMobile = useIsMobile()
   // Dismissal (mobile only) lasts until playback starts again.
   const [dismissedAt, setDismissedAt] = useState<number | null>(null)

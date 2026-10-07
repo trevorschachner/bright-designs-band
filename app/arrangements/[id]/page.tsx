@@ -305,7 +305,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
             <h2 className="text-2xl font-heading font-bold mb-4 text-foreground">Listen to Arrangement</h2>
             <AudioPlayerComponent  
               tracks={[{ 
-                id: 'full', 
+                id: String(arr.id),
                 title: arr.title || 'Full Arrangement', 
                 duration: arr.durationSeconds ? formatSeconds(arr.durationSeconds) : '', 
                 description: arr.description || '', 

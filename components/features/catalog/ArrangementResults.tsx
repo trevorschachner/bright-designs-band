@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback, useState } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -11,10 +10,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Music, FileText, ExternalLink, Play, ChevronDown, MessageSquare } from "lucide-react";
+import { Music, FileText, ExternalLink, MessageSquare } from "lucide-react";
 import { arrangementContactHref } from "@/lib/contact-link";
 import type { ArrangementListItem } from "@/lib/services/arrangements";
-import { useAudio } from "@/components/features/audio/AudioProvider";
+import { CatalogPlayButton } from "./CatalogPlayButton";
 
 const formatSeconds = (total?: number | null) => {
   if (!total || total < 0) return '—';
@@ -23,25 +22,18 @@ const formatSeconds = (total?: number | null) => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
+const toTrack = (arrangement: ArrangementListItem, src: string) => ({
+  src,
+  title: arrangement.title || 'Arrangement',
+  showTitle: arrangement.showArrangements?.[0]?.show?.title,
+  arrangementId: arrangement.id,
+});
+
 /**
  * One server-rendered page of arrangements: the table (sm and up) and the
- * compact rows with an expandable player (below sm). The only client state is
- * which rows have their player open.
+ * compact rows (below sm). Audio plays through the site-wide player.
  */
 export function ArrangementResults({ items }: { items: ArrangementListItem[] }) {
-  // These rows keep the native <audio controls> previews; starting one pauses
-  // the site-wide player so two tracks never play at once.
-  const { pause: pauseSiteAudio } = useAudio();
-  const [expandedAudio, setExpandedAudio] = useState<Set<number>>(new Set());
-
-  const toggleAudio = useCallback((id: number) => {
-    setExpandedAudio(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
-      return next;
-    });
-  }, []);
-
   return (
     <>
     <div className="hidden sm:block">
@@ -101,13 +93,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                   <TableCell>
                     {audio ? (
                       <div className="flex items-center gap-2">
-                        <audio
-                          controls
-                          className="h-8 w-full max-w-[200px]"
-                          preload="none"
-                          src={audio.url}
-                          onPlay={pauseSiteAudio}
-                        />
+                        <CatalogPlayButton variant="table" track={toTrack(arrangement, audio.url)} />
                       </div>
                     ) : (
                       <span className="text-xs text-muted-foreground">No audio</span>
@@ -154,7 +140,6 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
         const audio = files.find(f => f.fileType === 'audio');
         const sampleScore = arrangement.sampleScoreUrl;
         const associatedShow = arrangement.showArrangements?.[0]?.show;
-        const audioOpen = expandedAudio.has(arrangement.id);
 
         return (
           <div key={arrangement.id} className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
@@ -162,13 +147,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
             <div className="flex items-center gap-3 px-4 py-3">
               {/* Listen button */}
               {audio ? (
-                <button
-                  onClick={() => toggleAudio(arrangement.id)}
-                  className="shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"
-                  aria-label={audioOpen ? 'Hide audio' : 'Play audio'}
-                >
-                  {audioOpen ? <ChevronDown className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-                </button>
+                <CatalogPlayButton variant="round" track={toTrack(arrangement, audio.url)} />
               ) : (
                 <div className="shrink-0 w-9 h-9 rounded-full bg-muted flex items-center justify-center">
                   <Music className="w-4 h-4 text-muted-foreground" />
@@ -220,13 +199,6 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                 </Button>
               </div>
             </div>
-
-            {/* Expandable audio player */}
-            {audio && audioOpen && (
-              <div className="px-4 pb-3 border-t pt-3">
-                <audio controls className="w-full h-8" preload="none" src={audio.url} autoPlay onPlay={pauseSiteAudio} />
-              </div>
-            )}
           </div>
         );
       })}
