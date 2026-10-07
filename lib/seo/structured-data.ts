@@ -1,160 +1,122 @@
-// Structured Data / Schema.org markup for SEO
-export interface StructuredDataProps {
-  type: 'Organization' | 'Service' | 'CreativeWork' | 'Article' | 'LocalBusiness'
-  data: Record<string, unknown>
+/**
+ * Schema.org JSON-LD builders. Rendered by components/features/seo/JsonLd.tsx.
+ *
+ * Business rule: every show and arrangement is for sale, but pricing is quoted
+ * per program. No schema here ever publishes a price, price range or currency.
+ */
+
+import { getPublicSiteUrl } from '@/lib/env'
+import { socialProfileUrls } from './social'
+import type { Faq } from '@/lib/content/faqs'
+import type { PublicPiece } from '@/lib/pieces/credits'
+
+type Schema = Record<string, unknown>
+
+/** The site origin (no trailing slash), from NEXT_PUBLIC_SITE_URL. */
+export function siteUrl(): string {
+  return getPublicSiteUrl().replace(/\/+$/, '')
 }
 
-export function generateStructuredData(props: StructuredDataProps): string {
-  const baseContext = {
-    '@context': 'https://schema.org',
-    '@type': props.type,
-    ...props.data
-  }
-
-  return JSON.stringify(baseContext, null, 2)
+/** A site path (or an absolute URL) to an absolute URL. */
+export function absoluteUrl(pathOrUrl: string): string {
+  if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl
+  return `${siteUrl()}${pathOrUrl.startsWith('/') ? '' : '/'}${pathOrUrl}`
 }
 
-import { social } from '@/config/site'
+const ORGANIZATION_NAME = 'Bright Designs'
+const CONTACT_EMAIL = 'hello@brightdesigns.band'
 
-// Organization Schema for main business
-export const organizationSchema = {
-  '@context': 'https://schema.org',
+/** Stable node id, so other schemas can point at the Organization. */
+export const organizationId = () => `${siteUrl()}/#organization`
+
+/** A reference to the Organization node, for brand / creator / publisher. */
+export const organizationRef = (): Schema => ({
   '@type': 'Organization',
-  name: 'Bright Designs',
-  alternateName: 'Bright Designs Band',
-  description: 'Championship-caliber marching band show design with 10+ years experience, 100+ custom shows, and 250+ arrangements delivered. Student-centered design specializing in BOA competitive bands and state finalist programs.',
-  url: 'https://www.brightdesigns.band',
-  logo: 'https://www.brightdesigns.band/logo.png',
-  image: 'https://www.brightdesigns.band/og-image.jpg',
-  foundingDate: '2017',
-  founders: [
-    {
-      '@type': 'Person',
-      name: 'Brighton Barrineau',
-      jobTitle: 'Arranger and Designer'
-    },
-    {
-      '@type': 'Person', 
-      name: 'Trevor Schachner',
-      jobTitle: 'Arranger and Designer'
-    },
-    {
-      '@type': 'Person',
-      name: 'Ryan Wilhite', 
-      jobTitle: 'Program Coordinator and Designer'
-    }
-  ],
-  contactPoint: {
-    '@type': 'ContactPoint',
-    contactType: 'Customer Service',
-    email: 'trevorschachner@gmail.com',
-    availableLanguage: 'English'
-  },
-  sameAs: (social || []).map(link => link.href),
-  serviceType: [
-    'Marching Band Show Design',
-    'Marching Band Shows',
-    'Custom Show Design',
-    'Professional Music Design & Arrangements',
-    'Custom Music Arrangements', 
-    'Drill Writing',
-    'Visual Design',
-    'Program Coordination',
-    'Music Design',
-    'Band Design',
-    'Band Consultation',
-    'Band Design Consultation',
-    'Band Design Services',
-    'Band Choreography',
-    'Music Education Services',
-    'Band Design and Development',
-    'Band Design and Development Services',
-    'Band Design and Development Consultation',
-  
+  '@id': organizationId(),
+  name: ORGANIZATION_NAME,
+  url: siteUrl(),
+})
 
-  ],
-  areaServed: {
-    '@type': 'Country',
-    name: 'United States'
-  },
-  knowsAbout: [
-    'Marching Band',
-    'Music Arrangement',
-    'Drill Design',
-    'Performance Choreography',
-    'Competitive Marching Band',
-    'Music Education'
-  ]
+export const FOUNDERS = [
+  { name: 'Trevor Schachner', jobTitle: 'Music and Visual Designer' },
+  { name: 'Brighton Barrineau', jobTitle: 'Music and Visual Designer' },
+  { name: 'Ryan Wilhite', jobTitle: 'Program Coordinator' },
+] as const
+
+const AREA_SERVED: Schema[] = [
+  { '@type': 'State', name: 'South Carolina' },
+  { '@type': 'State', name: 'Georgia' },
+  { '@type': 'State', name: 'North Carolina' },
+  { '@type': 'State', name: 'Florida' },
+  { '@type': 'Country', name: 'United States' },
+]
+
+/**
+ * The Organization. `sameAs` lists only the profiles filled in
+ * lib/seo/social.ts; it is left out entirely while none are.
+ */
+export function createOrganizationSchema(profiles?: Record<string, string>): Schema {
+  const sameAs = socialProfileUrls(profiles)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': organizationId(),
+    name: ORGANIZATION_NAME,
+    legalName: ORGANIZATION_NAME,
+    alternateName: 'Bright Designs Band',
+    description: 'Marching band show design: music, drill, choreography and program coordination. Every show and arrangement in the catalog is for sale, with pricing quoted per program. Based in South Carolina, serving the Southeast (SC, GA, NC, FL) and bands nationally.',
+    url: siteUrl(),
+    logo: absoluteUrl('/logos/brightdesignslogo-main.png'),
+    foundingDate: '2017',
+    founder: FOUNDERS.map((f) => ({ '@type': 'Person', name: f.name, jobTitle: f.jobTitle })),
+    email: CONTACT_EMAIL,
+    address: { '@type': 'PostalAddress', addressRegion: 'SC', addressCountry: 'US' },
+    areaServed: AREA_SERVED,
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      email: CONTACT_EMAIL,
+      availableLanguage: 'English',
+    },
+    ...(sameAs.length > 0 ? { sameAs } : {}),
+    knowsAbout: [
+      'Marching Band',
+      'Marching Band Show Design',
+      'Music Arrangement',
+      'Drill Design',
+      'Performance Choreography',
+      'Competitive Marching Band',
+      'Music Education',
+    ],
+  }
 }
+
+export const organizationSchema = createOrganizationSchema()
 
 // Service Schema for main services
 export function createServiceSchema(service: {
   name: string
   description: string
   serviceType: string
-  provider?: string
-}) {
+}): Schema {
   return {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: service.name,
     description: service.description,
     serviceType: service.serviceType,
-    provider: {
-      '@type': 'Organization',
-      name: service.provider || 'Bright Designs',
-      url: 'https://www.brightdesigns.band'
-    },
-    areaServed: {
-      '@type': 'Country', 
-      name: 'United States'
-    },
+    provider: organizationRef(),
+    areaServed: AREA_SERVED,
     audience: {
       '@type': 'Audience',
       audienceType: [
         'High School Marching Bands',
-        'College Marching Bands', 
+        'College Marching Bands',
         'Competitive Marching Bands',
         'Music Educators',
-        'Band Directors'
-      ]
-    }
-  }
-}
-
-// Creative Work Schema for shows and arrangements
-export function createCreativeWorkSchema(work: {
-  name: string
-  description: string
-  creator: string
-  genre?: string
-  year?: string
-  difficulty?: string
-  duration?: string
-}) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'CreativeWork',
-    name: work.name,
-    description: work.description,
-    creator: {
-      '@type': 'Organization',
-      name: work.creator
+        'Band Directors',
+      ],
     },
-    genre: work.genre || 'Marching Band Music',
-    dateCreated: work.year,
-    duration: work.duration,
-    audience: {
-      '@type': 'Audience',
-      audienceType: 'Marching Band'
-    },
-    additionalProperty: work.difficulty ? [
-      {
-        '@type': 'PropertyValue',
-        name: 'Difficulty Level',
-        value: work.difficulty
-      }
-    ] : undefined
   }
 }
 
@@ -166,54 +128,38 @@ export function createArticleSchema(article: {
   datePublished: string
   dateModified?: string
   image?: string
-}) {
+}): Schema {
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: article.headline,
     description: article.description,
-    author: {
-      '@type': 'Person',
-      name: article.author
-    },
+    author: article.author === ORGANIZATION_NAME ? organizationRef() : { '@type': 'Person', name: article.author },
     publisher: {
-      '@type': 'Organization',
-      name: 'Bright Designs',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://www.brightdesigns.band/logo.png'
-      }
+      ...organizationRef(),
+      logo: { '@type': 'ImageObject', url: absoluteUrl('/logos/brightdesignslogo-main.png') },
     },
     datePublished: article.datePublished,
     dateModified: article.dateModified || article.datePublished,
-    image: article.image ? {
-      '@type': 'ImageObject',
-      url: article.image
-    } : undefined,
-    mainEntityOfPage: {
-      '@type': 'WebPage'
-    }
+    ...(article.image ? { image: { '@type': 'ImageObject', url: absoluteUrl(article.image) } } : {}),
   }
 }
 
-// FAQ Schema for common questions
-export function createFAQSchema(faqs: Array<{ question: string, answer: string }>) {
+/** FAQPage from the same `Faq[]` the page renders (lib/content/faqs.ts). */
+export function createFAQSchema(faqs: Faq[]): Schema {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqs.map(faq => ({
+    mainEntity: faqs.map((faq) => ({
       '@type': 'Question',
       name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.answer
-      }
-    }))
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+    })),
   }
 }
 
-// Breadcrumb Schema
-export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string, url: string }>) {
+/** BreadcrumbList. Paths become absolute URLs (Google requires them). */
+export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string; url: string }>): Schema {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -221,13 +167,16 @@ export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string, url: s
       '@type': 'ListItem',
       position: index + 1,
       name: breadcrumb.name,
-      item: breadcrumb.url
-    }))
+      item: absoluteUrl(breadcrumb.url),
+    })),
   }
 }
 
-// Product Schema for shows. Every show is for sale, but pricing is by
-// conversation, so no Offer is emitted: we never publish a price we don't charge.
+/**
+ * Product for a show. Every show is for sale, so the Offer says InStock, but
+ * pricing is quoted per program: the Offer carries no price, priceCurrency or
+ * priceSpecification.
+ */
 export function createProductSchema({
   name,
   description,
@@ -235,90 +184,148 @@ export function createProductSchema({
   imageUrl,
 }: {
   name: string
-  description?: string
+  description?: string | null
   url: string
   imageUrl?: string | null
-}) {
+}): Schema {
+  const pageUrl = absoluteUrl(url)
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name,
-    description: description || `Marching band show by Bright Designs. Use it as-is, swap parts, or mix in new music. Contact us for pricing.`,
-    brand: {
-      '@type': 'Brand',
-      name: 'Bright Designs',
+    description:
+      description ||
+      'Marching band show by Bright Designs. Buy it as-is, build your own from its arrangements, or pair it with new custom music. Pricing is quoted per program.',
+    brand: organizationRef(),
+    url: pageUrl,
+    ...(imageUrl ? { image: absoluteUrl(imageUrl) } : {}),
+    offers: {
+      '@type': 'Offer',
+      availability: 'https://schema.org/InStock',
+      url: pageUrl,
+      seller: organizationRef(),
     },
-    url: `https://www.brightdesigns.band${url}`,
-    ...(imageUrl ? { image: imageUrl } : {}),
   }
 }
 
-// VideoObject Schema for shows with YouTube URLs
+/** Unique source pieces (title + composer), in first-seen order. */
+function basedOn(pieces: PublicPiece[] | undefined): Schema[] {
+  const seen = new Set<string>()
+  const out: Schema[] = []
+  for (const piece of pieces ?? []) {
+    const title = piece.title?.trim()
+    if (!title) continue
+    const composer = piece.composer?.trim() || null
+    const key = `${title.toLowerCase()}|${(composer ?? '').toLowerCase()}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push({
+      '@type': 'MusicComposition',
+      name: title,
+      ...(composer ? { composer: { '@type': 'Person', name: composer } } : {}),
+    })
+  }
+  return out
+}
+
+/**
+ * MusicComposition for a show or an arrangement. `isBasedOn` lists the source
+ * pieces (title + composer) the page already loads.
+ */
+export function createMusicCompositionSchema({
+  name,
+  description,
+  url,
+  composer,
+  year,
+  pieces,
+  partOf,
+}: {
+  name: string
+  description?: string | null
+  url: string
+  /** The arrangement's composer credit; shows leave it out. */
+  composer?: string | null
+  year?: number | string | null
+  pieces?: PublicPiece[]
+  /** The show an arrangement belongs to. */
+  partOf?: { name: string; url: string } | null
+}): Schema {
+  const sources = basedOn(pieces)
+  const composerName = composer?.trim()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'MusicComposition',
+    name,
+    ...(description ? { description } : {}),
+    url: absoluteUrl(url),
+    genre: 'Marching Band',
+    creator: organizationRef(),
+    ...(composerName ? { composer: { '@type': 'Person', name: composerName } } : {}),
+    ...(year ? { dateCreated: String(year) } : {}),
+    ...(sources.length > 0 ? { isBasedOn: sources } : {}),
+    ...(partOf ? { isPartOf: { '@type': 'MusicComposition', name: partOf.name, url: absoluteUrl(partOf.url) } } : {}),
+  }
+}
+
+/** The 11-character video id from any common YouTube URL form, or null. */
+export function youtubeVideoId(url: string | null | undefined): string | null {
+  if (!url) return null
+  const match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
+  return match?.[1] ?? null
+}
+
+/**
+ * VideoObject for a show's YouTube performance. Null when there is no URL or
+ * no video id can be read from it: the schema needs a real thumbnail and embed.
+ */
 export function createVideoObjectSchema({
   name,
   description,
   youtubeUrl,
-  thumbnailUrl,
   uploadDate,
 }: {
   name: string
-  description?: string
-  youtubeUrl: string
-  thumbnailUrl?: string | null
+  description?: string | null
+  youtubeUrl: string | null | undefined
   uploadDate?: string | null
-}) {
-  const videoId = youtubeUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]
-  const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : youtubeUrl
-  const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : youtubeUrl
+}): Schema | null {
+  const videoId = youtubeVideoId(youtubeUrl)
+  if (!videoId) return null
   return {
     '@context': 'https://schema.org',
     '@type': 'VideoObject',
     name,
     description: description || `Marching band show performance: ${name}`,
-    embedUrl,
-    url: watchUrl,
-    ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    embedUrl: `https://www.youtube.com/embed/${videoId}`,
+    contentUrl: `https://www.youtube.com/watch?v=${videoId}`,
     ...(uploadDate ? { uploadDate } : {}),
-    publisher: {
-      '@type': 'Organization',
-      name: 'Bright Designs',
-      url: 'https://www.brightdesigns.band',
-    },
+    publisher: organizationRef(),
   }
 }
 
-// Local Business Schema for regional SEO
-export const localBusinessSchema = {
+/** A show's VideoObject uploadDate: its createdAt, else Jan 1 of its year. */
+export function showUploadDate(createdAt: string | null | undefined, year: number | null | undefined): string | null {
+  if (createdAt) return createdAt
+  return year ? `${year}-01-01` : null
+}
+
+// Local business schema for regional SEO. No priceRange: pricing is quoted per program.
+export const localBusinessSchema: Schema = {
   '@context': 'https://schema.org',
   '@type': 'ProfessionalService',
-  name: 'Bright Designs',
+  '@id': `${siteUrl()}/#business`,
+  name: ORGANIZATION_NAME,
   alternateName: 'Bright Designs Band',
-  description: 'Championship-caliber marching band show design with 10+ years experience, 100+ custom shows, 250+ arrangements, and 50+ ensembles served. Student-centered design specializing in BOA competitive bands and state finalist programs across the Southeast.',
-  url: 'https://www.brightdesigns.band',
-  logo: 'https://www.brightdesigns.band/logo.png',
-  image: 'https://www.brightdesigns.band/og-image.jpg',
-  serviceArea: [
-    {
-      '@type': 'State',
-      name: 'South Carolina'
-    },
-    {
-      '@type': 'State', 
-      name: 'Georgia'
-    },
-    {
-      '@type': 'State',
-      name: 'North Carolina'
-    },
-    {
-      '@type': 'State',
-      name: 'Florida'
-    }
-  ],
-  areaServed: {
-    '@type': 'Country',
-    name: 'United States'
-  },
+  description: 'Marching band show design for competitive programs across the Southeast and nationally: music, drill, choreography and program coordination.',
+  url: siteUrl(),
+  logo: absoluteUrl('/logos/brightdesignslogo-main.png'),
+  image: absoluteUrl('/logos/brightdesignslogo-main.png'),
+  email: CONTACT_EMAIL,
+  address: { '@type': 'PostalAddress', addressRegion: 'SC', addressCountry: 'US' },
+  areaServed: AREA_SERVED,
+  parentOrganization: organizationRef(),
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
     name: 'Marching Band Design Services',
@@ -328,73 +335,70 @@ export const localBusinessSchema = {
         itemOffered: {
           '@type': 'Service',
           name: 'Custom Marching Band Show Design',
-          description: 'Complete custom show design specifically crafted for BOA regional and national competition success. Includes music arrangements, drill writing, visual design, wind choreography, and guard choreography.'
-        }
+          description: 'Complete custom show design: music arrangements, drill writing, visual design, wind choreography, and guard choreography.',
+        },
       },
       {
-        '@type': 'Offer', 
+        '@type': 'Offer',
         itemOffered: {
           '@type': 'Service',
           name: 'Professional Music Design & Arrangements',
-          description: 'Pre-written and custom wind, percussion, and sound design for groups of all skill levels with on-time delivery and clear communication'
-        }
+          description: 'Pre-written and custom wind, percussion, and sound design for groups of all skill levels.',
+        },
       },
       {
         '@type': 'Offer',
         itemOffered: {
           '@type': 'Service',
           name: 'Visual Design & Drill Writing',
-          description: 'Custom visual design, wind choreography, and guard choreography optimized for BOA competitions and state championship performance'
-        }
+          description: 'Custom visual design, wind choreography, and guard choreography.',
+        },
       },
       {
         '@type': 'Offer',
         itemOffered: {
           '@type': 'Service',
           name: 'Program Coordination',
-          description: 'One point of contact for all design needs from day one until the end of the season with professional project management'
-        }
-      }
-    ]
+          description: 'One point of contact for all design needs from day one until the end of the season.',
+        },
+      },
+    ],
   },
-  priceRange: '$2,500 - $10,000+',
-  telephone: '+1-XXX-XXX-XXXX', // Update with actual phone
-  email: 'trevorschachner@gmail.com',
   knowsAbout: [
     'BOA Marching Band Competition',
-    'State Championship Preparation', 
+    'State Championship Preparation',
     'Southeast Regional Circuits',
     'Competitive Show Design',
-    'Music Education'
-  ]
+    'Music Education',
+  ],
 }
 
 // Common schemas for the marching band industry
 export const marchingBandSchemas = {
   organization: organizationSchema,
   localBusiness: localBusinessSchema,
-  
+
   showDesignService: createServiceSchema({
     name: 'Custom Marching Band Show Design',
     description: 'Complete custom show design specifically crafted for BOA regional and national competition success. Includes music arrangements, drill writing, visual design, wind choreography, and guard choreography. Student-centered approach with comprehensive support from concept through finals week.',
-    serviceType: 'Creative Design Service'
+    serviceType: 'Creative Design Service',
   }),
 
   arrangementService: createServiceSchema({
     name: 'Professional Music Design & Arrangements',
     description: 'Pre-written and custom wind, percussion, and sound design for groups of all skill levels. Professional music arrangements delivered on time with clear communication and comprehensive support. Over 250 arrangements delivered with proven results.',
-    serviceType: 'Music Arrangement Service'
+    serviceType: 'Music Arrangement Service',
   }),
 
   drillService: createServiceSchema({
     name: 'Visual Design & Drill Writing',
     description: 'Custom visual design, wind choreography, and guard choreography that makes your band shine. Innovative drill writing optimized for BOA competitions and state championship performance with field designs that captivate audiences and judges.',
-    serviceType: 'Choreography Design Service'
+    serviceType: 'Choreography Design Service',
   }),
-  
+
   programCoordination: createServiceSchema({
     name: 'Program Coordination',
     description: 'Creative programming, comprehensive design elements, and professional project management. One point of contact for all your needs from day one until the end of the season. Clear communication and on-time delivery guaranteed.',
-    serviceType: 'Professional Service'
-  })
+    serviceType: 'Professional Service',
+  }),
 }

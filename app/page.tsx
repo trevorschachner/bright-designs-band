@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/features/seo/JsonLd"
 import PageHero from "@/components/layout/page-hero"
 import Link from "next/link"
 import Image from "next/image"
-import { marchingBandSchemas, createFAQSchema } from "@/lib/seo/structured-data"
+import { marchingBandSchemas } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
 
 // Revalidate every hour - service layer also caches for 1 hour
@@ -196,74 +196,10 @@ export default async function HomePage() {
         cta={{ label: "Explore All Services", href: "/services", iconRight: true }}
       />
 
-      {/* Structured Data for SEO */}
-      <JsonLd data={marchingBandSchemas.showDesignService} />
-      <JsonLd data={marchingBandSchemas.arrangementService} />
-      <JsonLd data={marchingBandSchemas.drillService} />
-      <JsonLd data={marchingBandSchemas.programCoordination} />
-      
-      <JsonLd data={createFAQSchema([
-        {
-          question: "How do you ensure music is delivered on time?",
-          answer: "We guarantee on-time delivery with our structured timeline system. You'll receive regular progress updates, drafts along the way, and we maintain clear communication throughout the entire design process to eliminate delays."
-        },
-        {
-          question: "What makes Bright Designs different from other marching band design companies?",
-          answer: "We specialize in serving state finalists and BOA competitive bands with exceptional communication and designs tailored specifically for competitive success. No missed deadlines, no communication gaps — and we back that with modern engineering that most design companies don't have."
-        },
-        {
-          question: "Do you work with BOA competitive bands and state finalists?",
-          answer: "Yes, we specialize in working with competitive programs including BOA regional and national level bands, state finalists, and 3A/4A/5A programs looking to elevate their competitive standing."
-        },
-        {
-          question: "Can you work within our budget and timeline constraints?",
-          answer: "Yes. We offer flexible design packages and work within your specific budget and performance timeline. We understand the financial constraints of band programs and offer payment plans."
-        },
-        {
-          question: "What regions do you serve?",
-          answer: "We work nationally, but specialize in the Southeast — South Carolina, Georgia, North Carolina, and Florida — where we know the local BOA circuits and competitive landscape deeply."
-        },
-        {
-          question: "How much does a marching band show cost?",
-          answer: "We don't list prices because it depends on what you need. You can buy a full show from our site, build your own from arrangements in different shows, or have us write a few new pieces to go with existing arrangements. Tell us about your band and we'll put together a quote."
-        },
-        {
-          question: "How long does it take to design a custom marching band show?",
-          answer: "A full custom show typically takes 8–16 weeks depending on scope and season start date. We recommend starting conversations 4–6 months before your first performance. Rush timelines are available for programs with tighter windows."
-        },
-        {
-          question: "What is included in a custom marching band show package?",
-          answer: "A full custom show package includes a custom music arrangement, drill design, visual design concepts, and support throughout the competitive season. Additional services like percussion writing, sound design, and program coordination are available. Every deliverable is provided in print-ready and performance-ready formats."
-        },
-        {
-          question: "Can we buy a show or arrangement from your site?",
-          answer: "Yes. Every show and every arrangement on our site is for sale. There are three ways to buy: 1) a full show, as it is on the site; 2) build your own show by mixing arrangements from different shows; 3) partial custom, where we write a few new pieces for your band and pair them with existing arrangements. Talk to us and we'll help you pick."
-        },
-        {
-          question: "Can you design a show for a small marching band?",
-          answer: "Yes. We work with bands of all sizes, including programs under 40 members. Any show or arrangement on our site can be fitted to your instrumentation, and any new music we write is scaled to your ensemble."
-        },
-        {
-          question: "When should we start planning our marching band show?",
-          answer: "Ideally 4–6 months before your first performance. For fall season competitive bands, that means starting conversations in the winter or early spring. The earlier you start, the more revision cycles we can offer and the more refined the final product."
-        },
-        {
-          question: "What difficulty levels do your shows come in?",
-          answer: "Our shows are categorized as Beginner, Intermediate, and Advanced (Grade 5+). We also offer BOA-specific competitive designs for programs aiming at regional and national rankings."
-        },
-        {
-          question: "Do you provide support during the marching season?",
-          answer: "Yes. We stay available throughout your season for questions, adjustments, and guidance. We want your show to succeed on the field, not just look good on paper."
-        },
-        {
-          question: "What files and deliverables do we receive?",
-          answer: "You receive music in PDF and editable formats, drill in your preferred notation software format, and visual design documentation. All files are yours to use for your program."
-        },
-        {
-          question: "What is BOA and how does show design affect scores?",
-          answer: "BOA (Bands of America) is the premier competitive marching band circuit in the United States. Judges score on Music Performance, Music General Effect, Visual Performance, and Visual General Effect. A well-designed show maximizes your score potential across all captions — the design needs to be challenging enough to earn credit but executable enough to be performed cleanly under pressure."
-        }
-      ])} />
+      {/* Structured data. The show-design and arrangement service schemas
+          live on the /shows and /arrangements layouts; the FAQPage schema lives
+          on /faqs, which renders that copy (this page has no FAQ section). */}
+      <JsonLd data={[marchingBandSchemas.drillService, marchingBandSchemas.programCoordination]} />
     </div>
   );
 }

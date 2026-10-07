@@ -21,7 +21,7 @@ import { cache } from 'react'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { ResaleCallout } from '@/components/features/resale-callout'
-import { createCreativeWorkSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
+import { createMusicCompositionSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 
 // Rendered on first request, then cached and revalidated hourly; writes
 // expire it through invalidateArrangement (lib/services/invalidate.ts).
@@ -48,9 +48,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     })
   }
 
+  // A null composer is left out rather than printed as "null".
+  const byComposer = arr.composer ? ` by ${arr.composer}` : ''
   return buildMetadata({
-    title: `${arr.title} - ${arr.composer} | Bright Designs Arrangements`,
-    description: arr.description || `Custom arrangement of ${arr.title} by ${arr.composer}. Professional marching band music design.`,
+    title: arr.composer
+      ? `${arr.title} - ${arr.composer} | Bright Designs Arrangements`
+      : `${arr.title} | Bright Designs Arrangements`,
+    description: arr.description || `Custom arrangement of ${arr.title}${byComposer}. Professional marching band music design.`,
     // OG Image is automatically handled by opengraph-image.tsx
   })
 }
@@ -66,20 +70,33 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   const parentShow = arr.show;
   const files = arr.files;
 
-  // Generate Structured Data
-  const creativeWorkSchema = createCreativeWorkSchema({
-    name: arr.title,
-    description: arr.description || `Arrangement of ${arr.title}`,
-    creator: arr.composer || 'Bright Designs',
-    difficulty: arr.grade ? `Grade ${arr.grade}` : undefined,
-    duration: arr.durationSeconds ? `${Math.floor(arr.durationSeconds / 60)}:${String(arr.durationSeconds % 60).padStart(2, '0')}` : undefined,
-  })
+  // Structured data. The breadcrumb mirrors the visible one: through the
+  // parent show when there is one, else through /arrangements.
+  const arrangementPath = `/arrangements/${arr.id}`
+  const breadcrumbSchema = createBreadcrumbSchema(
+    parentShow
+      ? [
+          { name: 'Home', url: '/' },
+          { name: 'Shows', url: '/shows' },
+          { name: parentShow.title, url: `/shows/${parentShow.slug}` },
+          { name: arr.title, url: arrangementPath },
+        ]
+      : [
+          { name: 'Home', url: '/' },
+          { name: 'Arrangements', url: '/arrangements' },
+          { name: arr.title, url: arrangementPath },
+        ]
+  )
 
-  const breadcrumbSchema = createBreadcrumbSchema([
-    { name: 'Home', url: '/' },
-    { name: 'Arrangements', url: '/arrangements' },
-    { name: arr.title, url: `/arrangements/${arr.id}` },
-  ])
+  const compositionSchema = createMusicCompositionSchema({
+    name: arr.title,
+    description: arr.description,
+    url: arrangementPath,
+    composer: arr.composer,
+    year: arr.year,
+    pieces: arr.pieces,
+    partOf: parentShow ? { name: parentShow.title, url: `/shows/${parentShow.slug}` } : null,
+  })
 
   const audio = files.find((f) => f.fileType === 'audio');
   const arrangementImage = files.find((f) => f.fileType === 'image');
@@ -113,8 +130,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   return (
     <div className="min-h-screen bg-background">
       <style dangerouslySetInnerHTML={{ __html: audioPlayerStyles }} />
-      <JsonLd data={creativeWorkSchema} />
-      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={[breadcrumbSchema, compositionSchema]} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb Navigation */}

@@ -23,7 +23,7 @@ import { arrangementContactHref } from '@/lib/contact-link'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
-import { createCreativeWorkSchema, createBreadcrumbSchema, createProductSchema, createVideoObjectSchema } from '@/lib/seo/structured-data'
+import { createMusicCompositionSchema, createBreadcrumbSchema, createProductSchema, createVideoObjectSchema, showUploadDate } from '@/lib/seo/structured-data'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { normaliseSlug } from '@/lib/slug'
 import { cache } from 'react'
@@ -155,38 +155,40 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     return `${m}:${String(s).padStart(2, '0')}`
   }
 
-  const creativeWorkSchema = createCreativeWorkSchema({
-    name: show.title,
-    description: show.description || '',
-    creator: 'Bright Designs',
-    year: show.year ? String(show.year) : undefined,
-    difficulty: displayDifficulty || undefined,
-    duration: show.duration || undefined,
-  })
+  const showPath = `/shows/${show.slug}`
 
   const breadcrumbSchema = createBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Shows', url: '/shows' },
-    { name: show.title, url: `/shows/${show.slug}` },
+    { name: show.title, url: showPath },
   ])
 
-  // Every show is for sale; pricing is by conversation, so no price is published.
+  // Every show is for sale; pricing is quoted per program, so no price is published.
   const productSchema = createProductSchema({
     name: show.title,
-    description: show.description ?? undefined,
-    url: `/shows/${show.slug}`,
+    description: show.description,
+    url: showPath,
     imageUrl: displayImageUrl,
   })
 
-  const videoObjectSchema = showRow.youtubeUrl
-    ? createVideoObjectSchema({
-        name: show.title,
-        description: show.description ?? undefined,
-        youtubeUrl: showRow.youtubeUrl,
-        thumbnailUrl: displayImageUrl,
-        uploadDate: show.year ? `${show.year}-01-01` : null,
-      })
-    : null
+  // The source pieces the arrangement cards already loaded, in show order.
+  const compositionSchema = createMusicCompositionSchema({
+    name: show.title,
+    description: show.description,
+    url: showPath,
+    year: show.year,
+    pieces: arrangements.flatMap((a) => piecesByArrangement[a.id] ?? []),
+  })
+
+  // Null without a YouTube URL (or one no video id can be read from).
+  const videoObjectSchema = createVideoObjectSchema({
+    name: show.title,
+    description: show.description,
+    youtubeUrl: showRow.youtubeUrl,
+    uploadDate: showUploadDate(show.createdAt, show.year),
+  })
+
+  const schemas = [breadcrumbSchema, productSchema, compositionSchema, ...(videoObjectSchema ? [videoObjectSchema] : [])]
 
   return (
     <div className="min-h-screen bg-background">
@@ -467,10 +469,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
         </div>
       </div>
 
-      <JsonLd data={creativeWorkSchema} />
-      <JsonLd data={breadcrumbSchema} />
-      <JsonLd data={productSchema} />
-      {videoObjectSchema && <JsonLd data={videoObjectSchema} />}
+      <JsonLd data={schemas} />
     </div>
   )
 }

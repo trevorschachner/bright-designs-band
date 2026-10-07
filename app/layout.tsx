@@ -61,8 +61,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className={`${poppins.variable} font-sans font-light`}>
         {/* Organization and Local Business structured data */}
-        <JsonLd data={organizationSchema} />
-        <JsonLd data={localBusinessSchema} />
+        <JsonLd data={[organizationSchema, localBusinessSchema]} />
         
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <GlobalBackground />
