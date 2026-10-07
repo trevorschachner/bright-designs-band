@@ -61,6 +61,7 @@ const RESOURCES = [
   { id: 2, title: 'Draft', isActive: false },
 ]
 let requestedActiveOnly = false
+let idLookup: (typeof RESOURCES)[number] | undefined
 
 vi.mock('drizzle-orm', async (orig) => {
   const actual = await orig<typeof import('drizzle-orm')>()
@@ -88,7 +89,10 @@ vi.mock('@/lib/database', () => ({
         return {
           where: (cond: { activeFilter?: unknown }) => {
             requestedActiveOnly = cond?.activeFilter === true
-            return { orderBy: async () => run(requestedActiveOnly) }
+            return {
+              orderBy: async () => run(requestedActiveOnly),
+              then: (resolve: (v: unknown) => void) => resolve(idLookup ? [idLookup] : []),
+            }
           },
           orderBy: async () => {
             requestedActiveOnly = false
@@ -177,5 +181,45 @@ describe('GET /api/resources', () => {
     const res = await getResources()
     const body = await res.json()
     expect(body.data.map((r: { id: number }) => r.id)).toEqual([1])
+  })
+})
+
+describe('GET /api/resources?all=true caching', () => {
+  it('answers anonymous ?all=true privately with active rows only', async () => {
+    const { GET } = await import('@/app/api/resources/route')
+    const res = await GET(new Request('http://localhost/api/resources?all=true&page=1&limit=10') as never)
+    const body = await res.json()
+    expect(res.headers.get('cache-control')).toBe('private, no-store')
+    expect(body.data.map((r: { id: number }) => r.id)).toEqual([1])
+  })
+})
+
+describe('GET /api/resources/[id]', () => {
+  const getOne = async (id: string) => {
+    const { GET } = await import('@/app/api/resources/[id]/route')
+    return GET(new Request(`http://localhost/api/resources/${id}`) as never, {
+      params: Promise.resolve({ id }),
+    })
+  }
+
+  it('404s an inactive resource for anonymous callers', async () => {
+    idLookup = RESOURCES[1]
+    expect((await getOne('2')).status).toBe(404)
+  })
+
+  it('serves an inactive resource to staff, uncached', async () => {
+    idLookup = RESOURCES[1]
+    currentUser = { email: 'admin@brightdesigns.band' }
+    const res = await getOne('2')
+    expect(res.status).toBe(200)
+    expect(res.headers.get('cache-control')).toBe('private, no-store')
+    expect((await res.json()).data.id).toBe(2)
+  })
+
+  it('keeps serving active resources publicly', async () => {
+    idLookup = RESOURCES[0]
+    const res = await getOne('1')
+    expect(res.status).toBe(200)
+    expect((await res.json()).id).toBe(1)
   })
 })

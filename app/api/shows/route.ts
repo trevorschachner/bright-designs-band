@@ -153,7 +153,6 @@ export async function GET(request: Request) {
     if (error instanceof UnknownFilterFieldError) {
       return BadRequestResponse(`Unknown filter field: ${error.field}`);
     }
-    console.error('Error fetching shows:', error);
     await reportError(error, { operation: 'GET /api/shows' });
     return ErrorResponse('Failed to load shows', 500);
   }

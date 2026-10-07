@@ -18,11 +18,14 @@ export async function GET(request: NextRequest) {
     // for them, and only explicitly with ?all=true.
     const wantsAll = new URL(request.url).searchParams.get('all') === 'true';
     if (wantsAll) {
+      // Never answer ?all=true from the shared public cache: the cache key is
+      // the query string only, so staff could be served the active-only list.
       const gate = await guard('canManageResources');
-      if (!gate.denied) {
-        const data = await db.select().from(resources).orderBy(desc(resources.createdAt));
-        return PrivateResponse(data);
-      }
+      const query = db.select().from(resources);
+      const data = gate.denied
+        ? await query.where(eq(resources.isActive, true)).orderBy(desc(resources.createdAt))
+        : await query.orderBy(desc(resources.createdAt));
+      return PrivateResponse(data);
     }
 
     const data = await db

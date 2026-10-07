@@ -6,7 +6,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
  * a 500 and reach reportError.
  */
 
-const reportError = vi.fn(async (_e: unknown, _c: unknown) => {})
+// Like the real reportError, which logs once itself.
+const reportError = vi.fn(async (_e: unknown, _c: unknown) => {
+  console.error('reportError')
+})
 vi.mock('@/lib/observability/report-error', () => ({ reportError }))
 
 vi.mock('@/lib/utils/supabase/server', () => ({
@@ -34,6 +37,7 @@ vi.mock('@/lib/database', () => ({ db: failing }))
 
 beforeEach(() => {
   reportError.mockClear()
+  vi.restoreAllMocks()
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -49,5 +53,7 @@ describe('GET /api/shows database failure', () => {
     expect(JSON.stringify(body)).not.toContain('connection refused')
     expect(reportError).toHaveBeenCalledOnce()
     expect(reportError.mock.calls[0][0]).toBe(boom)
+    // reportError logs once itself; the route must not log a second time.
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
 })
