@@ -61,6 +61,9 @@ export const arrangements = pgTable('arrangements', {
   // Written by the arrangements API but never read for ordering — reads use
   // showArrangements.orderIndex. Retained because 50 rows carry real values.
   displayOrder: integer('display_order').default(0).notNull(),
+  // Added in drizzle/0003 (existing rows get now()). Writers set it on every
+  // update; lib/actions compare it for optimistic concurrency.
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Files (unchanged)
@@ -88,6 +91,9 @@ export const files = pgTable('files', {
 export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
+  // Added in drizzle/0003 (existing rows get now()). lib/actions/tags.ts sets
+  // it on every update and compares it for optimistic concurrency.
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const showsToTags = pgTable('shows_to_tags', {
@@ -156,6 +162,19 @@ export const resources = pgTable('resources', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Old show slugs. When a show's slug changes, lib/actions/shows.ts records the
+// previous one here so /shows/<old> 308s to the current URL
+// (getSlugRedirect in lib/services/shows.ts). A slug that a show claims again
+// has its row deleted, so a live slug never also redirects. Table from
+// drizzle/0003; RLS policies in drizzle/migrations/2026-10-08_slug_redirects_rls.sql.
+export const slugRedirects = pgTable('slug_redirects', {
+  oldSlug: text('old_slug').primaryKey(),
+  showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('slug_redirects_show_id_idx').on(table.showId),
+]);
 
 // Relations
 
