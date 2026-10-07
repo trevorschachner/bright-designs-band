@@ -230,9 +230,15 @@
   50% { opacity: 1; transform: translateY(-4px) scale(1.2); }
 }
 .marcher-dot {
-  opacity: 0.3;
-  transform: scale(0.8);
-  animation: marcher-step 1.5s ease-in-out infinite both;
+  /* Static under prefers-reduced-motion: every dot half-lit, full size. */
+  opacity: 0.6;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .marcher-dot {
+    opacity: 0.3;
+    transform: scale(0.8);
+    animation: marcher-step 1.5s ease-in-out infinite both;
+  }
 }
 
 /* Waveform bars (audio players). */
@@ -241,5 +247,11 @@
   50% { height: 12px; }
 }
 .waveform-bar {
-  animation: waveform-bounce 0.5s ease-in-out infinite alternate;
+  /* Static under prefers-reduced-motion: bars held at mid height while playing. */
+  height: 8px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .waveform-bar {
+    animation: waveform-bounce 0.5s ease-in-out infinite alternate;
+  }
 }

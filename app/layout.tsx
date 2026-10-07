@@ -26,6 +26,11 @@ const poppins = Poppins({
   // Every weight the site uses: 300 (body, font-light), 400 (font-normal, and
   // <strong>/<b> = bolder than 300), 500 (font-medium), 600 (font-semibold),
   // 700 (font-bold), 800 (typography prose h1 on /privacy and /terms).
+  // One instance on purpose: next/font gives each instance its own generated
+  // family name, and the browser does not fall through a font stack per
+  // weight, so a second (preload: false) instance for 400/500/800 would never
+  // be used where the first family is present. next/font has no per-weight
+  // preload, so all six weights preload.
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-poppins",
   display: "swap",

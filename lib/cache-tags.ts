@@ -19,6 +19,7 @@ export const TAGS = {
 export const PATHS = {
   show: (slug: string) => `/shows/${slug}`,
   arrangement: (id: number | string) => `/arrangements/${id}`,
+  collection: (slug: string) => `/collections/${slug}`,
   home: '/',
   shows: '/shows',
   arrangements: '/arrangements',

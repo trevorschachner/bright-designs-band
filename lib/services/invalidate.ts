@@ -15,6 +15,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { PATHS, TAGS } from '@/lib/cache-tags';
+import { collections } from '@/lib/collections';
 
 const EXPIRE_NOW = { expire: 0 };
 
@@ -29,6 +30,13 @@ function expireTags(...tags: string[]) {
 function expirePaths(...paths: (string | null | undefined)[]) {
   for (const path of new Set(paths.filter((p): p is string => Boolean(p)))) revalidatePath(path);
 }
+
+/**
+ * Every /collections/<slug> page. They list shows (by difficulty or tag) and
+ * are prerendered; one built without a database holds no tagged read, so tag
+ * expiry alone would never refresh it. Name the paths.
+ */
+const collectionPaths = () => collections.map((c) => PATHS.collection(c.slug));
 
 function expireAllPagesOf(...patterns: string[]) {
   for (const pattern of patterns) revalidatePath(pattern, 'page');
@@ -47,7 +55,8 @@ export function invalidateShow(id: number, slug: string | null | undefined, prev
     PATHS.shows,
     PATHS.sitemap,
     PATHS.llms,
-    PATHS.llmsFull
+    PATHS.llmsFull,
+    ...collectionPaths()
   );
 }
 
@@ -71,7 +80,8 @@ export function invalidateArrangement(id: number, showSlug?: string | null) {
 export function invalidateTags() {
   expireTags(TAGS.tags);
   expireAllPagesOf(SHOW_PAGES, ARRANGEMENT_PAGES);
-  expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap);
+  // A tag collection (e.g. "Small Band") filters on the tag's name.
+  expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap, ...collectionPaths());
 }
 
 /** A source piece was created, edited or deleted. Credits show on every part. */

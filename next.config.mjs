@@ -1,4 +1,5 @@
 import { securityHeaders } from './lib/security-headers.mjs';
+import { catalogCdnHeaderRules } from './lib/catalog-cdn-headers.mjs';
 
 // Derive the Storage host from the same env var the app uses at runtime.
 // Netlify masks secrets as `****` during the build step. Outside a Netlify
@@ -52,7 +53,11 @@ const nextConfig = {
     ],
   },
   async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders(supabaseHostname) }];
+    return [
+      { source: '/(.*)', headers: securityHeaders(supabaseHostname) },
+      // Tagged, durable CDN cache for the dynamic catalog pages.
+      ...catalogCdnHeaderRules(),
+    ];
   },
 
   async redirects() {

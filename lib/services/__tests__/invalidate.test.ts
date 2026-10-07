@@ -15,6 +15,15 @@ const { revalidateTag, revalidatePath } = vi.hoisted(() => ({
 }))
 vi.mock('next/cache', () => ({ revalidateTag, revalidatePath }))
 
+// Prerendered collection landing pages, named because one built without a
+// database holds no tagged read to expire.
+const COLLECTIONS = [
+  '/collections/competitive-marching-band-shows',
+  '/collections/small-band-marching-shows',
+  '/collections/easy-marching-band-shows',
+  '/collections/grade-3-marching-band-shows',
+]
+
 const tags = () => revalidateTag.mock.calls.map(([tag]) => tag)
 const paths = () => revalidatePath.mock.calls.map(([path, type]) => (type ? `${path} (${type})` : path))
 
@@ -35,20 +44,20 @@ describe('invalidateShow', () => {
   it('expires the show and the list, its page, home, the catalog and the sitemap', () => {
     invalidateShow(7, 'apex')
     expect(tags()).toEqual(['show:7', 'shows'])
-    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
+    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt', ...COLLECTIONS])
   })
 
   it('drops the old URL too when the slug changed', () => {
     invalidateShow(7, 'apex-2', 'apex')
-    expect(paths()).toEqual(['/shows/apex-2', '/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
+    expect(paths()).toEqual(['/shows/apex-2', '/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt', ...COLLECTIONS])
   })
 
   it('does not repeat a slug that did not change, and copes with no slug', () => {
     invalidateShow(7, 'apex', 'apex')
-    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
+    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt', ...COLLECTIONS])
     revalidatePath.mockClear()
     invalidateShow(7, null)
-    expect(paths()).toEqual(['/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
+    expect(paths()).toEqual(['/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt', ...COLLECTIONS])
   })
 })
 
@@ -76,6 +85,7 @@ describe('invalidateTags and invalidatePieces', () => {
       '/shows',
       '/arrangements',
       '/sitemap.xml',
+      ...COLLECTIONS,
     ])
   })
 

@@ -22,6 +22,28 @@ export function databaseUnavailableAtBuild(): boolean {
   return shouldSkipSupabase() || !isDatabaseConfigured();
 }
 
+const warnedKeys = new Set<string>();
+
+/**
+ * Called when a read would take the build fallback. A production deploy
+ * (Netlify CONTEXT=production) must never ship empty prerendered pages, so it
+ * fails the build. Anywhere else (CI, previews, local) it warns once per key
+ * and the fallback is used.
+ */
+function onBuildWithoutDb(key: string): void {
+  if (process.env.CONTEXT === 'production') {
+    throw new Error('DATABASE_URL is required for a production build');
+  }
+  if (warnedKeys.has(key)) return;
+  warnedKeys.add(key);
+  console.warn(`[cachedRead] ${key}: no database during the build; prerendering the empty fallback.`);
+}
+
+/** Test hook: forget which keys have warned. */
+export function resetBuildWarningsForTests(): void {
+  warnedKeys.clear();
+}
+
 interface CachedReadOptions<A extends unknown[], R> {
   /** Every tag whose invalidation must drop this entry. See lib/cache-tags.ts. */
   tags: (...args: A) => string[];
@@ -47,7 +69,10 @@ export function cachedRead<A extends unknown[], R>(
   options: CachedReadOptions<A, R>
 ): (...args: A) => Promise<R> {
   return (...args: A) => {
-    if (databaseUnavailableAtBuild()) return Promise.resolve(options.atBuildWithoutDb);
+    if (databaseUnavailableAtBuild()) {
+      onBuildWithoutDb(key);
+      return Promise.resolve(options.atBuildWithoutDb);
+    }
     return unstable_cache(fn, [key], {
       revalidate: options.revalidate?.(...args) ?? REVALIDATE_SECONDS,
       tags: options.tags(...args),

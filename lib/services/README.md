@@ -52,8 +52,13 @@ We use `unstable_cache`, not `'use cache'`. Decided once for the whole layer.
    means nothing matched. It never means the query failed.
 5. **The one exception is a build without a database.** During `next build`
    with no `DATABASE_URL` (CI) or a masked Supabase env (some Netlify builds),
-   `cachedRead` returns `atBuildWithoutDb` without querying or caching. The
-   prerendered page is the empty state until the first revalidation or write.
+   `cachedRead` returns `atBuildWithoutDb` without querying or caching, and
+   warns once per key. The prerendered page is the empty state until the
+   first revalidation or write. In a Netlify production build
+   (`CONTEXT=production`) it throws `DATABASE_URL is required for a production
+   build` instead: production never ships empty prerendered pages. Collection
+   pages (`/collections/<slug>`) built this way hold no tagged read, so
+   `invalidateShow` and `invalidateTags` name their paths.
 6. **JSON-safe results.** A cache hit comes back through JSON, so services
    return ISO strings for timestamps (`toIso`) and plain objects, not Maps.
 7. **Admin reads are uncached.** Functions named `...ForAdmin` call the query
@@ -81,6 +86,12 @@ serialised filters).
 - **Searched reads are cached too, but for 300 s** (`SEARCH_REVALIDATE_SECONDS`)
   instead of 3600. Free text is the only input with a long tail of one-off
   values; a shorter life lets those entries age out. Same key and tags.
+- **No price in the public contract.** `SHOWS_FILTER_FIELDS` (the public
+  allowlist) has no `price`, so a public filter or sort on it is dropped, and
+  `canonicalShowsParams` drops it even from unparsed input. The public read
+  never selects the column (`ShowListItem` has no `price`). Only the admin
+  read (`getShowsPageForAdmin`, `AdminShowListItem`,
+  `SHOWS_ADMIN_FILTER_FIELDS`) carries it.
 - **Admin is exempt.** `GET /api/shows?admin=true` from staff still calls the
   uncached `getShowsPageForAdmin` with the admin table's own page sizes (up to
   100).
@@ -88,6 +99,47 @@ serialised filters).
   result count share one call per render. The detail pages do the same:
   `/shows/[slug]` and `/arrangements/[id]` wrap their lookup in React `cache`
   so `generateMetadata` and the page share it.
+
+## CDN cache for the catalog pages
+
+`/shows` and `/arrangements` read `searchParams`, so they are dynamic and Next
+sends `Cache-Control: private, no-store`. `next.config.mjs` adds, for both
+paths (`lib/catalog-cdn-headers.mjs`):
+
+| Header | Value |
+| --- | --- |
+| `Netlify-CDN-Cache-Control` | `public, durable, s-maxage=3600, stale-while-revalidate=86400` |
+| `Netlify-Cache-Tag` | `shows,arrangements,tags` |
+| `Netlify-Vary` | `query,header=<Next's RSC request headers>,cookie=__prerender_bypass\|__next_preview_data` |
+
+The browser keeps Next's private `Cache-Control`; only Netlify's CDN stores
+the page. `query` (bare) caches every filter, page and limit variant
+separately; without it `/shows?search=apex` would be served the cached
+`/shows`. The `header=` part keeps HTML and RSC payloads apart.
+
+How it interacts with `@netlify/plugin-nextjs` 5.16.2 (`dist/run/headers.js`):
+
+- `setVaryHeaders` **merges** a response's own `Netlify-Vary` into its
+  defaults (it does not overwrite it): bare `query` becomes "all query
+  params", the `header=` and `cookie=` lists are appended to its own. We repeat
+  its defaults anyway so the value is right on its own.
+- `setCacheControlHeaders` leaves a response alone when it already carries
+  `netlify-cdn-cache-control` and no `x-nextjs-cache` (true for a dynamic
+  page), so our CDN header survives.
+- `setCacheTagsHeaders` would overwrite `netlify-cache-tag` only when a full
+  route cache entry was read; `unstable_cache` reads are data reads and never
+  set it, so our tags survive.
+- On `revalidateTag(tag)` the adapter also purges the CDN tag of the same
+  name, so every helper in `invalidate.ts` that expires `shows`,
+  `arrangements` or `tags` purges these pages.
+
+**Trade-off.** A visitor may see a catalog page up to 1 h old (then up to a
+day stale while it re-renders in the background) only if a purge is missed.
+Normally a write purges within seconds. A write that touches none of the
+three tags (pieces, resources) does not purge these pages; they do not show
+piece credits or resources, so nothing visible goes stale. The free-text
+search entries live 5 minutes in the data cache, but the CDN object for a
+searched URL can live the full hour; tag purges still apply to it.
 
 ## Invalidation
 
@@ -100,9 +152,9 @@ straight after saving.
 
 | Helper | Tags | Paths |
 | --- | --- | --- |
-| `invalidateShow(id, slug, previousSlug?)` | `show:<id>`, `shows` | `/shows/<slug>` (and the old slug), `/`, `/shows`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` |
+| `invalidateShow(id, slug, previousSlug?)` | `show:<id>`, `shows` | `/shows/<slug>` (and the old slug), `/`, `/shows`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt`, every `/collections/<slug>` |
 | `invalidateArrangement(id, showSlug?)` | `arrangement:<id>`, `arrangements` | `/arrangements/<id>`, `/shows/<showSlug>`, `/`, `/arrangements`, `/sitemap.xml` |
-| `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[id]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml` |
+| `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[id]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml`, every `/collections/<slug>` |
 | `invalidatePieces()` | `pieces` | same as tags |
 | `invalidateResources()` | `resources` | `/resources`, `/`, `/sitemap.xml` |
 | `invalidateCatalog()` | all five list tags | the whole site (`/`, layout), plus `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` |
