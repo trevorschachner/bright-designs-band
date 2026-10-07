@@ -49,7 +49,6 @@ export const arrangements = pgTable('arrangements', {
   durationSeconds: integer('duration_seconds'),
   description: text('description'),
   percussionArranger: text('percussion_arranger'),
-  copyrightAmountUsd: numeric('copyright_amount_usd', { precision: 10, scale: 2 }),
   ensembleSize: ensembleSizeEnum('ensemble_size'),
   scene: arrangementSceneEnum('scene'),
   youtubeUrl: text('youtube_url'),
