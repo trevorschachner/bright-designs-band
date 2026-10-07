@@ -19,7 +19,7 @@
 ## Technology Stack
 
 ### Frontend Framework
-**Next.js 15** (App Router)
+**Next.js 16** (App Router)
 - **Purpose**: Full-stack React framework with server components
 - **Why**: SEO optimization, server-side rendering, built-in API routes
 - **Key Features**: 
@@ -31,7 +31,7 @@
 **Location**: `/app/*`
 
 ### UI Framework
-**React 18**
+**React 19**
 - **Purpose**: Component-based UI library
 - **Why**: Industry standard, excellent ecosystem
 - **Patterns Used**:
@@ -100,9 +100,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-key"
 
 **Commands**:
 ```bash
-pnpm db:generate  # Generate migration files
-pnpm db:push      # Push schema to database
-pnpm db:migrate   # Run migrations
+npm run db:generate  # Generate migration files
+npm run db:push      # Push schema to database
+npm run db:migrate   # Run migrations
 ```
 
 ### Schema Validation
@@ -194,7 +194,7 @@ ADMIN_EMAIL="your-email@brightdesigns.band"
 
 **Implementation**:
 - `/lib/auth/roles.ts` - Role definitions and checks
-- `/middleware.ts` - Auth middleware for protected routes
+- `/proxy.ts` - Next 16 proxy (formerly middleware): Supabase auth-code redirect and legacy `/shows/:id` redirect; route authorization lives in `lib/auth/guard.ts`
 - `/app/auth/*` - Auth callback handlers
 
 **User Roles**:
@@ -248,14 +248,14 @@ ADMIN_EMAIL="your-email@brightdesigns.band"
 ## Development Tools
 
 ### Package Manager
-**pnpm**
-- **Purpose**: Fast, disk-space efficient package manager
-- **Why**: Faster than npm/yarn, saves disk space
+**npm**
+- **Purpose**: Package manager (lockfile: `package-lock.json`; CI uses `npm ci`)
+- **Why**: Ships with Node, matches Netlify and CI
 - **Commands**:
-  - `pnpm install` - Install dependencies
-  - `pnpm dev` - Start dev server
-  - `pnpm build` - Build for production
-  - `pnpm start` - Start production server
+  - `npm ci` - Install dependencies
+  - `npm run dev` - Start dev server
+  - `npm run build` - Build for production
+  - `npm start` - Start production server
 
 ### TypeScript
 **TypeScript 5**
@@ -267,22 +267,22 @@ ADMIN_EMAIL="your-email@brightdesigns.band"
 **ESLint**
 - **Purpose**: Code quality and consistency
 - **Configuration**: Next.js default ESLint config
-- **Command**: `pnpm lint`
+- **Command**: `npm run lint`
 
 ### Database Tools
 **Drizzle Kit**
 - **Purpose**: Database migration management
 - **Commands**:
-  - `pnpm db:generate` - Generate migrations
-  - `pnpm db:push` - Push schema changes
-  - `pnpm db:migrate` - Run migrations
+  - `npm run db:generate` - Generate migrations
+  - `npm run db:push` - Push schema changes
+  - `npm run db:migrate` - Run migrations
 
 ---
 
 ## Architecture Patterns
 
 ### Server Components vs Client Components
-**Server Components** (default in Next.js 15):
+**Server Components** (default in Next.js 16):
 - Data fetching
 - Database queries
 - SEO-critical content
@@ -354,7 +354,7 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID="G-XXXXXXXXXX"
 
 ## Key Design Decisions
 
-### Why Next.js 15?
+### Why Next.js 16?
 - Built-in SSR/SSG for SEO
 - Server Components reduce client-side JavaScript
 - App Router for modern routing patterns

@@ -46,7 +46,7 @@ value in each.
 **Writes.**
 
 - `graphic_url` is set automatically by `POST /api/files` whenever an image is uploaded to a show (not to one of its parts). It has no field in the admin.
-- `thumbnail_url` is the admin's "Thumbnail URL" field, "Set as thumbnail" in the show gallery, the new-show upload, and `POST /api/admin/shows/backfill-images`.
+- `thumbnail_url` is the admin's "Thumbnail URL" field, "Set as thumbnail" in the show gallery, the new-show upload.
 - Deleting a file clears whichever of the two pointed at it (`DELETE /api/files/[id]`).
 
 So in practice: the latest uploaded show image wins over a manually chosen

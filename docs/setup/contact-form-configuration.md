@@ -76,7 +76,7 @@ ADMIN_API_KEY="your-secure-random-string-here"
 
 1. **Start your development server**:
    ```bash
-   pnpm dev
+   npm run dev
    ```
 
 2. **Visit the contact form**:

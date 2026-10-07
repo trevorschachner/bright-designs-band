@@ -287,7 +287,6 @@ Monitor these key areas:
 
 ### Open Source Tools Used
 - **Next.js**: Built-in SEO features and performance optimization
-- **Unlighthouse**: Site-wide Lighthouse auditing
 - **React SEO Tools**: Head tag and sitemap generation utilities
 
 ### Analytics Tools

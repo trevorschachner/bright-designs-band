@@ -1,8 +1,8 @@
 # Local Development Setup
 
 ## Prerequisites
-- Node.js 18+ 
-- pnpm (recommended) or npm
+- Node.js 20+
+- npm (ships with Node)
 - PostgreSQL database
 - Supabase account (for authentication and storage)
 
@@ -16,7 +16,7 @@
 
 2. **Install dependencies**
    ```bash
-   pnpm install
+   npm ci
    ```
 
 3. **Set up environment variables**
@@ -27,23 +27,22 @@
 
 4. **Set up the database**
    ```bash
-   pnpm db:migrate
+   npm run db:migrate
    ```
 
 5. **Start the development server**
    ```bash
-   pnpm dev
+   npm run dev
    ```
 
 ## Development Scripts
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Run linting
-- `pnpm type-check` - Run TypeScript checks
-- `pnpm db:migrate` - Run database migrations
-- `pnpm db:studio` - Open database studio
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run linting
+- `npm run typecheck` - Run TypeScript checks
+- `npm run db:migrate` - Run database migrations
 
 ## Project Structure
 

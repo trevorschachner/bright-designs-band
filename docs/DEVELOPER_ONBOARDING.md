@@ -5,8 +5,8 @@ Welcome to the Bright Designs Band codebase! This guide will help you understand
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- pnpm (package manager)
+- Node.js 20+ (matches netlify.toml)
+- npm (ships with Node)
 - TypeScript knowledge
 - React/Next.js experience
 
@@ -14,14 +14,14 @@ Welcome to the Bright Designs Band codebase! This guide will help you understand
 ```bash
 git clone <repository>
 cd bright-designs-band
-pnpm install
-pnpm dev
+npm ci
+npm run dev
 ```
 
 ## 📁 Project Structure
 
 ```
-├── app/                    # Next.js 13+ App Router
+├── app/                    # Next.js 16 App Router
 │   ├── (routes)/          # Page components
 │   ├── api/               # API routes
 │   └── layout.tsx         # Root layout
@@ -233,8 +233,8 @@ const featuredShows = await db.query.shows.findMany({
 
 ### Database Changes
 1. Update schema in `lib/database/schema.ts`
-2. Generate migration: `pnpm db:generate`
-3. Apply migration: `pnpm db:push`
+2. Generate migration: `npm run db:generate`
+3. Apply migration: `npm run db:push`
 4. Update types if needed
 
 ### Adding Features

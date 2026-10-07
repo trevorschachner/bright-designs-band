@@ -8,8 +8,7 @@
 
 Before you begin, make sure you have:
 
-- **Node.js 18+** - [Download](https://nodejs.org/)
-- **pnpm** - Install with: `npm install -g pnpm`
+- **Node.js 20+** - [Download](https://nodejs.org/)
 - **Git** - [Download](https://git-scm.com/)
 - **Code Editor** - VS Code recommended
 
@@ -27,7 +26,7 @@ cd bright-designs-band
 ## Step 2: Install Dependencies
 
 ```bash
-pnpm install
+npm ci
 ```
 
 This will install all required packages (~5 minutes on first run).
@@ -75,10 +74,10 @@ If you need to work with database schemas:
 
 ```bash
 # Push schema to database
-pnpm db:push
+npm run db:push
 
 # Or run migrations
-pnpm db:migrate
+npm run db:migrate
 ```
 
 **Note**: The staging database should already be set up. You only need this if creating a new local database.
@@ -88,7 +87,7 @@ pnpm db:migrate
 ## Step 5: Start the Development Server
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 The application will start at: **http://localhost:3000**
@@ -136,7 +135,7 @@ Open browser DevTools (F12) and verify:
 ```bash
 # Clear node_modules and reinstall
 rm -rf node_modules
-pnpm install
+npm ci
 ```
 
 ### Issue: "Cannot connect to database"
@@ -151,7 +150,7 @@ pnpm install
 **Solution**:
 ```bash
 # Use a different port
-pnpm dev -- -p 3001
+npm run dev -- -p 3001
 ```
 
 ### Issue: TypeScript errors
@@ -211,10 +210,10 @@ Before committing, run:
 
 ```bash
 # Lint your code
-pnpm lint
+npm run lint
 
 # Build to check for errors
-pnpm build
+npm run build
 ```
 
 ---
@@ -223,24 +222,17 @@ pnpm build
 
 ### Development
 ```bash
-pnpm dev           # Start dev server
-pnpm dev:turbo     # Start dev server with Turbopack (faster)
-pnpm build         # Build for production
-pnpm start         # Start production server
-pnpm lint          # Run ESLint
+npm run dev           # Start dev server
+npm run build         # Build for production
+npm start         # Start production server
+npm run lint          # Run ESLint
 ```
 
 ### Database
 ```bash
-pnpm db:generate   # Generate migration files from schema changes
-pnpm db:push       # Push schema changes to database
-pnpm db:migrate    # Run pending migrations
-```
-
-### SEO Tools
-```bash
-pnpm seo:audit     # Run SEO audit script
-pnpm seo:test      # Run full SEO tests
+npm run db:generate   # Generate migration files from schema changes
+npm run db:push       # Push schema changes to database
+npm run db:migrate    # Run pending migrations
 ```
 
 ---

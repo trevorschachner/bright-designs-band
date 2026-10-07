@@ -42,12 +42,12 @@ This documentation is designed to help anyone on the team understand, develop, a
 Quick reference of all major systems:
 
 #### Technology Stack
-- **Frontend**: Next.js 15, React 18, TypeScript 5
+- **Frontend**: Next.js 16, React 19, TypeScript 5
 - **Styling**: Tailwind CSS 3, shadcn/ui components
 - **Database**: Supabase (PostgreSQL) with Drizzle ORM
 - **Email**: Resend API (`transactional.brightdesigns.band`)
 - **Storage**: Supabase Storage (files, images, media)
-- **Auth**: Supabase Auth (email/password, OAuth)
+- **Auth**: Supabase Auth (magic link)
 - **Hosting**: Netlify (edge CDN, serverless functions)
 
 #### Key Integrations
@@ -166,8 +166,8 @@ Reusable UI components and patterns:
 
 **Modify the database**
 1. Update schema in `/lib/database/schema.ts`
-2. Run `pnpm db:generate` to create migration
-3. Run `pnpm db:push` to apply changes
+2. Run `npm run db:generate` to create migration
+3. Run `npm run db:push` to apply changes
 4. Update TypeScript types if needed
 
 **Add a new feature**
@@ -178,10 +178,8 @@ Reusable UI components and patterns:
 5. Create feature documentation in `/docs/features/`
 
 **Deploy changes**
-1. Push to `main` branch
-2. Netlify automatically deploys to `dev.brightdesigns.band`
-3. Test on dev environment
-4. Promote to production when ready
+1. Open a PR against `main` (squash-merge after checks pass)
+2. Netlify deploys production from `main` and builds a deploy preview for every PR
 
 **[More Tasks →](./DEVELOPER_ONBOARDING.md#common-tasks)**
 
@@ -216,8 +214,8 @@ docs/
 │   ├── contact-form-configuration.md # Contact form setup
 │   └── netlify-deployment.md         # Production deployment
 │
-├── code-review-analysis.md           # Code quality analysis
-└── wireframe-design-plan.md          # Original design planning
+├── adr/                              # Architecture decision records
+└── WORKFLOW.md                        # Issue and PR workflow
 ```
 
 ---
