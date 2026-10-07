@@ -31,3 +31,12 @@ the text is in the HTML. Making posthog-js a lazy import (and dropping
 `PHProvider`, which imports it statically) took `/` to 91 / 3.5 s in a
 throwaway build; the rest is the framework floor. Production, where the HTML
 paints before the chunks arrive, is the number to watch.
+| 2026-10-07 | b5ef491 | `/` | 87 | 4.0 s | 335 | Local, Task 4 fixes: posthog-js lazy (loads at ~140 ms, after LCP; surveys off), Poppins 300–800 (6 preloads), Inter preloaded again. Two runs, 4.0 s both |
+| 2026-10-07 | b5ef491 | `/shows` | 87 | 4.1 s | 360 | Local, Task 4 fixes. Two runs, 4.1 s both |
+| 2026-10-07 | b5ef491 | `/shows/true-north` | 87 | 4.1 s | 339 | Local, Task 4 fixes. Two runs, 4.1 s both |
+
+Font preloads are high-priority requests that finish before the LCP paint, so
+Lantern counts them against LCP too. A throwaway build of b5ef491 with only
+`preload: false` on Inter (a 48 KB variable font that is never painted; it sits
+behind Poppins in every stack) measured `/` 89 / 3.8 s, `/shows` 89 / 3.7 s,
+`/shows/true-north` 89 / 3.8 s.
