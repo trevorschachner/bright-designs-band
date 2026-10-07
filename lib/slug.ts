@@ -3,7 +3,7 @@
  * (`lib/validation/shows.ts` enforces the same pattern on writes).
  *
  * `normaliseSlug` is the one definition of "the canonical form of a slug".
- * The POST /api/shows route builds new slugs with `slugFromTitle`, and the
+ * `createShow` (lib/actions/shows.ts) builds new slugs with `slugFromTitle`, and the
  * pre-check in drizzle/migrations/2026-10-07_shows_slug_unique.sql looks for
  * rows whose stored slug differs from this form.
  */

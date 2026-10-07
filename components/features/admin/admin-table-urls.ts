@@ -1,10 +1,3 @@
-/** Path part of an endpoint, with any query string or hash removed. */
-const pathOf = (endpoint: string): string => endpoint.split(/[?#]/)[0].replace(/\/+$/, '');
-
-export function buildDeleteUrl(endpoint: string, id: number | string): string {
-  return `${pathOf(endpoint)}/${encodeURIComponent(String(id))}`;
-}
-
 export type TableSort = { field: string; direction: 'asc' | 'desc' };
 
 /**

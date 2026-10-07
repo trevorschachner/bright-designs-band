@@ -164,24 +164,18 @@ straight after saving.
 
 Which write calls which:
 
-| Route | Helper |
+| Write | Helper |
 | --- | --- |
-| `POST /api/shows` | `invalidateShow` |
-| `PUT /api/shows/[id]` (incl. setting the thumbnail) | `invalidateShow` (with the previous slug) |
-| `DELETE /api/shows/[id]` | `invalidateShow` |
-| `POST /api/arrangements` | `invalidateArrangement` (parent show slug) |
-| `PUT /api/arrangements/[id]` | `invalidateArrangement` |
-| `DELETE /api/arrangements/[id]` | `invalidateArrangement` (slug read before the delete) |
-| `PUT /api/arrangements/[id]/pieces` | `invalidateArrangement` |
-| `POST /api/tags`, `PUT`/`DELETE /api/tags/[id]` | `invalidateTags` |
-| `POST /api/pieces`, `PUT`/`DELETE /api/pieces/[id]` | `invalidatePieces` |
-| `POST /api/resources`, `PUT`/`DELETE /api/resources/[id]` | `invalidateResources` |
 | `lib/actions/shows.ts` (every action) | `invalidateShow` (`updateShow` passes the previous slug) |
+| `lib/actions/arrangements.ts` create / update / delete / tags / pieces | `invalidateArrangement` (parent show slug; read before a delete) |
+| `lib/actions/arrangements.ts` `reorderArrangements` | `invalidateShow` |
 | `lib/actions/tags.ts` | `invalidateTags` |
+| `lib/actions/pieces.ts` | `invalidatePieces` |
 | `lib/actions/resources.ts` | `invalidateResources` |
-| `POST /api/files` (both modes), `POST /api/files/youtube`, `DELETE /api/files/[id]` | `invalidateFileOwner` → `invalidateShow` and/or `invalidateArrangement` |
+| `lib/actions/files.ts` `setShowThumbnail` | `invalidateShow` |
+| `lib/actions/files.ts` `attachYouTube`, `deleteFile`; `POST /api/files` (both modes) | `invalidateFileOwner` → `invalidateShow` and/or `invalidateArrangement` |
 
-A new write route must call one of these. A new read that joins another entity
+A new write (action or route) must call one of these. A new read that joins another entity
 must add that entity's tag.
 
 ## The database client

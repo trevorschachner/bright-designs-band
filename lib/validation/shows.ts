@@ -4,7 +4,7 @@ import { shows, showDifficultyEnum } from '@/lib/database/schema';
 import { concurrencyStamp, rowId } from './concurrency';
 
 /**
- * Payload accepted by `POST /api/shows`.
+ * Payload accepted by `createShow`.
  *
  * Generated from the Drizzle table rather than restated by hand. The previous
  * hand-written version declared seven columns that do not exist on `shows`
@@ -19,7 +19,7 @@ import { concurrencyStamp, rowId } from './concurrency';
  * collects and enriched afterwards by editing, so the credit columns
  * (`commissioned`, `programCoordinator`, `percussionArranger`,
  * `soundDesigner`, `windArranger`, `drillWriter`) and `featured`, `graphicUrl`
- * and `youtubeUrl` are settable only through `PUT /api/shows/[id]`. Widening
+ * and `youtubeUrl` are settable only through `updateShow`. Widening
  * this would be inert until the form sends them.
  *
  * `slug` is omitted because the route derives it from the title and resolves
@@ -76,7 +76,7 @@ export const showSchema = showInsertSchema
 export type ShowInput = z.infer<typeof showSchema>;
 
 /**
- * Payload accepted by `PUT /api/shows/[id]`.
+ * Payload accepted by `updateShow`.
  *
  * The handler used to spread the request body straight into `.set()`, so any
  * column was writable, `id`, `createdAt` and `price` included. Every key is
@@ -135,7 +135,7 @@ export type UpdateShowInput = z.infer<typeof updateShowSchema>;
 // Server Action payloads (lib/actions/shows.ts)
 // ---------------------------------------------------------------------------
 
-/** `createShow`: the POST /api/shows payload, strict (unknown keys rejected). */
+/** `createShow`: the original POST /api/shows payload, strict (unknown keys rejected). */
 export const createShowSchema = showSchema.strict();
 /**
  * drizzle-zod types the refined nullable columns (description, duration,

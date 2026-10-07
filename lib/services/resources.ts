@@ -86,3 +86,8 @@ export const getResource = cachedRead('resource-v1', fetchResource, {
   atBuildWithoutDb: null as ResourceRow | null,
 });
 
+
+/** One resource by id or slug, drafts included, uncached. For the admin editor (it saves with `updatedAt`). */
+export function getResourceForAdmin(idOrSlug: string): Promise<ResourceRow | null> {
+  return fetchResource(idOrSlug);
+}

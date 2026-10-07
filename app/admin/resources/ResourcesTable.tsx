@@ -1,6 +1,7 @@
 'use client';
 
 import AdminTable, { ColumnDef } from '@/components/features/admin/AdminTable';
+import { deleteResource } from '@/lib/actions/resources';
 
 interface Resource {
   id: number;
@@ -47,6 +48,7 @@ export default function ResourcesTable() {
       listQuery="all=true"
       columns={columns}
       resourceName="resources"
+      onDelete={deleteResource}
     />
   );
 }

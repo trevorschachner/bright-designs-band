@@ -24,24 +24,26 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  ChevronLeft,
-  ChevronRight,
   Trash2,
-  ChevronsLeft,
-  ChevronsRight,
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { buildDeleteUrl, buildListUrl, nextSort, type TableSort } from './admin-table-urls';
+import type { ActionError, ActionResult } from '@/lib/actions/result';
+import { buildListUrl, nextSort, type TableSort } from './admin-table-urls';
+import { AdminTablePagination } from './AdminTablePagination';
+
+const DELETE_ERRORS: Record<ActionError, string> = {
+  forbidden: 'You do not have permission to delete this.',
+  invalid: 'Delete failed. Try again.',
+  not_found: 'Already deleted.',
+  conflict: 'This is still in use and cannot be deleted.',
+  stale: 'Delete failed. Try again.',
+  failed: 'Delete failed. Try again.',
+};
+
+/** Edit links use the slug when the row has one (shows), else the id. */
+const rowKey = (row: { id: number; slug?: unknown }) => (typeof row.slug === 'string' ? row.slug : row.id);
 
 export interface ColumnDef<T> {
   header: string;
@@ -52,7 +54,10 @@ export interface ColumnDef<T> {
 }
 
 interface AdminTableProps<T> {
+  /** List endpoint (a public GET with `?admin=true` / `?all=true`). */
   endpoint: string;
+  /** Deletes one row: a Server Action (e.g. `deleteShow`). `not_found` counts as done. */
+  onDelete: (id: number) => Promise<ActionResult<unknown>>;
   /** Fixed query string for list requests only, e.g. "all=true". */
   listQuery?: string;
   columns: ColumnDef<T>[];
@@ -64,11 +69,13 @@ export default function AdminTable<T extends { id: number }>({
   listQuery,
   columns,
   resourceName,
+  onDelete,
 }: AdminTableProps<T>) {
   const [data, setData] = useState<T[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<number | string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sort, setSort] = useState<TableSort | null>(null);
   
@@ -200,36 +207,19 @@ export default function AdminTable<T extends { id: number }>({
     setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
-  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 1 && value <= pagination.totalPages) {
-      handlePageChange(value);
-    }
-  };
-
-  const handleDelete = async (id: number | string) => {
-
+  const handleDelete = async (id: number) => {
+    setIsDeleting(true);
+    setDeleteError(null);
     try {
-      setIsDeleting(true);
-      // Determine the delete endpoint URL
-      // If endpoint is /api/shows, we want /api/shows/[id]
-      const deleteUrl = buildDeleteUrl(endpoint, id);
-      
-      const response = await fetch(deleteUrl, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to delete ${resourceName}`);
+      const result = await onDelete(id);
+      if (!result.ok && result.error !== 'not_found') {
+        setDeleteError(DELETE_ERRORS[result.error]);
+        return;
       }
-
-      // Refresh data - use current pagination values
-      await fetchData(pagination.page, pagination.limit);
       setDeletingId(null);
-    } catch (e) {
-      console.error('Delete error:', e);
-      alert(e instanceof Error ? e.message : 'Failed to delete item');
+      await fetchData(pagination.page, pagination.limit);
+    } catch {
+      setDeleteError(DELETE_ERRORS.failed);
     } finally {
       setIsDeleting(false);
     }
@@ -286,16 +276,16 @@ export default function AdminTable<T extends { id: number }>({
             <TableRow key={row.id}>
               {columns.map((column) => (
                 <TableCell key={String(column.accessorKey)}>
-                  {column.cell ? column.cell(row) : (row[column.accessorKey] as any)}
+                  {column.cell ? column.cell(row) : String(row[column.accessorKey] ?? '')}
                 </TableCell>
               ))}
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Link href={`/admin/${resourceName.toLowerCase()}/${(row as any).slug ?? row.id}`}>
+                  <Link href={`/admin/${resourceName.toLowerCase()}/${rowKey(row)}`}>
                     <Button variant="outline" size="sm">Edit</Button>
                   </Link>
                   
-                  <AlertDialog open={deletingId === row.id} onOpenChange={(open) => setDeletingId(open ? row.id : null)}>
+                  <AlertDialog open={deletingId === row.id} onOpenChange={(open) => { setDeleteError(null); setDeletingId(open ? row.id : null); }}>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm" className="w-8 h-8 p-0">
                         <Trash2 className="h-4 w-4" />
@@ -308,6 +298,7 @@ export default function AdminTable<T extends { id: number }>({
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently delete this {resourceName.slice(0, -1)} and remove it from our servers.
                         </AlertDialogDescription>
+                        {deleteError && <p className="text-sm text-destructive" role="alert">{deleteError}</p>}
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
@@ -331,97 +322,16 @@ export default function AdminTable<T extends { id: number }>({
         </TableBody>
       </Table>
       
-      {/* Pagination Controls - Always visible when there's data */}
-      {data.length > 0 && (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t bg-muted/30 min-h-[60px]">
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            Showing {data.length > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} to {Math.min(pagination.page * pagination.limit, pagination.total || data.length)} of {pagination.total || data.length} entries
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Show:</span>
-            <Select
-              value={pagination.limit.toString()}
-              onValueChange={(value) => handleLimitChange(parseInt(value, 10))}
-            >
-              <SelectTrigger className="w-20 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(1)}
-            disabled={pagination.page <= 1 || loading}
-            title="First page"
-          >
-            <ChevronsLeft className="h-4 w-4" />
-            <span className="sr-only">First</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page <= 1 || loading}
-            title="Previous page"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Previous</span>
-          </Button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Page</span>
-            <Input
-              type="number"
-              min={1}
-              max={pagination.totalPages || 1}
-              value={pagination.page}
-              onChange={handlePageInputChange}
-              onBlur={(e) => {
-                const value = parseInt(e.target.value, 10);
-                if (isNaN(value) || value < 1) {
-                  e.target.value = '1';
-                  handlePageChange(1);
-                } else if (value > pagination.totalPages) {
-                  e.target.value = pagination.totalPages.toString();
-                  handlePageChange(pagination.totalPages);
-                }
-              }}
-              className="w-16 h-8 text-center"
-            />
-            <span className="text-sm text-muted-foreground">of {pagination.totalPages || 1}</span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page >= pagination.totalPages || loading}
-            title="Next page"
-          >
-            <ChevronRight className="h-4 w-4" />
-            <span className="sr-only">Next</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.totalPages || 1)}
-            disabled={pagination.page >= pagination.totalPages || loading}
-            title="Last page"
-          >
-            <ChevronsRight className="h-4 w-4" />
-            <span className="sr-only">Last</span>
-          </Button>
-        </div>
-      </div>
-      )}
+      <AdminTablePagination
+        page={pagination.page}
+        limit={pagination.limit}
+        total={pagination.total || data.length}
+        totalPages={pagination.totalPages || 1}
+        shown={data.length}
+        loading={loading}
+        onPageChange={handlePageChange}
+        onLimitChange={handleLimitChange}
+      />
     </div>
   );
 }

@@ -53,29 +53,10 @@ beforeEach(() => {
 type Handler = (req: never, ctx: never) => Promise<Response>
 
 const WRITE_HANDLERS: { name: string; load: () => Promise<Handler>; hasParams?: boolean }[] = [
-  { name: 'POST /api/shows', load: async () => (await import('@/app/api/shows/route')).POST as unknown as Handler },
-  { name: 'PUT /api/shows/[id]', load: async () => (await import('@/app/api/shows/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/shows/[id]', load: async () => (await import('@/app/api/shows/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/arrangements', load: async () => (await import('@/app/api/arrangements/route')).POST as unknown as Handler },
-  { name: 'PUT /api/arrangements/[id]', load: async () => (await import('@/app/api/arrangements/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/arrangements/[id]', load: async () => (await import('@/app/api/arrangements/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/resources', load: async () => (await import('@/app/api/resources/route')).POST as unknown as Handler },
-  { name: 'PUT /api/resources/[id]', load: async () => (await import('@/app/api/resources/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/resources/[id]', load: async () => (await import('@/app/api/resources/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/tags', load: async () => (await import('@/app/api/tags/route')).POST as unknown as Handler },
-  { name: 'PUT /api/tags/[id]', load: async () => (await import('@/app/api/tags/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/tags/[id]', load: async () => (await import('@/app/api/tags/[id]/route')).DELETE as unknown as Handler, hasParams: true },
+  // The admin writes moved to Server Actions (lib/actions/__tests__/authorization.test.ts).
+  // These upload routes stay until SP3 Task 4.
   { name: 'POST /api/files', load: async () => (await import('@/app/api/files/route')).POST as unknown as Handler },
-  { name: 'DELETE /api/files/[id]', load: async () => (await import('@/app/api/files/[id]/route')).DELETE as unknown as Handler, hasParams: true },
   { name: 'POST /api/files/sign', load: async () => (await import('@/app/api/files/sign/route')).POST as unknown as Handler },
-  { name: 'POST /api/files/youtube', load: async () => (await import('@/app/api/files/youtube/route')).POST as unknown as Handler },
-  { name: 'POST /api/pieces', load: async () => (await import('@/app/api/pieces/route')).POST as unknown as Handler },
-  { name: 'PUT /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'PUT /api/arrangements/[id]/pieces', load: async () => (await import('@/app/api/arrangements/[id]/pieces/route')).PUT as unknown as Handler, hasParams: true },
-  // Reads, but gated: pieces carry copyright cost and licensing status (#51).
-  { name: 'GET /api/pieces', load: async () => (await import('@/app/api/pieces/route')).GET as unknown as Handler },
-  { name: 'GET /api/arrangements/[id]/pieces', load: async () => (await import('@/app/api/arrangements/[id]/pieces/route')).GET as unknown as Handler, hasParams: true },
 ]
 
 // /api/contact POST is deliberately absent: it serves the public contact form.

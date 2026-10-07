@@ -2,28 +2,33 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { deleteResource, updateResource } from '@/lib/actions/resources';
+import type { ResourceRow } from '@/lib/services/resources';
+import { resourceErrorMessage } from '../resource-errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { createResource } from '@/lib/actions/resources';
-import { resourceErrorMessage } from '../resource-errors';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-export default function NewResourcePage() {
+/** Edits one resource; saves with the loaded `updatedAt` (`stale` if someone else saved first). */
+export function ResourceEditor({ resource }: { resource: ResourceRow }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    fileUrl: '',
-    imageUrl: '', // Optional
-    isActive: true,
-    requiresContactForm: true,
+    title: resource.title,
+    slug: resource.slug,
+    description: resource.description ?? '',
+    fileUrl: resource.fileUrl ?? '',
+    imageUrl: resource.imageUrl ?? '',
+    isActive: resource.isActive,
+    requiresContactForm: resource.requiresContactForm,
   });
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -47,7 +52,7 @@ export default function NewResourcePage() {
       
       formData.append('fileType', type);
       formData.append('isPublic', 'true');
-      formData.append('description', 'Resource File');
+      formData.append('description', 'Resource File Update');
 
       const response = await fetch('/api/files', {
         method: 'POST',
@@ -55,15 +60,8 @@ export default function NewResourcePage() {
       });
 
       if (!response.ok) {
-        // Try to parse JSON, but handle if it fails
-        let errorMessage = 'Upload failed';
-        try {
-            const data = await response.json();
-            errorMessage = data.error || errorMessage;
-        } catch (e) {
-            errorMessage = response.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
+        const data = await response.json();
+        throw new Error(data.error || 'Upload failed');
       }
 
       const data = await response.json();
@@ -88,7 +86,7 @@ export default function NewResourcePage() {
       formData.append('file', file);
       formData.append('fileType', 'image');
       formData.append('isPublic', 'true');
-      formData.append('description', 'Resource Image');
+      formData.append('description', 'Resource Image Update');
 
       const response = await fetch('/api/files', {
         method: 'POST',
@@ -116,7 +114,7 @@ export default function NewResourcePage() {
     setError('');
 
     try {
-      const result = await createResource(formData);
+      const result = await updateResource({ id: resource.id, updatedAt: resource.updatedAt ?? '', ...formData });
       if (!result.ok) throw new Error(resourceErrorMessage(result));
 
       router.push('/admin/resources');
@@ -127,15 +125,51 @@ export default function NewResourcePage() {
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteResource(resource.id);
+      if (!result.ok && result.error !== 'not_found') throw new Error(resourceErrorMessage(result));
+
+      router.push('/admin/resources');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete resource');
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10 max-w-2xl">
-      <div className="mb-6">
-        <Button variant="ghost" asChild className="mb-4 pl-0">
-          <Link href="/admin/resources">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Resources
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-bold">Create New Resource</h1>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <Button variant="ghost" asChild className="mb-4 pl-0">
+            <Link href="/admin/resources">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Resources
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-bold">Edit Resource</h1>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the resource.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground">
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <Card>
@@ -157,7 +191,16 @@ export default function NewResourcePage() {
                 required
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g. Visual Technique Guide"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="slug">Slug</Label>
+              <Input
+                id="slug"
+                required
+                value={formData.slug}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
               />
             </div>
 
@@ -167,13 +210,12 @@ export default function NewResourcePage() {
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of the resource..."
                 rows={4}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="file">Resource File</Label>
+              <Label htmlFor="file">Update File</Label>
               <div className="flex items-center gap-4">
                 <Input
                   id="file"
@@ -185,14 +227,14 @@ export default function NewResourcePage() {
                 {uploadingFile && <Loader2 className="h-4 w-4 animate-spin" />}
               </div>
               {formData.fileUrl && (
-                <p className="text-xs text-green-600 mt-1">
-                  File uploaded successfully: {formData.fileUrl.split('/').pop()}
+                <p className="text-xs text-muted-foreground mt-1 break-all">
+                  Current: {formData.fileUrl}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image">Resource Image (Optional)</Label>
+              <Label htmlFor="image">Update Image (Thumbnail)</Label>
               <div className="flex items-center gap-4">
                 <Input
                   id="image"
@@ -205,8 +247,8 @@ export default function NewResourcePage() {
                 {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
               </div>
               {formData.imageUrl && (
-                <p className="text-xs text-green-600 mt-1">
-                  Image uploaded successfully: {formData.imageUrl.split('/').pop()}
+                <p className="text-xs text-muted-foreground mt-1 break-all">
+                  Current: {formData.imageUrl}
                 </p>
               )}
             </div>
@@ -217,7 +259,6 @@ export default function NewResourcePage() {
                 id="fileUrl"
                 value={formData.fileUrl}
                 onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
-                placeholder="https://..."
               />
             </div>
 
@@ -243,10 +284,10 @@ export default function NewResourcePage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Saving...
                 </>
               ) : (
-                'Create Resource'
+                'Save Changes'
               )}
             </Button>
           </form>

@@ -61,10 +61,8 @@ export const arrangements = pgTable('arrangements', {
   // Written by the arrangements API but never read for ordering — reads use
   // showArrangements.orderIndex. Retained because 50 rows carry real values.
   displayOrder: integer('display_order').default(0).notNull(),
-  // Added in drizzle/0003 (existing rows get now()). For optimistic
-  // concurrency once arrangement writes move to lib/actions. Until Task 3
-  // removes them, the /api/arrangements write routes do NOT bump it, so it is
-  // not yet a reliable "last changed" time.
+  // Added in drizzle/0003 (existing rows get now()). lib/actions/arrangements.ts
+  // sets it on every update and compares it for optimistic concurrency.
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

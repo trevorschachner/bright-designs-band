@@ -2,6 +2,7 @@
 
 import AdminTable, { ColumnDef } from '@/components/features/admin/AdminTable';
 import { Show } from '@/lib/types/shows';
+import { deleteShow } from '@/lib/actions/shows';
 
 const columns: ColumnDef<Show>[] = [
   {
@@ -11,7 +12,7 @@ const columns: ColumnDef<Show>[] = [
   },
   {
     header: 'Order',
-    accessorKey: 'displayOrder' as any,
+    accessorKey: 'displayOrder',
     sortable: true,
   },
   {
@@ -26,9 +27,9 @@ const columns: ColumnDef<Show>[] = [
   },
   {
     header: 'Featured',
-    accessorKey: 'featured' as any,
+    accessorKey: 'featured',
     sortable: true,
-    cell: (row) => (row as any).featured ? 'Yes' : 'No',
+    cell: (row) => (row.featured ? 'Yes' : 'No'),
   },
 ];
 
@@ -39,6 +40,7 @@ export default function ShowsTable() {
       listQuery="admin=true"
       columns={columns}
       resourceName="shows"
+      onDelete={deleteShow}
     />
   );
 }
