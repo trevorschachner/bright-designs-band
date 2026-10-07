@@ -82,3 +82,5 @@ The route caches for an hour (`cachedRead`) and drops the cache when an admin
 edit revalidates any tag it reads: `shows`, `arrangements`, `tags` or `pieces`. Google refreshes IMPORTDATA on its own
 schedule, roughly hourly. The tabs are formula output: edit in /admin, not in
 the sheet.
+
+See `docs/sheet-sync.md` for the full mirror guide: column ownership, adding a column and forcing a refresh.

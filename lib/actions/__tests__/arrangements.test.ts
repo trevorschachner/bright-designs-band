@@ -29,6 +29,14 @@ const invalidate = vi.hoisted(() => ({
   invalidateShow: vi.fn((..._args: unknown[]) => state.fake.events.push('invalidate')),
 }))
 vi.mock('@/lib/services/invalidate', () => invalidate)
+const tracked = vi.hoisted(() => ({
+  calls: [] as { name: string; props: unknown; distinctId: unknown; eventsSoFar: string[] }[],
+}))
+vi.mock('@/lib/observability/events', () => ({
+  trackServerEvent: async (name: string, props: unknown, distinctId?: unknown) => {
+    tracked.calls.push({ name, props, distinctId, eventsSoFar: [...state.fake.events] })
+  },
+}))
 vi.mock('@/lib/observability/report-error', () => ({ reportError: vi.fn(async () => {}) }))
 
 import {
@@ -72,6 +80,7 @@ function use(respond: Respond) {
 }
 
 beforeEach(() => {
+  tracked.calls.length = 0
   state.email = 'editor@example.com'
   invalidate.invalidateArrangement.mockClear()
   invalidate.invalidateShow.mockClear()
@@ -219,5 +228,30 @@ describe('setArrangementPieces', () => {
     await setArrangementPieces({ arrangementId: 11, pieceIds: [] })
     expect(opsOn(fake.ops, 'arrangement_pieces', 'insert')).toHaveLength(0)
     expect(opsOn(fake.ops, 'arrangement_pieces', 'delete')).toHaveLength(1)
+  })
+})
+
+describe('server events', () => {
+  it('createArrangement tracks arrangement.saved after commit', async () => {
+    use(partsDb({ 'select:show_arrangements': () => [{ orderIndex: 3 }] }))
+    await createArrangement({ showId: 7, title: 'Part 4' })
+    expect(tracked.calls).toHaveLength(1)
+    expect(tracked.calls[0]).toMatchObject({
+      name: 'arrangement.saved',
+      props: { arrangementId: 14, showId: 7 },
+      distinctId: 'editor@example.com',
+    })
+    expect(tracked.calls[0].eventsSoFar).toContain('commit')
+  })
+
+  it('updateArrangement tracks arrangement.saved after commit; nothing when stale', async () => {
+    await updateArrangement({ id: 11, updatedAt: LOADED, title: 'Mine' })
+    expect(tracked.calls).toHaveLength(1)
+    expect(tracked.calls[0]).toMatchObject({ name: 'arrangement.saved', props: { arrangementId: 11 } })
+    expect(tracked.calls[0].eventsSoFar).toContain('commit')
+    tracked.calls.length = 0
+    use(partsDb({ 'select:arrangements': () => [{ id: 11, updatedAt: new Date('2026-10-07T12:01:00.000Z') }] }))
+    await updateArrangement({ id: 11, updatedAt: LOADED, title: 'Mine' })
+    expect(tracked.calls).toHaveLength(0)
   })
 })

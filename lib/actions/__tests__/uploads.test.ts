@@ -52,6 +52,14 @@ vi.mock('@/lib/database', () => ({
 const invalidateFileOwner = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => { state.fake.events.push('invalidate') }))
 vi.mock('@/lib/services/files', () => ({ invalidateFileOwner }))
 const reportError = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => {}))
+const tracked = vi.hoisted(() => ({
+  calls: [] as { name: string; props: unknown; distinctId: unknown; eventsSoFar: string[] }[],
+}))
+vi.mock('@/lib/observability/events', () => ({
+  trackServerEvent: async (name: string, props: unknown, distinctId?: unknown) => {
+    tracked.calls.push({ name, props, distinctId, eventsSoFar: [...state.fake.events] })
+  },
+}))
 vi.mock('@/lib/observability/report-error', () => ({ reportError }))
 
 import { completeUpload, signUpload } from '@/lib/actions/uploads'
@@ -103,6 +111,7 @@ function use(respond: Respond) {
 }
 
 beforeEach(() => {
+  tracked.calls.length = 0
   state.email = 'editor@example.com'
   state.signed = []
   state.signError = null
@@ -290,5 +299,25 @@ describe('completeUpload', () => {
 
   it('rejects a malformed id', async () => {
     expect(await completeUpload({ pendingId: '../x' })).toMatchObject({ ok: false, error: 'invalid' })
+  })
+})
+
+describe('server events', () => {
+  it('completeUpload tracks upload.completed after commit (ids and enums only)', async () => {
+    const result = await completeUpload({ pendingId: PENDING_ID })
+    expect(result).toMatchObject({ ok: true })
+    expect(tracked.calls).toHaveLength(1)
+    expect(tracked.calls[0]).toMatchObject({
+      name: 'upload.completed',
+      props: { fileId: 12, kind: 'audio', isPublic: true, bucket: expect.any(String) },
+      distinctId: 'editor@example.com',
+    })
+    expect(tracked.calls[0].eventsSoFar).toContain('commit')
+  })
+
+  it('tracks nothing when the stored file does not match what was signed', async () => {
+    state.listed = { size: 5, mimetype: 'audio/mpeg' }
+    await completeUpload({ pendingId: PENDING_ID })
+    expect(tracked.calls).toHaveLength(0)
   })
 })

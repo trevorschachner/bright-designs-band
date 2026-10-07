@@ -27,6 +27,14 @@ vi.mock('@/lib/database', () => ({
 }))
 const invalidateShow = vi.hoisted(() => vi.fn((..._args: unknown[]) => state.fake.events.push('invalidate')))
 vi.mock('@/lib/services/invalidate', () => ({ invalidateShow }))
+const tracked = vi.hoisted(() => ({
+  calls: [] as { name: string; props: unknown; distinctId: unknown; eventsSoFar: string[] }[],
+}))
+vi.mock('@/lib/observability/events', () => ({
+  trackServerEvent: async (name: string, props: unknown, distinctId?: unknown) => {
+    tracked.calls.push({ name, props, distinctId, eventsSoFar: [...state.fake.events] })
+  },
+}))
 vi.mock('@/lib/observability/report-error', () => ({ reportError: vi.fn(async () => {}) }))
 
 import { createShow, deleteShow, setFeatured, setShowTags, updateShow } from '@/lib/actions/shows'
@@ -60,6 +68,7 @@ function use(respond: Respond) {
 }
 
 beforeEach(() => {
+  tracked.calls.length = 0
   state.email = 'editor@example.com'
   KNOWN_TAGS = [2, 3, 4]
   invalidateShow.mockClear()
@@ -248,5 +257,37 @@ describe('deleteShow, setFeatured, setShowTags', () => {
     expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
     use(showDb({ 'select:shows': () => [] }))
     expect(await setShowTags(7, [1])).toEqual({ ok: false, error: 'not_found' })
+  })
+})
+
+describe('server events', () => {
+  it('updateShow tracks show.saved (created: false) after commit, with the staff email', async () => {
+    await updateShow({ id: 7, updatedAt: LOADED, title: 'New title' })
+    expect(tracked.calls).toHaveLength(1)
+    expect(tracked.calls[0]).toMatchObject({
+      name: 'show.saved',
+      props: { showId: 7, slug: 'old-slug', created: false },
+      distinctId: 'editor@example.com',
+    })
+    expect(tracked.calls[0].eventsSoFar).toContain('commit')
+  })
+
+  it('updateShow tracks nothing for a stale save', async () => {
+    await updateShow({ id: 7, updatedAt: '2026-10-07T11:00:00.000Z', title: 'X' })
+    expect(tracked.calls).toHaveLength(0)
+  })
+
+  it('createShow tracks show.saved (created: true) after commit', async () => {
+    use((op) => {
+      if (op.kind === 'insert' && op.table === 'shows') {
+        const v = op.values as { slug: string; title: string }
+        return [{ id: 9, slug: v.slug, title: v.title, featured: false, updatedAt: SAVED }]
+      }
+      return []
+    })
+    await createShow({ title: 'Neon Nights' })
+    expect(tracked.calls).toHaveLength(1)
+    expect(tracked.calls[0]).toMatchObject({ name: 'show.saved', props: { showId: 9, slug: 'neon-nights', created: true } })
+    expect(tracked.calls[0].eventsSoFar).toContain('commit')
   })
 })

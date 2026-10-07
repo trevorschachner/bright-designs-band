@@ -8,6 +8,7 @@ import { contactSubmissionSchema, toServiceCategories } from '@/lib/validation/c
 import { consume, getClientIp } from '@/lib/rate-limit';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { getEnv } from '@/lib/env.server';
+import { trackServerEvent } from '@/lib/observability/events';
 
 const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
         : type || 'contact');
 
     // Save to database
+    let stored = false;
     try {
       await db.insert(contactSubmissions).values({
         firstName: name?.split(' ')?.[0] || name || 'Friend',
@@ -98,10 +100,13 @@ export async function POST(request: NextRequest) {
         ipAddress: ip,
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
+      stored = true;
     } catch (dbError) {
       console.error('Failed to save contact submission to database:', dbError);
       // Continue to send email even if DB save fails
     }
+    // Only the form type and source: never the submitter's email or name.
+    if (stored) await trackServerEvent('contact.received', { type: type ?? null, source: submissionSource });
 
     if (type === 'inquiry') {
       // Build a plain email using our templates module

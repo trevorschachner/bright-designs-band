@@ -6,6 +6,7 @@ import { files, shows, showsToTags, slugRedirects, tags } from '@/lib/database/s
 import { REMOVABLE_FILE_COLUMNS, removeFilesInOrder } from '@/lib/services/file-removal'
 import { createClient } from '@/lib/utils/supabase/server'
 import { invalidateShow } from '@/lib/services/invalidate'
+import { trackServerEvent } from '@/lib/observability/events'
 import { toIso } from '@/lib/services/cache'
 import { slugFromTitle } from '@/lib/slug'
 import {
@@ -103,7 +104,7 @@ const MAX_SLUG_ATTEMPTS = 50
 const runCreateShow = guarded(
   'canManageShows',
   createShowSchema,
-  async (data, { db }) => {
+  async (data, { db, email }) => {
     const { tags: tagIds, ...fields } = data
     const base = slugFromTitle(fields.title)
     if (!base) throw new InvalidError([{ path: 'title', message: 'Title needs at least one letter or number' }])
@@ -142,7 +143,16 @@ const runCreateShow = guarded(
       return row
     })
 
-    return { data: toWriteResult(created), invalidate: () => invalidateShow(created.id, created.slug) }
+    return {
+      data: toWriteResult(created),
+      invalidate: async () => {
+        try {
+          await invalidateShow(created.id, created.slug)
+        } finally {
+          await trackServerEvent('show.saved', { showId: created.id, slug: created.slug, created: true }, email)
+        }
+      },
+    }
   },
   'createShow'
 )
@@ -156,7 +166,7 @@ export async function createShow(input: CreateShowInput): Promise<ActionResult<S
 const runUpdateShow = guarded(
   'canManageShows',
   updateShowActionSchema,
-  async (data, { db }) => {
+  async (data, { db, email }) => {
     const { id, updatedAt, tags: tagIds, ...fields } = data
 
     const { row, previousSlug } = await db.transaction(async (tx) => {
@@ -183,7 +193,16 @@ const runUpdateShow = guarded(
       return { row: updated, previousSlug: current.slug }
     })
 
-    return { data: toWriteResult(row), invalidate: () => invalidateShow(row.id, row.slug, previousSlug) }
+    return {
+      data: toWriteResult(row),
+      invalidate: async () => {
+        try {
+          await invalidateShow(row.id, row.slug, previousSlug)
+        } finally {
+          await trackServerEvent('show.saved', { showId: row.id, slug: row.slug, created: false }, email)
+        }
+      },
+    }
   },
   'updateShow'
 )

@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm'
 import { files, pendingUploads, showArrangements, shows } from '@/lib/database/schema'
 import { publicStorageUrl } from '@/lib/media/public-url'
 import { invalidateFileOwner } from '@/lib/services/files'
+import { trackServerEvent } from '@/lib/observability/events'
 import { bucketForVisibility, downloadRoute, findObject, STORAGE_ROOT_PREFIX, withRootPrefix } from '@/lib/storage'
 import { createClient } from '@/lib/utils/supabase/server'
 import {
@@ -176,7 +177,7 @@ const runCompleteUpload = guarded(
       }
 
       await tx.delete(pendingUploads).where(eq(pendingUploads.id, pending.id))
-      return { row: result } as const
+      return { row: result, kind: pending.kind, isPublic: pending.isPublic, bucket: pending.bucket } as const
     })
 
     if (outcome.rejected) {
@@ -189,7 +190,17 @@ const runCompleteUpload = guarded(
     }
 
     const row = outcome.row
-    return { data: row, invalidate: () => invalidateFileOwner(row) }
+    const { kind, isPublic, bucket } = outcome
+    return {
+      data: row,
+      invalidate: async () => {
+        try {
+          await invalidateFileOwner(row)
+        } finally {
+          await trackServerEvent('upload.completed', { fileId: row.id, kind, isPublic, bucket }, email)
+        }
+      },
+    }
   },
   'completeUpload'
 )
