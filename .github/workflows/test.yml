@@ -69,19 +69,14 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
 
-  # Performance budget (lighthouserc.json): performance >= 0.95, LCP <= 2 s,
-  # script <= 180 KiB, mobile emulation, on /, /shows and /about.
-  # Builds and serves the site on the runner instead of waiting on the Netlify
-  # deploy preview, so the result does not depend on Netlify timing. With the
-  # dummy env the catalog pages render their empty/fallback state, so these
-  # numbers are a lower bound on page weight and an upper bound on speed; the
-  # real check is against production after SP2.
+  # Deterministic budgets (script and total bytes, SEO, best practices) block.
+  # Performance score and LCP only warn here: a shared runner's timings swing by
+  # 20+ points between runs. The real LCP check is Lighthouse against the Netlify
+  # deploy preview, recorded in docs/perf-baseline.md.
   lighthouse:
-    name: Lighthouse budget (advisory)
+    name: Lighthouse budget
     needs: [verify]
     if: github.event_name == 'pull_request'
-    # Advisory until SP2 (#59) lands; then make it required.
-    continue-on-error: true
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
