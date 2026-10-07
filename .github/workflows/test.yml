@@ -57,15 +57,14 @@ jobs:
       # Not covered by vitest: this one shells out to a tsx script.
       - run: npm run test:email:validate
 
-      # lib/database throws at import time without DATABASE_URL, and Next
-      # collects page data for /shows/[slug] and /arrangements/[id] during the
-      # build, so the variable has to be set and well-formed. It does not have to
-      # reach anything: queries against an unreachable host are caught and the
-      # pages fall back, and the build still exits 0. This job used to be handed
-      # the real production connection string for no reason.
+      # No DATABASE_URL, on purpose. lib/database connects lazily, so importing
+      # it is free, and during `next build` without a database the cached reads
+      # in lib/services answer their build fallback (empty lists, no show) for
+      # the pages Next prerenders. Anything that does query without one throws
+      # a clear "DATABASE_URL is not set" error. This job used to be handed the
+      # real production connection string, then a dummy one; it needs neither.
       - run: npm run build
         env:
-          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
           NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
 
@@ -79,7 +78,6 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
       NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
     steps:
@@ -99,8 +97,10 @@ jobs:
 
       - run: npm ci
 
-      # Same dummy env as the verify build (see the comment there); it is set
-      # at job level because `npm run start` needs it too.
+      # Same env as the verify build (no DATABASE_URL; see the comment there),
+      # set at job level because `npm run start` needs it too. Catalog API calls
+      # fail with "DATABASE_URL is not set", as they failed against the old
+      # unreachable dummy host, so the pages measure their empty states.
       - run: npm run build
 
       - run: npm run perf:ci
