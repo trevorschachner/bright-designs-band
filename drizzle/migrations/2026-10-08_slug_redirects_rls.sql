@@ -32,3 +32,12 @@ drop policy if exists "Staff can delete slug_redirects" on public.slug_redirects
 create policy "Staff can delete slug_redirects" on public.slug_redirects
   for delete to authenticated
   using ((select public.is_admin_user()));
+
+-- Rollback (not applied automatically; run by hand if needed). Drops the
+-- policies only; the table itself belongs to drizzle/0003.
+-- drop policy if exists "Anyone can read slug_redirects" on public.slug_redirects;
+-- drop policy if exists "Staff can insert slug_redirects" on public.slug_redirects;
+-- drop policy if exists "Staff can update slug_redirects" on public.slug_redirects;
+-- drop policy if exists "Staff can delete slug_redirects" on public.slug_redirects;
+-- To remove the table as well (loses every recorded old slug):
+-- drop table if exists public.slug_redirects;

@@ -1,8 +1,8 @@
 'use server'
 
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import type { Database } from '@/lib/database'
-import { shows, showsToTags, slugRedirects } from '@/lib/database/schema'
+import { shows, showsToTags, slugRedirects, tags } from '@/lib/database/schema'
 import { invalidateShow } from '@/lib/services/invalidate'
 import { toIso } from '@/lib/services/cache'
 import { slugFromTitle } from '@/lib/slug'
@@ -59,9 +59,23 @@ async function releaseRedirect(tx: Tx, slug: string) {
   await tx.delete(slugRedirects).where(eq(slugRedirects.oldSlug, slug))
 }
 
+/**
+ * Replaces a show's tag links. Every id must name an existing tag: an unknown
+ * one is `invalid` (path `tags`), checked before anything is written, rather
+ * than a foreign-key failure surfacing as `failed`.
+ */
 async function replaceShowTags(tx: Tx, showId: number, tagIds: number[]) {
-  await tx.delete(showsToTags).where(eq(showsToTags.showId, showId))
   const unique = [...new Set(tagIds)]
+  if (unique.length > 0) {
+    const found = new Set(
+      (await tx.select({ id: tags.id }).from(tags).where(inArray(tags.id, unique))).map((row) => row.id)
+    )
+    const unknown = unique.filter((id) => !found.has(id))
+    if (unknown.length > 0) {
+      throw new InvalidError(unknown.map((id) => ({ path: 'tags', message: `Unknown tag id ${id}` })))
+    }
+  }
+  await tx.delete(showsToTags).where(eq(showsToTags.showId, showId))
   if (unique.length > 0) {
     await tx.insert(showsToTags).values(unique.map((tagId) => ({ showId, tagId })))
   }
@@ -95,8 +109,12 @@ const runCreateShow = guarded(
     const created = await db.transaction(async (tx) => {
       let slug = base
       for (let n = 1; n <= MAX_SLUG_ATTEMPTS; n++) {
+        // Skip slugs another show holds or used to hold (a live redirect).
         const [taken] = await tx.select({ id: shows.id }).from(shows).where(eq(shows.slug, slug)).limit(1)
-        if (!taken) break
+        const [redirected] = taken
+          ? [undefined]
+          : await tx.select({ showId: slugRedirects.showId }).from(slugRedirects).where(eq(slugRedirects.oldSlug, slug)).limit(1)
+        if (!taken && !redirected) break
         slug = `${base}-${n}`
       }
       // Past MAX_SLUG_ATTEMPTS the insert hits the unique index: conflict.
@@ -115,13 +133,14 @@ const runCreateShow = guarded(
           displayOrder: fields.displayOrder ?? 0,
         })
         .returning(WRITE_COLUMNS)
+      // Belt and braces: the probe skipped redirected slugs, but a redirect
+      // written concurrently must not shadow the new show.
       await releaseRedirect(tx, row.slug)
       if (tagIds && tagIds.length > 0) await replaceShowTags(tx, row.id, tagIds)
       return row
     })
 
-    invalidateShow(created.id, created.slug)
-    return toWriteResult(created)
+    return { data: toWriteResult(created), invalidate: () => invalidateShow(created.id, created.slug) }
   },
   'createShow'
 )
@@ -162,8 +181,7 @@ const runUpdateShow = guarded(
       return { row: updated, previousSlug: current.slug }
     })
 
-    invalidateShow(row.id, row.slug, previousSlug)
-    return toWriteResult(row)
+    return { data: toWriteResult(row), invalidate: () => invalidateShow(row.id, row.slug, previousSlug) }
   },
   'updateShow'
 )
@@ -186,8 +204,7 @@ const runDeleteShow = guarded(
     // Files, tag links, part links and slug redirects go with it (FK cascades).
     const [deleted] = await db.delete(shows).where(eq(shows.id, id)).returning({ id: shows.id, slug: shows.slug })
     if (!deleted) throw new NotFoundError('show')
-    invalidateShow(deleted.id, deleted.slug)
-    return { id: deleted.id }
+    return { data: { id: deleted.id }, invalidate: () => invalidateShow(deleted.id, deleted.slug) }
   },
   'deleteShow'
 )
@@ -219,8 +236,7 @@ const runSetShowTags = guarded(
         .returning(WRITE_COLUMNS)
       return updated
     })
-    invalidateShow(row.id, row.slug)
-    return toWriteResult(row)
+    return { data: toWriteResult(row), invalidate: () => invalidateShow(row.id, row.slug) }
   },
   'setShowTags'
 )
@@ -239,8 +255,7 @@ const runSetFeatured = guarded(
       .where(eq(shows.id, showId))
       .returning(WRITE_COLUMNS)
     if (!row) throw new NotFoundError('show')
-    invalidateShow(row.id, row.slug)
-    return toWriteResult(row)
+    return { data: toWriteResult(row), invalidate: () => invalidateShow(row.id, row.slug) }
   },
   'setFeatured'
 )

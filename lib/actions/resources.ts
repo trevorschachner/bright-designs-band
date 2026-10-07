@@ -86,8 +86,7 @@ const runCreateResource = guarded(
       await syncFileDescription(tx, inserted.fileUrl, inserted.description)
       return inserted
     })
-    invalidateResources()
-    return toResult(row)
+    return { data: toResult(row), invalidate: () => invalidateResources() }
   },
   'createResource'
 )
@@ -120,8 +119,7 @@ const runUpdateResource = guarded(
       }
       return updated
     })
-    invalidateResources()
-    return toResult(row)
+    return { data: toResult(row), invalidate: () => invalidateResources() }
   },
   'updateResource'
 )
@@ -143,8 +141,7 @@ const runSetResourceActive = guarded(
       .where(eq(resources.id, id))
       .returning(COLUMNS)
     if (!row) throw new NotFoundError('resource')
-    invalidateResources()
-    return toResult(row)
+    return { data: toResult(row), invalidate: () => invalidateResources() }
   },
   'setResourceActive'
 )
@@ -160,8 +157,7 @@ const runDeleteResource = guarded(
   async ({ id }, { db }) => {
     const [deleted] = await db.delete(resources).where(eq(resources.id, id)).returning({ id: resources.id })
     if (!deleted) throw new NotFoundError('resource')
-    invalidateResources()
-    return { id: deleted.id }
+    return { data: { id: deleted.id }, invalidate: () => invalidateResources() }
   },
   'deleteResource'
 )

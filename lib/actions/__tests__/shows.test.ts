@@ -33,6 +33,8 @@ import { createShow, deleteShow, setFeatured, setShowTags, updateShow } from '@/
 
 const LOADED = '2026-10-07T12:00:00.000Z'
 const SAVED = new Date('2026-10-07T12:05:00.000Z')
+/** Tag ids the fake's `select from tags where id in (...)` reports as existing. */
+let KNOWN_TAGS = [2, 3, 4]
 
 function stored(extra: Record<string, unknown> = {}) {
   return { id: 7, slug: 'old-slug', updatedAt: new Date(LOADED), ...extra }
@@ -44,6 +46,7 @@ function showDb(overrides: Partial<Record<string, (op: Op) => unknown[]>> = {}):
     const custom = overrides[`${op.kind}:${op.table}`]
     if (custom) return custom(op)
     if (op.kind === 'select' && op.table === 'shows') return [stored()]
+    if (op.kind === 'select' && op.table === 'tags') return KNOWN_TAGS.map((id) => ({ id }))
     if (op.kind === 'update' && op.table === 'shows') {
       return [{ id: 7, slug: (op.set?.slug as string) ?? 'old-slug', title: 'Show', featured: Boolean(op.set?.featured), updatedAt: SAVED }]
     }
@@ -58,6 +61,7 @@ function use(respond: Respond) {
 
 beforeEach(() => {
   state.email = 'editor@example.com'
+  KNOWN_TAGS = [2, 3, 4]
   invalidateShow.mockClear()
   use(showDb())
 })
@@ -140,6 +144,7 @@ describe('updateShow', () => {
   it('replaces tags (deduplicated) only when tags are sent', async () => {
     const fake = state.fake
     await updateShow({ id: 7, updatedAt: LOADED, tags: [3, 3, 4] })
+    expect(opsOn(fake.ops, 'tags', 'select')).toHaveLength(1)
     const tagOps = opsOn(fake.ops, 'shows_to_tags')
     expect(tagOps.map((op) => op.kind)).toEqual(['delete', 'insert'])
     expect(tagOps[1].values).toEqual([{ showId: 7, tagId: 3 }, { showId: 7, tagId: 4 }])
@@ -156,11 +161,49 @@ describe('updateShow', () => {
   })
 })
 
-describe('createShow', () => {
-  it('derives a free slug, releases any redirect on it, links tags, invalidates', async () => {
-    let probes = 0
+describe('unknown tag ids', () => {
+  const unknown9 = { ok: false, error: 'invalid', issues: [{ path: 'tags', message: 'Unknown tag id 9' }] }
+
+  it('updateShow: invalid, nothing written, nothing invalidated', async () => {
+    const fake = state.fake
+    expect(await updateShow({ id: 7, updatedAt: LOADED, tags: [3, 9] })).toEqual(unknown9)
+    expect(opsOn(fake.ops, 'shows_to_tags')).toHaveLength(0)
+    expect(fake.events.at(-1)).toBe('rollback')
+    expect(invalidateShow).not.toHaveBeenCalled()
+  })
+
+  it('setShowTags: invalid before the links are touched', async () => {
+    const fake = state.fake
+    expect(await setShowTags(7, [9])).toEqual(unknown9)
+    expect(opsOn(fake.ops, 'shows_to_tags')).toHaveLength(0)
+  })
+
+  it('createShow: invalid, rolled back', async () => {
     const fake = use((op) => {
+      if (op.kind === 'insert' && op.table === 'shows') return [{ id: 9, slug: 'x', title: 'X', featured: false, updatedAt: SAVED }]
+      if (op.kind === 'select' && op.table === 'tags') return [{ id: 3 }]
+      return []
+    })
+    expect(await createShow({ title: 'X', tags: [3, 9] })).toEqual(unknown9)
+    expect(fake.events.at(-1)).toBe('rollback')
+    expect(invalidateShow).not.toHaveBeenCalled()
+  })
+
+  it('a non-positive tag id is rejected by the schema', async () => {
+    expect(await updateShow({ id: 7, updatedAt: LOADED, tags: [0] })).toMatchObject({ ok: false, error: 'invalid' })
+    expect(await setShowTags(7, [-1])).toMatchObject({ ok: false, error: 'invalid' })
+  })
+})
+
+describe('createShow', () => {
+  it('derives a free slug (skipping held and redirected slugs), releases any redirect on it, links tags, invalidates', async () => {
+    let probes = 0
+    let redirectProbes = 0
+    const fake = use((op) => {
+      // neon-nights is a live show; neon-nights-1 is an old slug that redirects.
       if (op.kind === 'select' && op.table === 'shows') return probes++ === 0 ? [{ id: 1 }] : []
+      if (op.kind === 'select' && op.table === 'slug_redirects') return redirectProbes++ === 0 ? [{ showId: 4 }] : []
+      if (op.kind === 'select' && op.table === 'tags') return [{ id: 2 }]
       if (op.kind === 'insert' && op.table === 'shows') {
         const v = op.values as { slug: string; title: string }
         return [{ id: 9, slug: v.slug, title: v.title, featured: false, updatedAt: SAVED }]
@@ -168,10 +211,10 @@ describe('createShow', () => {
       return []
     })
     const result = await createShow({ title: '  Neon Nights! ', tags: [2] })
-    expect(result).toMatchObject({ ok: true, data: { id: 9, slug: 'neon-nights-1', title: 'Neon Nights!' } })
+    expect(result).toMatchObject({ ok: true, data: { id: 9, slug: 'neon-nights-2', title: 'Neon Nights!' } })
     expect(opsOn(fake.ops, 'slug_redirects', 'delete')).toHaveLength(1)
     expect(opsOn(fake.ops, 'shows_to_tags', 'insert')[0].values).toEqual([{ showId: 9, tagId: 2 }])
-    expect(invalidateShow).toHaveBeenCalledWith(9, 'neon-nights-1')
+    expect(invalidateShow).toHaveBeenCalledWith(9, 'neon-nights-2')
     expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
   })
 

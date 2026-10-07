@@ -14,14 +14,13 @@ still in `app/api/` until the admin UI moves over (SP3 Task 3), then deleted.
 
 ```ts
 'use server'
-const runRenameTag = guarded('canManageTags', updateTagSchema, async (data, { db }) => {
+const runUpdateTag = guarded('canManageTags', updateTagSchema, async (data, { db }) => {
   const row = await db.transaction(async (tx) => { /* lock, check, write */ })
-  invalidateTags()          // after the transaction resolves: after commit
-  return toResult(row)      // JSON-safe: ISO strings, not Dates
+  return { data: toResult(row), invalidate: () => invalidateTags() }
 }, 'updateTag')
 
 export async function updateTag(input: UpdateTagInput) {
-  return runRenameTag(input)
+  return runUpdateTag(input)
 }
 ```
 
@@ -30,17 +29,26 @@ export async function updateTag(input: UpdateTagInput) {
   anything thrown. A Server Action is a public POST endpoint: the admin page
   being protected protects nothing here.
 - **The schema is strict.** `guarded()` refuses a non-strict `z.object` when
-  the module loads. Unknown keys are `invalid`, never dropped silently.
+  the module loads. It inspects only a top-level `ZodObject`: a schema wrapped
+  in `.transform()`/`.refine()`/`z.preprocess` (ZodEffects), or a nested
+  object, is not checked, so make those strict yourself.
 - **Export plain `async function`s** from the `'use server'` file, each
   calling its `guarded` runner. Positional signatures (`deleteShow(id)`) are
   fine; pack them into the schema's object.
 - **Open a transaction only when there is more than one statement**, or a
   read that must hold a lock (`select ... for update`). Single statements and
   reads do not need one.
-- **Invalidate after commit**, exactly one helper from
-  `lib/services/invalidate.ts`, outside the `db.transaction` callback. A
-  rolled-back write must never purge the cache.
+- **Return `{ data, invalidate }`; never call the invalidate helper yourself.**
+  `guarded` runs `invalidate` after `fn` resolves (after commit), so a
+  rolled-back write never purges the cache. It runs outside the error mapping:
+  if invalidation throws, it is logged and reported and the result is still
+  `ok(data)`, because the write committed. Exactly one helper from
+  `lib/services/invalidate.ts` per action.
 - **Return JSON-safe data.** The result is serialised to the browser.
+- **Unknown related ids are `invalid`, not `failed`.** Check them inside the
+  transaction before writing and throw `InvalidError` (e.g. show tags:
+  `{ path: 'tags', message: 'Unknown tag id 9' }`), rather than letting a
+  foreign-key error surface.
 
 ## The result type (`result.ts`)
 
@@ -90,10 +98,23 @@ Tables: `shows`, `resources` (existing `updated_at`), `tags`, `arrangements`
 
 `updateShow` changes a slug only when `slug` is sent. On a change it records
 the previous slug in `slug_redirects` and deletes any redirect row whose old
-slug is the new one (a live slug never also redirects). `createShow` releases
-a redirect row on the slug it takes, too. `/shows/[slug]` resolves a miss in
+slug is the new one (a live slug never also redirects). `createShow` skips
+slugs that a show holds or that redirect, and releases a redirect row on the
+slug it takes, too. `/shows/[slug]` resolves a miss in
 this order: exact slug → `getSlugRedirect` (308) → normalised form (308) →
 `notFound()`.
+
+## Deploying
+
+`drizzle/0003_slug_redirects_updated_at.sql` (and
+`drizzle/migrations/2026-10-08_slug_redirects_rls.sql`) must be applied with
+this code.
+
+- `getSlugRedirect` tolerates a missing `slug_redirects` table (42P01): no
+  redirect, one console.error per process, so public `/shows/<miss>` still 404s.
+- `getTagsForAdmin` selects `tags.updated_at`: **the admin tag pages error
+  until 0003 is applied.** So do `updateTag` and every action that writes or
+  reads `updated_at` on tags.
 
 ## Tests
 

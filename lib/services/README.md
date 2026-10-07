@@ -50,7 +50,9 @@ We use `unstable_cache`, not `'use cache'`. Decided once for the whole layer.
 4. **One error policy: throw.** Nothing here catches a database error. A
    lookup returns `null` for "no such row", and the page calls `notFound()`. A
    failure reaches the route's catch (500) or `app/error.tsx`. An empty list
-   means nothing matched. It never means the query failed.
+   means nothing matched. It never means the query failed. One deliberate
+   exception: `getSlugRedirect` returns null when `slug_redirects` does not
+   exist yet (42P01, before drizzle/0003), so a miss still 404s.
 5. **The one exception is a build without a database.** During `next build`
    with no `DATABASE_URL` (CI) or a masked Supabase env (some Netlify builds),
    `cachedRead` returns `atBuildWithoutDb` without querying or caching, and

@@ -124,7 +124,7 @@ export const updateShowSchema = showInsertSchema
       z.enum(showDifficultyEnum.enumValues).nullable()
     ),
     /** Tag ids. When present they replace the show's tags; when absent tags are untouched. */
-    tags: z.array(z.number().int()),
+    tags: z.array(rowId).max(200),
   })
   .partial()
   .strict();

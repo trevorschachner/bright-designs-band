@@ -29,8 +29,7 @@ const runCreateTag = guarded(
   createTagSchema,
   async ({ name }, { db }) => {
     const [row] = await db.insert(tags).values({ name }).returning(COLUMNS)
-    invalidateTags()
-    return toResult(row)
+    return { data: toResult(row), invalidate: () => invalidateTags() }
   },
   'createTag'
 )
@@ -59,8 +58,7 @@ const runUpdateTag = guarded(
         .returning(COLUMNS)
       return updated
     })
-    invalidateTags()
-    return toResult(row)
+    return { data: toResult(row), invalidate: () => invalidateTags() }
   },
   'updateTag'
 )
@@ -77,8 +75,7 @@ const runDeleteTag = guarded(
     // Show and part links go with it (FK cascades).
     const [deleted] = await db.delete(tags).where(eq(tags.id, id)).returning({ id: tags.id })
     if (!deleted) throw new NotFoundError('tag')
-    invalidateTags()
-    return { id: deleted.id }
+    return { data: { id: deleted.id }, invalidate: () => invalidateTags() }
   },
   'deleteTag'
 )

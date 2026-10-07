@@ -10,7 +10,7 @@ const { unstableCache, rows, calls } = vi.hoisted(() => ({
   unstableCache: vi.fn(
     (fn: (...a: unknown[]) => unknown, _key: string[], _opts: { tags: string[]; revalidate: number }) => fn,
   ),
-  rows: { value: [] as { slug: string }[] },
+  rows: { value: [] as { slug: string }[], error: null as unknown },
   calls: [] as string[],
 }))
 vi.mock('next/cache', () => ({ unstable_cache: unstableCache }))
@@ -27,7 +27,10 @@ vi.mock('@/lib/database', async () => {
       return chain
     },
     where: () => chain,
-    limit: async () => rows.value,
+    limit: async () => {
+      if (rows.error) throw rows.error
+      return rows.value
+    },
   }
   return { isDatabaseConfigured: () => true, db: { select: () => chain } }
 })
@@ -36,6 +39,7 @@ import { getSlugRedirect } from '@/lib/services/shows'
 
 beforeEach(() => {
   rows.value = []
+  rows.error = null
   calls.length = 0
   unstableCache.mockClear()
 })
@@ -54,6 +58,22 @@ describe('getSlugRedirect', () => {
   it('never redirects a slug to itself', async () => {
     rows.value = [{ slug: 'same' }]
     expect(await getSlugRedirect('same')).toBeNull()
+  })
+
+  it('treats a missing slug_redirects table (42P01, under DrizzleQueryError) as no redirect, logging once', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    rows.error = Object.assign(new Error('Failed query'), {
+      cause: Object.assign(new Error('relation "slug_redirects" does not exist'), { code: '42P01' }),
+    })
+    expect(await getSlugRedirect('a')).toBeNull()
+    expect(await getSlugRedirect('b')).toBeNull()
+    expect(log).toHaveBeenCalledTimes(1)
+    log.mockRestore()
+  })
+
+  it('rethrows any other database failure', async () => {
+    rows.error = Object.assign(new Error('Failed query'), { cause: Object.assign(new Error('timeout'), { code: '57014' }) })
+    await expect(getSlugRedirect('a')).rejects.toThrow('Failed query')
   })
 
   it('is cached under the shows tag', async () => {

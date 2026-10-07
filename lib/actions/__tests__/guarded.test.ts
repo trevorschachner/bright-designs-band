@@ -78,14 +78,14 @@ describe('error mapping', () => {
 
 describe('guarded()', () => {
   it('runs fn with the parsed data and { email, db }, and wraps the result in ok', async () => {
-    const fn = vi.fn(async (data: { name: string }) => data.name.toUpperCase())
+    const fn = vi.fn(async (data: { name: string }) => ({ data: data.name.toUpperCase() }))
     const run = guarded('canManageTags', schema, fn, 'test')
     expect(await run({ name: 'dark' })).toEqual({ ok: true, data: 'DARK' })
     expect(fn).toHaveBeenCalledWith({ name: 'dark' }, { email: 'editor@example.com', db: fakeDb })
   })
 
   it('is forbidden without a session, and for an address with no role, before fn runs', async () => {
-    const fn = vi.fn(async () => 'x')
+    const fn = vi.fn(async () => ({ data: 'x' }))
     const run = guarded('canManageTags', schema, fn, 'test')
     state.email = null
     expect(await run({ name: 'a' })).toEqual({ ok: false, error: 'forbidden' })
@@ -95,7 +95,7 @@ describe('guarded()', () => {
   })
 
   it('is forbidden when the role lacks the permission', async () => {
-    const fn = vi.fn(async () => 'x')
+    const fn = vi.fn(async () => ({ data: 'x' }))
     expect(await guarded('canManageUsers', schema, fn, 'test')({ name: 'a' })).toEqual({ ok: false, error: 'forbidden' })
     expect(fn).not.toHaveBeenCalled()
   })
@@ -103,12 +103,12 @@ describe('guarded()', () => {
   it('is failed (not forbidden) when authorization itself is unavailable', async () => {
     state.roleLookupFails = true
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-    expect(await guarded('canManageTags', schema, async () => 'x', 'test')({ name: 'a' })).toEqual({ ok: false, error: 'failed' })
+    expect(await guarded('canManageTags', schema, async () => ({ data: 'x' }), 'test')({ name: 'a' })).toEqual({ ok: false, error: 'failed' })
     error.mockRestore()
   })
 
   it('returns invalid with field issues for bad input, and rejects unknown keys', async () => {
-    const fn = vi.fn(async () => 'x')
+    const fn = vi.fn(async () => ({ data: 'x' }))
     const run = guarded('canManageTags', schema, fn, 'test')
     const bad = await run({ name: '' })
     expect(bad).toEqual({ ok: false, error: 'invalid', issues: [{ path: 'name', message: 'Name is required' }] })
@@ -117,8 +117,43 @@ describe('guarded()', () => {
     expect(fn).not.toHaveBeenCalled()
   })
 
+  it('runs invalidate after fn resolves, and not when fn throws', async () => {
+    const order: string[] = []
+    const invalidate = vi.fn(() => {
+      order.push('invalidate')
+    })
+    const run = guarded('canManageTags', schema, async () => {
+      order.push('write')
+      return { data: 1, invalidate }
+    }, 'test')
+    expect(await run({ name: 'a' })).toEqual({ ok: true, data: 1 })
+    expect(order).toEqual(['write', 'invalidate'])
+
+    const never = vi.fn()
+    const failing = guarded('canManageTags', schema, async () => {
+      if (order.length < 99) throw new StaleError()
+      return { data: 1, invalidate: never }
+    }, 'test')
+    expect(await failing({ name: 'a' })).toEqual({ ok: false, error: 'stale' })
+    expect(never).not.toHaveBeenCalled()
+  })
+
+  it('still returns ok when invalidation throws after the commit, and reports it', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const boom = new Error('revalidateTag outside a request')
+    const run = guarded('canManageTags', schema, async () => ({
+      data: 'saved',
+      invalidate: async () => {
+        throw boom
+      },
+    }), 'renameTag')
+    expect(await run({ name: 'a' })).toEqual({ ok: true, data: 'saved' })
+    expect(reportError).toHaveBeenCalledWith(boom, expect.objectContaining({ operation: 'renameTag:invalidate' }))
+    error.mockRestore()
+  })
+
   it('refuses a non-strict object schema at definition time', () => {
-    expect(() => guarded('canManageTags', z.object({ name: z.string() }), async () => 'x', 'loose')).toThrow(/strict/)
+    expect(() => guarded('canManageTags', z.object({ name: z.string() }), async () => ({ data: 'x' }), 'loose')).toThrow(/strict/)
   })
 
   it('maps a throw from fn without leaking its message', async () => {
@@ -137,6 +172,12 @@ describe('assertFresh', () => {
     expect(() => assertFresh(stored, '2026-10-07T12:00:00.123Z')).not.toThrow()
     expect(() => assertFresh(stored, '2026-10-07T08:00:00.123-04:00')).not.toThrow()
     expect(() => assertFresh('2026-10-07T12:00:00.123Z', '2026-10-07T12:00:00.123Z')).not.toThrow()
+  })
+
+  it('treats a microsecond database value as fresh against its millisecond ISO form (precision regression)', () => {
+    // A raw `timestamp` as Postgres sends it: microseconds, +0000 appended by drizzle.
+    expect(() => assertFresh('2026-10-07 12:00:00.123456+0000', '2026-10-07T12:00:00.123Z')).not.toThrow()
+    expect(() => assertFresh('2026-10-07 12:00:00.124456+0000', '2026-10-07T12:00:00.123Z')).toThrow(StaleError)
   })
 
   it('throws StaleError when they differ or nothing is stored', () => {
