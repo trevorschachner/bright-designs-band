@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/utils/supabase/client'
-import { getUserRole } from '@/lib/auth/roles'
 import { safeNext } from '@/lib/auth/safe-next'
 import { Loader2, AlertCircle } from 'lucide-react'
 
@@ -34,13 +33,11 @@ function AuthCallbackContent() {
         return
       }
 
-      const userRole = getUserRole(data.user.email || '')
-      const isPrivileged = userRole === 'staff' || userRole === 'admin'
-      const isAdminPath = nextPath.startsWith('/admin')
-
-      const targetPath = isPrivileged
-        ? (isAdminPath ? nextPath : '/admin')
-        : (isAdminPath ? '/' : nextPath)
+      // Admin access is a row in admin_users, which only the server can read.
+      // Sign-ups are closed, so a magic link is for an admin: send them to the
+      // admin area (or the admin page they asked for). The admin layout checks
+      // the allowlist and sends anyone not on it to '/'.
+      const targetPath = nextPath.startsWith('/admin') ? nextPath : '/admin'
 
       router.replace(targetPath)
     }

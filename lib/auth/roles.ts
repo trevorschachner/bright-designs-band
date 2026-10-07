@@ -1,108 +1,87 @@
-export type UserRole = 'admin' | 'staff' | 'user'
+import { cache } from 'react'
+import { sql } from 'drizzle-orm'
+import { db } from '@/lib/database'
+import { adminUsers } from '@/lib/database/schema'
+import { isAdminRole, permissionsFor, type AdminRole, type Permission, type UserPermissions } from './permissions'
 
-export interface UserPermissions {
-  canAccessAdmin: boolean
-  canManageShows: boolean
-  canManageTags: boolean
-  canManageResources: boolean
-  canManageUsers: boolean
-  canViewAnalytics: boolean
-  canCreateArrangements: boolean
-  canEditArrangements: boolean
-  canDeleteArrangements: boolean
-  canUploadFiles: boolean
-  canDeleteFiles: boolean
-}
+export {
+  ADMIN_ROLES,
+  ROLE_PERMISSIONS,
+  NO_PERMISSIONS,
+  permissionsFor,
+  roleHasPermission,
+  type AdminRole,
+  type Permission,
+  type UserPermissions,
+} from './permissions'
 
-export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
-  admin: {
-    canAccessAdmin: true,
-    canManageShows: true,
-    canManageTags: true,
-    canManageResources: true,
-    canManageUsers: true,
-    canViewAnalytics: true,
-    canCreateArrangements: true,
-    canEditArrangements: true,
-    canDeleteArrangements: true,
-    canUploadFiles: true,
-    canDeleteFiles: true,
-  },
-  staff: {
-    canAccessAdmin: true,
-    canManageShows: true,
-    canManageTags: true,
-    canManageResources: true,
-    canManageUsers: false,
-    canViewAnalytics: true,
-    canCreateArrangements: true,
-    canEditArrangements: true,
-    canDeleteArrangements: true,
-    canUploadFiles: true,
-    canDeleteFiles: true,
-  },
-  user: {
-    canAccessAdmin: false,
-    canManageShows: false,
-    canManageTags: false,
-    canManageResources: false,
-    canManageUsers: false,
-    canViewAnalytics: false,
-    canCreateArrangements: false,
-    canEditArrangements: false,
-    canDeleteArrangements: false,
-    canUploadFiles: false,
-    canDeleteFiles: false,
-  },
-}
+/**
+ * Who is an admin: a row in `admin_users` (owner or editor), nothing else.
+ *
+ * This replaced a rule that made every @brightdesigns.band address staff. The
+ * lookup reads the database on every request; `React.cache` only dedupes it
+ * within one render, so a role change or removal applies on the next request.
+ * Never put this behind the Next data cache: a cached "yes" would outlive a
+ * removal.
+ *
+ * Fails closed. If the table does not exist yet (the migration has not been
+ * applied) the answer is "no role", logged once, never a fallback to the old
+ * domain rule. Any other database error is thrown: callers treat it as a
+ * failure (500), not as a denial a person could mistake for being removed.
+ */
 
-export function getUserRole(email: string): UserRole {
-  if (!email) return 'user'
-  
-  // Staff members have @brightdesigns.band emails
-  if (email.endsWith('@brightdesigns.band')) {
-    return 'staff'
+const UNDEFINED_TABLE = '42P01'
+let reportedMissingTable = false
+
+function isUndefinedTable(error: unknown): boolean {
+  // drizzle wraps driver errors in DrizzleQueryError with the postgres error as `cause`.
+  for (let e: unknown = error, depth = 0; e && depth < 4; depth++) {
+    if ((e as { code?: unknown }).code === UNDEFINED_TABLE) return true
+    e = (e as { cause?: unknown }).cause
   }
-  
-  // You can add specific admin emails here if needed
-  const adminEmails: string[] = [
-    // Add specific admin emails here if you want to override the domain rule
-    // 'admin@example.com'
-  ]
-  
-  if (adminEmails.includes(email.toLowerCase())) {
-    return 'admin'
+  return false
+}
+
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
+const lookupRole = cache(async (normalizedEmail: string): Promise<AdminRole | null> => {
+  let rows: { role: string }[]
+  try {
+    rows = await db
+      .select({ role: adminUsers.role })
+      .from(adminUsers)
+      .where(sql`lower(${adminUsers.email}::text) = ${normalizedEmail}`)
+      .limit(1)
+  } catch (error) {
+    if (isUndefinedTable(error)) {
+      if (!reportedMissingTable) {
+        reportedMissingTable = true
+        console.error(
+          'admin_users table is missing (apply drizzle/migrations/2026-10-08_admin_users.sql). ' +
+            'Denying all admin access until it exists.'
+        )
+      }
+      return null
+    }
+    throw error
   }
-  
-  // Everyone else is a regular user
-  return 'user'
+  const role = rows[0]?.role
+  return isAdminRole(role) ? role : null
+})
+
+export async function getUserRole(email: string | null | undefined): Promise<AdminRole | null> {
+  if (!email) return null
+  const normalized = normalizeEmail(email)
+  if (!normalized) return null
+  return lookupRole(normalized)
 }
 
-export function getUserPermissions(email: string): UserPermissions {
-  const role = getUserRole(email)
-  return ROLE_PERMISSIONS[role]
+export async function getUserPermissions(email: string | null | undefined): Promise<UserPermissions> {
+  return permissionsFor(await getUserRole(email))
 }
 
-export function hasPermission(email: string, permission: keyof UserPermissions): boolean {
-  const permissions = getUserPermissions(email)
-  return permissions[permission]
+export async function requirePermission(email: string | null | undefined, permission: Permission): Promise<boolean> {
+  return (await getUserPermissions(email))[permission]
 }
-
-export function requirePermission(email: string | undefined, permission: keyof UserPermissions): boolean {
-  if (!email) return false
-  return hasPermission(email, permission)
-}
-
-export function requireRole(email: string | undefined, requiredRole: UserRole): boolean {
-  if (!email) return false
-  const userRole = getUserRole(email)
-  
-  // Define role hierarchy: admin > staff > user
-  const roleHierarchy: Record<UserRole, number> = {
-    admin: 3,
-    staff: 2,
-    user: 1,
-  }
-  
-  return roleHierarchy[userRole] >= roleHierarchy[requiredRole]
-} 

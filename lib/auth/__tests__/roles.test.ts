@@ -1,59 +1,116 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { PgDialect } from 'drizzle-orm/pg-core'
+import type { SQL } from 'drizzle-orm'
 
-import { 
-  ROLE_PERMISSIONS, 
-  getUserPermissions, 
-  hasPermission, 
-  requirePermission 
-} from '@/lib/auth/roles'
+/**
+ * getUserRole reads admin_users through `db`. The db is mocked at the query
+ * chain so the test sees exactly what the lookup asks for and can make it
+ * return rows or fail like Postgres does.
+ */
 
-describe('ROLE_PERMISSIONS', () => {
-  it('grants canDeleteFiles to admin and staff but not users', () => {
-    expect(ROLE_PERMISSIONS.admin.canDeleteFiles).toBe(true)
-    expect(ROLE_PERMISSIONS.staff.canDeleteFiles).toBe(true)
-    expect(ROLE_PERMISSIONS.user.canDeleteFiles).toBe(false)
+let rows: { role: string }[] = []
+let failWith: unknown = null
+const whereArgs: SQL[] = []
+
+vi.mock('@/lib/database', () => ({
+  db: {
+    select: () => ({
+      from: () => ({
+        where: (condition: SQL) => {
+          whereArgs.push(condition)
+          return {
+            limit: async () => {
+              if (failWith) throw failWith
+              return rows
+            },
+          }
+        },
+      }),
+    }),
+  },
+}))
+
+async function load() {
+  // Fresh module per test: the "missing table" warning is once per process.
+  vi.resetModules()
+  return import('@/lib/auth/roles')
+}
+
+const dialect = new PgDialect()
+
+beforeEach(() => {
+  rows = []
+  failWith = null
+  whereArgs.length = 0
+  vi.restoreAllMocks()
+})
+
+describe('getUserRole', () => {
+  it('returns owner and editor from the admin_users row', async () => {
+    const { getUserRole } = await load()
+    rows = [{ role: 'owner' }]
+    expect(await getUserRole('trevor@brightdesigns.band')).toBe('owner')
+    rows = [{ role: 'editor' }]
+    expect(await getUserRole('someone@example.com')).toBe('editor')
+  })
+
+  it('returns null when there is no row, including for domain addresses', async () => {
+    // The old rule made every @brightdesigns.band address staff. Gone.
+    const { getUserRole } = await load()
+    rows = []
+    expect(await getUserRole('designer@brightdesigns.band')).toBeNull()
+  })
+
+  it('returns null without querying for a missing email', async () => {
+    const { getUserRole } = await load()
+    expect(await getUserRole(undefined)).toBeNull()
+    expect(await getUserRole('')).toBeNull()
+    expect(await getUserRole('   ')).toBeNull()
+    expect(whereArgs).toHaveLength(0)
+  })
+
+  it('ignores an unknown role value rather than trusting it', async () => {
+    const { getUserRole } = await load()
+    rows = [{ role: 'superuser' }]
+    expect(await getUserRole('a@example.com')).toBeNull()
+  })
+
+  it('compares case-insensitively: lower(email) against the lower-cased input', async () => {
+    const { getUserRole } = await load()
+    rows = [{ role: 'editor' }]
+    expect(await getUserRole('  Trevor@BrightDesigns.Band ')).toBe('editor')
+    const query = dialect.sqlToQuery(whereArgs[0])
+    expect(query.sql).toMatch(/lower\(.*"email"::text\)/)
+    expect(query.params).toEqual(['trevor@brightdesigns.band'])
+  })
+
+  it('fails closed when admin_users does not exist: null, one console.error', async () => {
+    const { getUserRole } = await load()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    // drizzle wraps the driver error; the postgres code sits on `cause`.
+    failWith = Object.assign(new Error('Failed query'), {
+      cause: Object.assign(new Error('relation "admin_users" does not exist'), { code: '42P01' }),
+    })
+    expect(await getUserRole('trevor@brightdesigns.band')).toBeNull()
+    expect(await getUserRole('brighton@brightdesigns.band')).toBeNull()
+    expect(error).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws on any other database error instead of denying silently', async () => {
+    const { getUserRole } = await load()
+    failWith = Object.assign(new Error('connection refused'), { code: 'ECONNREFUSED' })
+    await expect(getUserRole('trevor@brightdesigns.band')).rejects.toThrow('connection refused')
   })
 })
 
-describe('getUserPermissions', () => {
-  it('treats @brightdesigns.band emails as staff with file delete rights', () => {
-    const permissions = getUserPermissions('designer@brightdesigns.band')
-    expect(permissions.canDeleteFiles).toBe(true)
-  })
-
-  it('lets staff delete arrangements', () => {
-    // The route previously gated deletion on an inline @brightdesigns.band
-    // check, so staff could always do this; the role map said otherwise.
-    // The map was wrong — it is the code that described real intent.
-    expect(getUserPermissions('designer@brightdesigns.band').canDeleteArrangements).toBe(true)
-    expect(getUserPermissions('guest@example.com').canDeleteArrangements).toBe(false)
-  })
-
-  it('treats other emails as regular users without file delete rights', () => {
-    const permissions = getUserPermissions('guest@example.com')
-    expect(permissions.canDeleteFiles).toBe(false)
-    expect(permissions.canUploadFiles).toBe(false)
-  })
-})
-
-describe('permission helpers', () => {
-  it('hasPermission reflects the underlying permission map', () => {
-    expect(hasPermission('designer@brightdesigns.band', 'canDeleteFiles')).toBe(true)
-    expect(hasPermission('guest@example.com', 'canDeleteFiles')).toBe(false)
-  })
-
-  it('requirePermission guards against missing emails', () => {
-    expect(requirePermission(undefined, 'canDeleteFiles')).toBe(false)
-    expect(requirePermission('', 'canDeleteFiles')).toBe(false)
-  })
-})
-
-describe('canManageResources', () => {
-  it('is granted to staff and admin but not regular users', () => {
-    // Resources were previously gated only by an inline @brightdesigns.band
-    // check, with no corresponding entry in the role map.
-    expect(ROLE_PERMISSIONS.admin.canManageResources).toBe(true)
-    expect(ROLE_PERMISSIONS.staff.canManageResources).toBe(true)
-    expect(ROLE_PERMISSIONS.user.canManageResources).toBe(false)
+describe('getUserPermissions / requirePermission', () => {
+  it('derive from the looked-up role', async () => {
+    const { getUserPermissions, requirePermission } = await load()
+    rows = [{ role: 'editor' }]
+    expect((await getUserPermissions('e@example.com')).canDeleteFiles).toBe(true)
+    expect(await requirePermission('e@example.com', 'canManageUsers')).toBe(false)
+    rows = []
+    expect((await getUserPermissions('guest@example.com')).canAccessAdmin).toBe(false)
+    expect(await requirePermission(undefined, 'canDeleteFiles')).toBe(false)
   })
 })

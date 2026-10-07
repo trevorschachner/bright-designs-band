@@ -19,6 +19,13 @@ vi.mock('@/lib/utils/supabase/server', () => ({
   }),
 }))
 
+// Admin access is a row in admin_users, read by getUserRole (lib/auth/roles.ts).
+// Stand in for that lookup: only the test's admin address has a row.
+vi.mock('@/lib/auth/roles', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/auth/roles')>()),
+  getUserRole: async (email?: string | null) => (email === 'admin@brightdesigns.band' ? 'editor' : null),
+}))
+
 vi.mock('next/cache', () => ({
   revalidateTag: vi.fn(),
   revalidatePath: vi.fn(),

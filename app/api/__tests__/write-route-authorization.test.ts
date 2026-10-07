@@ -9,9 +9,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
  * survives the migration it exists to protect, and a route added later is only
  * covered once someone adds it to WRITE_HANDLERS.
  *
- * Both rejection paths must return before any database access, so no database
- * mock is needed. lib/database throws at import without DATABASE_URL, so a
- * route that checks permissions too late fails loudly here.
+ * Both rejection paths must return before any content database access. The
+ * role lookup (admin_users) is the one read allowed first, and it is mocked
+ * below; a route that touches anything else before checking fails loudly,
+ * since there is no DATABASE_URL.
  */
 
 let currentUser: { email: string } | null = null
@@ -33,6 +34,13 @@ vi.mock('@/lib/utils/supabase/server', () => ({
       }),
     },
   }),
+}))
+
+// Admin access is a row in admin_users, read by getUserRole (lib/auth/roles.ts).
+// Stand in for that lookup: only the test's admin address has a row.
+vi.mock('@/lib/auth/roles', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/auth/roles')>()),
+  getUserRole: async (email?: string | null) => (email === 'admin@brightdesigns.band' ? 'editor' : null),
 }))
 
 beforeEach(() => {
@@ -92,6 +100,13 @@ describe('every write route is gated on permission', () => {
 
     it(`${entry.name} rejects a signed-in caller without permission with 403`, async () => {
       currentUser = { email: 'nobody@example.com' }
+      const res = await call(entry)
+      expect(res.status).toBe(403)
+    })
+
+    it(`${entry.name} rejects a company-domain address that is not on the allowlist with 403`, async () => {
+      // The old rule made every @brightdesigns.band address staff.
+      currentUser = { email: 'former-staff@brightdesigns.band' }
       const res = await call(entry)
       expect(res.status).toBe(403)
     })

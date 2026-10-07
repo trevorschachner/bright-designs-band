@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle, FileText, ListMusic } from 'lucide-react';
-import { getUserRole, getUserPermissions } from '@/lib/auth/roles';
+import { getUserRole, permissionsFor } from '@/lib/auth/roles';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Breadcrumb, 
@@ -39,8 +39,9 @@ export default async function AdminPage() {
     return redirect('/login');
   }
 
-  const userRole = getUserRole(user.email || '');
-  const permissions = getUserPermissions(user.email || '');
+  const role = await getUserRole(user.email);
+  const userRole = role ?? 'none';
+  const permissions = permissionsFor(role);
   const posthogKey = getPosthogKey()
   const analyticsConfigured = Boolean(posthogKey);
   const posthogHost = getPosthogHost();
@@ -66,8 +67,8 @@ export default async function AdminPage() {
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
-      case 'staff': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'owner': return 'bg-red-100 text-red-800 border-red-200';
+      case 'editor': return 'bg-blue-100 text-blue-800 border-blue-200';
       default: return 'bg-muted text-foreground border-border';
     }
   };
@@ -218,11 +219,12 @@ export default async function AdminPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">156</div>
-              <p className="text-xs text-muted-foreground">Registered users</p>
-              <Button className="w-full mt-4">
-                Manage Users
-              </Button>
+              <p className="text-xs text-muted-foreground">Who has admin access, and as owner or editor</p>
+              <Link href="/admin/users" className="mt-4 inline-block w-full">
+                <Button className="w-full">
+                  Manage Users
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         )}

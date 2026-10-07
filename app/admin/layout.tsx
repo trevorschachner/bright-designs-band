@@ -1,6 +1,8 @@
 import type React from 'react'
 import { redirect } from 'next/navigation'
 import { resolveAuthorization } from '@/lib/auth/authorization'
+import { getUserRole } from '@/lib/auth/roles'
+import { AdminNav } from '@/components/features/admin/AdminNav'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -13,6 +15,11 @@ export const fetchCache = 'force-no-store'
  * signed-up account could previously load every admin screen. The API routes
  * now refuse their writes, but the interface itself should not render at all
  * for someone without admin access.
+ *
+ * Admin access is a row in `admin_users`, read on every request (no cross-
+ * request cache), so a removed user is denied on their next request. A failed
+ * lookup throws to the error boundary rather than redirecting: it is an
+ * outage, not a denial.
  */
 export default async function AdminLayout({
   children,
@@ -33,9 +40,16 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  const result = resolveAuthorization(email, 'canAccessAdmin')
+  if (!email) redirect('/login')
+  const role = await getUserRole(email)
+  const result = resolveAuthorization(email, role, 'canAccessAdmin')
   if (result.status === 'unauthenticated') redirect('/login')
   if (result.status === 'forbidden') redirect('/')
 
-  return children
+  return (
+    <>
+      <AdminNav role={result.role} />
+      {children}
+    </>
+  )
 }

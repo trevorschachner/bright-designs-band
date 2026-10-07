@@ -23,7 +23,7 @@ export default async function ManageResourcesPage() {
 
   // Assuming if they can manage shows they can manage resources, or we need a new permission. 
   // Reusing 'canManageShows' for simplicity for now as 'admin' check.
-  if (!requirePermission(user.email, 'canManageShows')) {
+  if (!(await requirePermission(user.email, 'canManageShows'))) {
     redirect('/');
   }
 

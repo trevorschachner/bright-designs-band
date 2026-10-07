@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, customType } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -269,6 +269,25 @@ export const contactRateLimits = pgTable('contact_rate_limits', {
 }, (table) => ({
   pk: primaryKey({ columns: [table.ip, table.windowStart] }),
 }));
+
+// Postgres `citext` (case-insensitive text). Drizzle has no built-in type for
+// it; the driver returns it as a string. Queries still compare
+// lower(email) = <lower-cased input> so they never rely on citext operators.
+const citext = customType<{ data: string }>({
+  dataType() {
+    return 'citext';
+  },
+});
+
+// Named admin allowlist (drizzle/migrations/2026-10-08_admin_users.sql). A row
+// here is what grants admin access: lib/auth/roles.ts getUserRole() reads it
+// per request, and RLS policies call public.is_admin_user() over it.
+export const adminUsers = pgTable('admin_users', {
+  email: citext('email').primaryKey(),
+  role: text('role', { enum: ['owner', 'editor'] }).notNull(),
+  addedBy: citext('added_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const contactSubmissionsRelations = relations(contactSubmissions, ({ one }) => ({
   interestedShow: one(shows, {
