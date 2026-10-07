@@ -52,7 +52,7 @@ export default function ManageTagsPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchTags = () => {
-    fetch('/api/tags')
+    fetch('/api/tags?admin=true')
       .then(res => res.json())
       .then(data => {
         setTags(data);

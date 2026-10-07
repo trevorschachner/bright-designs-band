@@ -14,7 +14,8 @@ import { AudioPlayerComponent } from '@/components/features/audio-player'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
-import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles, getPublicFilesByShowId, getPublicPiecesByArrangementIds } from '@/lib/database/queries'
+import { getShowBySlug, getShowArrangements, getPublicShowFiles, getAllShowSlugs } from '@/lib/services/shows'
+import { getPublicPiecesByArrangementIds } from '@/lib/services/pieces'
 import { SourcePieces } from '@/components/features/source-pieces'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
 import { ResaleCallout } from '@/components/features/resale-callout'
@@ -24,76 +25,26 @@ import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { createCreativeWorkSchema, createBreadcrumbSchema, createProductSchema, createVideoObjectSchema } from '@/lib/seo/structured-data'
 import { notFound } from 'next/navigation'
-import { db } from '@/lib/database'
-import { shows } from '@/lib/database/schema'
-import { eq } from 'drizzle-orm'
 import { Suspense } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
 
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
+  // Prerendering is an optimisation: a show missing here renders on first
+  // request, so a database failure at build degrades to that, not a failed build.
   try {
-    const allShows = await db.select({ slug: shows.slug }).from(shows);
-    return allShows
-      .filter(s => s.slug)
-      .map(s => ({ slug: s.slug! }));
+    return (await getAllShowSlugs()).map(slug => ({ slug }))
   } catch {
-    return [];
+    return []
   }
 }
-
-interface ShowWithTagsResult {
-  show: any
-  showsToTags: Array<{ tag: any }>
-}
-
-async function getShowByIdentifier(identifier: string): Promise<ShowWithTagsResult | null> {
-  const slugResult = await getShowWithTagsBySlug(identifier)
-  if (slugResult) {
-    return slugResult
-  }
-
-  if (!/^\d+$/.test(identifier)) {
-    return null
-  }
-
-  const numericId = parseInt(identifier, 10)
-  const show = await db.query.shows.findFirst({
-    where: eq(shows.id, numericId),
-    with: {
-      showsToTags: {
-        with: {
-          tag: true,
-        },
-      },
-    },
-  })
-
-  if (!show) {
-    return null
-  }
-
-    const { showsToTags: tagRelations = [], ...rest } = show as any
-    const formattedTags = Array.isArray(tagRelations)
-      ? tagRelations
-          .map((relation: any) => ({
-            tag: relation?.tag ?? null,
-          }))
-          .filter((relation) => relation.tag)
-      : []
-
-    return {
-      show: rest,
-      showsToTags: formattedTags,
-    }
-  }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   try {
-    // Optimized: Use the same helper function, React 18+ will deduplicate this request
-    const showResult = await getShowByIdentifier(slug)
+    // Same cached read as the page body, so this costs no extra query.
+    const showResult = await getShowBySlug(slug)
     const showRow = showResult?.show
     const tags = showResult?.showsToTags || []
 
@@ -138,7 +89,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ShowDetailBySlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const showResult = await getShowByIdentifier(slug)
+  const showResult = await getShowBySlug(slug)
 
   if (!showResult) {
     notFound()
@@ -162,7 +113,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     duration: showRow.duration as string | null,
     thumbnailUrl: showRow.thumbnailUrl ?? null,
     graphicUrl: showRow.graphicUrl ?? null,
-    createdAt: showRow.createdAt instanceof Date ? showRow.createdAt.toISOString() : (showRow as any).createdAt,
+    createdAt: showRow.createdAt,
   }
 
   const displayDifficulty = (() => {
@@ -176,11 +127,11 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   // Optimized: Fetch all arrangements with their files in a single query
   // This eliminates N+1 queries - previously was 1 + N queries (N = number of arrangements)
   // Now it's just 1 query total
-  const arrangements = await getShowWithArrangementsAndFiles(showId)
-  const piecesByArrangement = await getPublicPiecesByArrangementIds(arrangements.map((a: any) => a.id))
+  const arrangements = await getShowArrangements(showId)
+  const piecesByArrangement = await getPublicPiecesByArrangementIds(arrangements.map((a) => a.id))
 
   // Fetch show image files as fallback if graphicUrl/thumbnailUrl are not set
-  const showFiles = await getPublicFilesByShowId(showId)
+  const showFiles = await getPublicShowFiles(showId)
   const showImageFile = Array.isArray(showFiles) 
     ? showFiles.find((f: any) => f.fileType === 'image' && f.isPublic) 
     : null
@@ -353,7 +304,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       title: arrangement.title || `Movement ${index + 1}`,
                       description: description,
                       url: arrangement.audioUrl,
-                      imageUrl: displayImageUrl || arrangement.graphicUrl || arrangement.thumbnailUrl || undefined,
+                      imageUrl: displayImageUrl || undefined,
                     };
                   })}
                 title="Listen to Full Show"
@@ -472,7 +423,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
 
                   <SourcePieces
                     part={arrangement}
-                    pieces={piecesByArrangement.get(arrangement.id)}
+                    pieces={piecesByArrangement[arrangement.id]}
                     className="mb-3 ml-12"
                   />
 

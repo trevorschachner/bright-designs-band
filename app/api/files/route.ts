@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm';
 import { SuccessResponse, PrivateResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { fileUploadSchema } from '@/lib/validation/files';
 import { z } from 'zod';
+import { invalidateFileOwner } from '@/lib/services/files';
 
 type FileType = typeof fileTypeEnum.enumValues[number];
 
@@ -83,7 +84,8 @@ export async function POST(request: NextRequest) {
           .update({ graphic_url: inserted.url })
           .eq('id', metadata.showId);
       }
-      
+
+      await invalidateFileOwner(metadata);
       return SuccessResponse(inserted, 201);
 
     } else {
@@ -147,7 +149,8 @@ export async function POST(request: NextRequest) {
           .update({ graphic_url: inserted.url })
           .eq('id', metadata.showId);
       }
-  
+
+      await invalidateFileOwner(metadata);
       return SuccessResponse(inserted, 201);
     }
 

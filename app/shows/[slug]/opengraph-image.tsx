@@ -1,8 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { db } from '@/lib/database'
-import { shows } from '@/lib/database/schema'
-import { eq } from 'drizzle-orm'
-import { getShowWithTagsBySlug } from '@/lib/database/queries'
+import { getShowBySlug } from '@/lib/services/shows'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import sharp from 'sharp'
@@ -23,13 +20,8 @@ const logoBase64 = `data:image/png;base64,${readFileSync(logoPath).toString('bas
 export default async function Image({ params }: { params: { slug: string } }) {
   const { slug } = await params
 
-  let show = null
-  const slugResult = await getShowWithTagsBySlug(slug)
-  if (slugResult) {
-    show = slugResult.show
-  } else if (/^\d+$/.test(slug)) {
-    show = await db.query.shows.findFirst({ where: eq(shows.id, parseInt(slug, 10)) })
-  }
+  // Handles slugs, loose slugs and numeric ids, like the page itself.
+  const show = (await getShowBySlug(slug))?.show ?? null
 
   const title = show?.title || 'Bright Designs Band'
   const graphicUrl = show?.graphicUrl || show?.thumbnailUrl

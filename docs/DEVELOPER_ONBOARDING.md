@@ -161,7 +161,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 ### Schema Location
 - `lib/database/schema.ts` - Table definitions
-- `lib/database/queries.ts` - Common queries
+- `lib/services/` - Cached reads and cache invalidation (see `lib/services/README.md`)
 - `drizzle/` - drizzle-kit generated migrations
 - `drizzle/migrations/` - hand-written SQL (RLS policies, backfills); see `drizzle/README.md`
 

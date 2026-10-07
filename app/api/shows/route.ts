@@ -1,129 +1,15 @@
-import { shows, showArrangements, showsToTags, files } from '@/lib/database/schema';
-import { NextResponse } from 'next/server';
-import { revalidateTag, unstable_cache } from 'next/cache';
+import { shows, showsToTags } from '@/lib/database/schema';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
-import { buildTableQuery, UnknownFilterFieldError } from '@/lib/filters/table-query';
-import { count } from 'drizzle-orm/sql';
-import { eq, desc, and, exists, inArray } from 'drizzle-orm';
+import { UnknownFilterFieldError } from '@/lib/filters/table-query';
+import { eq } from 'drizzle-orm';
 import { guard } from '@/lib/auth/guard';
 import { showSchema } from '@/lib/validation/shows';
-import { SuccessResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
+import { SuccessResponse, PrivateResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { reportError } from '@/lib/observability/report-error';
-import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
-import { publicStorageUrl } from '@/lib/media/public-url';
+import { getShowsPage, getShowsPageForAdmin, type ShowsPageParams } from '@/lib/services/shows';
+import { invalidateShow } from '@/lib/services/invalidate';
 
 export const dynamic = 'force-dynamic';
-
-function toPublicUrl(urlOrPath: string | null | undefined): string | null {
-  if (!urlOrPath) return null;
-  if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) return urlOrPath;
-  try {
-    return publicStorageUrl(STORAGE_BUCKET, withRootPrefix(urlOrPath));
-  } catch {
-    return null;
-  }
-}
-
-interface ShowQueryParams {
-  search?: string;
-  conditions: any[];
-  sort: any[];
-  page: number;
-  limit: number;
-  featured?: boolean;
-}
-
-async function queryShowsData(params: ShowQueryParams) {
-  const { db } = await import('@/lib/database');
-  const { search, conditions, sort, page, limit, featured } = params;
-  const offset = (page - 1) * limit;
-
-  const { where: finalWhereClause, orderBy } = buildTableQuery(
-    shows,
-    { search, conditions, sort },
-    {
-      searchable: ['title', 'description'],
-      relations: {
-        tags: (tagIds) =>
-          exists(
-            db
-              .select()
-              .from(showsToTags)
-              .where(and(eq(showsToTags.showId, shows.id), inArray(showsToTags.tagId, tagIds)))
-          ),
-      },
-      extra: featured ? [eq(shows.featured, true)] : [],
-      defaultOrderBy: [shows.displayOrder, desc(shows.createdAt)],
-    }
-  );
-
-  const countQuery = db.select({ count: count() }).from(shows);
-  const dataQuery = db.query.shows.findMany({
-    limit,
-    offset,
-    where: finalWhereClause,
-    orderBy,
-    columns: {
-      id: true, slug: true, title: true, description: true, year: true,
-      difficulty: true, duration: true, price: true, graphicUrl: true,
-      thumbnailUrl: true, featured: true, displayOrder: true, createdAt: true,
-    },
-    with: {
-      files: {
-        where: (f: any, { eq: feq, and }: any) => and(feq(f.isPublic, true), feq(f.fileType, 'image')),
-        orderBy: [files.displayOrder],
-        limit: 1,
-      },
-      showsToTags: { with: { tag: true } },
-      showArrangements: {
-        orderBy: (sa: any, { asc }: any) => [asc(sa.orderIndex)],
-        with: {
-          arrangement: {
-            columns: { id: true, title: true, scene: true, durationSeconds: true, sampleScoreUrl: true },
-          },
-        },
-      },
-    },
-  });
-
-  const [totalResult, rows] = await Promise.all([
-    finalWhereClause ? countQuery.where(finalWhereClause) : countQuery,
-    dataQuery,
-  ]);
-
-  const total = totalResult[0]?.count || 0;
-
-  const data = rows.map((r: any) => {
-    const graphicUrl = toPublicUrl(r.graphicUrl);
-    const thumbnailUrl = toPublicUrl(r.thumbnailUrl);
-    const fallbackUrl = r.files?.[0]?.url ? toPublicUrl(r.files[0].url) : null;
-    return {
-      id: r.id,
-      slug: r.slug,
-      title: r.title,
-      description: r.description,
-      year: r.year,
-      difficulty: r.difficulty,
-      duration: r.duration,
-      price: r.price ? Number(r.price) : null,
-      thumbnailUrl: graphicUrl || thumbnailUrl || fallbackUrl,
-      graphicUrl: graphicUrl || null,
-      featured: !!r.featured,
-      displayOrder: r.displayOrder ?? 0,
-      createdAt: r.createdAt,
-      arrangements: (r.showArrangements || []).map((sa: any) => sa.arrangement).filter(Boolean),
-      showsToTags: r.showsToTags || [],
-    };
-  });
-
-  return { data, total };
-}
-
-const getCachedShows = unstable_cache(
-  queryShowsData,
-  ['shows-api'],
-  { revalidate: 3600, tags: ['shows'] }
-);
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -133,16 +19,28 @@ export async function GET(request: Request) {
   const limit = filterState.limit || 20;
   const featuredParam = searchParams.get('featured');
 
-  try {
-    const { data, total } = await getCachedShows({
-      search: filterState.search,
-      conditions: filterState.conditions || [],
-      sort: filterState.sort || [],
-      page,
-      limit,
-      featured: featuredParam && ['true', '1'].includes(featuredParam.toLowerCase()) ? true : undefined,
-    });
+  const params: ShowsPageParams = {
+    search: filterState.search,
+    conditions: filterState.conditions || [],
+    sort: filterState.sort || [],
+    page,
+    limit,
+    featured: featuredParam && ['true', '1'].includes(featuredParam.toLowerCase()) ? true : undefined,
+  };
 
+  try {
+    // The admin shows table asks with ?admin=true and must see its own writes
+    // at once, so staff get an uncached read that never enters a shared cache.
+    // Anyone else asking with ?admin=true gets the public (cached) answer.
+    if (searchParams.get('admin') === 'true') {
+      const gate = await guard('canManageShows');
+      if (!gate.denied) {
+        const { data, total } = await getShowsPageForAdmin(params);
+        return PrivateResponse(QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit }));
+      }
+    }
+
+    const { data, total } = await getShowsPage(params);
     const response = QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit });
     return SuccessResponse(response);
   } catch (error) {
@@ -202,8 +100,7 @@ export async function POST(request: Request) {
       ).onConflictDoNothing();
     }
 
-    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-    revalidateTag('shows');
+    invalidateShow(inserted.id, inserted.slug);
     return SuccessResponse(inserted, 201);
   } catch (error) {
     console.error('Error creating show:', error);

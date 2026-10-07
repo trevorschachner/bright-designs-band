@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
-import { revalidateTag } from 'next/cache';
 import { guard } from '@/lib/auth/guard';
 import { pieces } from '@/lib/database/schema';
 import { pieceInputSchema } from '@/lib/validation/pieces';
+import { invalidatePieces } from '@/lib/services/invalidate';
 import {
   BadRequestResponse,
   ErrorResponse,
@@ -35,8 +35,7 @@ export async function PUT(request: Request, { params }: Context) {
       .where(eq(pieces.id, id))
       .returning();
     if (!updated) return NotFoundResponse('Piece');
-    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-    revalidateTag('arrangements');
+    invalidatePieces();
     return SuccessResponse(updated, 200, 0);
   } catch (error) {
     console.error('Error updating piece:', error);
@@ -56,8 +55,7 @@ export async function DELETE(_request: Request, { params }: Context) {
     const { db } = await import('@/lib/database');
     const [deleted] = await db.delete(pieces).where(eq(pieces.id, id)).returning();
     if (!deleted) return NotFoundResponse('Piece');
-    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-    revalidateTag('arrangements');
+    invalidatePieces();
     return SuccessResponse(deleted, 200, 0);
   } catch (error) {
     console.error('Error deleting piece:', error);

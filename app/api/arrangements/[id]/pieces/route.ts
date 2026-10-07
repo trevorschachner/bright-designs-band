@@ -1,7 +1,9 @@
-import { asc, eq, inArray } from 'drizzle-orm';
-import { revalidateTag } from 'next/cache';
+import { eq, inArray } from 'drizzle-orm';
 import { guard } from '@/lib/auth/guard';
 import { arrangementPieces, arrangements, pieces } from '@/lib/database/schema';
+import { getArrangementPiecesForAdmin } from '@/lib/services/pieces';
+import { getShowSlugForArrangement } from '@/lib/services/arrangements';
+import { invalidateArrangement } from '@/lib/services/invalidate';
 import { arrangementPiecesInputSchema } from '@/lib/validation/pieces';
 import {
   BadRequestResponse,
@@ -26,23 +28,6 @@ const parseId = (raw: string) => {
   return Number.isInteger(id) && id > 0 ? id : null;
 };
 
-type Db = (typeof import('@/lib/database'))['db'];
-
-const listPieces = (db: Db, arrangementId: number) =>
-  db
-    .select({
-      id: pieces.id,
-      title: pieces.title,
-      composer: pieces.composer,
-      copyrightAmountUsd: pieces.copyrightAmountUsd,
-      licensingStatus: pieces.licensingStatus,
-      orderIndex: arrangementPieces.orderIndex,
-    })
-    .from(arrangementPieces)
-    .innerJoin(pieces, eq(pieces.id, arrangementPieces.pieceId))
-    .where(eq(arrangementPieces.arrangementId, arrangementId))
-    .orderBy(asc(arrangementPieces.orderIndex));
-
 export async function GET(_request: Request, { params }: Context) {
   const gate = await guard('canEditArrangements');
   if (gate.denied) return gate.denied;
@@ -51,8 +36,7 @@ export async function GET(_request: Request, { params }: Context) {
   if (arrangementId === null) return BadRequestResponse('Invalid arrangement id');
 
   try {
-    const { db } = await import('@/lib/database');
-    return SuccessResponse(await listPieces(db, arrangementId), 200, 0);
+    return SuccessResponse(await getArrangementPiecesForAdmin(arrangementId), 200, 0);
   } catch (error) {
     console.error('Error fetching arrangement pieces:', error);
     return ErrorResponse('Failed to fetch arrangement pieces');
@@ -98,9 +82,10 @@ export async function PUT(request: Request, { params }: Context) {
       }
     });
 
-    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-    revalidateTag('arrangements');
-    return SuccessResponse(await listPieces(db, arrangementId), 200, 0);
+    // The credit list is part of the arrangement, so this is an arrangement
+    // change, not a pieces change.
+    invalidateArrangement(arrangementId, await getShowSlugForArrangement(arrangementId));
+    return SuccessResponse(await getArrangementPiecesForAdmin(arrangementId), 200, 0);
   } catch (error) {
     console.error('Error updating arrangement pieces:', error);
     return ErrorResponse('Failed to update arrangement pieces');

@@ -6,6 +6,7 @@ import { FileText, Download, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
+import { getActiveResources } from "@/lib/services/resources"
 
 export const metadata: Metadata = {
   title: "Marching Band Director Resources - Free Guides & Tools | Bright Designs",
@@ -17,22 +18,8 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 // export const dynamic = 'force-dynamic';
 
-async function getResources() {
-  try {
-    const { db } = await import('@/lib/database');
-    const { resources } = await import('@/lib/database/schema');
-    const { desc, eq } = await import('drizzle-orm');
-    
-    const data = await db.select().from(resources).where(eq(resources.isActive, true)).orderBy(desc(resources.createdAt));
-    return data;
-  } catch (e) {
-    console.error('Failed to fetch resources:', e);
-    return [];
-  }
-}
-
 export default async function ResourcesPage() {
-  const resourcesList = await getResources();
+  const resourcesList = await getActiveResources();
 
   // Hardcoded blog posts for now
   const blogPosts = [

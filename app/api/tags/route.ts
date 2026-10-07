@@ -2,26 +2,23 @@ import { tags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
 import { tagInputSchema } from '@/lib/validation/tags';
-import { revalidateTag } from 'next/cache';
+import { PRIVATE_HEADERS, PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';
+import { getAllTags, getTagsForAdmin } from '@/lib/services/tags';
+import { invalidateTags } from '@/lib/services/invalidate';
 
-// Cache tags for 2 hours (tags rarely change)
-export const revalidate = 7200;
-
-export async function GET() {
+/**
+ * Every tag, cached. The admin tags page asks with ?admin=true and gets an
+ * uncached, private read so it sees its own writes. Same body either way.
+ */
+export async function GET(request: Request) {
   try {
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e);
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    if (new URL(request.url).searchParams.get('admin') === 'true') {
+      const gate = await guard('canManageTags');
+      if (!gate.denied) {
+        return NextResponse.json(await getTagsForAdmin(), { headers: PRIVATE_HEADERS });
+      }
     }
-    const allTags = await db.query.tags.findMany();
-    return NextResponse.json(allTags, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=7200, stale-while-revalidate=14400',
-      },
-    });
+    return NextResponse.json(await getAllTags(), { headers: PUBLIC_CACHE_HEADERS });
   } catch (error) {
     console.error('Error fetching tags:', error);
     return NextResponse.json({ error: 'Failed to fetch tags' }, { status: 500 });
@@ -46,7 +43,6 @@ export async function POST(request: Request) {
   }
 
   const newTag = await db.insert(tags).values(parsed.data).returning();
-  // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-  revalidateTag('tags');
+  invalidateTags();
   return NextResponse.json(newTag);
 } 

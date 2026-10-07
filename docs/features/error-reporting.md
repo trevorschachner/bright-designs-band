@@ -65,8 +65,9 @@ replacement.
 
 Use `reportError` wherever an error is being swallowed on purpose — where the
 caller returns a fallback and continues. If the error should propagate, let it:
-`lib/database/queries.ts` throws by design, and detail and admin pages want
-failures to surface.
+the read services in `lib/services/` throw by design (see
+`lib/services/README.md`), and pages turn a missing row into `notFound()` and a
+failure into the error boundary.
 
 See also: `docs/features/filtering-system.md` for the related case of a filter
 naming an unknown column, which returns a 400 rather than degrading.

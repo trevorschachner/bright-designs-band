@@ -36,6 +36,7 @@ export default function ShowsTable() {
   return (
     <AdminTable<Show>
       endpoint="/api/shows"
+      listQuery="admin=true"
       columns={columns}
       resourceName="shows"
     />

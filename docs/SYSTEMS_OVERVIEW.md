@@ -94,7 +94,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-key"
 
 **Key Files**:
 - `/lib/database/schema.ts` - Table definitions
-- `/lib/database/queries.ts` - Reusable query functions
+- `/lib/services/` - The read layer: cached public reads, uncached admin reads, invalidation (see its README)
 - `/lib/database/index.ts` - Database client
 - `/drizzle.config.ts` - Drizzle configuration
 

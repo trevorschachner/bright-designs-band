@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { files } from '@/lib/database/schema'
 import { guard } from '@/lib/auth/guard'
 import { isValidYouTubeUrl } from '@/components/features/youtube-player'
+import { invalidateFileOwner } from '@/lib/services/files'
 
 export async function POST(request: NextRequest) {
   // canCreateArrangements, not canUploadFiles, is what this route has always
@@ -93,6 +94,8 @@ export async function POST(request: NextRequest) {
       description,
       displayOrder,
     }).returning()
+
+    await invalidateFileOwner(fileRecord[0])
 
     return NextResponse.json({ 
       success: true,

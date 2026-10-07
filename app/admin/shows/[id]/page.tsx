@@ -63,7 +63,7 @@ export default function EditShowPage() {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/shows/${id}`)
+      fetch(`/api/shows/${id}?admin=true`)
         .then(async (res) => {
           if (!res.ok) return null;
           const text = await res.text();
@@ -271,7 +271,7 @@ export default function EditShowPage() {
         setSelectedArrangementTags([]);
         setShowAddArrangementForm(false);
         // Reload arrangements
-        fetch(`/api/shows/${id}`)
+        fetch(`/api/shows/${id}?admin=true`)
           .then(res => res.json())
           .then(data => setArrangements(data.arrangements));
       } else {
@@ -341,7 +341,7 @@ export default function EditShowPage() {
         setEditingArrangementData(null);
         setSelectedArrangementTags([]);
         // Reload arrangements
-      fetch(`/api/shows/${id}`)
+      fetch(`/api/shows/${id}?admin=true`)
         .then(res => res.json())
         .then(data => setArrangements(data.arrangements));
       } else {
@@ -367,7 +367,7 @@ export default function EditShowPage() {
         throw new Error(data?.error || 'Failed to delete arrangement');
       }
       // Refresh arrangements list
-      const res = await fetch(`/api/shows/${id}`);
+      const res = await fetch(`/api/shows/${id}?admin=true`);
       const data = await res.json();
       setArrangements(Array.isArray(data.arrangements) ? data.arrangements : []);
     } catch (err: any) {

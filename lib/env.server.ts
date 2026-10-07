@@ -48,7 +48,7 @@ const postgresUrl = z.string().refine((value) => {
 })
 
 const serverSchema = z.object({
-  // Optional so the Netlify build and CI's dummy env still build;
+  // Optional so the Netlify build and CI (which has none) still build;
   // lib/database throws a clear error when it is actually used without one.
   DATABASE_URL: z.preprocess(unset, postgresUrl.optional()),
   SUPABASE_SERVICE_ROLE_KEY: optionalString,

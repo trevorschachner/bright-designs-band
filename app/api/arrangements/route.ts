@@ -1,140 +1,35 @@
-import { arrangements, files, showArrangements, arrangementsToTags } from '@/lib/database/schema';
+import { arrangements, showArrangements, arrangementsToTags, shows } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
-import { revalidateTag } from 'next/cache';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
-import { buildTableQuery, UnknownFilterFieldError } from '@/lib/filters/table-query';
-import { count } from 'drizzle-orm/sql';
-import { eq, desc, exists, and, inArray } from 'drizzle-orm';
+import { UnknownFilterFieldError } from '@/lib/filters/table-query';
+import { eq, desc } from 'drizzle-orm';
 import { withDb } from '@/lib/utils/db';
-
-// Cache API responses for 1 hour, revalidate in background
-export const revalidate = 3600;
+import { PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';
+import { getArrangementsPage } from '@/lib/services/arrangements';
+import { invalidateArrangement } from '@/lib/services/invalidate';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filterState = FilterUrlManager.fromUrlParams(searchParams);
+  // Default pagination; the response reflects the limit actually used.
+  const activeFilterState = { ...filterState, page: filterState.page || 1, limit: filterState.limit || 25 };
 
-  return withDb(async (db) => {
-    try {
-      // Default pagination
-      const page = filterState.page || 1;
-      const limit = filterState.limit || 25;
-      const offset = (page - 1) * limit;
-
-      const { where: finalWhereClause, orderBy } = buildTableQuery(
-        arrangements,
-        filterState,
-        {
-          // 'name' used to be listed here but arrangements has no such column,
-          // so buildSearchCondition silently discarded it.
-          searchable: ['title', 'composer', 'arranger'],
-          relations: {
-            tags: (tagIds) =>
-              exists(
-                db
-                  .select()
-                  .from(arrangementsToTags)
-                  .where(
-                    and(
-                      eq(arrangementsToTags.arrangementId, arrangements.id),
-                      inArray(arrangementsToTags.tagId, tagIds)
-                    )
-                  )
-              ),
-          },
-          defaultOrderBy: [arrangements.title],
-        }
-      );
-
-      let countQueryBuilder = db.select({ count: count() }).from(arrangements);
-      if (finalWhereClause) {
-        countQueryBuilder = countQueryBuilder.where(finalWhereClause) as typeof countQueryBuilder;
-      }
-
-      const countQuery = countQueryBuilder;
-
-      // Execute count query and optimized single query with public files relation (audio/sample score)
-      const [totalResult, arrangementsWithRelations] = await Promise.all([
-        countQuery,
-        db.query.arrangements.findMany({
-          limit,
-          offset,
-          where: finalWhereClause,
-          orderBy,
-          // Explicit columns: never ship copyright cost or other internal
-          // fields on a public, edge-cached route.
-          columns: {
-            id: true,
-            title: true,
-            composer: true,
-            arranger: true,
-            percussionArranger: true,
-            description: true,
-            grade: true,
-            year: true,
-            durationSeconds: true,
-            scene: true,
-            ensembleSize: true,
-            youtubeUrl: true,
-            commissioned: true,
-            sampleScoreUrl: true,
-            displayOrder: true,
-          },
-          with: {
-            files: {
-              where: (files: any, { eq }: any) => eq(files.isPublic, true),
-              orderBy: [files.displayOrder, files.createdAt],
-            },
-            showArrangements: {
-              with: {
-                show: {
-                  columns: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                  },
-                },
-              },
-            },
-          },
-        })
-      ]);
-
-      const total = totalResult[0]?.count || 0;
-
-      // Ensure the response pagination reflects the actual limit used (25) even if not in URL
-      const activeFilterState = { ...filterState, limit };
-
-      const response = QueryBuilder.buildFilteredResponse(
-        arrangementsWithRelations,
-        total,
-        activeFilterState
-      );
-
-      return NextResponse.json(response, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
-          // Without this the edge caches one body per path: a search for
-          // something with no matches was served to every visitor as an empty
-          // catalogue until the hour expired. See lib/utils/api-helpers.ts.
-          'Netlify-Vary': 'query',
-        },
-      });
-    } catch (error) {
-      // A filter naming a column the table does not have is the caller's
-      // mistake, not a server fault. It used to land in the 500 below, which is
-      // how the dead `type` and `price` filters presented.
-      if (error instanceof UnknownFilterFieldError) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
-      }
-      console.error('Error fetching arrangements:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch arrangements' },
-        { status: 500 }
-      );
+  try {
+    const { data, total } = await getArrangementsPage(activeFilterState);
+    const response = QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit: activeFilterState.limit });
+    // Raw body (no envelope) on purpose: app/arrangements/page.tsx reads it as-is.
+    return NextResponse.json(response, { headers: PUBLIC_CACHE_HEADERS });
+  } catch (error) {
+    // A filter naming a column the table does not have is the caller's
+    // mistake, not a server fault. It used to land in the 500 below, which is
+    // how the dead `type` and `price` filters presented.
+    if (error instanceof UnknownFilterFieldError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
-  });
+    console.error('Error fetching arrangements:', error);
+    return NextResponse.json({ error: 'Failed to fetch arrangements' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -207,8 +102,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-    revalidateTag('arrangements');
+    const [parent] = await db
+      .select({ slug: shows.slug })
+      .from(shows)
+      .where(eq(shows.id, Number(showId)))
+      .limit(1);
+    invalidateArrangement(newId, parent?.slug);
     return NextResponse.json({ id: newId, showId: Number(showId), orderIndex: finalOrder });
   });
 }

@@ -15,6 +15,12 @@ vi.mock('@/lib/utils/supabase/server', () => ({
   }),
 }))
 
+vi.mock('next/cache', () => ({
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+  unstable_cache: <T extends (...a: never[]) => unknown>(fn: T) => fn,
+}))
+
 type Row = Record<string, unknown>
 
 const project = (row: Row, columns?: Record<string, boolean>): Row =>
@@ -80,9 +86,12 @@ vi.mock('@/lib/database', () => ({
         findFirst: async (opts: Parameters<typeof applyOpts>[0]) => applyOpts(opts),
       },
     },
-    select: (fields?: unknown) => ({
+    select: (fields?: Record<string, unknown>) => ({
       from: (table: { isActive?: unknown }) => {
-        if (fields) return Promise.resolve([{ count: 1 }])
+        if (fields && 'count' in fields) {
+          const counted = Promise.resolve([{ count: 1 }])
+          return Object.assign(counted, { where: () => counted })
+        }
         const isResources = 'isActive' in table
         const run = (activeOnly: boolean) =>
           (isResources ? RESOURCES : []).filter((r) => !activeOnly || r.isActive)
