@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { sql } from 'drizzle-orm'
+import { sql, type SQL } from 'drizzle-orm'
+import { PgDialect } from 'drizzle-orm/pg-core'
 import { shows, arrangements } from '@/lib/database/schema'
 import { buildTableQuery, UnknownFilterFieldError } from '../table-query'
 
@@ -63,6 +64,14 @@ describe('composition', () => {
     )
     expect(plan.where).toBeDefined()
     expect(plan.orderBy).toHaveLength(1)
+  })
+
+  it('sorts blanks last in both directions', () => {
+    const render = (o: unknown) => new PgDialect().sqlToQuery(o as SQL).sql
+    for (const direction of ['asc', 'desc'] as const) {
+      const plan = buildTableQuery(shows, state([], [{ field: 'difficulty', direction }]), { defaultOrderBy: [] })
+      expect(render(plan.orderBy[0])).toBe(`"shows"."difficulty" ${direction} nulls last`)
+    }
   })
 
   it('returns no where clause and the default ordering for an empty filter state', () => {

@@ -29,6 +29,9 @@ import {
   Trash2,
   ChevronsLeft,
   ChevronsRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
@@ -38,12 +41,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { buildDeleteUrl, buildListUrl } from './admin-table-urls';
+import { buildDeleteUrl, buildListUrl, nextSort, type TableSort } from './admin-table-urls';
 
 export interface ColumnDef<T> {
   header: string;
   accessorKey: keyof T;
   cell?: (row: T) => React.ReactNode;
+  /** Header click sorts by this column on the server. The endpoint must accept `sort=[...]`. */
+  sortable?: boolean;
 }
 
 interface AdminTableProps<T> {
@@ -65,6 +70,7 @@ export default function AdminTable<T extends { id: number }>({
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sort, setSort] = useState<TableSort | null>(null);
   
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -79,7 +85,7 @@ export default function AdminTable<T extends { id: number }>({
       setLoading(true);
       setError(null);
       
-      const url = buildListUrl(endpoint, listQuery, page, limit);
+      const url = buildListUrl(endpoint, listQuery, page, limit, sort);
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -147,7 +153,7 @@ export default function AdminTable<T extends { id: number }>({
     } finally {
       setLoading(false);
     }
-  }, [endpoint, listQuery, resourceName]);
+  }, [endpoint, listQuery, resourceName, sort]);
 
   useEffect(() => {
     fetchData(pagination.page, pagination.limit);
@@ -158,6 +164,36 @@ export default function AdminTable<T extends { id: number }>({
       setPagination(prev => ({ ...prev, page: newPage }));
     }
   };
+
+  const handleSort = (field: string) => {
+    setSort(current => nextSort(current, field));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const renderHeaders = () =>
+    columns.map((column) => {
+      const field = String(column.accessorKey);
+      if (!column.sortable) {
+        return <TableHead key={field}>{column.header}</TableHead>;
+      }
+      const direction = sort?.field === field ? sort.direction : null;
+      const Icon = direction === 'asc' ? ArrowUp : direction === 'desc' ? ArrowDown : ArrowUpDown;
+      return (
+        <TableHead
+          key={field}
+          aria-sort={direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'}
+        >
+          <button
+            type="button"
+            onClick={() => handleSort(field)}
+            className="inline-flex items-center gap-1 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+          >
+            {column.header}
+            <Icon className={`h-3.5 w-3.5 ${direction ? 'text-foreground' : 'opacity-40'}`} aria-hidden />
+          </button>
+        </TableHead>
+      );
+    });
 
   const handleLimitChange = (newLimit: number) => {
     setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
@@ -204,9 +240,7 @@ export default function AdminTable<T extends { id: number }>({
         <Table>
           <TableHeader>
             <TableRow>
-              {columns.map((column) => (
-                <TableHead key={String(column.accessorKey)}>{column.header}</TableHead>
-              ))}
+              {renderHeaders()}
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -242,9 +276,7 @@ export default function AdminTable<T extends { id: number }>({
       <Table>
         <TableHeader>
           <TableRow>
-            {columns.map((column) => (
-              <TableHead key={String(column.accessorKey)}>{column.header}</TableHead>
-            ))}
+            {renderHeaders()}
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>

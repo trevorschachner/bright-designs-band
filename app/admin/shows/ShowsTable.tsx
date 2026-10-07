@@ -7,22 +7,27 @@ const columns: ColumnDef<Show>[] = [
   {
     header: 'Title',
     accessorKey: 'title',
+    sortable: true,
   },
   {
     header: 'Order',
     accessorKey: 'displayOrder' as any,
+    sortable: true,
   },
   {
     header: 'Year',
     accessorKey: 'year',
+    sortable: true,
   },
   {
     header: 'Difficulty',
     accessorKey: 'difficulty',
+    sortable: true,
   },
   {
     header: 'Featured',
     accessorKey: 'featured' as any,
+    sortable: true,
     cell: (row) => (row as any).featured ? 'Yes' : 'No',
   },
 ];
