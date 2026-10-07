@@ -7,8 +7,15 @@ import { withDb } from '@/lib/utils/db';
 import { updateShowSchema } from '@/lib/validation/shows';
 import { BadRequestResponse, ErrorResponse, NotFoundResponse } from '@/lib/utils/api-helpers';
 
-// Cache show detail responses for 1 hour
-export const revalidate = 3600;
+/**
+ * Never cached. The only reader is the admin editor (`app/admin/shows/[id]`),
+ * which loads this when a show is opened and PUTs the whole snapshot back on
+ * auto-save. It used to be served from the CDN for an hour, so a thumbnail
+ * saved a moment earlier was missing when the editor was reopened, and the
+ * next auto-save wrote the stale copy back over it. Public pages read shows
+ * through `lib/services/shows.ts`, which has its own tagged cache.
+ */
+export const dynamic = 'force-dynamic';
 
 /**
  * A route `id` is either a numeric primary key or an exact slug. There is no
@@ -94,9 +101,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         }).filter(Boolean),
       };
       return NextResponse.json(normalized, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
-        },
+        headers: { 'Cache-Control': 'private, no-store' },
       });
     } catch (e) {
       console.error('Failed to fetch show by id:', e);
