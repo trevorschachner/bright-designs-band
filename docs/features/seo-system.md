@@ -33,12 +33,10 @@ The SEO system combines open-source tools and custom implementations to provide:
 - FAQ schema for common questions
 - Breadcrumb navigation schema
 
-#### Performance Optimization (`lib/seo/performance.ts`)
-- Core Web Vitals monitoring (LCP, FID, CLS)
-- Image optimization utilities
-- Font loading optimization
-- Critical CSS generation
-- Resource hints and preloading
+#### Performance
+Fonts load through `next/font` (self-hosted, `display: swap`); images through
+`next/image` with `priority` on the above-the-fold image. Web vitals are
+captured by PostHog when its web-vitals capture is on for the project. See `docs/perf-baseline.md`.
 
 ### 🔍 **Content Optimization**
 
@@ -130,12 +128,11 @@ return (
 
 ### 3. Optimize Images
 
-```typescript
+```tsx
 import Image from 'next/image'
-import { getOptimizedImageProps } from '@/lib/seo/performance'
 
-const imageProps = getOptimizedImageProps('/show-image.jpg', 'Marching band performance', true)
-<Image {...imageProps} width={1200} height={630} />
+<Image src="/show-image.jpg" alt="Marching band performance" width={1200} height={630}
+  priority sizes="(max-width: 1024px) 100vw, 50vw" />
 ```
 
 ## Configuration

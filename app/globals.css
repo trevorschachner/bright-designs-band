@@ -223,3 +223,23 @@
     @apply flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
   }
 }
+
+/* MarchingFormationLoader: each dot pulses and "steps" up; delays make a diagonal wave. */
+@keyframes marcher-step {
+  0%, 100% { opacity: 0.3; transform: translateY(0) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-4px) scale(1.2); }
+}
+.marcher-dot {
+  opacity: 0.3;
+  transform: scale(0.8);
+  animation: marcher-step 1.5s ease-in-out infinite both;
+}
+
+/* Waveform bars (audio players). */
+@keyframes waveform-bounce {
+  0%, 100% { height: 4px; }
+  50% { height: 12px; }
+}
+.waveform-bar {
+  animation: waveform-bounce 0.5s ease-in-out infinite alternate;
+}

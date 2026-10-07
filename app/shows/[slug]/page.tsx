@@ -225,6 +225,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                 fill
                 className="object-cover rounded-lg"
                 priority
+                fetchPriority="high"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             ) : (

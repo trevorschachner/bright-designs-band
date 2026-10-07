@@ -11,7 +11,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
-import { generateResourceHints } from "@/lib/seo/performance"
 import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
 import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
@@ -22,16 +21,21 @@ import { getPublicSiteUrl, getPosthogKey, getPosthogHost } from "@/lib/env"
 import { Toaster } from "@/components/ui/toaster"
 import { PostHogProvider } from "@/components/features/analytics/PostHogProvider"
 
+// Inter is only a fallback behind Poppins in the font stacks, so it is never
+// painted; do not preload it.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
-  preload: true,
+  preload: false,
 })
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  // The weights the site uses: 300 (body, font-light), 500 (font-medium),
+  // 600 (font-semibold), 700 (font-bold). font-normal / <strong> (400) match
+  // 500 under CSS font matching.
+  weight: ["300", "500", "600", "700"],
   variable: "--font-poppins",
   display: "swap",
 })
@@ -49,18 +53,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const resourceHints = generateResourceHints()
   const posthogKey = getPosthogKey()
   const posthogHost = getPosthogHost()
   
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Resource hints for performance */}
-        {resourceHints.map((hint, index) => (
-          <link key={index} {...hint} />
-        ))}
-        
         {/* Additional SEO meta tags */}
         <meta name="robots" content="index,follow" />
         <meta name="googlebot" content="index,follow,max-video-preview:-1,max-image-preview:large,max-snippet:-1" />
