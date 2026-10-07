@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/database'
 import { files } from '@/lib/database/schema'
 import { eq } from 'drizzle-orm'
 import { fileStorage } from '@/lib/storage'
@@ -17,8 +18,6 @@ export async function GET(
     if (isNaN(fileId)) {
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
     }
-
-    const { db } = await import('@/lib/database')
 
     // Drizzle returns camelCase fields (storagePath, isPublic); supabase-js
     // returns the raw snake_case columns, which broke the computed URL.

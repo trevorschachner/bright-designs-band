@@ -160,7 +160,6 @@ straight after saving.
 | `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[id]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml`, every `/collections/<slug>` |
 | `invalidatePieces()` | `pieces` | same as tags |
 | `invalidateResources()` | `resources` | `/resources`, `/`, `/sitemap.xml` |
-| `invalidateCatalog()` | all five list tags | the whole site (`/`, layout), plus `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` |
 
 Which write calls which:
 

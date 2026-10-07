@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { guard } from '@/lib/auth/guard'
+import { db } from '@/lib/database'
 import { files } from '@/lib/database/schema'
 import { storageBucketFor, withRootPrefix } from '@/lib/storage'
 
@@ -26,7 +27,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
 
   try {
-    const { db } = await import('@/lib/database')
     const [file] = await db
       .select({ storagePath: files.storagePath, url: files.url, fileType: files.fileType })
       .from(files)

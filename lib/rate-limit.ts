@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm'
+import { db } from '@/lib/database'
 import { contactRateLimits } from '@/lib/database/schema'
 
 /**
@@ -38,7 +39,6 @@ export async function consume(
   const retryAfterSeconds = Math.max(1, Math.ceil((windowEnd - now.getTime()) / 1000))
 
   try {
-    const { db } = await import('@/lib/database')
     const rows = await db
       .insert(contactRateLimits)
       .values({ ip, windowStart, count: 1 })

@@ -94,13 +94,5 @@ export function invalidatePieces() {
 /** A resource (downloadable guide) was created, updated or deleted. */
 export function invalidateResources() {
   expireTags(TAGS.resources);
-  expirePaths('/resources', PATHS.home, PATHS.sitemap);
-}
-
-/** Everything public. For bulk changes that touch several entities at once. */
-export function invalidateCatalog() {
-  expireTags(TAGS.shows, TAGS.arrangements, TAGS.tags, TAGS.pieces, TAGS.resources);
-  revalidatePath(PATHS.home, 'layout');
-  // Route handlers are not under the layout: name them.
-  expirePaths(PATHS.sitemap, PATHS.llms, PATHS.llmsFull);
+  expirePaths(PATHS.resources, PATHS.home, PATHS.sitemap);
 }

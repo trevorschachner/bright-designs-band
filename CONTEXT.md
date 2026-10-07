@@ -15,22 +15,27 @@ Defined in `lib/database/schema.ts`.
 
 ## Where things live
 
-- `app/`: routes. `app/admin/` is the owner dashboard, `app/api/` the route handlers.
-- `lib/services/`: cached read layer for public pages. `lib/database/`: Drizzle schema and raw queries.
-- `lib/validation/`: zod schemas for write routes.
-- `lib/auth/guard.ts`: the single authorization gate every write route calls (`guard('canManageShows')`).
+- `app/`: routes. `app/admin/` is the admin (dashboard, shows, arrangements, pieces, tags, resources, inquiries, users), `app/api/` the route handlers (public GETs, `/api/contact`, `/api/export/*`, the private-file download route; no admin writes).
+- `lib/actions/`: Server Actions, the only way the admin writes (`guarded()`: permission, strict schema, invalidate after commit). See `lib/actions/README.md`.
+- `lib/services/`: cached read layer for public pages, plus uncached admin reads (`lib/services/admin.ts`) and cache invalidation (`invalidate.ts`). `lib/database/`: Drizzle schema and raw queries.
+- `lib/validation/`: zod schemas for the actions.
+- `lib/auth/guard.ts`: the single authorization gate every action and staff route calls (`guard('canManageShows')`).
 - `lib/env.ts` (public helpers) and `lib/env.server.ts` (zod-validated server env via `getEnv()`).
 - `lib/security-headers.mjs`: security headers including a report-only CSP.
 - `proxy.ts`: Next 16 proxy (auth-code redirect, legacy `/shows/:id` redirect).
 - `drizzle/`: schema migrations; `drizzle/migrations/` hand-written SQL.
 
-## Auth today
+## Auth
 
-Supabase magic link. Role is derived from the email: an address ending `@brightdesigns.band` is staff, anything else is a plain user (`lib/auth/roles.ts`). An explicit allowlist with roles is planned in #60.
+Supabase magic link for sign-in. Admin access is an allowlist: a row in `admin_users` (email, role `owner` or `editor`), read on every request by `lib/auth/roles.ts`, with permissions per role in `lib/auth/permissions.ts`. No row means no access. Owners manage the list at `/admin/users`. RLS uses the same table (`is_admin_user()`, `is_admin_owner()`).
 
-## Caching today
+## Writes and files
 
-Public pages use ISR (`revalidate = 3600`) and `unstable_cache` with the tag `shows` in `lib/services/shows.ts`. Invalidation is known to be incomplete (not every admin write revalidates it); to be fixed in #59.
+Admin writes are Server Actions (`lib/actions/*`), not API routes. Uploads: `signUpload` validates and records a `pending_uploads` row and returns a signed URL; the browser uploads straight to Storage; `completeUpload` verifies the object and writes the `files` row. Public files live in the public bucket ("Bright Designs"); private files in the private bucket ("private"), reachable only through `/api/files/<id>/download` (staff, 60 s signed URL).
+
+## Caching
+
+Public pages use ISR and tagged `unstable_cache` reads in `lib/services/`. Every action invalidates through one helper in `lib/services/invalidate.ts` after its write commits (table in `lib/services/README.md`). Admin reads are uncached.
 
 ## Current program
 

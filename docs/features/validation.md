@@ -58,10 +58,11 @@ rows.
 
 ## Create is narrow on purpose
 
-`POST /api/shows` accepts the fields the new-show form sends. The credit columns
+`createShow` (`lib/actions/shows.ts`; historically `POST /api/shows`, deleted
+in SP3) accepts the fields the new-show form sends. The credit columns
 (`commissioned`, `programCoordinator`, `percussionArranger`, `soundDesigner`,
 `windArranger`, `drillWriter`), plus `featured`, `graphicUrl` and `youtubeUrl`,
-are settable only through `PUT /api/shows/[id]`.
+are settable only through `updateShow` (historically the show update route).
 
 Widening create would be inert until the form sends them, and a schema claiming
 a capability the UI cannot exercise is the same kind of lie as a phantom column.

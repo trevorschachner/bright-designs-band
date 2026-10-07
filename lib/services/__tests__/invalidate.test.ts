@@ -6,7 +6,6 @@ import {
   invalidateTags,
   invalidatePieces,
   invalidateResources,
-  invalidateCatalog,
 } from '@/lib/services/invalidate'
 
 const { revalidateTag, revalidatePath } = vi.hoisted(() => ({
@@ -34,7 +33,11 @@ beforeEach(() => {
 
 describe('every tag is expired immediately', () => {
   it('passes { expire: 0 }, never the single-argument form', () => {
-    invalidateCatalog()
+    invalidateShow(1, 'a')
+    invalidateArrangement(2, 'a')
+    invalidateTags()
+    invalidatePieces()
+    invalidateResources()
     expect(revalidateTag.mock.calls.length).toBeGreaterThan(0)
     for (const call of revalidateTag.mock.calls) expect(call[1]).toEqual({ expire: 0 })
   })
@@ -102,13 +105,5 @@ describe('invalidateResources', () => {
     invalidateResources()
     expect(tags()).toEqual(['resources'])
     expect(paths()).toEqual(['/resources', '/', '/sitemap.xml'])
-  })
-})
-
-describe('invalidateCatalog', () => {
-  it('expires every list tag, the whole layout and the generated text routes', () => {
-    invalidateCatalog()
-    expect(tags()).toEqual(['shows', 'arrangements', 'tags', 'pieces', 'resources'])
-    expect(paths()).toEqual(['/ (layout)', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
   })
 })
