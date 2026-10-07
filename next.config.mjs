@@ -1,15 +1,23 @@
 import { securityHeaders } from './lib/security-headers.mjs';
 
-// Fall back to the production project ref so a missing env var at build time
-// degrades to today's behaviour rather than breaking every remote image.
+// Derive the Storage host from the same env var the app uses at runtime.
+// Netlify masks secrets as `****` during the build step, and the build must
+// still succeed, so a missing/masked/invalid value warns once and omits the
+// Supabase image pattern and CSP origin instead of throwing.
 const supabaseHostname = (() => {
   const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  if (!raw) return 'yibokqolsyxosftcupgz.supabase.co';
-  try {
-    return new URL(raw).hostname;
-  } catch {
-    return 'yibokqolsyxosftcupgz.supabase.co';
+  if (raw && raw !== '****') {
+    try {
+      return new URL(raw).hostname;
+    } catch {
+      // fall through to the warning
+    }
   }
+  console.warn(
+    '[next.config] NEXT_PUBLIC_SUPABASE_URL is missing, masked or invalid; ' +
+      'omitting Supabase remote image pattern and CSP origin.'
+  );
+  return null;
 })();
 
 /** @type {import('next').NextConfig} */
@@ -21,16 +29,15 @@ const nextConfig = {
   images: {
     deviceSizes: [640, 1080, 1920],
     formats: ['image/webp'],
-    // Derive the Storage host from the same env var the app uses at runtime.
-    // Hardcoding one project ref meant any other environment (staging, preview,
-    // a restored project) threw on every remote image instead of loading it.
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: supabaseHostname,
-        pathname: '/storage/v1/object/public/**',
-      },
-    ],
+    remotePatterns: supabaseHostname
+      ? [
+          {
+            protocol: 'https',
+            hostname: supabaseHostname,
+            pathname: '/storage/v1/object/public/**',
+          },
+        ]
+      : [],
   },
   // eslint key is deprecated in Next.js 15+ in favor of 'next lint' command or separate config
   // Removing it to fix build error

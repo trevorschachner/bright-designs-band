@@ -32,7 +32,7 @@ export async function DELETE(
     }
 
     // Delete from Supabase Storage
-    const storageResult = await fileStorage.deleteFile(file.storagePath)
+    const storageResult = await fileStorage.deleteFile(file.storagePath, await (await import('@/lib/utils/supabase/server')).createClient())
     if (!storageResult.success) {
       console.error('Failed to delete from storage:', storageResult.error)
       // Continue with database deletion even if storage deletion fails
@@ -78,8 +78,6 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
     }
 
-    const { createClient } = await import('@/lib/utils/supabase/server')
-    const supabase = await createClient()
     const { db } = await import('@/lib/database')
 
     // Drizzle returns camelCase fields (storagePath, isPublic); supabase-js
@@ -93,7 +91,7 @@ export async function GET(
       return NextResponse.json({ error: 'File not found' }, { status: 404, headers: noStore })
     }
 
-    const computedUrl = fileStorage.getFileUrl(f.storagePath, f.isPublic, supabase)
+    const computedUrl = fileStorage.getFileUrl(f.storagePath, f.isPublic)
 
     return NextResponse.json({ success: true, file: { ...f, url: computedUrl } }, { headers: noStore })
 

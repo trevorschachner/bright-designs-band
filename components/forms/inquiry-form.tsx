@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/lib/hooks/use-toast"
 import { Turnstile, type TurnstileHandle } from "@/components/forms/turnstile"
 
 const inquiryFormSchema = z.object({

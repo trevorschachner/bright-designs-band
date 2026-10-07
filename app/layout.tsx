@@ -19,6 +19,7 @@ import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
 import { getPublicSiteUrl, getPosthogKey, getPosthogHost } from "@/lib/env"
+import { Toaster } from "@/components/ui/toaster"
 import { PostHogProvider } from "@/components/features/analytics/PostHogProvider"
 
 const inter = Inter({
@@ -92,6 +93,7 @@ export default function RootLayout({
             <CTASection />
             <SiteFooter footer={footer} social={social} />
             <GlobalAudioPlayerBar />
+            <Toaster />
           </ShowPlanProvider>
         </ThemeProvider>
       </body>

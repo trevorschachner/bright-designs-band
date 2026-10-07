@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { files, fileTypeEnum } from '@/lib/database/schema';
+import { publicStorageUrl } from '@/lib/media/public-url';
 import { fileStorage, withRootPrefix, STORAGE_BUCKET } from '@/lib/storage';
 import { guard } from '@/lib/auth/guard';
 import { and, eq } from 'drizzle-orm';
@@ -48,9 +49,7 @@ export async function POST(request: NextRequest) {
       const metadata = parsed.data;
       
       // Get public URL from storage path
-      const { data: { publicUrl } } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(withRootPrefix(metadata.storagePath));
+      const publicUrl = publicStorageUrl(STORAGE_BUCKET, withRootPrefix(metadata.storagePath));
         
       const insertPayload: any = {
         file_name: metadata.fileName,
@@ -200,7 +199,7 @@ export async function GET(request: NextRequest) {
 
     const withUrls = fileList.map((f: any) => ({
       ...f,
-      url: fileStorage.getFileUrl(f.storagePath, f.isPublic, supabase),
+      url: fileStorage.getFileUrl(f.storagePath, f.isPublic),
     }));
 
     // The rows depend on the caller, so this must never enter a shared cache.

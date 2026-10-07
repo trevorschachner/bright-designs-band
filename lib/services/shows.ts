@@ -25,8 +25,8 @@ import { shows, showsToTags, files, tags } from "@/lib/database/schema";
 import { eq, desc, notInArray, and } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { STORAGE_BUCKET, withRootPrefix } from "@/lib/storage";
-import { createClient } from "@supabase/supabase-js";
-import { getSupabaseConfig, shouldSkipSupabase } from "@/lib/env";
+import { shouldSkipSupabase } from "@/lib/env";
+import { publicStorageUrl } from "@/lib/media/public-url";
 import { reportError } from "@/lib/observability/report-error";
 
 export type ShowSummary = {
@@ -45,25 +45,18 @@ export type ShowSummary = {
   arrangements: { id: number; title: string | null; scene: string | null }[];
 };
 
-// Helper to convert storage paths to public URLs
-// Using a lightweight client without cookies for cache compatibility
+// Helper to convert storage paths to public URLs (no client needed)
 function getPublicUrl(path: string | null): string | null {
   if (!path) return null;
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
 
   if (shouldSkipSupabase()) return null;
-  
-  const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
 
-  if (!supabaseUrl || !supabaseKey) return null;
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  const { data } = supabase.storage
-    .from(STORAGE_BUCKET)
-    .getPublicUrl(withRootPrefix(path));
-    
-  return data.publicUrl;
+  try {
+    return publicStorageUrl(STORAGE_BUCKET, withRootPrefix(path));
+  } catch {
+    return null;
+  }
 }
 
 async function fetchFeaturedShows(): Promise<ShowSummary[]> {
