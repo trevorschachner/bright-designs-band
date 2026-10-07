@@ -13,7 +13,8 @@ import {
   BreadcrumbItem, 
   BreadcrumbPage 
 } from '@/components/ui/breadcrumb';
-import { getDashboardStats } from '@/lib/services/admin';
+import { getDashboardStats, getNeedsAttention, getRecentEdits } from '@/lib/services/admin';
+import { NeedsAttentionCard, RecentEditsCard } from '@/components/features/admin/DashboardLists';
 import { getPosthogHost, getPosthogKey } from '@/lib/env';
 
 export default async function AdminPage() {
@@ -38,6 +39,18 @@ export default async function AdminPage() {
   if (!user) {
     return redirect('/login');
   }
+
+  // Each list fails on its own: a broken check must not take the dashboard down.
+  const [recentEdits, attention] = await Promise.all([
+    getRecentEdits(10).catch((error: unknown) => {
+      console.error('Error fetching recent edits:', error);
+      return null;
+    }),
+    getNeedsAttention().catch((error: unknown) => {
+      console.error('Error fetching needs-attention lists:', error);
+      return null;
+    }),
+  ]);
 
   const role = await getUserRole(user.email);
   const userRole = role ?? 'none';
@@ -230,6 +243,12 @@ export default async function AdminPage() {
         )}
       </div>
 
+      {permissions.canManageShows && (
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <RecentEditsCard edits={recentEdits} />
+          <NeedsAttentionCard groups={attention} />
+        </div>
+      )}
     </div>
   );
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -32,6 +32,7 @@ import {
 import type { ActionError, ActionResult } from '@/lib/actions/result';
 import { buildListUrl, nextSort, type TableSort } from './admin-table-urls';
 import { AdminTablePagination } from './AdminTablePagination';
+import { AdminTableToolbar } from './AdminTableToolbar';
 
 const DELETE_ERRORS: Record<ActionError, string> = {
   forbidden: 'You do not have permission to delete this.',
@@ -54,7 +55,7 @@ export interface ColumnDef<T> {
 }
 
 interface AdminTableProps<T> {
-  /** List endpoint (a public GET with `?admin=true` / `?all=true`). */
+  /** List endpoint (a public GET with `?admin=true` / `?all=true`); it must accept `q` (title search). */
   endpoint: string;
   /** Deletes one row: a Server Action (e.g. `deleteShow`). `not_found` counts as done. */
   onDelete: (id: number) => Promise<ActionResult<unknown>>;
@@ -78,6 +79,7 @@ export default function AdminTable<T extends { id: number }>({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sort, setSort] = useState<TableSort | null>(null);
+  const [query, setQuery] = useState('');
   
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -92,7 +94,7 @@ export default function AdminTable<T extends { id: number }>({
       setLoading(true);
       setError(null);
       
-      const url = buildListUrl(endpoint, listQuery, page, limit, sort);
+      const url = buildListUrl(endpoint, listQuery, page, limit, sort, query);
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -160,7 +162,7 @@ export default function AdminTable<T extends { id: number }>({
     } finally {
       setLoading(false);
     }
-  }, [endpoint, listQuery, resourceName, sort]);
+  }, [endpoint, listQuery, resourceName, sort, query]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(#59-followup): fetch-on-change sets loading synchronously; moving it changes when the spinner shows
@@ -172,6 +174,11 @@ export default function AdminTable<T extends { id: number }>({
       setPagination(prev => ({ ...prev, page: newPage }));
     }
   };
+
+  const handleSearch = useCallback((q: string) => {
+    setQuery(q);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, []);
 
   const handleSort = (field: string) => {
     setSort(current => nextSort(current, field));
@@ -225,8 +232,12 @@ export default function AdminTable<T extends { id: number }>({
     }
   };
 
+  const toolbar = <AdminTableToolbar resourceName={resourceName} onSearch={handleSearch} />;
+
   if (loading) {
     return (
+      <div>
+      {toolbar}
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -251,18 +262,21 @@ export default function AdminTable<T extends { id: number }>({
           </TableBody>
         </Table>
       </div>
+      </div>
     );
   }
 
   if (error) {
-    return <p className="text-red-500">{error}</p>;
+    return <div>{toolbar}<p className="text-red-500">{error}</p></div>;
   }
 
   if (data.length === 0) {
-    return <p>No {resourceName} found.</p>;
+    return <div>{toolbar}<p>No {resourceName} found{query ? ` matching “${query}”` : ''}.</p></div>;
   }
 
   return (
+    <div>
+    {toolbar}
     <div className="border rounded-md">
       <Table>
         <TableHeader>
@@ -332,6 +346,7 @@ export default function AdminTable<T extends { id: number }>({
         onPageChange={handlePageChange}
         onLimitChange={handleLimitChange}
       />
+    </div>
     </div>
   );
 }

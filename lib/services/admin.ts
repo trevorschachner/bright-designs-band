@@ -1,4 +1,4 @@
-/** Admin reads: the dashboard and the show editor. Uncached; throw on a database failure. */
+/** Admin reads: the dashboard (./admin-dashboard.ts), the inquiries and arrangements lists, and the show editor. Uncached; throw on a database failure. */
 
 import { db } from '@/lib/database';
 import { shows, arrangements, files, tags, contactSubmissions, arrangementPieces, pieces, showArrangements } from '@/lib/database/schema';
@@ -8,6 +8,8 @@ import type { PieceSummary } from '@/lib/pieces/editor';
 import { toIso } from './cache';
 import { showWhere } from './shows';
 import { getTagsForAdmin, type AdminTagRow } from './tags';
+
+export * from './admin-dashboard';
 
 export async function getDashboardStats() {
   const [[showCount], [arrangementCount], [contactCount], [fileCount], [tagCount]] = await Promise.all([

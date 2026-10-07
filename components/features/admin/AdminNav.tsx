@@ -9,9 +9,11 @@ import type { AdminRole } from '@/lib/auth/permissions'
 const LINKS: { href: string; label: string; ownerOnly?: boolean }[] = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/shows', label: 'Shows' },
-  { href: '/admin/tags', label: 'Tags' },
+  { href: '/admin/arrangements', label: 'Arrangements' },
   { href: '/admin/pieces', label: 'Pieces' },
+  { href: '/admin/tags', label: 'Tags' },
   { href: '/admin/resources', label: 'Resources' },
+  { href: '/admin/inquiries', label: 'Inquiries' },
   { href: '/admin/users', label: 'Users', ownerOnly: true },
 ]
 

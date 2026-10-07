@@ -8,7 +8,8 @@
 
 import { db } from '@/lib/database';
 import { shows, showsToTags, showArrangements, files, tags, slugRedirects } from '@/lib/database/schema';
-import { and, desc, eq, exists, inArray, sql, count, type SQL } from 'drizzle-orm';
+import { and, desc, eq, exists, ilike, inArray, sql, count, type SQL } from 'drizzle-orm';
+import { likePattern } from '@/lib/filters/admin-search';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterCondition, SortCondition } from '@/lib/filters/types';
 import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
@@ -263,7 +264,8 @@ export type AdminShowListItem = ShowListItem & { price: number | null };
  */
 async function fetchShowsRows(
   params: ShowsPageParams,
-  includePrice: boolean
+  includePrice: boolean,
+  titleQuery?: string
 ): Promise<{ data: (ShowListItem | AdminShowListItem)[]; total: number }> {
   const { search, conditions, sort, page, limit, featured } = params;
   const offset = (page - 1) * limit;
@@ -282,7 +284,10 @@ async function fetchShowsRows(
               .where(and(eq(showsToTags.showId, shows.id), inArray(showsToTags.tagId, tagIds)))
           ),
       },
-      extra: featured ? [eq(shows.featured, true)] : [],
+      extra: [
+        ...(featured ? [eq(shows.featured, true)] : []),
+        ...(titleQuery ? [ilike(shows.title, likePattern(titleQuery))] : []),
+      ],
       defaultOrderBy: [shows.displayOrder, desc(shows.createdAt)],
     }
   );
@@ -368,9 +373,13 @@ export const getShowsPage = cachedRead('shows-page-v2', fetchShowsPage, {
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
 });
 
-/** The same page, uncached and with `price`, for the admin shows table. */
-export function getShowsPageForAdmin(params: ShowsPageParams) {
-  return fetchShowsRows(params, true) as Promise<{ data: AdminShowListItem[]; total: number }>;
+/**
+ * The same page, uncached and with `price`, for the admin shows table. `q` is
+ * the table's title search (`ilike`); the public page has no such parameter.
+ */
+export function getShowsPageForAdmin(params: ShowsPageParams & { q?: string }) {
+  const { q, ...page } = params;
+  return fetchShowsRows(page, true, q) as Promise<{ data: AdminShowListItem[]; total: number }>;
 }
 
 // ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@ import { SuccessResponse, PrivateResponse, ErrorResponse, BadRequestResponse } f
 import { reportError } from '@/lib/observability/report-error';
 import { getShowsPageForAdmin, type ShowsPageParams } from '@/lib/services/shows';
 import { parseShowsQuery, queryShows } from '@/lib/services/catalog';
+import { readAdminSearch } from '@/lib/filters/admin-search';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,8 +37,10 @@ export async function GET(request: Request) {
       const filterState = FilterUrlManager.fromUrlParams(searchParams);
       const limit = filterState.limit || 20;
       const featuredParam = searchParams.get('featured');
-      const params: ShowsPageParams = {
+      const params: ShowsPageParams & { q?: string } = {
         search: filterState.search,
+        // The admin table's title search. Read only here, never by the public parser.
+        q: readAdminSearch(searchParams),
         conditions: filterState.conditions || [],
         sort: filterState.sort || [],
         page: filterState.page || 1,
