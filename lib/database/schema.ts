@@ -260,6 +260,16 @@ export const contactSubmissions = pgTable('contact_submissions', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Per-IP counters for the public contact form (lib/rate-limit.ts). RLS is on
+// with no policies; only the server writes it, over DATABASE_URL.
+export const contactRateLimits = pgTable('contact_rate_limits', {
+  ip: text('ip').notNull(),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+  count: integer('count').notNull().default(0),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.ip, table.windowStart] }),
+}));
+
 export const contactSubmissionsRelations = relations(contactSubmissions, ({ one }) => ({
   interestedShow: one(shows, {
     fields: [contactSubmissions.interestedShowId],
