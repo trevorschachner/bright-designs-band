@@ -23,4 +23,6 @@ export const PATHS = {
   shows: '/shows',
   arrangements: '/arrangements',
   sitemap: '/sitemap.xml',
+  llms: '/llms.txt',
+  llmsFull: '/llms-full.txt',
 } as const

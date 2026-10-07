@@ -1,4 +1,10 @@
-# Bright Designs Band
+/**
+ * The hand-written top of /llms.txt and /llms-full.txt. The catalog sections
+ * below it are generated (lib/seo/llms.ts).
+ *
+ * Business rule: never list a price. Pricing is quoted per program.
+ */
+export const llmsHeader = (siteUrl: string) => `# Bright Designs Band
 
 > Professional marching band show design company. Custom show design, music arrangements, drill writing, and visual design for competitive marching bands — specializing in BOA competitive programs and state finalists across the Southeast United States.
 
@@ -21,23 +27,21 @@ Bright Designs was founded by Brighton Barrineau, Trevor Schachner, and Ryan Wil
 - Southeast region focus: South Carolina, Georgia, North Carolina, Florida
 - Programs nationally
 
-## Pricing
+## Buying a Show
 
-- Pre-written show packages: vary by difficulty and package tier
-- Custom show design: approximately $2,500–$10,000+ depending on scope and services included
-- Payment plans available
+Pricing is quoted per program; contact us. Three ways to buy: a full show as-is, build-your-own from existing arrangements, or partial custom.
 
 ## Key Pages
 
-- [Show Catalog](https://brightdesigns.band/shows) — Browse pre-written and custom marching band show designs available for purchase
-- [Arrangements](https://brightdesigns.band/arrangements) — Professional marching band arrangements
-- [Services](https://brightdesigns.band/services) — Full list of design services and packages
-- [Our Process](https://brightdesigns.band/process) — How we work with your program from concept to competition
-- [About](https://brightdesigns.band/about) — Meet the Bright Designs team
-- [Contact](https://brightdesigns.band/contact) — Request a quote or ask questions
-- [Resources](https://brightdesigns.band/resources) — Free guides, tools, and articles for band directors
-- [FAQs](https://brightdesigns.band/faqs) — Answers to common questions about show design, timelines, and pricing
-- [Collections](https://brightdesigns.band/collections) — Curated show collections by difficulty, theme, and ensemble size
+- [Show Catalog](${siteUrl}/shows) — Browse pre-written and custom marching band show designs available for purchase
+- [Arrangements](${siteUrl}/arrangements) — Professional marching band arrangements
+- [Services](${siteUrl}/services) — Full list of design services and packages
+- [Our Process](${siteUrl}/process) — How we work with your program from concept to competition
+- [About](${siteUrl}/about) — Meet the Bright Designs team
+- [Contact](${siteUrl}/contact) — Request a quote or ask questions
+- [Resources](${siteUrl}/resources) — Free guides, tools, and articles for band directors
+- [FAQs](${siteUrl}/faqs) — Answers to common questions about show design, timelines, and buying
+- [Collections](${siteUrl}/collections) — Curated show collections by difficulty, theme, and ensemble size
 
 ## What Makes Bright Designs Different
 
@@ -45,5 +49,6 @@ Most marching band design companies are run by designers who are not engineers. 
 
 ## Contact
 
-- Website: https://brightdesigns.band
+- Website: ${siteUrl}
 - Email: hello@brightdesigns.band
+`

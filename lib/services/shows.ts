@@ -597,6 +597,34 @@ export const getAllShowSlugs = cachedRead('show-slugs-v1', fetchAllShowSlugs, {
   atBuildWithoutDb: [] as string[],
 });
 
+export type ShowIndexEntry = {
+  slug: string;
+  title: string;
+  description: string | null;
+  year: number | null;
+  difficulty: ShowDifficulty | null;
+};
+
+async function fetchShowIndex(): Promise<ShowIndexEntry[]> {
+  const rows = await db
+    .select({
+      slug: shows.slug,
+      title: shows.title,
+      description: shows.description,
+      year: shows.year,
+      difficulty: shows.difficulty,
+    })
+    .from(shows)
+    .orderBy(desc(shows.year), shows.title);
+  return rows.filter((r) => r.slug);
+}
+
+/** Every show's title, year, difficulty and description, for /llms.txt and /llms-full.txt. */
+export const getShowIndex = cachedRead('show-index-v1', fetchShowIndex, {
+  tags: () => [TAGS.shows],
+  atBuildWithoutDb: [] as ShowIndexEntry[],
+});
+
 // ---------------------------------------------------------------------------
 // /api/shows/[id]
 // ---------------------------------------------------------------------------

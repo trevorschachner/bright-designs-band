@@ -2,7 +2,7 @@
  * Server-rendered JSON-LD. One `<script type="application/ld+json">` per
  * schema, in the initial HTML, so crawlers see every schema on the page.
  *
- * Not `next/script`: that injects on the client and dedupes by `id`, so only
+ * Not the Next Script component: that injects on the client and dedupes by `id`, so only
  * the first schema on a page ever appeared.
  */
 

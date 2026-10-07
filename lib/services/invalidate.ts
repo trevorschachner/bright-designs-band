@@ -5,7 +5,8 @@
  *
  * Each helper expires the entity's own tags (the cached reads that join the
  * entity carry its tag too, see lib/cache-tags.ts) and the pages that render
- * it: the detail page(s), the home page, the list page and the sitemap.
+ * it: the detail page(s), the home page, the list page and the sitemap (and,
+ * for shows, /llms.txt and /llms-full.txt).
  *
  * Tags are expired immediately (`{ expire: 0 }`) rather than with the `'max'`
  * stale-while-revalidate profile: the admin UI re-reads right after saving and
@@ -44,7 +45,9 @@ export function invalidateShow(id: number, slug: string | null | undefined, prev
     previousSlug && previousSlug !== slug ? PATHS.show(previousSlug) : null,
     PATHS.home,
     PATHS.shows,
-    PATHS.sitemap
+    PATHS.sitemap,
+    PATHS.llms,
+    PATHS.llmsFull
   );
 }
 
@@ -88,4 +91,6 @@ export function invalidateResources() {
 export function invalidateCatalog() {
   expireTags(TAGS.shows, TAGS.arrangements, TAGS.tags, TAGS.pieces, TAGS.resources);
   revalidatePath(PATHS.home, 'layout');
+  // Route handlers are not under the layout: name them.
+  expirePaths(PATHS.sitemap, PATHS.llms, PATHS.llmsFull);
 }

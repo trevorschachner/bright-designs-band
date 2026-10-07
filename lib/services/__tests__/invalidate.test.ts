@@ -35,20 +35,20 @@ describe('invalidateShow', () => {
   it('expires the show and the list, its page, home, the catalog and the sitemap', () => {
     invalidateShow(7, 'apex')
     expect(tags()).toEqual(['show:7', 'shows'])
-    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml'])
+    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
   })
 
   it('drops the old URL too when the slug changed', () => {
     invalidateShow(7, 'apex-2', 'apex')
-    expect(paths()).toEqual(['/shows/apex-2', '/shows/apex', '/', '/shows', '/sitemap.xml'])
+    expect(paths()).toEqual(['/shows/apex-2', '/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
   })
 
   it('does not repeat a slug that did not change, and copes with no slug', () => {
     invalidateShow(7, 'apex', 'apex')
-    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml'])
+    expect(paths()).toEqual(['/shows/apex', '/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
     revalidatePath.mockClear()
     invalidateShow(7, null)
-    expect(paths()).toEqual(['/', '/shows', '/sitemap.xml'])
+    expect(paths()).toEqual(['/', '/shows', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
   })
 })
 
@@ -96,9 +96,9 @@ describe('invalidateResources', () => {
 })
 
 describe('invalidateCatalog', () => {
-  it('expires every list tag and the whole layout', () => {
+  it('expires every list tag, the whole layout and the generated text routes', () => {
     invalidateCatalog()
     expect(tags()).toEqual(['shows', 'arrangements', 'tags', 'pieces', 'resources'])
-    expect(paths()).toEqual(['/ (layout)'])
+    expect(paths()).toEqual(['/ (layout)', '/sitemap.xml', '/llms.txt', '/llms-full.txt'])
   })
 })

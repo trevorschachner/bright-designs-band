@@ -41,3 +41,6 @@ Lantern counts them against LCP too. A throwaway build of b5ef491 with only
 behind Poppins in every stack) measured `/` 89 / 3.8 s, `/shows` 89 / 3.7 s,
 `/shows/true-north` 89 / 3.8 s.
 | 2026-10-07 | Task 4 r2 | `/` | 89 | 3.8 s | 335 | Local, Inter removed (never painted; it only sat behind Poppins in the stacks). 6 font preloads (Poppins 300–800, ~47 KB). Two runs, 3.8 s both; TBT 10–20 ms |
+| 2026-10-07 | Task 5 | `/` | 89 | 3.8 s | 335 | Local, after Task 5: server-rendered JSON-LD (4 blocks), sitemap.ts/robots.ts, generated llms.txt. SEO 100. Two runs, identical |
+| 2026-10-07 | Task 5 | `/shows` | 89 | 3.7 s | 360 | Local, after Task 5. SEO 100. Two runs (3.8 s, 3.7 s) |
+| 2026-10-07 | Task 5 | `/shows/true-north` | 89 | 3.8 s | 339 | Local, after Task 5: 7 JSON-LD blocks (Organization, ProfessionalService, Service, BreadcrumbList, Product, MusicComposition, VideoObject). SEO 100. Two runs, identical |

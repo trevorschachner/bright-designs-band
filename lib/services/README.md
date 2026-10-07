@@ -6,13 +6,13 @@ Writes stay in the API routes, and each one ends by calling one helper from
 
 | File | What it reads |
 | --- | --- |
-| `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs |
+| `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs, the show index for `/llms.txt` |
 | `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[id]` page and OG image (`getArrangementDetail`: one relational query) |
 | `catalog.ts` | `queryShows` / `queryArrangements`: parse + bound the catalog query, then one paged read (below) |
 | `pieces.ts` | Public source-piece credits; admin piece lists |
 | `resources.ts` | Active resources; one resource by id or slug (`/api/resources/[id]`); admin list including drafts |
 | `tags.ts` | All tags; one tag (`/api/tags/[id]`) |
-| `sitemap.ts` | Show slugs and arrangement ids for `/sitemap.xml` |
+| `sitemap.ts` | Show slugs and arrangement ids for `/sitemap.xml` (`app/sitemap.ts`) |
 | `admin.ts` | Dashboard counts |
 | `files.ts` | No reads: `invalidateFileOwner()` routes a file write to its show or arrangement |
 | `cache.ts` | `cachedRead()`, the build fallback, `toIso()` |
@@ -100,12 +100,12 @@ straight after saving.
 
 | Helper | Tags | Paths |
 | --- | --- | --- |
-| `invalidateShow(id, slug, previousSlug?)` | `show:<id>`, `shows` | `/shows/<slug>` (and the old slug), `/`, `/shows`, `/sitemap.xml` |
+| `invalidateShow(id, slug, previousSlug?)` | `show:<id>`, `shows` | `/shows/<slug>` (and the old slug), `/`, `/shows`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` |
 | `invalidateArrangement(id, showSlug?)` | `arrangement:<id>`, `arrangements` | `/arrangements/<id>`, `/shows/<showSlug>`, `/`, `/arrangements`, `/sitemap.xml` |
 | `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[id]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml` |
 | `invalidatePieces()` | `pieces` | same as tags |
 | `invalidateResources()` | `resources` | `/resources`, `/`, `/sitemap.xml` |
-| `invalidateCatalog()` | all five list tags | the whole site (`/`, layout) |
+| `invalidateCatalog()` | all five list tags | the whole site (`/`, layout), plus `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` |
 
 Which write calls which:
 
