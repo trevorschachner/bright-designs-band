@@ -1,3 +1,5 @@
+import { securityHeaders } from './lib/security-headers.mjs';
+
 // Fall back to the production project ref so a missing env var at build time
 // degrades to today's behaviour rather than breaking every remote image.
 const supabaseHostname = (() => {
@@ -33,6 +35,10 @@ const nextConfig = {
   // eslint key is deprecated in Next.js 15+ in favor of 'next lint' command or separate config
   // Removing it to fix build error
   
+  async headers() {
+    return [{ source: '/(.*)', headers: securityHeaders(supabaseHostname) }];
+  },
+
   async redirects() {
     return [
       { source: '/resources/blog/how-to-choose-a-designer', destination: '/blog/how-to-choose-a-designer', permanent: true },
