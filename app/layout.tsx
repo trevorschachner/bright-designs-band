@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Poppins } from "next/font/google"
+import { Poppins } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
 import { SiteHeader } from "@/components/layout/site-header"
@@ -20,12 +20,6 @@ import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
 import { getPublicSiteUrl } from "@/lib/env"
 import { Toaster } from "@/components/ui/toaster"
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-})
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -65,7 +59,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logos/apple-touch-icon.png" />
         <link rel="manifest" href="/logos/manifest.json" />
       </head>
-      <body suppressHydrationWarning className={`${inter.variable} ${poppins.variable} font-sans font-light`}>
+      <body suppressHydrationWarning className={`${poppins.variable} font-sans font-light`}>
         {/* Organization and Local Business structured data */}
         <JsonLd data={organizationSchema} />
         <JsonLd data={localBusinessSchema} />
