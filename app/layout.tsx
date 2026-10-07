@@ -13,6 +13,7 @@ import { JsonLd } from "@/components/features/seo/JsonLd"
 import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
 import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
 import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
+import { AudioProvider } from "@/components/features/audio/AudioProvider"
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
 import { GlobalSpotlight } from "@/components/ui/global-spotlight"
@@ -84,13 +85,15 @@ export default function RootLayout({
           <GlobalBackground />
           <GlobalSpotlight />
           <ShowPlanProvider>
-            <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
-            <Suspense fallback={<PageLoadingSkeleton />}>
-              <main>{children}</main>
-            </Suspense>
-            <CTASection />
-            <SiteFooter footer={footer} social={social} />
-            <GlobalAudioPlayerBar />
+            <AudioProvider>
+              <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
+              <Suspense fallback={<PageLoadingSkeleton />}>
+                <main>{children}</main>
+              </Suspense>
+              <CTASection />
+              <SiteFooter footer={footer} social={social} />
+              <GlobalAudioPlayerBar />
+            </AudioProvider>
             <Toaster />
           </ShowPlanProvider>
         </ThemeProvider>

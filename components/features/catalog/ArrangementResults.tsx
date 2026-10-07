@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Music, FileText, ExternalLink, Play, ChevronDown, MessageSquare } from "lucide-react";
 import { arrangementContactHref } from "@/lib/contact-link";
 import type { ArrangementListItem } from "@/lib/services/arrangements";
+import { useAudio } from "@/components/features/audio/AudioProvider";
 
 const formatSeconds = (total?: number | null) => {
   if (!total || total < 0) return '—';
@@ -28,6 +29,9 @@ const formatSeconds = (total?: number | null) => {
  * which rows have their player open.
  */
 export function ArrangementResults({ items }: { items: ArrangementListItem[] }) {
+  // These rows keep the native <audio controls> previews; starting one pauses
+  // the site-wide player so two tracks never play at once.
+  const { pause: pauseSiteAudio } = useAudio();
   const [expandedAudio, setExpandedAudio] = useState<Set<number>>(new Set());
 
   const toggleAudio = useCallback((id: number) => {
@@ -97,11 +101,12 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                   <TableCell>
                     {audio ? (
                       <div className="flex items-center gap-2">
-                        <audio 
-                          controls 
-                          className="h-8 w-full max-w-[200px]" 
+                        <audio
+                          controls
+                          className="h-8 w-full max-w-[200px]"
                           preload="none"
                           src={audio.url}
+                          onPlay={pauseSiteAudio}
                         />
                       </div>
                     ) : (
@@ -219,7 +224,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
             {/* Expandable audio player */}
             {audio && audioOpen && (
               <div className="px-4 pb-3 border-t pt-3">
-                <audio controls className="w-full h-8" preload="none" src={audio.url} autoPlay />
+                <audio controls className="w-full h-8" preload="none" src={audio.url} autoPlay onPlay={pauseSiteAudio} />
               </div>
             )}
           </div>

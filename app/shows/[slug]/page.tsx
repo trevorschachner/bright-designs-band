@@ -296,7 +296,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           {arrangements.filter((a: any) => a.audioUrl).length > 0 && (
             <div id="master-player">
               <AudioPlayerComponent
-                playerId="master-player"
+                showTitle={show.title}
                 className="border-primary/20 shadow-sm"
                 tracks={arrangements
                   .filter((a: any) => a.audioUrl)
