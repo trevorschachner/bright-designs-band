@@ -1,12 +1,12 @@
 # lib/services: the read layer and cache invalidation
 
 Every database read a page or API route makes goes through a function here.
-Writes stay in the API routes, and each one ends by calling one helper from
-`invalidate.ts`.
+Writes live in the API routes and in the Server Actions in `lib/actions/`
+(see its README); each one ends by calling one helper from `invalidate.ts`.
 
 | File | What it reads |
 | --- | --- |
-| `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs, the show index for `/llms.txt` |
+| `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs, old-slug redirects (`getSlugRedirect`, tagged `shows`), the show index for `/llms.txt` |
 | `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[id]` page and OG image (`getArrangementDetail`: one relational query) |
 | `catalog.ts` | `queryShows` / `queryArrangements`: parse + bound the catalog query, then one paged read (below) |
 | `pieces.ts` | Public source-piece credits; admin piece lists |
@@ -174,6 +174,9 @@ Which write calls which:
 | `POST /api/tags`, `PUT`/`DELETE /api/tags/[id]` | `invalidateTags` |
 | `POST /api/pieces`, `PUT`/`DELETE /api/pieces/[id]` | `invalidatePieces` |
 | `POST /api/resources`, `PUT`/`DELETE /api/resources/[id]` | `invalidateResources` |
+| `lib/actions/shows.ts` (every action) | `invalidateShow` (`updateShow` passes the previous slug) |
+| `lib/actions/tags.ts` | `invalidateTags` |
+| `lib/actions/resources.ts` | `invalidateResources` |
 | `POST /api/files` (both modes), `POST /api/files/youtube`, `DELETE /api/files/[id]` | `invalidateFileOwner` → `invalidateShow` and/or `invalidateArrangement` |
 
 A new write route must call one of these. A new read that joins another entity

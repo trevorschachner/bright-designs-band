@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { concurrencyStamp, rowId } from './concurrency'
 
 /**
  * Tag write payload.
@@ -13,3 +14,16 @@ export const tagInputSchema = z.object({
 })
 
 export type TagInput = z.infer<typeof tagInputSchema>
+
+/** Action payloads (lib/actions/tags.ts). Strict: unknown keys are rejected. */
+export const createTagSchema = tagInputSchema.strict()
+
+export const updateTagSchema = tagInputSchema
+  .extend({
+    id: rowId,
+    /** The `updatedAt` the caller loaded (optimistic concurrency). */
+    updatedAt: concurrencyStamp,
+  })
+  .strict()
+
+export const tagIdSchema = z.object({ id: rowId }).strict()

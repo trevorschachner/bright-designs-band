@@ -15,7 +15,7 @@ import { YouTubeFacade } from '@/components/features/youtube-facade'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
-import { getShowBySlug, getShowArrangements, getPublicShowFiles, getAllShowSlugs } from '@/lib/services/shows'
+import { getShowBySlug, getShowArrangements, getPublicShowFiles, getAllShowSlugs, getSlugRedirect } from '@/lib/services/shows'
 import { getPublicPiecesByArrangementIds } from '@/lib/services/pieces'
 import { SourcePieces } from '@/components/features/source-pieces'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
@@ -100,8 +100,17 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   const showResult = await getShow(slug)
 
   if (!showResult) {
-    // Old links in another case or with underscores: send them to the
-    // canonical form (no query; that URL does its own exact lookup).
+    // Miss order (permanentRedirect is a 308; each step runs only if the
+    // previous one found nothing):
+    //   1. exact slug (getShow, above)
+    //   2. slug_redirects: a show whose slug was changed in the admin; send
+    //      the old URL to its current slug (getSlugRedirect)
+    //   3. normalised form: old links in another case or with underscores
+    //      (no query; that URL does its own exact lookup, then step 2)
+    //   4. notFound()
+    // proxy.ts handles numeric /shows/<id> links before they reach the page.
+    const renamedTo = await getSlugRedirect(slug)
+    if (renamedTo) permanentRedirect(`/shows/${renamedTo}`)
     const canonical = normaliseSlug(slug.replace(/_/g, '-'))
     if (canonical && canonical !== slug) permanentRedirect(`/shows/${canonical}`)
     notFound()

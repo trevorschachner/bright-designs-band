@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createInsertSchema } from 'drizzle-zod';
 import { shows, showDifficultyEnum } from '@/lib/database/schema';
+import { concurrencyStamp, rowId } from './concurrency';
 
 /**
  * Payload accepted by `POST /api/shows`.
@@ -129,3 +130,35 @@ export const updateShowSchema = showInsertSchema
   .strict();
 
 export type UpdateShowInput = z.infer<typeof updateShowSchema>;
+
+// ---------------------------------------------------------------------------
+// Server Action payloads (lib/actions/shows.ts)
+// ---------------------------------------------------------------------------
+
+/** `createShow`: the POST /api/shows payload, strict (unknown keys rejected). */
+export const createShowSchema = showSchema.strict();
+/**
+ * drizzle-zod types the refined nullable columns (description, duration,
+ * thumbnailUrl, videoUrl) as required in `z.input`, though the schema accepts
+ * them absent. Only `title` is required.
+ */
+export type CreateShowInput = { title: string } & Partial<Omit<z.input<typeof createShowSchema>, 'title'>>;
+
+/**
+ * `updateShow`: the PUT payload plus the show `id` and the `updatedAt` the
+ * caller loaded. Still strict and still partial: `slug` and `tags` change
+ * only when sent.
+ */
+export const updateShowActionSchema = updateShowSchema.extend({
+  id: rowId,
+  updatedAt: concurrencyStamp,
+});
+export type UpdateShowActionInput = z.input<typeof updateShowActionSchema>;
+
+export const showIdSchema = z.object({ id: rowId }).strict();
+
+export const setShowTagsSchema = z
+  .object({ showId: rowId, tagIds: z.array(rowId).max(200) })
+  .strict();
+
+export const setFeaturedSchema = z.object({ showId: rowId, featured: z.boolean() }).strict();

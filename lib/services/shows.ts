@@ -7,7 +7,7 @@
  */
 
 import { db } from '@/lib/database';
-import { shows, showsToTags, showArrangements, files, tags } from '@/lib/database/schema';
+import { shows, showsToTags, showArrangements, files, tags, slugRedirects } from '@/lib/database/schema';
 import { and, desc, eq, exists, inArray, sql, count, type SQL } from 'drizzle-orm';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterCondition, SortCondition } from '@/lib/filters/types';
@@ -433,6 +433,29 @@ async function fetchShowBySlug(slug: string): Promise<ShowWithTags | null> {
 export const getShowBySlug = cachedRead('show-by-slug-v3', fetchShowBySlug, {
   tags: () => [TAGS.shows, TAGS.tags],
   atBuildWithoutDb: null as ShowWithTags | null,
+});
+
+async function fetchSlugRedirect(oldSlug: string): Promise<string | null> {
+  const [row] = await db
+    .select({ slug: shows.slug })
+    .from(slugRedirects)
+    .innerJoin(shows, eq(shows.id, slugRedirects.showId))
+    .where(eq(slugRedirects.oldSlug, oldSlug))
+    .limit(1);
+  // Never redirect a slug to itself (a loop); lib/actions/shows.ts deletes a
+  // redirect row when a show claims its slug, so this is belt and braces.
+  return row && row.slug !== oldSlug ? row.slug : null;
+}
+
+/**
+ * The current slug of the show that used to live at `oldSlug`, or null.
+ * Rows are written by lib/actions/shows.ts `updateShow` on a slug change.
+ * Joined to `shows`, so a show renamed twice redirects straight to its latest
+ * slug. Tagged `shows`: every show write (invalidateShow) expires it.
+ */
+export const getSlugRedirect = cachedRead('slug-redirect-v1', fetchSlugRedirect, {
+  tags: () => [TAGS.shows],
+  atBuildWithoutDb: null as string | null,
 });
 
 export type ShowArrangementFile = {

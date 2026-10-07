@@ -4,7 +4,7 @@ import { db } from '@/lib/database';
 import { tags } from '@/lib/database/schema';
 import { asc, eq } from 'drizzle-orm';
 import { TAGS } from '@/lib/cache-tags';
-import { cachedRead } from './cache';
+import { cachedRead, toIso } from './cache';
 
 export type TagRow = { id: number; name: string };
 
@@ -18,9 +18,16 @@ export const getAllTags = cachedRead('all-tags-v2', fetchAllTags, {
   atBuildWithoutDb: [] as TagRow[],
 });
 
+/** A tag as the admin sees it: `updatedAt` is sent back on rename (lib/actions/tags.ts). */
+export type AdminTagRow = TagRow & { updatedAt: string | null };
+
 /** Every tag, uncached, for the admin tags page (it re-reads after each write). */
-export function getTagsForAdmin(): Promise<TagRow[]> {
-  return fetchAllTags();
+export async function getTagsForAdmin(): Promise<AdminTagRow[]> {
+  const rows = await db
+    .select({ id: tags.id, name: tags.name, updatedAt: tags.updatedAt })
+    .from(tags)
+    .orderBy(asc(tags.name));
+  return rows.map((row) => ({ ...row, updatedAt: toIso(row.updatedAt) }));
 }
 
 async function fetchTag(id: number): Promise<TagRow | null> {
