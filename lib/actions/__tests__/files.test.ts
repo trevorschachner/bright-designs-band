@@ -15,19 +15,32 @@ const state = vi.hoisted(() => ({
   existsVisible: false,
   publicHeadStatus: 404,
   removed: [] as string[][],
+  buckets: [] as string[],
+  /** Answers for successive list() calls (private bucket lookups): true = visible, false = absent, 'error'. */
+  listAnswers: [] as (boolean | 'error')[],
+  listCalls: 0,
+  /** Paths whose remove() errors (for the arrangement delete). */
+  failRemoveFor: null as string | null,
 }))
 
 vi.mock('@/lib/utils/supabase/server', () => ({
   createClient: async () => ({
     auth: { getUser: async () => ({ data: { user: state.email ? { email: state.email } : null }, error: null }) },
     storage: {
-      from: () => ({
+      from: (bucket: string) => ({
         remove: async (paths: string[]) => {
           state.removed.push(paths)
-          if (state.removeError) return { data: null, error: state.removeError }
+          state.buckets.push(bucket)
+          if (state.removeError || paths.includes(state.failRemoveFor ?? '')) return { data: null, error: state.removeError ?? { message: 'boom' } }
           return { data: state.removeReports === 'all' ? paths.map((name) => ({ name })) : [], error: null }
         },
         exists: async () => ({ data: state.existsVisible, error: state.existsVisible ? null : { message: 'not found' } }),
+        list: async (_dir: string, opts?: { search?: string }) => {
+          state.listCalls++
+          const answer = state.listAnswers.shift() ?? false
+          if (answer === 'error') return { data: null, error: { message: 'boom' } }
+          return { data: answer ? [{ name: opts?.search, id: 'obj', metadata: {} }] : [], error: null }
+        },
       }),
     },
   }),
@@ -42,11 +55,14 @@ vi.mock('@/lib/database', () => ({
 const invalidateFileOwner = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => { state.fake.events.push('invalidate') }))
 vi.mock('@/lib/services/files', () => ({ invalidateFileOwner }))
 const invalidateShow = vi.hoisted(() => vi.fn((..._args: unknown[]) => state.fake.events.push('invalidate')))
-vi.mock('@/lib/services/invalidate', () => ({ invalidateShow }))
+const invalidateArrangement = vi.hoisted(() => vi.fn((..._args: unknown[]) => state.fake.events.push('invalidate')))
+vi.mock('@/lib/services/invalidate', () => ({ invalidateShow, invalidateArrangement }))
+vi.mock('@/lib/services/pieces', () => ({ getArrangementPiecesForAdmin: async () => [] }))
 const reportError = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => {}))
 vi.mock('@/lib/observability/report-error', () => ({ reportError }))
 
 import { attachYouTube, deleteFile, setShowThumbnail } from '@/lib/actions/files'
+import { deleteArrangement } from '@/lib/actions/arrangements'
 
 const SAVED = new Date('2026-10-07T12:05:00.000Z')
 const IMAGE = {
@@ -84,7 +100,12 @@ beforeEach(() => {
   state.existsVisible = false
   state.publicHeadStatus = 404
   state.removed = []
+  state.buckets = []
+  state.listAnswers = []
+  state.listCalls = 0
+  state.failRemoveFor = null
   reportError.mockClear()
+  invalidateArrangement.mockClear()
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://project.supabase.co')
   vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: state.publicHeadStatus })))
   invalidateFileOwner.mockClear()
@@ -225,5 +246,101 @@ describe('attachYouTube', () => {
 
   it('requires a show or a part', async () => {
     expect(await attachYouTube({ url: 'https://youtu.be/abc' })).toMatchObject({ ok: false, error: 'invalid' })
+  })
+})
+
+describe('deleteFile: private bucket', () => {
+  const PRIVATE = { ...IMAGE, url: '/api/files/5/download' }
+  const usePrivate = () => use(filesDb({ 'select:files': () => [PRIVATE] }))
+
+  it('removes from the private bucket; a reported removal needs no lookup and never a public HEAD', async () => {
+    const fake = usePrivate()
+    state.listAnswers = [true]
+    expect(await deleteFile({ id: 5 })).toMatchObject({ ok: true })
+    expect(state.buckets).toEqual(['private'])
+    expect(fetch).not.toHaveBeenCalled()
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
+  })
+
+  it('remove() reporting nothing: visible before and gone after (list) is a confirmed removal', async () => {
+    const fake = usePrivate()
+    state.removeReports = 'none'
+    state.listAnswers = [true, false]
+    expect(await deleteFile({ id: 5 })).toMatchObject({ ok: true })
+    expect(state.listCalls).toBe(2)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
+  })
+
+  it('never uses the public HEAD, even when it would 404 (it 404s on every private object)', async () => {
+    const fake = usePrivate()
+    state.removeReports = 'none'
+    state.publicHeadStatus = 404
+    state.listAnswers = [false, false]
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(fetch).not.toHaveBeenCalled()
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
+  })
+
+  it('not visible before the remove is unclear (absent, or hidden by RLS): failed, row kept', async () => {
+    const fake = usePrivate()
+    state.removeReports = 'none'
+    state.listAnswers = [false]
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
+    expect(opsOn(fake.ops, 'shows', 'update')).toHaveLength(0)
+  })
+
+  it('still visible after, or a failed lookup: failed, row kept', async () => {
+    let fake = usePrivate()
+    state.removeReports = 'none'
+    state.listAnswers = [true, true]
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
+
+    fake = usePrivate()
+    state.listAnswers = [true, 'error']
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
+
+    fake = usePrivate()
+    state.listAnswers = ['error']
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
+  })
+})
+
+describe('deleteArrangement removes its files first', () => {
+  const PART_FILES = [
+    { id: 21, storagePath: 'shows/7/arrangements/3/audio/a.mp3', url: 'https://cdn.example/a.mp3', fileType: 'audio' },
+    { id: 22, storagePath: 'shows/7/arrangements/3/score/b.pdf', url: '/api/files/22/download', fileType: 'score' },
+    { id: 23, storagePath: 'shows/7/arrangements/3/youtube/y.url', url: 'https://youtu.be/y', fileType: 'youtube' },
+  ]
+  const usePartDb = () =>
+    use(filesDb({
+      'select:files': () => PART_FILES,
+      'select:show_arrangements': () => [{ slug: 'my-show' }],
+      'delete:arrangements': () => [{ id: 3 }],
+    }))
+
+  it('each object, then its row, then the part; YouTube rows have no object', async () => {
+    const fake = usePartDb()
+    expect(await deleteArrangement({ id: 3 })).toEqual({ ok: true, data: { id: 3 } })
+    expect(state.removed).toEqual([['files/shows/7/arrangements/3/audio/a.mp3'], ['files/shows/7/arrangements/3/score/b.pdf']])
+    expect(state.buckets).toEqual(['Bright Designs', 'private'])
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(3)
+    const lastFileDelete = fake.events.lastIndexOf('delete:files')
+    expect(lastFileDelete).toBeLessThan(fake.events.indexOf('delete:arrangements'))
+    expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
+  })
+
+  it('a Storage failure aborts: failed, part kept, files after it kept', async () => {
+    state.failRemoveFor = 'files/shows/7/arrangements/3/score/b.pdf'
+    const fake = usePartDb()
+    expect(await deleteArrangement({ id: 3 })).toEqual({ ok: false, error: 'failed' })
+    // The first file's object and row are gone (committed on its own), the rest stay.
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
+    expect(opsOn(fake.ops, 'arrangements', 'delete')).toHaveLength(0)
+    expect(invalidateArrangement).not.toHaveBeenCalled()
   })
 })

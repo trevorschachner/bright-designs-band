@@ -6,6 +6,7 @@ import {
   arrangementPieces,
   arrangements,
   arrangementsToTags,
+  files,
   pieces,
   showArrangements,
   shows,
@@ -14,6 +15,8 @@ import {
 import { invalidateArrangement, invalidateShow } from '@/lib/services/invalidate'
 import { toIso } from '@/lib/services/cache'
 import { getArrangementPiecesForAdmin } from '@/lib/services/pieces'
+import { fileStorage } from '@/lib/storage'
+import { createClient } from '@/lib/utils/supabase/server'
 import {
   arrangementIdSchema,
   createArrangementSchema,
@@ -173,10 +176,31 @@ const runDeleteArrangement = guarded(
   'canDeleteArrangements',
   arrangementIdSchema,
   async ({ id }, { db }) => {
+    // The part's files first, each through the same confirmed path as
+    // deleteFile: remove the object, delete the row only once it is gone.
+    // Each file commits on its own, so a retry after a failure resumes with
+    // the files left (a rolled-back row whose private object was already
+    // removed could never be confirmed again). Any failure aborts before the
+    // part is touched: `failed`, part and remaining files kept.
+    const partFiles = await db
+      .select({ id: files.id, storagePath: files.storagePath, url: files.url, fileType: files.fileType })
+      .from(files)
+      .where(eq(files.arrangementId, id))
+    if (partFiles.length > 0) {
+      const supabase = await createClient()
+      for (const file of partFiles) {
+        if (file.fileType !== 'youtube') {
+          const removed = await fileStorage.deleteFile(file, supabase)
+          if (!removed.success) throw new Error(`Storage refused to remove file ${file.id}: ${removed.error ?? 'unknown'}`)
+        }
+        await db.delete(files).where(eq(files.id, file.id))
+      }
+    }
+
     const { deleted, slug } = await db.transaction(async (tx) => {
       // Read first: the cascade removes the link to the show.
       const slug = await showSlugFor(tx, id)
-      // Show links, tag links, piece links and file rows go with it (FK cascades).
+      // Show links, tag links and piece links go with it (FK cascades); its files are already gone.
       const [deleted] = await tx.delete(arrangements).where(eq(arrangements.id, id)).returning({ id: arrangements.id })
       if (!deleted) throw new NotFoundError('arrangement')
       return { deleted, slug }

@@ -1,8 +1,8 @@
 # lib/actions: Server Actions for the admin
 
 Admin writes are Server Actions here. The API write routes they replaced were
-deleted in SP3 Task 3. File uploads still use `POST /api/files/sign` +
-`POST /api/files` (direct-to-Storage) until Task 4.
+deleted in SP3 Task 3; the upload routes (`POST /api/files/sign`,
+`POST /api/files`) in Task 4.
 
 | File | Actions | Permission | Invalidates |
 | --- | --- | --- | --- |
@@ -12,6 +12,7 @@ deleted in SP3 Task 3. File uploads still use `POST /api/files/sign` +
 | `arrangements.ts` | `createArrangement`, `updateArrangement`, `deleteArrangement`, `reorderArrangements`, `setArrangementTags`, `setArrangementPieces` | `canCreateArrangements` / `canEditArrangements` / `canDeleteArrangements` | `invalidateArrangement(id, showSlug)`; reorder: `invalidateShow` |
 | `pieces.ts` | `listPieces`, `createPiece`, `updatePiece`, `deletePiece` | `canEditArrangements` | `invalidatePieces()` |
 | `files.ts` | `setShowThumbnail`, `attachYouTube`, `deleteFile` | `canManageShows` / `canCreateArrangements` / `canDeleteFiles` | `invalidateShow` / `invalidateFileOwner(file)` |
+| `uploads.ts` | `signUpload`, `completeUpload` | `canUploadFiles` | (sign: none) / `invalidateFileOwner(file)` |
 | `admin-users.ts` | `listAdminUsers`, `addAdminUser`, `setAdminUserRole`, `removeAdminUser` | `canManageUsers` | (none: not public) |
 
 ## Writing an action
@@ -104,9 +105,28 @@ saving without a `stale`. `reorderArrangements` and `setArrangementPieces` do
 not bump anything: the order lives in `show_arrangements`, the credits in
 `arrangement_pieces`.
 
-`deleteFile` removes the Storage object first and deletes the row only if
-Storage accepted the remove; a refusal is `failed` and the row stays, so the
-object is never orphaned by a half-done delete.
+`deleteFile` removes the Storage object first and deletes the row only once
+the object is confirmed gone (lib/storage.ts `deleteFile`: public bucket via
+`exists` + a public-URL HEAD; private bucket via `list` before and after,
+never a public HEAD). Anything unclear is `failed` and the row stays, so the
+object is never orphaned by a half-done delete. `deleteArrangement` does the
+same for each of the part's files (each committed on its own) before it
+deletes the part; one failure aborts with the part kept.
+
+## Uploads (`uploads.ts`)
+
+`signUpload` → browser PUT to the signed URL → `completeUpload`. The browser
+sends a display name, MIME type, size, kind and visibility; the server checks
+them against `lib/validation/files.ts` (per-kind MIME allowlist and size
+limit), checks the show exists and the part is on it, builds the path
+(`shows/<id>/[arrangements/<id>/]<kind>/<uuid>.<ext>`, extension from the MIME
+type; `resources/<kind>/...` for resource attachments, which have no show),
+picks the bucket (public / private) and records a `pending_uploads` row.
+`completeUpload` lists the object and requires its size and MIME type to
+equal the pending row's; only then is the `files` row written, from the
+pending row. A mismatch removes the object and is `invalid`. Private rows'
+`url` is `/api/files/<id>/download` (staff, 302 to a 60 s signed URL).
+`drizzle/0004_pending_uploads.sql` must be applied with this code.
 
 ## Slugs and redirects
 

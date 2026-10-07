@@ -173,7 +173,7 @@ Which write calls which:
 | `lib/actions/pieces.ts` | `invalidatePieces` |
 | `lib/actions/resources.ts` | `invalidateResources` |
 | `lib/actions/files.ts` `setShowThumbnail` | `invalidateShow` |
-| `lib/actions/files.ts` `attachYouTube`, `deleteFile`; `POST /api/files` (both modes) | `invalidateFileOwner` → `invalidateShow` and/or `invalidateArrangement` |
+| `lib/actions/files.ts` `attachYouTube`, `deleteFile`; `lib/actions/uploads.ts` `completeUpload` | `invalidateFileOwner` → `invalidateShow` and/or `invalidateArrangement` |
 
 A new write (action or route) must call one of these. A new read that joins another entity
 must add that entity's tag.

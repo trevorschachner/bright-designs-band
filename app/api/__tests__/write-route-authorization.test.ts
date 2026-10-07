@@ -54,10 +54,14 @@ type Handler = (req: never, ctx: never) => Promise<Response>
 
 const WRITE_HANDLERS: { name: string; load: () => Promise<Handler>; hasParams?: boolean }[] = [
   // The admin writes and uploads moved to Server Actions
-  // (lib/actions/__tests__/authorization.test.ts, uploads.test.ts).
+  // (lib/actions/__tests__/authorization.test.ts, uploads.test.ts). What is
+  // left is staff-only reads that must gate the same way.
+  {
+    name: 'GET /api/files/[id]/download',
+    load: async () => (await import('@/app/api/files/[id]/download/route')).GET as unknown as Handler,
+    hasParams: true,
+  },
 ]
-
-it.todo('staff-only read routes are added here as they land')
 
 // /api/contact POST is deliberately absent: it serves the public contact form.
 
