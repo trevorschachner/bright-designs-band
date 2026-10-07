@@ -24,7 +24,7 @@ describe('public helpers', () => {
     expect(env.getStorageBucket()).toBe('Bright Designs')
     expect(env.getStorageRootPrefix()).toBe('files')
     expect(env.getPosthogHost()).toBe('/ingest')
-    expect(env.getPublicSiteUrl()).toBe('https://www.brightdesigns.band')
+    expect(env.getPublicSiteUrl()).toBe('https://brightdesigns.band')
     expect(env.getPublicEnv()).toMatchObject({
       NEXT_PUBLIC_STORAGE_BUCKET: 'Bright Designs',
       NEXT_PUBLIC_STORAGE_ROOT_PREFIX: 'files',

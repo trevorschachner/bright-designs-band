@@ -11,7 +11,11 @@
  */
 
 import { cache } from 'react';
-import { ARRANGEMENTS_FILTER_FIELDS, SHOWS_FILTER_FIELDS } from '@/lib/filters/filter-definitions';
+import {
+  ARRANGEMENTS_FILTER_FIELDS,
+  SHOWS_ADMIN_FILTER_FIELDS,
+  SHOWS_FILTER_FIELDS,
+} from '@/lib/filters/filter-definitions';
 import {
   CATALOG_DEFAULT_LIMIT,
   clampLimit,
@@ -56,11 +60,22 @@ export function parseArrangementsQuery(input: QueryInput): CatalogFilters {
  * unbounded cache entries, and `{ page, limit }` vs `{ limit, page }` is one
  * entry, not two.
  */
+const PUBLIC_SHOW_KEYS = new Set(SHOWS_FILTER_FIELDS.map((f) => f.key));
+/** Admin-only show fields (`price`): dropped even from unparsed public input. */
+const ADMIN_ONLY_SHOW_KEYS = new Set(
+  SHOWS_ADMIN_FILTER_FIELDS.map((f) => f.key).filter((k) => !PUBLIC_SHOW_KEYS.has(k))
+);
+const isPublicShowField = (field: string) => !ADMIN_ONLY_SHOW_KEYS.has(field);
+
 export function canonicalShowsParams(filters: CatalogFilters): ShowsPageParams {
   const params: ShowsPageParams = {
     search: normalizeSearch(filters.search),
-    conditions: (filters.conditions ?? []).map(({ field, operator, value, values }) => ({ field, operator, value, values })),
-    sort: (filters.sort ?? []).map(({ field, direction }) => ({ field, direction })),
+    conditions: (filters.conditions ?? [])
+      .filter((c) => isPublicShowField(c.field))
+      .map(({ field, operator, value, values }) => ({ field, operator, value, values })),
+    sort: (filters.sort ?? [])
+      .filter((s) => isPublicShowField(s.field))
+      .map(({ field, direction }) => ({ field, direction })),
     page: clampPage(filters.page),
     limit: clampLimit(filters.limit, SHOWS_DEFAULT_LIMIT),
     featured: filters.featured ? true : undefined,

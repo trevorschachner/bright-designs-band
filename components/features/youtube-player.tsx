@@ -46,6 +46,49 @@ export function YouTubePlayer({ youtubeUrl, className }: YouTubePlayerProps) {
   );
 }
 
+interface YouTubeFacadeIslandProps {
+  /** An 11-character YouTube video id. */
+  videoId: string;
+  /** Accessible name for the play button and the iframe. */
+  title: string;
+  className?: string;
+  /** The server-rendered poster (thumbnail and play button). */
+  children: React.ReactNode;
+}
+
+/**
+ * Click-to-load YouTube. Until the visitor presses play, the page carries only
+ * the server-rendered poster passed as `children`: no iframe, no YouTube
+ * script, no third-party request but the thumbnail. The press swaps in the
+ * privacy-enhanced (youtube-nocookie.com) player, autoplaying.
+ */
+export function YouTubeFacadeIsland({ videoId, title, className, children }: YouTubeFacadeIslandProps) {
+  const [playing, setPlaying] = React.useState(false);
+
+  return (
+    <div className={cn("relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-lg", className)}>
+      {playing ? (
+        <iframe
+          className="absolute inset-0 h-full w-full"
+          src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPlaying(true)}
+          aria-label={`Play video: ${title}`}
+          className="group absolute inset-0 h-full w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          {children}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // Utility function to validate YouTube URLs
 export function isValidYouTubeUrl(url: string): boolean {
   const regexes = [

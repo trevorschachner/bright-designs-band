@@ -30,20 +30,26 @@ const supabaseHostname = (() => {
   return null;
 })();
 
+const YOUTUBE_THUMBNAIL_PATTERN = { protocol: 'https', hostname: 'i.ytimg.com', pathname: '/vi/**' };
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
     deviceSizes: [640, 1080, 1920],
     formats: ['image/webp'],
-    remotePatterns: supabaseHostname
-      ? [
-          {
-            protocol: 'https',
-            hostname: supabaseHostname,
-            pathname: '/storage/v1/object/public/**',
-          },
-        ]
-      : [],
+    remotePatterns: [
+      ...(supabaseHostname
+        ? [
+            {
+              protocol: 'https',
+              hostname: supabaseHostname,
+              pathname: '/storage/v1/object/public/**',
+            },
+          ]
+        : []),
+      // The show page's YouTube facade poster (components/features/youtube-facade.tsx).
+      YOUTUBE_THUMBNAIL_PATTERN,
+    ],
   },
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders(supabaseHostname) }];

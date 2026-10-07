@@ -11,7 +11,12 @@ import { FilterField } from './types';
  * exist will not compile.
  */
 
-export const SHOWS_FILTER_FIELDS: FilterField[] = deriveFilterFields(shows, {
+/**
+ * Every show field staff may filter or sort on, `price` included. Admin only:
+ * the public catalog contract is SHOWS_FILTER_FIELDS below, which has no price
+ * (pricing is quoted per program and never published).
+ */
+export const SHOWS_ADMIN_FILTER_FIELDS: FilterField[] = deriveFilterFields(shows, {
   columns: [
     {
       key: 'title',
@@ -60,6 +65,18 @@ export const SHOWS_FILTER_FIELDS: FilterField[] = deriveFilterFields(shows, {
     },
   ],
 });
+
+/** Fields that are never part of the public catalog contract. */
+const ADMIN_ONLY_SHOW_FIELDS = new Set(['price']);
+
+/**
+ * The public catalog allowlist for shows (`/shows`, public `GET /api/shows`).
+ * No `price`: a public query cannot filter or sort on it, so the price cannot
+ * be inferred from the order or the result set.
+ */
+export const SHOWS_FILTER_FIELDS: FilterField[] = SHOWS_ADMIN_FILTER_FIELDS.filter(
+  (f) => !ADMIN_ONLY_SHOW_FIELDS.has(f.key)
+);
 
 export const ARRANGEMENTS_FILTER_FIELDS: FilterField[] = deriveFilterFields(arrangements, {
   columns: [

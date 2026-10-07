@@ -17,6 +17,15 @@ beforeEach(() => {
 })
 
 describe('robots', () => {
+  it('keeps every crawler out of /api/ and /admin', () => {
+    const { rules } = robots()
+    const list = Array.isArray(rules) ? rules : [rules]
+    for (const rule of list.filter((r) => r.allow === '/')) {
+      expect(rule.disallow).toEqual(['/api/', '/admin'])
+    }
+    expect(list.find((r) => r.userAgent === '*')?.disallow).toEqual(['/api/', '/admin'])
+  })
+
   it('allows every AI crawler explicitly', () => {
     const { rules } = robots()
     const list = Array.isArray(rules) ? rules : [rules]

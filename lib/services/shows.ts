@@ -112,7 +112,7 @@ function summaryRelations() {
     },
     files: {
       columns: { storagePath: true },
-      where: eq(files.fileType, 'image'),
+      where: and(eq(files.isPublic, true), eq(files.fileType, 'image')),
       limit: 1,
     },
   };
@@ -237,7 +237,6 @@ export type ShowListItem = {
   year: number | null;
   difficulty: ShowDifficulty | null;
   duration: string | null;
-  price: number | null;
   thumbnailUrl: string | null;
   graphicUrl: string | null;
   featured: boolean;
@@ -253,11 +252,18 @@ export type ShowListItem = {
   showsToTags: { tag: TagRef }[];
 };
 
+/** The admin table's row: the public item plus `price`, which is never public. */
+export type AdminShowListItem = ShowListItem & { price: number | null };
+
 /**
  * One page of the catalog. Throws UnknownFilterFieldError for a filter naming
- * a field shows does not have; the route turns that into a 400.
+ * a field shows does not have; the route turns that into a 400. `price` is
+ * selected only for the admin read: the public projection never contains it.
  */
-async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowListItem[]; total: number }> {
+async function fetchShowsRows(
+  params: ShowsPageParams,
+  includePrice: boolean
+): Promise<{ data: (ShowListItem | AdminShowListItem)[]; total: number }> {
   const { search, conditions, sort, page, limit, featured } = params;
   const offset = (page - 1) * limit;
 
@@ -290,7 +296,7 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
       orderBy,
       columns: {
         id: true, slug: true, title: true, description: true, year: true,
-        difficulty: true, duration: true, price: true, graphicUrl: true,
+        difficulty: true, duration: true, price: includePrice, graphicUrl: true,
         thumbnailUrl: true, featured: true, displayOrder: true, createdAt: true,
       },
       with: {
@@ -314,11 +320,11 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
     }),
   ]);
 
-  const data: ShowListItem[] = rows.map((r) => {
+  const data = rows.map((r): ShowListItem | AdminShowListItem => {
     const graphicUrl = toPublicUrl(r.graphicUrl);
     const thumbnailUrl = toPublicUrl(r.thumbnailUrl);
     const fallbackUrl = r.files?.[0]?.url ? toPublicUrl(r.files[0].url) : null;
-    return {
+    const item: ShowListItem = {
       id: r.id,
       slug: r.slug,
       title: r.title,
@@ -326,7 +332,6 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
       year: r.year,
       difficulty: r.difficulty,
       duration: r.duration,
-      price: r.price ? Number(r.price) : null,
       thumbnailUrl: graphicUrl || thumbnailUrl || fallbackUrl,
       graphicUrl: graphicUrl || null,
       featured: !!r.featured,
@@ -337,9 +342,17 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
         .filter((a): a is NonNullable<typeof a> => Boolean(a)),
       showsToTags: presentTags(r.showsToTags || []),
     };
+    if (!includePrice) return item;
+    const price = (r as { price?: string | null }).price;
+    return { ...item, price: price ? Number(price) : null };
   });
 
   return { data, total: Number(totalResult[0]?.count ?? 0) };
+}
+
+/** The public page: no `price` is selected, so none can reach a response. */
+async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowListItem[]; total: number }> {
+  return fetchShowsRows(params, false);
 }
 
 /**
@@ -354,9 +367,9 @@ export const getShowsPage = cachedRead('shows-page-v2', fetchShowsPage, {
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
 });
 
-/** The same page, uncached, for the admin shows table. */
+/** The same page, uncached and with `price`, for the admin shows table. */
 export function getShowsPageForAdmin(params: ShowsPageParams) {
-  return fetchShowsPage(params);
+  return fetchShowsRows(params, true) as Promise<{ data: AdminShowListItem[]; total: number }>;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
+// The YouTube facade poster is always allowed, with or without Supabase.
+const YTIMG = { protocol: 'https', hostname: 'i.ytimg.com', pathname: '/vi/**' };
+
 async function loadConfig() {
   vi.resetModules();
   return (await import('../../next.config.mjs')).default;
@@ -29,7 +32,7 @@ describe('next.config Supabase hostname', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const config = await loadConfig();
     expect(warn).toHaveBeenCalledOnce();
-    expect(config.images?.remotePatterns).toEqual([]);
+    expect(config.images?.remotePatterns).toEqual([YTIMG]);
   });
 
   it('allows the Supabase storage host when the URL is present', async () => {
@@ -38,6 +41,7 @@ describe('next.config Supabase hostname', () => {
     const config = await loadConfig();
     expect(config.images?.remotePatterns).toEqual([
       { protocol: 'https', hostname: 'abc.supabase.co', pathname: '/storage/v1/object/public/**' },
+      YTIMG,
     ]);
   });
 });

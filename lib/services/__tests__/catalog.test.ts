@@ -84,6 +84,34 @@ describe('parseShowsQuery', () => {
     expect(filters).not.toHaveProperty('unrelated')
   })
 
+  // Pricing is never published, so price is not part of the public contract:
+  // no filter or sort on it survives parsing, and no public read selects it.
+  it('drops a price filter and a price sort', () => {
+    const filters = parseShowsQuery(
+      q({
+        filters: JSON.stringify([
+          { field: 'price', operator: 'between', values: [0, 1000] },
+          { field: 'price', operator: 'gte', value: 500 },
+        ]),
+        sort: JSON.stringify([{ field: 'price', direction: 'desc' }]),
+      })
+    )
+    expect(filters.conditions).toEqual([])
+    expect(filters.sort).toEqual([])
+  })
+
+  it('queryShows drops price even from unparsed input and never selects it', async () => {
+    await queryShows({
+      page: 1,
+      limit: 24,
+      conditions: [{ field: 'price', operator: 'gte', value: 1 }],
+      sort: [{ field: 'price', direction: 'asc' }],
+    })
+    expect(cacheCalls[0].args).toEqual([{ conditions: [], sort: [], page: 1, limit: 24 }])
+    const opts = showsFindMany.mock.calls[0][0] as { columns: Record<string, boolean> }
+    expect(opts.columns.price).not.toBe(true)
+  })
+
   it('treats malformed JSON as no filter', () => {
     const filters = parseShowsQuery(q({ filters: '{not json', sort: '"year"' }))
     expect(filters.conditions).toEqual([])

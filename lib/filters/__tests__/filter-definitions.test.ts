@@ -3,7 +3,7 @@ import { getTableColumns } from 'drizzle-orm';
 import { shows, arrangements } from '@/lib/database/schema';
 import { showDifficultyEnum, arrangementSceneEnum } from '@/lib/database/schema';
 import { deriveFilterFields } from '../filter-fields';
-import { SHOWS_FILTER_FIELDS, ARRANGEMENTS_FILTER_FIELDS } from '../filter-definitions';
+import { SHOWS_FILTER_FIELDS, SHOWS_ADMIN_FILTER_FIELDS, ARRANGEMENTS_FILTER_FIELDS } from '../filter-definitions';
 import type { FilterField } from '../types';
 
 // Filter fields used to restate column names and types by hand, and the
@@ -19,6 +19,7 @@ const byKey = (fields: FilterField[], key: string) =>
 describe('column fields are derived from the Drizzle table', () => {
   const cases = [
     { name: 'shows', fields: SHOWS_FILTER_FIELDS, table: shows },
+    { name: 'shows (admin)', fields: SHOWS_ADMIN_FILTER_FIELDS, table: shows },
     { name: 'arrangements', fields: ARRANGEMENTS_FILTER_FIELDS, table: arrangements },
   ] as const;
 
@@ -38,7 +39,7 @@ describe('column fields are derived from the Drizzle table', () => {
   // dataType instead of columnType would quietly turn price into a text filter
   // and strip its range operators.
   it('numeric columns are number fields, not text', () => {
-    const price = byKey(SHOWS_FILTER_FIELDS, 'price');
+    const price = byKey(SHOWS_ADMIN_FILTER_FIELDS, 'price');
     expect(price.type).toBe('number');
     expect(price.operators).toContain('between');
     expect(price.operators).toContain('gte');
@@ -92,13 +93,26 @@ describe('deriveFilterFields', () => {
   });
 
   it('keeps the declared order, columns before relations', () => {
-    expect(SHOWS_FILTER_FIELDS.map(f => f.key)).toEqual([
+    expect(SHOWS_ADMIN_FILTER_FIELDS.map(f => f.key)).toEqual([
       'title',
       'year',
       'difficulty',
       'displayOrder',
       'duration',
       'price',
+      'tags',
+    ]);
+  });
+
+  // Pricing is quoted per program. A public filter or sort on price would let
+  // anyone bracket it from the result set, so it is admin only.
+  it('the public shows allowlist has no price', () => {
+    expect(SHOWS_FILTER_FIELDS.map(f => f.key)).toEqual([
+      'title',
+      'year',
+      'difficulty',
+      'displayOrder',
+      'duration',
       'tags',
     ]);
   });

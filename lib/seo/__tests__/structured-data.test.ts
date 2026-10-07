@@ -6,7 +6,6 @@ import {
   createFAQSchema,
   createMusicCompositionSchema,
   createOrganizationSchema,
-  createProductSchema,
   createVideoObjectSchema,
   showUploadDate,
   youtubeVideoId,
@@ -65,20 +64,13 @@ describe('createOrganizationSchema', () => {
   })
 })
 
-describe('createProductSchema', () => {
-  const schema = createProductSchema({ name: 'Test Show', url: '/shows/test-show' })
-
-  it('is for sale (InStock) but never carries a price', () => {
-    expect(schema['@type']).toBe('Product')
-    expect(schema.offers).toMatchObject({ '@type': 'Offer', availability: 'https://schema.org/InStock' })
-    const keys = allKeys(schema)
-    expect(keys.filter((k) => /price/i.test(k))).toEqual([])
-    expect(JSON.stringify(schema)).not.toContain('$')
-  })
-
-  it('uses absolute URLs and the Organization as brand', () => {
-    expect(schema.url).toMatch(/^https?:\/\/.+\/shows\/test-show$/)
-    expect(schema.brand).toMatchObject({ '@type': 'Organization', name: 'Bright Designs' })
+// No Product schema: Google requires Offer.price for one, and no price is
+// ever published. Show pages carry BreadcrumbList, MusicComposition and
+// VideoObject only.
+describe('no Product schema', () => {
+  it('is not exported', async () => {
+    const mod = await import('../structured-data')
+    expect(mod).not.toHaveProperty('createProductSchema')
   })
 })
 

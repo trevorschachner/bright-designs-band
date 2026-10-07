@@ -108,7 +108,7 @@ export default function EditShowPage() {
         .catch((err) => {
           console.error('Failed to load show data:', err);
         });
-      fetch('/api/tags')
+      fetch('/api/tags?admin=true')
         .then(res => res.json())
         .then(data => setTags(data));
     }

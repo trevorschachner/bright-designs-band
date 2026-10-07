@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText, MessageSquare } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
+import { YouTubeFacade } from '@/components/features/youtube-facade'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
@@ -23,7 +24,7 @@ import { arrangementContactHref } from '@/lib/contact-link'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
-import { createMusicCompositionSchema, createBreadcrumbSchema, createProductSchema, createVideoObjectSchema, showUploadDate } from '@/lib/seo/structured-data'
+import { createMusicCompositionSchema, createBreadcrumbSchema, createVideoObjectSchema, showUploadDate } from '@/lib/seo/structured-data'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { normaliseSlug } from '@/lib/slug'
 import { cache } from 'react'
@@ -163,14 +164,8 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     { name: show.title, url: showPath },
   ])
 
-  // Every show is for sale; pricing is quoted per program, so no price is published.
-  const productSchema = createProductSchema({
-    name: show.title,
-    description: show.description,
-    url: showPath,
-    imageUrl: displayImageUrl,
-  })
-
+  // No Product schema: Google requires an Offer.price for one, and pricing is
+  // quoted per program, never published.
   // The source pieces the arrangement cards already loaded, in show order.
   const compositionSchema = createMusicCompositionSchema({
     name: show.title,
@@ -188,7 +183,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     uploadDate: showUploadDate(show.createdAt, show.year),
   })
 
-  const schemas = [breadcrumbSchema, productSchema, compositionSchema, ...(videoObjectSchema ? [videoObjectSchema] : [])]
+  const schemas = [breadcrumbSchema, compositionSchema, ...(videoObjectSchema ? [videoObjectSchema] : [])]
 
   return (
     <div className="min-h-screen bg-background">
@@ -219,7 +214,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
         {/* Show Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Left side - Image */}
-          <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video" id="listen">
+          <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video">
             {displayImageUrl ? (
               <Image
                 src={displayImageUrl}
@@ -327,10 +322,21 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           )}
         </div>
 
+        {/* The performance video. Shown whenever a VideoObject is emitted: the
+            same youtubeUrl drives both, and both render nothing without an id. */}
+        {videoObjectSchema && (
+          <section className="mb-8" aria-labelledby="watch-heading">
+            <h2 id="watch-heading" className="text-2xl font-heading font-bold text-foreground mb-4">
+              Watch the Performance
+            </h2>
+            <YouTubeFacade youtubeUrl={showRow.youtubeUrl} title={`${show.title} performance`} className="max-w-3xl" />
+          </section>
+        )}
+
         <ResaleCallout kind="show" title={show.title} className="mb-8" />
 
         {/* Show Arrangements Section */}
-        <div className="space-y-4">
+        <div className="space-y-4" id="listen">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-heading font-bold text-foreground">Show Arrangements</h2>
             <Badge variant="secondary" className="text-sm font-medium">
@@ -359,7 +365,6 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
               <Card 
                 key={arrangement.id} 
                 className="frame-card overflow-hidden group hover:shadow-lg transition-all duration-200 border border-border hover:border-primary/20"
-                id={index === 0 ? 'listen' : undefined}
               >
                 <CardContent className="p-4">
                   {/* Header Row */}

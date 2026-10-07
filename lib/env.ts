@@ -57,7 +57,7 @@ export const getOptionalPublicSiteUrl = (): string | null =>
   sanitizePublicUrl(process.env.NEXT_PUBLIC_SITE_URL)
 
 export const getPublicSiteUrl = (
-  fallback = 'https://www.brightdesigns.band'
+  fallback = 'https://brightdesigns.band'
 ): string => getOptionalPublicSiteUrl() ?? fallback
 
 export const getSupabaseConfig = () => ({

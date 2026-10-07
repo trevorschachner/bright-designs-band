@@ -172,42 +172,6 @@ export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string; url: s
   }
 }
 
-/**
- * Product for a show. Every show is for sale, so the Offer says InStock, but
- * pricing is quoted per program: the Offer carries no price, priceCurrency or
- * priceSpecification.
- */
-export function createProductSchema({
-  name,
-  description,
-  url,
-  imageUrl,
-}: {
-  name: string
-  description?: string | null
-  url: string
-  imageUrl?: string | null
-}): Schema {
-  const pageUrl = absoluteUrl(url)
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name,
-    description:
-      description ||
-      'Marching band show by Bright Designs. Buy it as-is, build your own from its arrangements, or pair it with new custom music. Pricing is quoted per program.',
-    brand: organizationRef(),
-    url: pageUrl,
-    ...(imageUrl ? { image: absoluteUrl(imageUrl) } : {}),
-    offers: {
-      '@type': 'Offer',
-      availability: 'https://schema.org/InStock',
-      url: pageUrl,
-      seller: organizationRef(),
-    },
-  }
-}
-
 /** Unique source pieces (title + composer), in first-seen order. */
 function basedOn(pieces: PublicPiece[] | undefined): Schema[] {
   const seen = new Set<string>()
