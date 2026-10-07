@@ -4,6 +4,8 @@ import { eq } from 'drizzle-orm'
 import { fileStorage } from '@/lib/storage'
 import { guard } from '@/lib/auth/guard'
 
+const noStore = { 'Cache-Control': 'private, no-store' }
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -76,29 +78,24 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
     }
 
-    let createClient: any
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'))
-    } catch (e) {
-      console.error('Supabase client import failed.', e)
-      return NextResponse.json({ error: 'Auth provider not configured' }, { status: 500 })
-    }
+    const { createClient } = await import('@/lib/utils/supabase/server')
     const supabase = await createClient()
+    const { db } = await import('@/lib/database')
 
-    // Fetch via Supabase to respect RLS
-    const { data: fileRow, error: fetchErr } = await supabase
-      .from('files')
-      .select('*')
-      .eq('id', fileId)
-      .single()
-    if (fetchErr || !fileRow) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    // Drizzle returns camelCase fields (storagePath, isPublic); supabase-js
+    // returns the raw snake_case columns, which broke the computed URL.
+    const f = await db.query.files.findFirst({ where: eq(files.id, fileId) })
+
+    // Private files are staff-only. Answer 404 rather than 401/403 so an
+    // anonymous caller cannot tell a private file from a missing one.
+    const gate = f && !f.isPublic ? await guard('canUploadFiles') : null
+    if (!f || (gate && gate.denied)) {
+      return NextResponse.json({ error: 'File not found' }, { status: 404, headers: noStore })
     }
 
-    const f = fileRow as any
     const computedUrl = fileStorage.getFileUrl(f.storagePath, f.isPublic, supabase)
 
-    return NextResponse.json({ success: true, file: { ...f, url: computedUrl } })
+    return NextResponse.json({ success: true, file: { ...f, url: computedUrl } }, { headers: noStore })
 
   } catch (error) {
     console.error('File fetch error:', error)

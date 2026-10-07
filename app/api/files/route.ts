@@ -3,7 +3,7 @@ import { files, fileTypeEnum } from '@/lib/database/schema';
 import { fileStorage, withRootPrefix, STORAGE_BUCKET } from '@/lib/storage';
 import { guard } from '@/lib/auth/guard';
 import { and, eq } from 'drizzle-orm';
-import { SuccessResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
+import { SuccessResponse, PrivateResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { fileUploadSchema } from '@/lib/validation/files';
 import { z } from 'zod';
 
@@ -168,8 +168,9 @@ export async function GET(request: NextRequest) {
       return ErrorResponse('Auth provider not configured');
     }
     const supabase = await createClient();
-    // Use getUser() for proper authentication
-    const { data: { user } } = await supabase.auth.getUser();
+    // Optional gate: a denial here means "public rows only", not an error.
+    const gate = await guard('canUploadFiles');
+    const isStaff = gate.denied === null;
 
     const { searchParams } = new URL(request.url);
     const showId = searchParams.get('showId');
@@ -183,8 +184,8 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(files.fileType, fileType as FileType));
     }
 
-    // Public files are always visible. Private files are only visible to authenticated users.
-    if (!user) {
+    // Public files are always visible. Private files are only visible to staff.
+    if (!isStaff) {
       conditions.push(eq(files.isPublic, true));
     }
 
@@ -202,7 +203,8 @@ export async function GET(request: NextRequest) {
       url: fileStorage.getFileUrl(f.storagePath, f.isPublic, supabase),
     }));
 
-    return SuccessResponse(withUrls);
+    // The rows depend on the caller, so this must never enter a shared cache.
+    return PrivateResponse(withUrls);
 
   } catch (error) {
     console.error('File fetch error:', error);
