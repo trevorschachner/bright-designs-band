@@ -75,26 +75,20 @@ export async function getDynamicRoutes(): Promise<SitemapURL[]> {
   const routes: SitemapURL[] = []
 
   try {
-    const { db } = await import('@/lib/database')
-    const { shows, arrangements } = await import('@/lib/database/schema')
-    const { desc } = await import('drizzle-orm')
+    const { getSitemapEntries } = await import('@/lib/services/sitemap')
+    const { shows, arrangementIds } = await getSitemapEntries()
 
-    const [showRows, arrRows] = await Promise.all([
-      db.select({ slug: shows.slug, updatedAt: shows.updatedAt }).from(shows).orderBy(desc(shows.updatedAt)),
-      db.select({ id: arrangements.id }).from(arrangements),
-    ])
-
-    showRows.forEach(row => {
-      if (row.slug) routes.push({
+    shows.forEach(row => {
+      routes.push({
         loc: `/shows/${row.slug}`,
-        lastmod: row.updatedAt ? String(row.updatedAt).split('T')[0] : undefined,
+        lastmod: row.updatedAt ? row.updatedAt.split('T')[0] : undefined,
         changefreq: 'monthly',
         priority: 0.8,
       })
     })
 
-    arrRows.forEach(row => {
-      routes.push({ loc: `/arrangements/${row.id}`, changefreq: 'monthly', priority: 0.8 })
+    arrangementIds.forEach(id => {
+      routes.push({ loc: `/arrangements/${id}`, changefreq: 'monthly', priority: 0.8 })
     })
   } catch (error) {
     console.error('Error fetching dynamic routes for sitemap:', error)

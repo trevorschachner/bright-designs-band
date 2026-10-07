@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
 import { tagInputSchema } from '@/lib/validation/tags';
 import { invalidateTags } from '@/lib/services/invalidate';
+import { getTag } from '@/lib/services/tags';
 import { reportError } from '@/lib/observability/report-error';
 
 /** Generic body only: the underlying message never reaches the client. */
@@ -16,9 +17,8 @@ async function failed(error: unknown, operation: string) {
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const tag = await db.query.tags.findFirst({
-      where: eq(tags.id, parseInt(id, 10)),
-    });
+    const tag = /^\d+$/.test(id) ? await getTag(Number(id)) : null;
+    if (!tag) return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
     return NextResponse.json(tag);
   } catch (error) {
     await reportError(error, { operation: 'GET /api/tags/[id]' });

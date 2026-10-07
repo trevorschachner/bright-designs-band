@@ -100,7 +100,7 @@ vi.mock('@/lib/database', () => ({
             requestedActiveOnly = cond?.activeFilter === true
             return {
               orderBy: async () => run(requestedActiveOnly),
-              then: (resolve: (v: unknown) => void) => resolve(idLookup ? [idLookup] : []),
+              limit: async () => (idLookup ? [idLookup] : []),
             }
           },
           orderBy: async () => {

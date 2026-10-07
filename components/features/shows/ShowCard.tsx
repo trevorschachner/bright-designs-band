@@ -41,7 +41,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
   if (isLoading || !show) {
     return <ShowCardSkeleton />;
   }
-  const href = `/shows/${show.slug ?? show.id}`;
+  const href = `/shows/${show.slug}`;
 
   const displayDifficulty = (() => {
     const value = String(show.difficulty || '').toLowerCase();

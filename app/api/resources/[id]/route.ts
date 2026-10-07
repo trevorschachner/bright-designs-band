@@ -5,18 +5,12 @@ import { resources, files } from '@/lib/database/schema';
 import { eq } from 'drizzle-orm';
 import { PrivateResponse } from '@/lib/utils/api-helpers';
 import { invalidateResources } from '@/lib/services/invalidate';
+import { getResource } from '@/lib/services/resources';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-
-    const idNum = parseInt(id, 10);
-    const isNumeric = !isNaN(idNum);
-
-    const [resource] = await db
-      .select()
-      .from(resources)
-      .where(isNumeric ? eq(resources.id, idNum) : eq(resources.slug, id));
+    const resource = await getResource(id);
 
     if (!resource) {
       return NextResponse.json({ error: 'Resource not found' }, { status: 404 });

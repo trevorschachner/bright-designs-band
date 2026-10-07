@@ -7,11 +7,12 @@ Writes stay in the API routes, and each one ends by calling one helper from
 | File | What it reads |
 | --- | --- |
 | `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs |
-| `arrangements.ts` | The `/api/arrangements` page, arrangement detail, an arrangement's public files |
+| `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[id]` page and OG image (`getArrangementDetail`: one relational query) |
 | `catalog.ts` | `queryShows` / `queryArrangements`: parse + bound the catalog query, then one paged read (below) |
 | `pieces.ts` | Public source-piece credits; admin piece lists |
-| `resources.ts` | Active resources; admin list including drafts |
-| `tags.ts` | All tags |
+| `resources.ts` | Active resources; one resource by id or slug (`/api/resources/[id]`); admin list including drafts |
+| `tags.ts` | All tags; one tag (`/api/tags/[id]`) |
+| `sitemap.ts` | Show slugs and arrangement ids for `/sitemap.xml` |
 | `admin.ts` | Dashboard counts |
 | `files.ts` | No reads: `invalidateFileOwner()` routes a file write to its show or arrangement |
 | `cache.ts` | `cachedRead()`, the build fallback, `toIso()` |
@@ -84,7 +85,9 @@ serialised filters).
   uncached `getShowsPageForAdmin` with the admin table's own page sizes (up to
   100).
 - `queryShows` is wrapped in React `cache`, so the list and the sidebar's
-  result count share one call per render.
+  result count share one call per render. The detail pages do the same:
+  `/shows/[slug]` and `/arrangements/[id]` wrap their lookup in React `cache`
+  so `generateMetadata` and the page share it.
 
 ## Invalidation
 

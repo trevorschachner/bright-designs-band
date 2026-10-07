@@ -407,28 +407,17 @@ async function findShowWithTags(where: SQL): Promise<ShowWithTags | null> {
 }
 
 /**
- * A show by slug. Falls back to a case-insensitive match that treats `_` and
- * `-` alike (old links), then to a numeric id. Null when nothing matches.
+ * A show by its exact slug. Null when nothing matches. There is no fuzzy
+ * fallback: slugs are stored in canonical form (lib/slug.ts, enforced by
+ * lib/validation/shows.ts and the unique index from
+ * drizzle/migrations/2026-10-07_shows_slug_unique.sql), and old numeric
+ * `/shows/<id>` links are redirected by proxy.ts before they reach the page.
  */
-async function fetchShowBySlug(identifier: string): Promise<ShowWithTags | null> {
-  const exact = await findShowWithTags(eq(shows.slug, identifier));
-  if (exact) return exact;
-
-  const [loose] = await db
-    .select({ id: shows.id })
-    .from(shows)
-    .where(
-      sql`LOWER(${shows.slug}) = LOWER(${identifier})
-        OR LOWER(REPLACE(${shows.slug}, '_', '-')) = LOWER(REPLACE(${identifier}, '_', '-'))`
-    )
-    .limit(1);
-  if (loose) return findShowWithTags(eq(shows.id, loose.id));
-
-  if (/^\d+$/.test(identifier)) return findShowWithTags(eq(shows.id, Number(identifier)));
-  return null;
+async function fetchShowBySlug(slug: string): Promise<ShowWithTags | null> {
+  return findShowWithTags(eq(shows.slug, slug));
 }
 
-export const getShowBySlug = cachedRead('show-by-slug-v2', fetchShowBySlug, {
+export const getShowBySlug = cachedRead('show-by-slug-v3', fetchShowBySlug, {
   tags: () => [TAGS.shows, TAGS.tags],
   atBuildWithoutDb: null as ShowWithTags | null,
 });

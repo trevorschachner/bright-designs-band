@@ -162,7 +162,7 @@ export default async function HomePage() {
                     ))}
                   </div>
                   <Button className="w-full" asChild>
-                    <Link href={`/shows/${show.slug ?? show.id}`}>View Details</Link>
+                    <Link href={`/shows/${show.slug}`}>View Details</Link>
                   </Button>
                 </CardContent>
               </Card>

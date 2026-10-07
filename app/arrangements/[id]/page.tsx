@@ -13,25 +13,33 @@ import {
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 import { AudioPlayerComponent, audioPlayerStyles } from "@/components/features/audio-player"
-import { getPublicArrangementFiles } from "@/lib/services/arrangements"
-import { getPublicPiecesByArrangementIds } from "@/lib/services/pieces"
+import { getArrangementDetail } from "@/lib/services/arrangements"
 import { SourcePieces } from '@/components/features/source-pieces'
-import { createClient } from '@/lib/utils/supabase/server'
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { ResaleCallout } from '@/components/features/resale-callout'
 import { createCreativeWorkSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 
+// Rendered on first request, then cached and revalidated hourly; writes
+// expire it through invalidateArrangement (lib/services/invalidate.ts).
+export const revalidate = 3600
+
+/** No prebuild: an empty list opts the route into on-demand ISR. */
+export function generateStaticParams() {
+  return []
+}
+
+/** One lookup per request, shared by generateMetadata and the page. */
+const getArrangement = cache((id: string) =>
+  /^\d+$/.test(id) ? getArrangementDetail(Number(id)) : Promise.resolve(null)
+)
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  const supabase = await createClient()
-  
-  const { data: arr } = await supabase
-    .from('arrangements')
-    .select('title, description, composer')
-    .eq('id', Number(id))
-    .single()
+  const arr = await getArrangement(id)
 
   if (!arr) {
     return buildMetadata({
@@ -49,28 +57,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ArrangementDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const arrangementId = Number(id);
-  const supabase = await createClient();
+  const arr = await getArrangement(id);
 
-  // Fetch arrangement with all fields
-  const { data: arr, error: arrError } = await supabase
-    .from('arrangements')
-    .select('*')
-    .eq('id', arrangementId)
-    .single();
-
-  if (arrError || !arr) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Arrangement not found</h1>
-          <Button asChild>
-            <Link href="/arrangements">Back to Arrangements</Link>
-          </Button>
-        </div>
-      </div>
-    );
+  if (!arr) {
+    notFound();
   }
+
+  const parentShow = arr.show;
+  const files = arr.files;
 
   // Generate Structured Data
   const creativeWorkSchema = createCreativeWorkSchema({
@@ -78,7 +72,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
     description: arr.description || `Arrangement of ${arr.title}`,
     creator: arr.composer || 'Bright Designs',
     difficulty: arr.grade ? `Grade ${arr.grade}` : undefined,
-    duration: arr.duration_seconds ? `${Math.floor(arr.duration_seconds / 60)}:${String(arr.duration_seconds % 60).padStart(2, '0')}` : undefined,
+    duration: arr.durationSeconds ? `${Math.floor(arr.durationSeconds / 60)}:${String(arr.durationSeconds % 60).padStart(2, '0')}` : undefined,
   })
 
   const breadcrumbSchema = createBreadcrumbSchema([
@@ -87,64 +81,11 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
     { name: arr.title, url: `/arrangements/${arr.id}` },
   ])
 
-  // Fetch show information if linked
-  let parentShow: { id: number; title?: string | null; thumbnailUrl?: string | null; graphicUrl?: string | null } | null = null;
-  let showImageFiles: any[] = [];
-  
-  const { data: showArrData } = await supabase
-    .from('show_arrangements')
-    .select('show_id, order_index')
-    .eq('arrangement_id', arrangementId)
-    .limit(1)
-    .single();
+  const audio = files.find((f) => f.fileType === 'audio');
+  const arrangementImage = files.find((f) => f.fileType === 'image');
 
-  if (showArrData?.show_id) {
-    // `name` was dropped from shows by a migration; selecting it made this
-    // query error, and because the error was discarded the page silently lost
-    // its parent-show context entirely rather than failing visibly.
-    const { data: showData, error: showError } = await supabase
-      .from('shows')
-      .select('id, title, thumbnail_url, graphic_url')
-      .eq('id', showArrData.show_id)
-      .single();
-
-    if (showError) {
-      console.error('Failed to load parent show for arrangement:', showError);
-    }
-
-    if (showData) {
-      parentShow = {
-        id: showData.id,
-        title: showData.title,
-        thumbnailUrl: showData.thumbnail_url,
-        graphicUrl: showData.graphic_url,
-      };
-      
-      // Fetch show image files as fallback
-      const { data: showFiles } = await supabase
-        .from('files')
-        .select('url, file_type, is_public')
-        .eq('show_id', showData.id)
-        .eq('is_public', true)
-        .eq('file_type', 'image')
-        .order('display_order', { ascending: true })
-        .limit(1);
-      
-      if (showFiles && Array.isArray(showFiles) && showFiles.length > 0) {
-        showImageFiles = showFiles;
-      }
-    }
-  }
-
-  // Fetch files for audio and images
-  const files = await getPublicArrangementFiles(arrangementId);
-  const piecesByArrangement = await getPublicPiecesByArrangementIds([arrangementId]);
-  const audio = Array.isArray(files) ? files.find((f: any) => f.fileType === 'audio' && f.isPublic) : undefined;
-  const arrangementImage = Array.isArray(files) ? files.find((f: any) => f.fileType === 'image' && f.isPublic) : undefined;
-
-  // Use arrangement image, fallback to show graphic_url, show thumbnail_url, show image files, or null
-  const showImageFile = showImageFiles.length > 0 ? showImageFiles[0] : null;
-  const displayImage = arrangementImage?.url || parentShow?.graphicUrl || parentShow?.thumbnailUrl || showImageFile?.url || null;
+  // Arrangement image, then the show's graphic, thumbnail, first image file.
+  const displayImage = arrangementImage?.url || parentShow?.graphicUrl || parentShow?.thumbnailUrl || parentShow?.imageUrl || null;
 
   const formatSeconds = (total?: number | null) => {
     if (!total || total < 0) return '—'
@@ -162,7 +103,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   })();
 
   const displayEnsembleSize = (() => {
-    const value = String(arr.ensemble_size || '').toLowerCase();
+    const value = String(arr.ensembleSize || '').toLowerCase();
     if (value === 'small') return 'Small Ensemble';
     if (value === 'medium') return 'Medium Ensemble';
     if (value === 'large') return 'Large Ensemble';
@@ -195,7 +136,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link href={`/shows/${parentShow.id}`}>{parentShow.title}</Link>
+                    <Link href={`/shows/${parentShow.slug}`}>{parentShow.title}</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -272,7 +213,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
             {parentShow && (
               <p className="text-lg text-primary mb-4">
                 From:{" "}
-                <Link href={`/shows/${parentShow.id}`} className="hover:underline">
+                <Link href={`/shows/${parentShow.slug}`} className="hover:underline">
                   {parentShow.title}
                 </Link>
               </p>
@@ -284,7 +225,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
 
             <SourcePieces
               part={arr}
-              pieces={piecesByArrangement[arrangementId]}
+              pieces={arr.pieces}
               className="mb-6"
             />
 
@@ -302,16 +243,16 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                   <span className="text-sm"><span className="font-medium">Music Arranger:</span> {arr.arranger}</span>
                 </div>
               )}
-              {arr.percussion_arranger && (
+              {arr.percussionArranger && (
                 <div className="flex items-center">
                   <Music className="w-4 h-4 text-muted-foreground mr-2" />
-                  <span className="text-sm"><span className="font-medium">Percussion Arranger:</span> {arr.percussion_arranger}</span>
+                  <span className="text-sm"><span className="font-medium">Percussion Arranger:</span> {arr.percussionArranger}</span>
                 </div>
               )}
-              {arr.duration_seconds && (
+              {arr.durationSeconds && (
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 text-muted-foreground mr-2" />
-                  <span className="text-sm"><span className="font-medium">Duration:</span> {formatSeconds(arr.duration_seconds)}</span>
+                  <span className="text-sm"><span className="font-medium">Duration:</span> {formatSeconds(arr.durationSeconds)}</span>
                 </div>
               )}
               {displayEnsembleSize && (
@@ -338,9 +279,9 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                   </Link>
                 </Button>
               )}
-              {arr.sample_score_url && (
+              {arr.sampleScoreUrl && (
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href={arr.sample_score_url} target="_blank" rel="noopener noreferrer">
+                  <Link href={arr.sampleScoreUrl} target="_blank" rel="noopener noreferrer">
                     <FileText className="w-4 h-4 mr-2" />
                     Download Sample Materials
                   </Link>
@@ -348,7 +289,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               )}
               {parentShow && (
                 <Button variant="ghost" className="w-full" asChild>
-                  <Link href={`/shows/${parentShow.id}`}>
+                  <Link href={`/shows/${parentShow.slug}`}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     View Full Show
                   </Link>
@@ -366,7 +307,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               tracks={[{ 
                 id: 'full', 
                 title: arr.title || 'Full Arrangement', 
-                duration: arr.duration_seconds ? formatSeconds(arr.duration_seconds) : '', 
+                duration: arr.durationSeconds ? formatSeconds(arr.durationSeconds) : '', 
                 description: arr.description || '', 
                 type: 'Full Track', 
                 url: audio.url,
@@ -396,7 +337,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
           <div className="mb-12">
             <h2 className="text-2xl font-heading font-bold mb-4 text-foreground">Related Files</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {files.filter((f: any) => f.fileType !== 'audio' || !f.isPublic).map((file: any) => (
+              {files.filter((f) => f.fileType !== 'audio').map((file) => (
                 <Card key={file.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">

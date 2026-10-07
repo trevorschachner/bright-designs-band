@@ -31,7 +31,7 @@ export function ShowListView({ item: show, isLoading, priority = false }: ShowLi
   })();
 
   return (
-    <Link href={`/shows/${show.slug ?? show.id}`} className="block">
+    <Link href={`/shows/${show.slug}`} className="block">
       <Card className="frame-card group overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
         <div className="flex flex-col sm:flex-row">
           {/* Thumbnail */}

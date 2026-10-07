@@ -105,17 +105,12 @@ describe('getShowBySlug', () => {
     expect(await getShowBySlug('no-such-show')).toBeNull()
   })
 
-  it('falls back to a loose slug match', async () => {
-    findFirst.mockResolvedValueOnce(undefined).mockResolvedValueOnce(showRow(9))
-    looseMatch.mockResolvedValue([{ id: 9 }])
-    const result = await getShowBySlug('Show_9')
-    expect(result?.show.id).toBe(9)
-  })
-
-  it('falls back to a numeric id', async () => {
-    findFirst.mockResolvedValueOnce(undefined).mockResolvedValueOnce(showRow(42))
-    const result = await getShowBySlug('42')
-    expect(result?.show.id).toBe(42)
+  it('matches the exact slug only: no case-insensitive scan, no numeric-id fallback', async () => {
+    findFirst.mockResolvedValue(undefined)
+    expect(await getShowBySlug('Show_9')).toBeNull()
+    expect(await getShowBySlug('42')).toBeNull()
+    expect(findFirst).toHaveBeenCalledTimes(2)
+    expect(looseMatch).not.toHaveBeenCalled()
   })
 
   it('selects explicit detail columns, never price', async () => {

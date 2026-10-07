@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/database';
 import { tags } from '@/lib/database/schema';
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { TAGS } from '@/lib/cache-tags';
 import { cachedRead } from './cache';
 
@@ -22,3 +22,15 @@ export const getAllTags = cachedRead('all-tags-v2', fetchAllTags, {
 export function getTagsForAdmin(): Promise<TagRow[]> {
   return fetchAllTags();
 }
+
+async function fetchTag(id: number): Promise<TagRow | null> {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const [row] = await db.select({ id: tags.id, name: tags.name }).from(tags).where(eq(tags.id, id)).limit(1);
+  return row ?? null;
+}
+
+/** One tag by id, or null. */
+export const getTag = cachedRead('tag-v1', fetchTag, {
+  tags: () => [TAGS.tags],
+  atBuildWithoutDb: null as TagRow | null,
+});

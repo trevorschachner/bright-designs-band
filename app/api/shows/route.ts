@@ -9,6 +9,7 @@ import { reportError } from '@/lib/observability/report-error';
 import { getShowsPageForAdmin, type ShowsPageParams } from '@/lib/services/shows';
 import { parseShowsQuery, queryShows } from '@/lib/services/catalog';
 import { invalidateShow } from '@/lib/services/invalidate';
+import { slugFromTitle } from '@/lib/slug';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,15 +86,10 @@ export async function POST(request: Request) {
     const { tags: tagIds, ...showData } = parsedData.data;
     const { db } = await import('@/lib/database');
 
-    const generateSlug = (title: string) =>
-      title.toLowerCase().trim()
-        .replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')
-        .replace(/-+/g, '-').replace(/^-+|-+$/g, '');
-
-    let slug = generateSlug(showData.title);
+    let slug = slugFromTitle(showData.title);
     let suffix = 1;
     while (await db.query.shows.findFirst({ where: eq(shows.slug, slug), columns: { id: true } })) {
-      slug = `${generateSlug(showData.title)}-${suffix++}`;
+      slug = `${slugFromTitle(showData.title)}-${suffix++}`;
     }
 
     const [inserted] = await db.insert(shows).values({

@@ -5,13 +5,13 @@
  */
 
 import { db } from '@/lib/database';
-import { arrangements, arrangementsToTags, files, showArrangements, shows } from '@/lib/database/schema';
+import { arrangementPieces, arrangements, arrangementsToTags, files, showArrangements, shows } from '@/lib/database/schema';
 import { and, asc, eq, exists, inArray, sql, count } from 'drizzle-orm';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterState } from '@/lib/filters/types';
 import { TAGS } from '@/lib/cache-tags';
 import { cachedRead, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
-import { PUBLIC_FILE_COLUMNS, type PublicFile } from './shows';
+import type { PublicFile } from './shows';
 
 type TagRef = { id: number; name: string };
 
@@ -182,18 +182,137 @@ export const getArrangementForApi = cachedRead('arrangement-api-v2', fetchArrang
   atBuildWithoutDb: null as ArrangementApiDetail | null,
 });
 
-async function fetchPublicArrangementFiles(arrangementId: number): Promise<PublicFile[]> {
-  return db
-    .select(PUBLIC_FILE_COLUMNS)
-    .from(files)
-    .where(and(eq(files.arrangementId, arrangementId), eq(files.isPublic, true)))
-    .orderBy(files.displayOrder);
+// ---------------------------------------------------------------------------
+// /arrangements/[id] (page, metadata and OG image)
+// ---------------------------------------------------------------------------
+
+/** The parent show as the detail page renders it: link, title and art. */
+export type ArrangementDetailShow = {
+  id: number;
+  title: string;
+  slug: string;
+  thumbnailUrl: string | null;
+  graphicUrl: string | null;
+  /** The show's first public image file: the art fallback after graphic/thumbnail. */
+  imageUrl: string | null;
+};
+
+export type ArrangementDetail = {
+  id: number;
+  title: string;
+  composer: string | null;
+  arranger: string | null;
+  percussionArranger: string | null;
+  description: string | null;
+  grade: string | null;
+  year: number | null;
+  durationSeconds: number | null;
+  scene: string | null;
+  ensembleSize: string | null;
+  commissioned: string | null;
+  sampleScoreUrl: string | null;
+  /** The first show (by order index) the arrangement belongs to, or null. */
+  show: ArrangementDetailShow | null;
+  /** Public files only, in display order. */
+  files: PublicFile[];
+  /** Source pieces in order: title and composer only, never licensing cost. */
+  pieces: { id: number; title: string; composer: string | null }[];
+};
+
+/**
+ * What /arrangements/[id] renders, in one relational query (Drizzle compiles
+ * the nested `with` into a single SQL statement with lateral joins).
+ */
+async function fetchArrangementDetail(id: number): Promise<ArrangementDetail | null> {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const row = await db.query.arrangements.findFirst({
+    where: eq(arrangements.id, id),
+    columns: {
+      id: true,
+      title: true,
+      composer: true,
+      arranger: true,
+      percussionArranger: true,
+      description: true,
+      grade: true,
+      year: true,
+      durationSeconds: true,
+      scene: true,
+      ensembleSize: true,
+      commissioned: true,
+      sampleScoreUrl: true,
+    },
+    with: {
+      showArrangements: {
+        columns: {},
+        // Same parent as getShowSlugForArrangement, so invalidation expires
+        // the show page this one links to.
+        orderBy: [asc(showArrangements.orderIndex)],
+        limit: 1,
+        with: {
+          show: {
+            columns: { id: true, title: true, slug: true, thumbnailUrl: true, graphicUrl: true },
+            with: {
+              files: {
+                columns: { url: true },
+                where: and(eq(files.isPublic, true), eq(files.fileType, 'image')),
+                orderBy: [asc(files.displayOrder)],
+                limit: 1,
+              },
+            },
+          },
+        },
+      },
+      files: {
+        columns: {
+          id: true,
+          fileName: true,
+          originalName: true,
+          fileType: true,
+          url: true,
+          isPublic: true,
+          description: true,
+          displayOrder: true,
+        },
+        where: eq(files.isPublic, true),
+        orderBy: [asc(files.displayOrder)],
+      },
+      arrangementPieces: {
+        columns: {},
+        orderBy: [asc(arrangementPieces.orderIndex)],
+        with: { piece: { columns: { id: true, title: true, composer: true } } },
+      },
+    },
+  });
+  if (!row) return null;
+
+  const { showArrangements: parents, files: fileRows, arrangementPieces: pieceRows, ...arrangement } = row;
+  const parent = parents[0]?.show ?? null;
+  return {
+    ...arrangement,
+    show: parent
+      ? {
+          id: parent.id,
+          title: parent.title,
+          slug: parent.slug,
+          thumbnailUrl: parent.thumbnailUrl,
+          graphicUrl: parent.graphicUrl,
+          imageUrl: parent.files[0]?.url ?? null,
+        }
+      : null,
+    files: fileRows,
+    pieces: pieceRows.map((p) => p.piece).filter((p): p is NonNullable<typeof p> => Boolean(p)),
+  };
 }
 
-/** An arrangement's public files (audio, art, scores), in display order. */
-export const getPublicArrangementFiles = cachedRead('arrangement-public-files-v2', fetchPublicArrangementFiles, {
-  tags: (arrangementId) => [TAGS.arrangements, TAGS.arrangement(arrangementId)],
-  atBuildWithoutDb: [] as PublicFile[],
+/**
+ * An arrangement's detail page data, or null. Tagged with everything it
+ * reads: the arrangement, its parent show (and that show's art files, which
+ * invalidate through `invalidateShow`), and its pieces.
+ */
+export const getArrangementDetail = cachedRead('arrangement-detail-v1', fetchArrangementDetail, {
+  tags: (id) => [TAGS.arrangement(id), TAGS.arrangements, TAGS.shows, TAGS.pieces],
+  atBuildWithoutDb: null as ArrangementDetail | null,
 });
 
 // ---------------------------------------------------------------------------

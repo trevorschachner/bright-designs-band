@@ -5,7 +5,7 @@
 
 import { db } from '@/lib/database';
 import { resources } from '@/lib/database/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, type SQL } from 'drizzle-orm';
 import { TAGS } from '@/lib/cache-tags';
 import { cachedRead, toIso } from './cache';
 
@@ -65,3 +65,24 @@ export async function getResourcesForAdmin(): Promise<ResourceRow[]> {
   const rows = await db.select(RESOURCE_COLUMNS).from(resources).orderBy(desc(resources.createdAt));
   return serialise(rows);
 }
+
+/** A route id is a numeric primary key or a slug. */
+function resourceWhere(idOrSlug: string): SQL {
+  return /^\d+$/.test(idOrSlug) ? eq(resources.id, Number(idOrSlug)) : eq(resources.slug, idOrSlug);
+}
+
+async function fetchResource(idOrSlug: string): Promise<ResourceRow | null> {
+  const [row] = await db.select(RESOURCE_COLUMNS).from(resources).where(resourceWhere(idOrSlug)).limit(1);
+  return row ? serialise([row])[0] : null;
+}
+
+/**
+ * One resource by id or slug, active or not, or null. Cached: the route
+ * decides who may see an inactive one (staff only, never publicly cached).
+ * Every resource write calls invalidateResources(), which expires this.
+ */
+export const getResource = cachedRead('resource-v1', fetchResource, {
+  tags: () => [TAGS.resources],
+  atBuildWithoutDb: null as ResourceRow | null,
+});
+

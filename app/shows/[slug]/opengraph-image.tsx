@@ -20,7 +20,7 @@ const logoBase64 = `data:image/png;base64,${readFileSync(logoPath).toString('bas
 export default async function Image({ params }: { params: { slug: string } }) {
   const { slug } = await params
 
-  // Handles slugs, loose slugs and numeric ids, like the page itself.
+  // The same cached exact-slug read as the page (lib/services/shows.ts).
   const show = (await getShowBySlug(slug))?.show ?? null
 
   const title = show?.title || 'Bright Designs Band'

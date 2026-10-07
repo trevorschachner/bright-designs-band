@@ -1,7 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { db } from '@/lib/database'
-import { arrangements } from '@/lib/database/schema'
-import { eq } from 'drizzle-orm'
+import { getArrangementDetail } from '@/lib/services/arrangements'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -23,10 +21,9 @@ export const contentType = 'image/png'
 export default async function Image({ params }: { params: { id: string } }) {
   const { id } = await params
 
-  const arr = await db.query.arrangements.findFirst({
-    where: eq(arrangements.id, parseInt(id, 10)),
-    columns: { title: true, composer: true, grade: true, ensembleSize: true },
-  })
+  // The page's own cached read: a card render costs no query when the page
+  // (or another card) has already loaded this arrangement.
+  const arr = /^\d+$/.test(id) ? await getArrangementDetail(Number(id)) : null
 
   // Fallback values
   const title = arr?.title || 'Custom Arrangement'

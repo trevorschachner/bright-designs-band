@@ -18,8 +18,11 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  // 2. Legacy Redirect: /shows/:id -> /shows/:slug
-  // Only attempt if env vars are present and valid (not placeholders)
+  // 2. Legacy Redirect: /shows/:id -> /shows/:slug (308)
+  // For old external links and bookmarks only: nothing on the site links to
+  // /shows/<id> any more, and the page itself matches exact slugs only
+  // (lib/services/shows.ts getShowBySlug). Only attempt if env vars are
+  // present and valid (not placeholders).
   const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig()
   const isValidConfig = Boolean(supabaseUrl && supabaseKey)
 

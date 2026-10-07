@@ -24,11 +24,18 @@ import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { createCreativeWorkSchema, createBreadcrumbSchema, createProductSchema, createVideoObjectSchema } from '@/lib/seo/structured-data'
-import { notFound } from 'next/navigation'
-import { Suspense } from 'react'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { normaliseSlug } from '@/lib/slug'
+import { cache } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
 
 export const revalidate = 3600;
+
+/**
+ * One show lookup per request: generateMetadata and the page both call this,
+ * and React's request cache dedupes them in front of the cached service read.
+ */
+const getShow = cache((slug: string) => getShowBySlug(slug))
 
 export async function generateStaticParams() {
   // Prerendering is an optimisation: a show missing here renders on first
@@ -43,8 +50,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   try {
-    // Same cached read as the page body, so this costs no extra query.
-    const showResult = await getShowBySlug(slug)
+    // Same per-request lookup as the page body, so this costs no extra query.
+    const showResult = await getShow(slug)
     const showRow = showResult?.show
     const tags = showResult?.showsToTags || []
 
@@ -89,9 +96,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ShowDetailBySlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const showResult = await getShowBySlug(slug)
+  const showResult = await getShow(slug)
 
   if (!showResult) {
+    // Old links in another case or with underscores: send them to the
+    // canonical form (no query; that URL does its own exact lookup).
+    const canonical = normaliseSlug(slug.replace(/_/g, '-'))
+    if (canonical && canonical !== slug) permanentRedirect(`/shows/${canonical}`)
     notFound()
   }
 
@@ -124,17 +135,15 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     return String(show.difficulty || '')
   })()
 
-  // Optimized: Fetch all arrangements with their files in a single query
-  // This eliminates N+1 queries - previously was 1 + N queries (N = number of arrangements)
-  // Now it's just 1 query total
-  const arrangements = await getShowArrangements(showId)
-  const piecesByArrangement = await getPublicPiecesByArrangementIds(arrangements.map((a) => a.id))
-
-  // Fetch show image files as fallback if graphicUrl/thumbnailUrl are not set
-  const showFiles = await getPublicShowFiles(showId)
-  const showImageFile = Array.isArray(showFiles) 
-    ? showFiles.find((f: any) => f.fileType === 'image' && f.isPublic) 
-    : null
+  // Everything below keys off the show id: the arrangements (then their
+  // source pieces) and the show's own files load in parallel.
+  const [[arrangements, piecesByArrangement], showFiles] = await Promise.all([
+    getShowArrangements(showId).then(async (rows) =>
+      [rows, await getPublicPiecesByArrangementIds(rows.map((a) => a.id))] as const
+    ),
+    getPublicShowFiles(showId),
+  ])
+  const showImageFile = showFiles.find((f) => f.fileType === 'image' && f.isPublic) ?? null
 
   // Determine display image: graphicUrl > thumbnailUrl > show image file > null
   const displayImageUrl = show.graphicUrl || show.thumbnailUrl || showImageFile?.url || null
