@@ -1,4 +1,9 @@
 import { PostHog } from 'posthog-node';
+import { getPosthogHost, getPosthogKey } from '@/lib/env';
+
+// posthog-node needs an absolute host; the public default (`/ingest`) is a
+// client-side rewrite and means nothing on the server.
+const SERVER_POSTHOG_HOST = 'https://us.i.posthog.com';
 
 /**
  * Reports a server-side error that the caller is deliberately swallowing.
@@ -26,15 +31,16 @@ function getClient(): PostHog | null {
   if (disabled) return null;
   if (client) return client;
 
-  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const key = getPosthogKey();
   if (!key) {
     // No key configured (local dev, CI, preview builds). Not an error.
     disabled = true;
     return null;
   }
 
+  const host = getPosthogHost(SERVER_POSTHOG_HOST);
   client = new PostHog(key, {
-    host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
+    host: host.startsWith('/') ? SERVER_POSTHOG_HOST : host,
     // Server rendering is short-lived; don't sit on events waiting for a batch
     // to fill, or the invocation ends before they flush.
     flushAt: 1,

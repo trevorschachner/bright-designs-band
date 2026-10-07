@@ -1,6 +1,7 @@
 import posthog from "posthog-js"
+import { getPosthogKey } from "@/lib/env"
 
-const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const posthogKey = getPosthogKey();
 const isDevelopment = process.env.NODE_ENV === "development";
 
 // Only initialize PostHog in production from this file

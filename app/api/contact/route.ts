@@ -6,18 +6,17 @@ import type { ServiceCategory } from '@/lib/email/types';
 import { contactSubmissionSchema, toServiceCategories } from '@/lib/validation/contact';
 import { consume, getClientIp } from '@/lib/rate-limit';
 import { verifyTurnstile } from '@/lib/turnstile';
+import { getEnv } from '@/lib/env';
 
 const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 
 const ADMIN_EMAIL_FALLBACK = 'hello@brightdesigns.band';
 const ADMIN_EMAIL_ADDRESS = 'hello@brightdesigns.band';
 const getAdminRecipients = (): string[] => {
-  const raw =
-    process.env.ADMIN_EMAIL_ADDRESSES ??
-    process.env.ADMIN_EMAIL ??
-    ADMIN_EMAIL_FALLBACK;
+  const env = getEnv();
+  if (env.ADMIN_EMAIL_ADDRESSES) return env.ADMIN_EMAIL_ADDRESSES;
 
-  return raw
+  return (env.ADMIN_EMAIL ?? ADMIN_EMAIL_FALLBACK)
     .split(',')
     .map(email => email.trim())
     .filter(Boolean);
