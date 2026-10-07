@@ -64,34 +64,21 @@ once per show.
 
 ## Live mirror: "Active Assets on Website" sheet
 
-    npm run sync:sheet              # write
-    npm run sync:sheet -- --dry-run # counts only
+The [Active Assets on Website](https://docs.google.com/spreadsheets/d/1KG86ojOiA8DgD2hISiyJVumnjmWe-6TDNcy4nSSHqPY/edit)
+sheet mirrors the site with no job or credentials: cell A1 of each tab is an
+`IMPORTDATA` formula pointing at a public CSV.
 
-Rewrites the Shows, Arrangements (parts), Pieces and links tabs of the
-[Active Assets on Website](https://docs.google.com/spreadsheets/d/1KG86ojOiA8DgD2hISiyJVumnjmWe-6TDNcy4nSSHqPY/edit)
-sheet from the database, plus a "Sync status" tab with the time and row
-counts. One-way: edits made in the sheet are overwritten. Same reader and
-column order as `export:shows`; values are written RAW, so nothing in a title
-can become a formula.
+| Tab | A1 |
+|---|---|
+| Shows | `=IMPORTDATA("https://brightdesigns.band/api/export/shows.csv")` |
+| Arrangements | `=IMPORTDATA("https://brightdesigns.band/api/export/parts.csv")` |
+| Pieces | `=IMPORTDATA("https://brightdesigns.band/api/export/pieces.csv")` |
+| links | `=IMPORTDATA("https://brightdesigns.band/api/export/links.csv")` |
 
-Runs daily at 10:00 UTC from `.github/workflows/sync-website-sheet.yml`, and
-on demand from the Actions tab ("Run workflow"). Repository secrets:
-
-- `SHEET_SYNC_DATABASE_URL`: a read-only Postgres role (setup below).
-- `GOOGLE_SERVICE_ACCOUNT_JSON`: key for a Google service account with the
-  Sheets API enabled. Share the sheet with its `client_email` as Editor.
-
-Read-only role, run once in the Supabase SQL editor (pick a password). Every
-one of these tables has row-level security, so the role needs `bypassrls`;
-it can still only `select`, and every session is read-only:
-
-```sql
-create role sheet_sync login bypassrls password '<password>';
-grant usage on schema public to sheet_sync;
-grant select on shows, arrangements, show_arrangements, files, pieces,
-  arrangement_pieces, tags, shows_to_tags to sheet_sync;
-alter role sheet_sync set default_transaction_read_only = on;
-```
-
-`SHEET_SYNC_DATABASE_URL` is the app's pooler URL with the user and password
-swapped: `postgresql://sheet_sync.<project-ref>:<password>@aws-0-us-east-2.pooler.supabase.com:6543/postgres`.
+`app/api/export/[file]/route.ts` serves them with the same reader and column
+order as `export:shows`, except Pieces is public-safe: `id, title, composer`
+only (copyright cost and licensing status stay in /admin and `export:shows`).
+The route caches for an hour and drops the cache when an admin edit
+revalidates `shows` or `arrangements`. Google refreshes IMPORTDATA on its own
+schedule, roughly hourly. The tabs are formula output: edit in /admin, not in
+the sheet.
