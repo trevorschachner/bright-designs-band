@@ -14,7 +14,8 @@ import { AudioPlayerComponent } from '@/components/features/audio-player'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
-import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles, getPublicFilesByShowId } from '@/lib/database/queries'
+import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles, getPublicFilesByShowId, getPublicPiecesByArrangementIds } from '@/lib/database/queries'
+import { SourcePieces } from '@/components/features/source-pieces'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
 import { ResaleCallout } from '@/components/features/resale-callout'
 import { arrangementContactHref } from '@/lib/contact-link'
@@ -176,6 +177,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   // This eliminates N+1 queries - previously was 1 + N queries (N = number of arrangements)
   // Now it's just 1 query total
   const arrangements = await getShowWithArrangementsAndFiles(showId)
+  const piecesByArrangement = await getPublicPiecesByArrangementIds(arrangements.map((a: any) => a.id))
 
   // Fetch show image files as fallback if graphicUrl/thumbnailUrl are not set
   const showFiles = await getPublicFilesByShowId(showId)
@@ -467,6 +469,12 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       {arrangement.description}
                     </p>
                   )}
+
+                  <SourcePieces
+                    part={arrangement}
+                    pieces={piecesByArrangement.get(arrangement.id)}
+                    className="mb-3 ml-12"
+                  />
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 ml-12">

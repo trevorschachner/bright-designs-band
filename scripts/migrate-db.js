@@ -60,6 +60,7 @@ child.stderr.on('data', (data) => {
 });
 
 child.on('close', (code) => {
+  clearTimeout(timeout);
   if (code === 0) {
     console.log('✅ Migration completed successfully!');
   } else {
@@ -72,8 +73,10 @@ child.on('close', (code) => {
   }
 });
 
-// Set a timeout to prevent hanging
-setTimeout(() => {
+// Set a timeout to prevent hanging. Cleared on close: left running, it held the
+// process open and then exited 1 after a successful migrate, which made
+// `npm run db:migrate` skip its second step.
+const timeout = setTimeout(() => {
   console.error('❌ Command timed out after 30 seconds');
   child.kill('SIGTERM');
   process.exit(1);
