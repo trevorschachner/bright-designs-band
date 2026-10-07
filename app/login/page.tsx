@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/utils/supabase/client'
+import { safeNext } from '@/lib/auth/safe-next'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -49,6 +50,7 @@ function LoginForm() {
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
+          shouldCreateUser: false,
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin`
         }
       })
@@ -84,7 +86,7 @@ function LoginForm() {
       } else {
         // Successful verification will set the session
         // Redirect to admin or next path
-        const next = searchParams.get('next') ?? '/admin'
+        const next = safeNext(searchParams.get('next'))
         setLoading(false)
         router.push(next)
       }

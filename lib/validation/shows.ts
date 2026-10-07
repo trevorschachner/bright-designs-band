@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createInsertSchema } from 'drizzle-zod';
-import { shows } from '@/lib/database/schema';
+import { shows, showDifficultyEnum } from '@/lib/database/schema';
 
 /**
  * Payload accepted by `POST /api/shows`.
@@ -46,13 +46,15 @@ const CREATABLE = {
  */
 const trimmed = (schema: z.ZodString) => schema.trim();
 
-export const showSchema = createInsertSchema(shows, {
+const showInsertSchema = createInsertSchema(shows, {
   title: schema => trimmed(schema).min(1, 'Title is required'),
   description: schema => trimmed(schema),
   duration: schema => trimmed(schema),
   thumbnailUrl: schema => trimmed(schema),
   videoUrl: schema => trimmed(schema),
-})
+});
+
+export const showSchema = showInsertSchema
   .pick(CREATABLE)
   .extend({
     /**
@@ -71,3 +73,59 @@ export const showSchema = createInsertSchema(shows, {
   });
 
 export type ShowInput = z.infer<typeof showSchema>;
+
+/**
+ * Payload accepted by `PUT /api/shows/[id]`.
+ *
+ * The handler used to spread the request body straight into `.set()`, so any
+ * column was writable, `id`, `createdAt` and `price` included. Every key is
+ * now optional (the editor sends a full snapshot, other callers send one or
+ * two fields) and any key not listed here is rejected.
+ *
+ * `price` is excluded deliberately: no editor sets it and it is not a field a
+ * show edit should be able to change. `id`, `createdAt` and `updatedAt` are
+ * server-owned.
+ *
+ * `slug` is accepted only when sent explicitly. It used to be recomputed from
+ * `title` on every save, so the editor's auto-save silently changed public
+ * URLs whenever a title was touched.
+ */
+const UPDATABLE = {
+  title: true,
+  description: true,
+  year: true,
+  difficulty: true,
+  duration: true,
+  thumbnailUrl: true,
+  videoUrl: true,
+  displayOrder: true,
+  featured: true,
+  youtubeUrl: true,
+  commissioned: true,
+  programCoordinator: true,
+  percussionArranger: true,
+  soundDesigner: true,
+  windArranger: true,
+  drillWriter: true,
+} as const;
+
+export const updateShowSchema = showInsertSchema
+  .pick(UPDATABLE)
+  .extend({
+    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase words separated by hyphens'),
+    /**
+     * The admin editor's difficulty select has an empty "Select difficulty..."
+     * option and sends `''` when nothing is chosen. `''` is not a value of the
+     * Postgres enum, so it is read as "no difficulty".
+     */
+    difficulty: z.preprocess(
+      value => (value === '' ? null : value),
+      z.enum(showDifficultyEnum.enumValues).nullable()
+    ),
+    /** Tag ids. When present they replace the show's tags; when absent tags are untouched. */
+    tags: z.array(z.number().int()),
+  })
+  .partial()
+  .strict();
+
+export type UpdateShowInput = z.infer<typeof updateShowSchema>;

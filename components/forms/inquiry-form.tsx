@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -21,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
+import { Turnstile, type TurnstileHandle } from "@/components/forms/turnstile"
 
 const inquiryFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -44,9 +46,13 @@ const inquiryFormSchema = z.object({
 
 type InquiryFormValues = z.infer<typeof inquiryFormSchema>
 
+// What callers post to /api/contact: the form values plus the Turnstile token
+// the route requires.
+export type InquirySubmission = InquiryFormValues & { turnstileToken: string }
+
 interface InquiryFormProps {
   showTitle?: string
-  onSubmit: (data: InquiryFormValues) => void
+  onSubmit: (data: InquirySubmission) => void | Promise<void>
   isLoading: boolean
   isGeneralInquiry?: boolean
 }
@@ -78,6 +84,20 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
     },
   })
 
+  const turnstileRef = useRef<TurnstileHandle>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+
+  // Tokens are single-use, so the widget is reset after every attempt; on
+  // success the callers unmount or navigate away, on failure the user can
+  // retry with a fresh token.
+  const submit = async (values: InquiryFormValues) => {
+    try {
+      await onSubmit({ ...values, turnstileToken: turnstileToken ?? "" })
+    } finally {
+      turnstileRef.current?.reset()
+    }
+  }
+
   const referralSource = form.watch("referralSource")
   const showReferralBandDirector = referralSource === "band-director"
 
@@ -86,7 +106,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(submit)} className="space-y-8">
         <FormField
           control={form.control}
           name="showInterest"
@@ -351,7 +371,8 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
           />
         )}
         <div className="pt-10 mt-2 wireframe-border-dashed border-t">
-          <Button type="submit" disabled={isLoading} className="btn-wireframe-primary w-full h-12 text-sm uppercase tracking-wide">
+          <Turnstile ref={turnstileRef} onToken={setTurnstileToken} className="mb-4" />
+          <Button type="submit" disabled={isLoading || turnstileToken === null} className="btn-wireframe-primary w-full h-12 text-sm uppercase tracking-wide">
             {isLoading ? (
               <span className="inline-flex items-center">
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...

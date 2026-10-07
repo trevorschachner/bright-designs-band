@@ -32,6 +32,18 @@ export function SuccessResponse<T>(data: T, status: number = 200, cacheMaxAge: n
   );
 }
 
+/**
+ * Same envelope as SuccessResponse, for bodies that depend on who is asking.
+ * SuccessResponse is cached publicly and varies only on the query string, so a
+ * session-dependent body sent through it can be served to the wrong visitor.
+ */
+export function PrivateResponse<T>(data: T, status: number = 200): NextResponse<ApiResponse<T>> {
+  return NextResponse.json(
+    { success: true, data },
+    { status, headers: { 'Cache-Control': 'private, no-store' } }
+  );
+}
+
 export function ErrorResponse(
   error: string = 'Internal server error',
   status: number = 500,

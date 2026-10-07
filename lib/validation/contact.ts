@@ -46,6 +46,10 @@ export const contactSubmissionSchema = z.object({
   // them through without a cast.
   services: z.array(z.string()).max(50).optional(),
   showPlan: z.array(z.string()).max(50).optional(),
+  // Cloudflare Turnstile response from the widget. Required on every form
+  // that posts here; verified server-side before anything is stored or sent.
+  // Stripped by the handler before persistence or email.
+  turnstileToken: z.string().min(1).max(2048),
 })
 
 export type ContactSubmission = z.infer<typeof contactSubmissionSchema>

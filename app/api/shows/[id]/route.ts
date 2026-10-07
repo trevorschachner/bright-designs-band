@@ -1,21 +1,31 @@
-import { shows, showsToTags, showArrangements, arrangementsToTags } from '@/lib/database/schema';
-import { eq, sql } from 'drizzle-orm';
+import { shows, showsToTags, showArrangements } from '@/lib/database/schema';
+import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
 import { revalidateTag } from 'next/cache';
 import { withDb } from '@/lib/utils/db';
+import { updateShowSchema } from '@/lib/validation/shows';
+import { BadRequestResponse, ErrorResponse, NotFoundResponse } from '@/lib/utils/api-helpers';
 
 // Cache show detail responses for 1 hour
 export const revalidate = 3600;
+
+/**
+ * A route `id` is either a numeric primary key or an exact slug. There is no
+ * fuzzy fallback: the old `slug LIKE '<id>-%'` match could resolve to, and then
+ * update, a different show. All digits means id, so a slug that starts with a
+ * number (`1984-show`) is still looked up as a slug.
+ */
+function showWhere(id: string) {
+  return /^\d+$/.test(id) ? eq(shows.id, Number(id)) : eq(shows.slug, id);
+}
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return withDb(async (db) => {
     try {
-      const idNum = Number.parseInt(id, 10);
-      const isNumeric = Number.isFinite(idNum);
       const show = await db.query.shows.findFirst({
-        where: isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id),
+        where: showWhere(id),
         // Select all columns including extended fields
         columns: {
           id: true,
@@ -100,146 +110,69 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const gate = await guard('canManageShows');
   if (gate.denied) return gate.denied;
 
-  const body = await request.json();
-  const { tags: tagIds, ...showData } = body;
-  
-  console.log('PUT /api/shows/' + id, 'Received body:', JSON.stringify(body, null, 2));
-
-  // Basic validation for required fields on update
-  if ('title' in showData) {
-    const t = typeof showData.title === 'string' ? showData.title.trim() : '';
-    if (!t) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-    }
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return BadRequestResponse([{ path: [], message: 'Body must be valid JSON' }]);
   }
 
-  console.log('PUT /api/shows/' + id, 'Received data:', JSON.stringify(showData, null, 2));
-  console.log('PUT /api/shows/' + id, 'Tag IDs:', tagIds);
+  const parsed = updateShowSchema.safeParse(body);
+  if (!parsed.success) {
+    return BadRequestResponse(
+      parsed.error.issues.map(issue => ({ path: issue.path, message: issue.message }))
+    );
+  }
+
+  const { tags: tagIds, ...fields } = parsed.data;
 
   return withDb(async (db) => {
     try {
-      const updatedShow = await db.transaction(async (tx: any) => {
-        console.log('PUT /api/shows/' + id, 'Updating show with data:', JSON.stringify(showData, null, 2));
+      const result = await db.transaction(async (tx: any) => {
+        const [found] = await tx.select({ id: shows.id }).from(shows).where(showWhere(id)).limit(1);
+        if (!found) return { status: 'not_found' as const };
+        const showId: number = found.id;
 
-        // First, find the show by ID or slug
-        const idNum = Number.parseInt(id, 10);
-        const isNumeric = Number.isFinite(idNum);
-        
-        let showToUpdate: { id: number } | null = null;
-        
-        if (isNumeric) {
-          // If numeric ID, find by ID
-          const found = await tx
+        if (fields.slug !== undefined) {
+          const [holder] = await tx
             .select({ id: shows.id })
             .from(shows)
-            .where(eq(shows.id, idNum))
+            .where(eq(shows.slug, fields.slug))
             .limit(1);
-          if (Array.isArray(found) && found[0]) {
-            showToUpdate = found[0];
-          }
-        } else {
-          // If slug, try exact match first
-          let found = await tx
-            .select({ id: shows.id })
-            .from(shows)
-            .where(eq(shows.slug, id))
-            .limit(1);
-          
-          // If not found, try case-insensitive match with underscore/hyphen variations
-          if (!found || !Array.isArray(found) || found.length === 0) {
-            const result = await tx.execute(sql`
-              SELECT id
-              FROM shows
-              WHERE LOWER(slug) = LOWER(${id})
-                 OR LOWER(REPLACE(slug, '_', '-')) = LOWER(REPLACE(${id}, '_', '-'))
-                 OR LOWER(REPLACE(slug, '-', '_')) = LOWER(REPLACE(${id}, '-', '_'))
-                 OR slug LIKE ${id + '-%'}
-              LIMIT 1
-            `);
-            if (Array.isArray(result) && result.length > 0) {
-              found = [{ id: Number((result[0] as any).id) }];
-            }
-          }
-          
-          if (Array.isArray(found) && found[0]) {
-            showToUpdate = found[0];
-          }
-        }
-        
-        if (!showToUpdate) {
-          throw new Error('Show not found');
-        }
-        
-        const showId = showToUpdate.id;
-
-        // Compute slug from provided title (server-authoritative)
-        const sourceTitle: string | undefined = showData.title as string | undefined;
-        const slugFrom = (sourceTitle || '').toString();
-        let slug = slugFrom
-          ? slugFrom
-              .toLowerCase()
-              .normalize('NFKD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-+|-+$/g, '')
-          : undefined;
-
-        // Ensure slug uniqueness if we are updating it
-        if (slug) {
-          const existingWithSlug = await tx
-            .select({ id: shows.id })
-            .from(shows)
-            .where(eq(shows.slug, slug))
-            .limit(1);
-          const conflict = Array.isArray(existingWithSlug) && existingWithSlug[0] && existingWithSlug[0].id !== showId;
-          if (conflict) {
-            slug = `${slug}-${showId}`;
-          }
+          if (holder && holder.id !== showId) return { status: 'slug_taken' as const };
         }
 
-        const payload = { ...showData, ...(slug ? { slug } : {}) };
-
-        // Update by ID (we now have the actual ID)
         const [updated] = await tx
           .update(shows)
-          .set(payload)
+          .set({ ...fields, updatedAt: new Date() })
           .where(eq(shows.id, showId))
           .returning();
-        
-        console.log('PUT /api/shows/' + id, 'Update result:', updated ? 'Success' : 'No rows updated');
-        console.log('PUT /api/shows/' + id, 'Updated show:', JSON.stringify(updated, null, 2));
-        
-        if (!updated) {
-          throw new Error('Show not found');
-        }
-        
-        await tx.delete(showsToTags).where(eq(showsToTags.showId, updated.id));
-        console.log('PUT /api/shows/' + id, 'Deleted existing tags');
 
-        if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
-          await tx.insert(showsToTags).values(
-            tagIds.map((tagId: number) => ({
-              showId: updated.id,
-              tagId,
-            }))
-          );
-          console.log('PUT /api/shows/' + id, 'Inserted', tagIds.length, 'tags');
+        if (tagIds !== undefined) {
+          await tx.delete(showsToTags).where(eq(showsToTags.showId, showId));
+          const unique = [...new Set(tagIds)];
+          if (unique.length > 0) {
+            await tx.insert(showsToTags).values(unique.map(tagId => ({ showId, tagId })));
+          }
         }
-        
-        return updated;
+
+        return { status: 'ok' as const, updated };
       });
 
-      console.log('PUT /api/shows/' + id, 'Transaction completed successfully');
+      if (result.status === 'not_found') return NotFoundResponse('Show');
+      if (result.status === 'slug_taken') return ErrorResponse('Slug is already in use', 409);
+
       // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
       revalidateTag('shows');
-      return NextResponse.json(updatedShow);
-    } catch (error: any) {
-      console.error('PUT /api/shows/' + id, 'Error updating show:', error);
-      console.error('PUT /api/shows/' + id, 'Error stack:', error?.stack);
-      return NextResponse.json({ 
-        error: 'Failed to update show', 
-        details: error?.message || String(error) 
-      }, { status: 500 });
+      return NextResponse.json(result.updated);
+    } catch (error) {
+      // The slug check above can lose a race with a concurrent write; the
+      // unique index is the backstop.
+      if ((error as { code?: string })?.code === '23505') {
+        return ErrorResponse('Slug is already in use', 409);
+      }
+      console.error(`PUT /api/shows/${id} failed:`, error instanceof Error ? error.message : String(error));
+      return ErrorResponse('Failed to update show');
     }
   });
 }
@@ -250,14 +183,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (gate.denied) return gate.denied;
 
   return withDb(async (db) => {
-    const idNum = Number.parseInt(id, 10);
-    const isNumeric = Number.isFinite(idNum);
-    const deletedShow = await db
-      .delete(shows)
-      .where(isNumeric ? eq(shows.id, idNum) : eq(shows.slug, id))
-      .returning();
+    const deletedShow = await db.delete(shows).where(showWhere(id)).returning();
+    if (!Array.isArray(deletedShow) || deletedShow.length === 0) {
+      return NotFoundResponse('Show');
+    }
     // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
     revalidateTag('shows');
     return NextResponse.json(deletedShow);
   });
-} 
+}

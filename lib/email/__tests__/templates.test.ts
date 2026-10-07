@@ -110,10 +110,102 @@ describe('Email Templates', () => {
 
       const result = generateCustomerConfirmationTemplate(data);
       
-      // Check that name is present
+      // The first name is the only part of the name the confirmation uses
       expect(result.html).toContain('John');
-      expect(result.html).toContain('Doe');
       expect(result.text).toContain('John');
+    });
+
+    it('does not echo the submitter\'s free text back to them', () => {
+      // This email goes to whatever address was submitted. Anything the
+      // submitter typed would make it a relay for content from our domain.
+      const data: ContactFormData = {
+        firstName: 'Jane',
+        lastName: 'LASTNAME-SPAM-PAYLOAD',
+        email: 'jane@example.com',
+        services: ['drill-design'],
+        message: 'BUY CHEAP PILLS at spam.example',
+        instrumentation: 'NOTES-SPAM-PAYLOAD',
+        school: 'SCHOOL-SPAM-PAYLOAD',
+        referralSource: 'REFERRAL-SPAM-PAYLOAD',
+        referralBandDirector: 'DIRECTOR-SPAM-PAYLOAD',
+        bandSize: 'BANDSIZE-SPAM-PAYLOAD',
+        abilityLevel: 'ABILITY-SPAM-PAYLOAD',
+        showInterest: 'TOPIC-SPAM-PAYLOAD',
+        privacyAgreed: true,
+      };
+
+      const result = generateCustomerConfirmationTemplate(data, 'inquiry');
+
+      for (const payload of [
+        'BUY CHEAP PILLS', 'NOTES-SPAM-PAYLOAD', 'SCHOOL-SPAM-PAYLOAD', 'REFERRAL-SPAM-PAYLOAD',
+        'DIRECTOR-SPAM-PAYLOAD', 'BANDSIZE-SPAM-PAYLOAD', 'ABILITY-SPAM-PAYLOAD',
+        'TOPIC-SPAM-PAYLOAD', 'LASTNAME-SPAM-PAYLOAD',
+      ]) {
+        expect(result.html).not.toContain(payload);
+        expect(result.text).not.toContain(payload);
+      }
+      expect(result.text).toContain('24 hours');
+      expect(result.html).toContain('Drill Design');
+    });
+
+    it('never includes a URL-bearing topic', () => {
+      const data: ContactFormData = {
+        firstName: 'Jane',
+        lastName: 'Smith',
+        email: 'jane@example.com',
+        services: [],
+        message: '',
+        showInterest: '<strong>Claim your prize at evil.example/x</strong>',
+        privacyAgreed: true,
+      };
+
+      for (const kind of ['inquiry', 'contact', 'resource_download'] as const) {
+        const result = generateCustomerConfirmationTemplate(data, kind);
+        for (const body of [result.html, result.text]) {
+          expect(body).not.toContain('evil.example');
+          expect(body).not.toContain('Claim your prize');
+        }
+      }
+    });
+
+    it('names the submission with a fixed phrase per kind', () => {
+      const data: ContactFormData = {
+        firstName: 'Jane', lastName: '', email: 'jane@example.com',
+        services: [], message: '', privacyAgreed: true,
+      };
+      expect(generateCustomerConfirmationTemplate(data, 'inquiry').text).toContain("We've received your show inquiry")
+      expect(generateCustomerConfirmationTemplate(data, 'contact').text).toContain("We've received your message")
+      expect(generateCustomerConfirmationTemplate(data, 'resource_download').text).toContain("We've received your guide request")
+      expect(generateCustomerConfirmationTemplate(data).text).toContain("We've received your message")
+    });
+
+    it('strips the first name to letters, spaces, apostrophes and hyphens', () => {
+      const base: ContactFormData = {
+        firstName: '', lastName: '', email: 'jane@example.com',
+        services: [], message: '', privacyAgreed: true,
+      };
+      const greet = (firstName: string) =>
+        generateCustomerConfirmationTemplate({ ...base, firstName }).text
+
+      expect(greet("Mary-Jane O'Neil")).toContain("Hi Mary-Jane O'Neil,")
+      expect(greet('José')).toContain('Hi José,')
+      // The body has our own links, so check the greeting line itself.
+      const greeting = greet('https://evil.example/x').split('\n').find((l) => l.startsWith('Hi '))
+      expect(greeting).toBe('Hi httpsevilexamplex,')
+      expect(greet('<@1234./>')).toContain('Hi there,')
+      expect(greet('')).toContain('Hi there,')
+      expect(greet('N'.repeat(300))).not.toContain('N'.repeat(51))
+    });
+
+    it('drops service values that are not known categories', () => {
+      const data = {
+        firstName: 'Jane', lastName: '', email: 'jane@example.com',
+        services: ['drill-design', 'visit evil.example'], message: '', privacyAgreed: true,
+      } as unknown as ContactFormData;
+      const result = generateCustomerConfirmationTemplate(data);
+      expect(result.html).toContain('Drill Design');
+      expect(result.html).not.toContain('evil.example');
+      expect(result.text).not.toContain('evil.example');
     });
 
     it('should handle minimal required data without crashing', () => {

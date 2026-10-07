@@ -49,7 +49,6 @@ export const arrangements = pgTable('arrangements', {
   durationSeconds: integer('duration_seconds'),
   description: text('description'),
   percussionArranger: text('percussion_arranger'),
-  copyrightAmountUsd: numeric('copyright_amount_usd', { precision: 10, scale: 2 }),
   ensembleSize: ensembleSizeEnum('ensemble_size'),
   scene: arrangementSceneEnum('scene'),
   youtubeUrl: text('youtube_url'),
@@ -260,6 +259,16 @@ export const contactSubmissions = pgTable('contact_submissions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Per-IP counters for the public contact form (lib/rate-limit.ts). RLS is on
+// with no policies; only the server writes it, over DATABASE_URL.
+export const contactRateLimits = pgTable('contact_rate_limits', {
+  ip: text('ip').notNull(),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+  count: integer('count').notNull().default(0),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.ip, table.windowStart] }),
+}));
 
 export const contactSubmissionsRelations = relations(contactSubmissions, ({ one }) => ({
   interestedShow: one(shows, {

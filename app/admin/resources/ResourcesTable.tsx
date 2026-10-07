@@ -44,6 +44,7 @@ export default function ResourcesTable() {
   return (
     <AdminTable<Resource>
       endpoint="/api/resources"
+      listQuery="all=true"
       columns={columns}
       resourceName="resources"
     />

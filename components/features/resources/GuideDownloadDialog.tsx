@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Download, Loader2, CheckCircle } from 'lucide-react';
+import { Turnstile, type TurnstileHandle } from '@/components/forms/turnstile';
 
 interface GuideDownloadDialogProps {
   resourceId: number;
@@ -24,6 +25,8 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const turnstileRef = useRef<TurnstileHandle>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,6 +47,7 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
           type: 'resource_download',
           resourceId,
           resourceTitle,
+          turnstileToken: turnstileToken ?? '',
         }),
       });
 
@@ -75,6 +79,8 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
     } catch (error) {
       console.error('Error submitting form:', error);
     } finally {
+      // Tokens are single-use; get a fresh one for any retry.
+      turnstileRef.current?.reset();
       setIsLoading(false);
     }
   };
@@ -152,7 +158,9 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Turnstile ref={turnstileRef} onToken={setTurnstileToken} />
+
+            <Button type="submit" className="w-full" disabled={isLoading || turnstileToken === null}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

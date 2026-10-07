@@ -10,14 +10,14 @@ import Link from 'next/link'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect('/login')
   }
 
-  const userRole = getUserRole(session.user.email || '')
-  const permissions = getUserPermissions(session.user.email || '')
+  const userRole = getUserRole(user.email || '')
+  const permissions = getUserPermissions(user.email || '')
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -55,16 +55,16 @@ export default async function ProfilePage() {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={session.user.user_metadata?.avatar_url} alt={session.user.email} />
+                  <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
                   <AvatarFallback className="text-lg">
-                    {session.user.email?.charAt(0).toUpperCase()}
+                    {user.email?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
                   <h3 className="text-lg font-semibold">
-                    {session.user.user_metadata?.full_name || session.user.email}
+                    {user.user_metadata?.full_name || user.email}
                   </h3>
-                  <p className="text-muted-foreground">{session.user.email}</p>
+                  <p className="text-muted-foreground">{user.email}</p>
                   <Badge className={getRoleBadgeColor(userRole)}>
                     <Shield className="w-3 h-3 mr-1" />
                     {userRole.toUpperCase()}
@@ -75,15 +75,15 @@ export default async function ProfilePage() {
                 <div className="flex items-center space-x-2">
                   <Mail className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Email verified</span>
-                  <Badge variant={session.user.email_confirmed_at ? 'default' : 'secondary'}>
-                    {session.user.email_confirmed_at ? 'Yes' : 'No'}
+                  <Badge variant={user.email_confirmed_at ? 'default' : 'secondary'}>
+                    {user.email_confirmed_at ? 'Yes' : 'No'}
                   </Badge>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Member since</span>
                   <span className="text-sm font-medium">
-                    {formatDate(session.user.created_at)}
+                    {formatDate(user.created_at)}
                   </span>
                 </div>
               </div>

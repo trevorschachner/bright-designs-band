@@ -75,3 +75,17 @@ const isSupabaseEnvMasked =
 export const shouldSkipSupabase = (): boolean =>
   Boolean(isNetlifyBuild && isSupabaseEnvMasked)
 
+
+// Cloudflare's documented always-pass test site key. Used only outside
+// production so local dev works without a Cloudflare account; the matching
+// server-side behaviour is in lib/turnstile.ts.
+const TURNSTILE_TEST_SITE_KEY = '1x00000000000000000000AA'
+
+// NEXT_PUBLIC_* is inlined at build time only when read as a literal
+// `process.env.NEXT_PUBLIC_…` expression, which this does.
+export const getTurnstileSiteKey = (): string | null =>
+  sanitizeSecretString(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) ??
+  (process.env.NODE_ENV === 'production' ? null : TURNSTILE_TEST_SITE_KEY)
+
+export const getTurnstileSecret = (): string | null =>
+  sanitizeSecretString(process.env.TURNSTILE_SECRET_KEY)

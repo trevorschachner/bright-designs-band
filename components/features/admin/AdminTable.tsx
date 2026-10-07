@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { buildDeleteUrl, buildListUrl } from './admin-table-urls';
 
 export interface ColumnDef<T> {
   header: string;
@@ -47,12 +48,15 @@ export interface ColumnDef<T> {
 
 interface AdminTableProps<T> {
   endpoint: string;
+  /** Fixed query string for list requests only, e.g. "all=true". */
+  listQuery?: string;
   columns: ColumnDef<T>[];
   resourceName: string;
 }
 
 export default function AdminTable<T extends { id: number }>({
   endpoint,
+  listQuery,
   columns,
   resourceName,
 }: AdminTableProps<T>) {
@@ -75,9 +79,7 @@ export default function AdminTable<T extends { id: number }>({
       setLoading(true);
       setError(null);
       
-      // Determine separator for query params
-      const separator = endpoint.includes('?') ? '&' : '?';
-      const url = `${endpoint}${separator}page=${page}&limit=${limit}`;
+      const url = buildListUrl(endpoint, listQuery, page, limit);
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -145,7 +147,7 @@ export default function AdminTable<T extends { id: number }>({
     } finally {
       setLoading(false);
     }
-  }, [endpoint, resourceName]);
+  }, [endpoint, listQuery, resourceName]);
 
   useEffect(() => {
     fetchData(pagination.page, pagination.limit);
@@ -174,7 +176,7 @@ export default function AdminTable<T extends { id: number }>({
       setIsDeleting(true);
       // Determine the delete endpoint URL
       // If endpoint is /api/shows, we want /api/shows/[id]
-      const deleteUrl = `${endpoint}/${id}`;
+      const deleteUrl = buildDeleteUrl(endpoint, id);
       
       const response = await fetch(deleteUrl, {
         method: 'DELETE',

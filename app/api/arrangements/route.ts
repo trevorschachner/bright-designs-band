@@ -62,6 +62,25 @@ export async function GET(request: Request) {
           offset,
           where: finalWhereClause,
           orderBy,
+          // Explicit columns: never ship copyright cost or other internal
+          // fields on a public, edge-cached route.
+          columns: {
+            id: true,
+            title: true,
+            composer: true,
+            arranger: true,
+            percussionArranger: true,
+            description: true,
+            grade: true,
+            year: true,
+            durationSeconds: true,
+            scene: true,
+            ensembleSize: true,
+            youtubeUrl: true,
+            commissioned: true,
+            sampleScoreUrl: true,
+            displayOrder: true,
+          },
           with: {
             files: {
               where: (files: any, { eq }: any) => eq(files.isPublic, true),
@@ -161,7 +180,6 @@ export async function POST(request: Request) {
     if (rest.youtubeUrl !== undefined) arrangementData.youtubeUrl = rest.youtubeUrl;
     if (rest.commissioned !== undefined) arrangementData.commissioned = rest.commissioned;
     if (rest.sampleScoreUrl !== undefined) arrangementData.sampleScoreUrl = rest.sampleScoreUrl;
-    if (rest.copyrightAmountUsd !== undefined) arrangementData.copyrightAmountUsd = rest.copyrightAmountUsd ? Number(rest.copyrightAmountUsd) : null;
     // Use the destructured displayOrder, not rest.displayOrder (which is undefined)
     if (displayOrder !== undefined) arrangementData.displayOrder = displayOrder ? Number(displayOrder) : 0;
 

@@ -40,7 +40,6 @@ export default function EditShowPage() {
     youtubeUrl: '',
     commissioned: '',
     sampleScoreUrl: '',
-    copyrightAmountUsd: '',
     displayOrder: '',
     // Default Wind Arranger
     windArranger: 'Brighton Barrineau, Trevor Schachner',
@@ -239,7 +238,6 @@ export default function EditShowPage() {
         youtubeUrl: newArrangement.youtubeUrl || null,
         commissioned: newArrangement.commissioned || null,
         sampleScoreUrl: newArrangement.sampleScoreUrl || null,
-        copyrightAmountUsd: newArrangement.copyrightAmountUsd ? Number(newArrangement.copyrightAmountUsd) : null,
         displayOrder: newArrangement.displayOrder ? Number(newArrangement.displayOrder) : undefined,
         showId: show?.id,
         tags: selectedArrangementTags,
@@ -267,7 +265,6 @@ export default function EditShowPage() {
           youtubeUrl: '',
           commissioned: '',
           sampleScoreUrl: '',
-          copyrightAmountUsd: '',
           displayOrder: '',
           windArranger: 'Brighton Barrineau, Trevor Schachner', // Reset default
         });
@@ -304,7 +301,6 @@ export default function EditShowPage() {
       youtubeUrl: arrangement.youtubeUrl || arrangement.youtube_url || '',
       commissioned: arrangement.commissioned || '',
       sampleScoreUrl: arrangement.sampleScoreUrl || arrangement.sample_score_url || '',
-      copyrightAmountUsd: arrangement.copyrightAmountUsd || arrangement.copyright_amount_usd || '',
       displayOrder: arrangement.displayOrder || arrangement.display_order || 0,
     });
     setSelectedArrangementTags((arrangement.tags || []).map((t: any) => t.id));
@@ -329,7 +325,6 @@ export default function EditShowPage() {
         youtube_url: editingArrangementData.youtubeUrl || null,
         commissioned: editingArrangementData.commissioned || null,
         sample_score_url: editingArrangementData.sampleScoreUrl || null,
-        copyright_amount_usd: editingArrangementData.copyrightAmountUsd ? Number(editingArrangementData.copyrightAmountUsd) : null,
         display_order: editingArrangementData.displayOrder ? Number(editingArrangementData.displayOrder) : 0,
         show_id: show?.id,
         tags: selectedArrangementTags,
@@ -975,16 +970,6 @@ export default function EditShowPage() {
                       onChange={(e) => setNewArrangement({ ...newArrangement, displayOrder: e.target.value })} 
                     />
                   </div>
-                  <div>
-                    <label className="block mb-2 text-sm font-medium">Copyright Amount (USD)</label>
-                    <input 
-                      className="w-full p-2 border rounded" 
-                      type="number" 
-                      step="0.01"
-                      value={newArrangement.copyrightAmountUsd} 
-                      onChange={(e) => setNewArrangement({ ...newArrangement, copyrightAmountUsd: e.target.value })} 
-                    />
-                  </div>
                   <div className="md:col-span-2">
                     <label className="block mb-2 text-sm font-medium">Description</label>
                     <textarea 
@@ -1067,7 +1052,6 @@ export default function EditShowPage() {
                         youtubeUrl: '',
                         commissioned: '',
                         sampleScoreUrl: '',
-                        copyrightAmountUsd: '',
                         displayOrder: '',
                         windArranger: 'Brighton Barrineau, Trevor Schachner', // Reset default
                       });
@@ -1226,16 +1210,6 @@ export default function EditShowPage() {
                           type="number" 
                           value={editingArrangementData?.displayOrder || 0} 
                           onChange={(e) => setEditingArrangementData({ ...editingArrangementData, displayOrder: e.target.value })} 
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-2 text-sm font-medium">Copyright Amount (USD)</label>
-                        <input 
-                          className="w-full p-2 border rounded" 
-                          type="number" 
-                          step="0.01"
-                          value={editingArrangementData?.copyrightAmountUsd || ''} 
-                          onChange={(e) => setEditingArrangementData({ ...editingArrangementData, copyrightAmountUsd: e.target.value })} 
                         />
                       </div>
                       <div className="md:col-span-2">

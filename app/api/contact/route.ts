@@ -4,6 +4,10 @@ import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } fr
 import { contactSubmissions } from '@/lib/database/schema';
 import type { ServiceCategory } from '@/lib/email/types';
 import { contactSubmissionSchema, toServiceCategories } from '@/lib/validation/contact';
+import { consume, getClientIp } from '@/lib/rate-limit';
+import { verifyTurnstile } from '@/lib/turnstile';
+
+const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 
 const ADMIN_EMAIL_FALLBACK = 'hello@brightdesigns.band';
 const ADMIN_EMAIL_ADDRESS = 'hello@brightdesigns.band';
@@ -34,7 +38,12 @@ async function sendEmailOrThrow(
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Bad request' }, { status: 400 });
+    }
     // Validate everything before it leaves this process: `email` reaches both
     // a DB insert and sendEmail's `to:`.
     const validated = contactSubmissionSchema.safeParse(body);
@@ -44,9 +53,28 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Order matters: the rate limit runs before Turnstile so a flood of bad
+    // tokens cannot make us call Cloudflare without bound, and both run
+    // before anything is stored or emailed.
+    const ip = getClientIp(request.headers);
+    const limit = await consume(ip, RATE_LIMIT);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many submissions. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+      );
+    }
+
     // Read every field from the validated payload — reading passthrough
     // fields off the raw body is what made the schema's constraints decorative.
-    const rest = validated.data;
+    // The Turnstile token is split off here so it is never persisted or
+    // passed to an email template.
+    const { turnstileToken, ...rest } = validated.data;
+    if (!(await verifyTurnstile(turnstileToken, ip))) {
+      return NextResponse.json({ error: 'Verification failed' }, { status: 400 });
+    }
+
     const { name, email, message, type } = rest;
     const formSource = typeof rest.source === 'string' ? rest.source : undefined;
     const submissionSource =
@@ -68,7 +96,7 @@ export async function POST(request: NextRequest) {
         privacyAgreed: true, // Assuming consent is given by submitting
         source: submissionSource,
         status: 'new',
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+        ipAddress: ip,
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
     } catch (dbError) {
@@ -111,7 +139,7 @@ export async function POST(request: NextRequest) {
         replyTo: email,
       }, 'admin inquiry notification');
 
-      const confirmation = generateCustomerConfirmationTemplate(emailData);
+      const confirmation = generateCustomerConfirmationTemplate(emailData, 'inquiry');
 
       await sendEmailOrThrow({
         to: email,
@@ -180,7 +208,7 @@ export async function POST(request: NextRequest) {
         replyTo: email,
       }, 'admin general contact notification');
 
-      const confirmation = generateCustomerConfirmationTemplate(emailData);
+      const confirmation = generateCustomerConfirmationTemplate(emailData, 'contact');
 
       await sendEmailOrThrow({
         to: email,
@@ -191,8 +219,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("Error processing contact form:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error('[contact] Error processing contact form:', error);
+    return NextResponse.json(
+      { error: 'Something went wrong. Please try again later.' },
+      { status: 500 }
+    );
   }
 }
