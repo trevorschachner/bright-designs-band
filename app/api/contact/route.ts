@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         replyTo: email,
       }, 'admin inquiry notification');
 
-      const confirmation = generateCustomerConfirmationTemplate(emailData);
+      const confirmation = generateCustomerConfirmationTemplate(emailData, 'inquiry');
 
       await sendEmailOrThrow({
         to: email,
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
         replyTo: email,
       }, 'admin general contact notification');
 
-      const confirmation = generateCustomerConfirmationTemplate(emailData);
+      const confirmation = generateCustomerConfirmationTemplate(emailData, 'contact');
 
       await sendEmailOrThrow({
         to: email,

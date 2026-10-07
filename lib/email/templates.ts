@@ -343,12 +343,34 @@ Please respond within 24 hours.
   return { html, text };
 }
 
-const capConfirmationText = (value: string | undefined, max: number): string => {
-  const trimmed = (value ?? '').replace(/\s+/g, ' ').trim();
-  return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
+/** Which kind of submission a confirmation acknowledges. */
+export type ConfirmationKind = 'inquiry' | 'contact' | 'resource_download';
+
+// Fixed phrases: the confirmation never names the topic the submitter typed.
+const CONFIRMATION_SUBJECTS: Record<ConfirmationKind, string> = {
+  inquiry: 'your show inquiry',
+  contact: 'your message',
+  resource_download: 'your guide request',
 };
 
-export function generateCustomerConfirmationTemplate(data: ContactFormData): { html: string; text: string } {
+/**
+ * The submitter's first name reduced to letters, spaces, apostrophes and
+ * hyphens, so no URL, address or markup can survive into the greeting.
+ */
+const confirmationFirstName = (value: string | undefined): string => {
+  const cleaned = (value ?? '')
+    .replace(/[^\p{L}\p{M}\s'’-]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 50)
+    .trim();
+  return /\p{L}/u.test(cleaned) ? cleaned : 'there';
+};
+
+export function generateCustomerConfirmationTemplate(
+  data: ContactFormData,
+  kind: ConfirmationKind = 'contact'
+): { html: string; text: string } {
   const serviceLabels: Record<string, string> = {
     'existing-show-purchase': 'Purchase Existing Show',
     'custom-show-creation': 'Custom Show Creation',
@@ -373,17 +395,18 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
     'visual-technique-guide': 'Visual Technique Guide Download'
   };
 
-  const selectedServices = data.services
-    .map(s => serviceLabels[s] || s)
-    .join(', ');
-
   // This email goes to whatever address was submitted, so it must not carry
-  // the submitter's free text: echoing `message`, notes, school or referral
-  // fields would turn the form into a relay for arbitrary content sent from
-  // our domain. Only the first name and the inquiry topic (the show title on
-  // show pages) appear, both length-capped; services are fixed labels.
-  const firstName = capConfirmationText(data.firstName, 50) || 'there';
-  const topic = capConfirmationText(data.showInterest, 120);
+  // the submitter's free text: echoing the message, topic, notes, school or
+  // referral fields would turn the form into a relay for arbitrary content
+  // sent from our domain. The only submitter-derived text is a first name
+  // stripped to letters; the subject phrase and service labels are fixed, and
+  // unknown service values are dropped rather than echoed.
+  const selectedServices = data.services
+    .map(s => serviceLabels[s])
+    .filter(Boolean)
+    .join(', ');
+  const firstName = confirmationFirstName(data.firstName);
+  const subject = CONFIRMATION_SUBJECTS[kind];
 
   const html = `<!DOCTYPE html>
 <html>
@@ -410,7 +433,7 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
           <tr>
             <td style="padding:30px 20px;">
               <!-- Intro Message -->
-              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">We've received your inquiry${topic ? ` about <strong>${escapeHtmlText(topic)}</strong>` : ''} and will reply within 24 hours.</p>
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">We've received ${subject} and will reply within 24 hours.</p>
               ${selectedServices ? `
               <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${colors.charcoal};">Services you selected: ${escapeHtmlText(selectedServices)}</p>
               ` : ''}
@@ -469,7 +492,7 @@ export function generateCustomerConfirmationTemplate(data: ContactFormData): { h
 
 Hi ${firstName},
 
-We've received your inquiry${topic ? ` about ${topic}` : ''} and will reply within 24 hours.
+We've received ${subject} and will reply within 24 hours.
 ${selectedServices ? `\nServices you selected: ${selectedServices}\n` : ''}
 In the meantime, feel free to browse our website at https://brightdesigns.band
 

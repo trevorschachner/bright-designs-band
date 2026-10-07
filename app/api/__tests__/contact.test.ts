@@ -156,7 +156,8 @@ describe('POST /api/contact', () => {
     expect(confirmation.html).not.toContain('UNIQUE-MESSAGE-TEXT-42')
     expect(confirmation.text).not.toContain('UNIQUE-MESSAGE-TEXT-42')
     expect(confirmation.html).not.toContain('Rock Canyon HS')
-    expect(confirmation.html).toContain('Starlight')
+    expect(confirmation.html).not.toContain('Starlight')
+    expect(confirmation.text).toContain('your show inquiry')
   })
 
   it('applies the same rule to the general-contact branch', async () => {
@@ -164,6 +165,19 @@ describe('POST /api/contact', () => {
     const confirmation = sent.find((e) => e.to === 'jane@example.com')!
     expect(confirmation.html).not.toContain('UNIQUE-MESSAGE-TEXT-42')
     expect(confirmation.text).not.toContain('UNIQUE-MESSAGE-TEXT-42')
+    expect(confirmation.text).toContain('your message')
+  })
+
+  it('does not put a URL-bearing topic or name into the confirmation', async () => {
+    await post({
+      ...validBody,
+      name: 'https://evil.example/x Smith',
+      showInterest: 'Claim your prize at evil.example/x',
+    })
+    const confirmation = sent.find((e) => e.to === 'jane@example.com')!
+    expect(confirmation.html).not.toContain('evil.example')
+    expect(confirmation.text).not.toContain('evil.example')
+    expect(confirmation.text).not.toContain('Claim your prize')
   })
 
   it('never returns the internal error message', async () => {
