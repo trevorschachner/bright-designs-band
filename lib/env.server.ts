@@ -85,6 +85,9 @@ const serverSchema = z.object({
   // Storage bucket for isPublic = false files (default "private"). Server-only:
   // the browser never needs it (private files are served by
   // /api/files/<id>/download, uploads are signed by lib/actions/uploads.ts).
+  // The Storage policies hard-code the bucket id 'private'
+  // (drizzle/migrations/2026-10-08_storage_policies_admin.sql): this must equal
+  // 'private', or that SQL must be edited to match before it is applied.
   STORAGE_PRIVATE_BUCKET: optionalString,
 
   ALLOW_DB_MIGRATE: optionalBoolean,
@@ -136,7 +139,8 @@ export const getTurnstileSecret = (): string | null =>
 
 /**
  * The private Storage bucket (isPublic = false files). Created in the Supabase
- * dashboard; policies in drizzle/migrations/2026-10-08_storage_policies.sql.
+ * dashboard; policies in drizzle/migrations/2026-10-08_storage_policies_admin.sql,
+ * which hard-code the id 'private' (keep STORAGE_PRIVATE_BUCKET equal to it).
  * The public bucket is getStorageBucket() in lib/env.ts.
  */
 export const getPrivateStorageBucket = (fallback = 'private'): string =>

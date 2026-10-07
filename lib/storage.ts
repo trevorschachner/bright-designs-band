@@ -96,10 +96,22 @@ export class FileStorageService {
    * - public bucket: authenticated `exists`, then an anonymous HEAD on the
    *   public URL (which the caller's RLS cannot hide);
    * - private bucket: there is no anonymous view (a public-URL HEAD 404s on
-   *   every private object), so only `list` is used, before and after the
-   *   remove. Visible before and gone after = removed. Not visible before =
-   *   unclear (absent, or hidden by RLS): failure, row kept;
-   *   scripts/find-orphan-files.ts (service role) tells the two apart.
+   *   every private object), so only `list` is used. A listing that works and
+   *   has no object of that exact name = absent = success; the name present =
+   *   not removed (permission?); a listing error = unclear = failure. This
+   *   trusts the admin policies on the private bucket
+   *   (drizzle/migrations/2026-10-08_storage_policies_admin.sql), which let
+   *   every admin see every object there.
+   *
+   *   | bucket  | remove()      | lookup                          | result          |
+   *   | any     | error         | -                               | failed, row kept |
+   *   | any     | object listed | -                               | success         |
+   *   | public  | []            | exists() or HEAD 200            | failed          |
+   *   | public  | []            | exists() false + HEAD 400/404   | success         |
+   *   | public  | []            | HEAD other / network error      | failed          |
+   *   | private | []            | list ok, no exact match         | success         |
+   *   | private | []            | list ok, exact match            | failed          |
+   *   | private | []            | list error                      | failed          |
    */
   async deleteFile(
     file: { storagePath: string; url: string | null },
@@ -109,8 +121,6 @@ export class FileStorageService {
     const isPrivate = isDownloadRoute(file.url)
     const bucket = storageBucketFor(file)
     try {
-      const before = isPrivate ? await findObject(supabase, bucket, fullPath) : null
-
       const { data, error } = await supabase.storage.from(bucket).remove([fullPath])
       if (error) {
         console.error('Storage delete error:', error)
@@ -119,9 +129,6 @@ export class FileStorageService {
       if (data && data.length > 0) return { success: true }
 
       if (isPrivate) {
-        if (before?.status !== 'object') {
-          return { success: false, error: 'Could not confirm the private object exists or was removed' }
-        }
         const after = await findObject(supabase, bucket, fullPath)
         if (after.status === 'absent') return { success: true }
         return {

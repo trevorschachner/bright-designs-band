@@ -15,7 +15,7 @@ import {
 import { invalidateArrangement, invalidateShow } from '@/lib/services/invalidate'
 import { toIso } from '@/lib/services/cache'
 import { getArrangementPiecesForAdmin } from '@/lib/services/pieces'
-import { fileStorage } from '@/lib/storage'
+import { invalidateShowsById, REMOVABLE_FILE_COLUMNS, removeFilesInOrder } from '@/lib/services/file-removal'
 import { createClient } from '@/lib/utils/supabase/server'
 import {
   arrangementIdSchema,
@@ -176,25 +176,18 @@ const runDeleteArrangement = guarded(
   'canDeleteArrangements',
   arrangementIdSchema,
   async ({ id }, { db }) => {
-    // The part's files first, each through the same confirmed path as
-    // deleteFile: remove the object, delete the row only once it is gone.
-    // Each file commits on its own, so a retry after a failure resumes with
-    // the files left (a rolled-back row whose private object was already
-    // removed could never be confirmed again). Any failure aborts before the
-    // part is touched: `failed`, part and remaining files kept.
-    const partFiles = await db
-      .select({ id: files.id, storagePath: files.storagePath, url: files.url, fileType: files.fileType })
-      .from(files)
-      .where(eq(files.arrangementId, id))
+    // The part's files first, each through the confirmed path deleteFile
+    // uses (lib/services/file-removal.ts), each committed on its own. A
+    // failure aborts before the part is touched: `failed`, part and remaining
+    // files kept, and what was already removed is invalidated.
+    const partFiles = await db.select(REMOVABLE_FILE_COLUMNS).from(files).where(eq(files.arrangementId, id))
+    let clearedShowIds: number[] = []
     if (partFiles.length > 0) {
-      const supabase = await createClient()
-      for (const file of partFiles) {
-        if (file.fileType !== 'youtube') {
-          const removed = await fileStorage.deleteFile(file, supabase)
-          if (!removed.success) throw new Error(`Storage refused to remove file ${file.id}: ${removed.error ?? 'unknown'}`)
-        }
-        await db.delete(files).where(eq(files.id, file.id))
-      }
+      const ownerSlug = await showSlugFor(db, id)
+      ;({ clearedShowIds } = await removeFilesInOrder(db, partFiles, createClient, async (cleared) => {
+        invalidateArrangement(id, ownerSlug)
+        await invalidateShowsById(cleared)
+      }))
     }
 
     const { deleted, slug } = await db.transaction(async (tx) => {
@@ -205,7 +198,14 @@ const runDeleteArrangement = guarded(
       if (!deleted) throw new NotFoundError('arrangement')
       return { deleted, slug }
     })
-    return { data: { id: deleted.id }, invalidate: () => invalidateArrangement(deleted.id, slug) }
+    return {
+      data: { id: deleted.id },
+      invalidate: async () => {
+        invalidateArrangement(deleted.id, slug)
+        // A show whose thumbnail/graphic pointed at one of the part's files was cleared.
+        await invalidateShowsById(clearedShowIds)
+      },
+    }
   },
   'deleteArrangement'
 )

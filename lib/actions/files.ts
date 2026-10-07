@@ -5,7 +5,7 @@ import { files, shows } from '@/lib/database/schema'
 import { invalidateFileOwner } from '@/lib/services/files'
 import { invalidateShow } from '@/lib/services/invalidate'
 import { toIso } from '@/lib/services/cache'
-import { fileStorage } from '@/lib/storage'
+import { REMOVABLE_FILE_COLUMNS, removeFile } from '@/lib/services/file-removal'
 import { createClient } from '@/lib/utils/supabase/server'
 import {
   attachYouTubeSchema,
@@ -141,44 +141,14 @@ const runDeleteFile = guarded(
   'canDeleteFiles',
   fileIdSchema,
   async ({ id }, { db }) => {
-    const [file] = await db
-      .select({ id: files.id, url: files.url, storagePath: files.storagePath, fileType: files.fileType, showId: files.showId, arrangementId: files.arrangementId })
-      .from(files)
-      .where(eq(files.id, id))
-      .limit(1)
+    const [file] = await db.select(REMOVABLE_FILE_COLUMNS).from(files).where(eq(files.id, id)).limit(1)
     if (!file) throw new NotFoundError('file')
 
-    // A YouTube link has no Storage object. Anything else: remove the object
-    // first, and keep the row if Storage refuses, so a retry can finish.
-    if (file.fileType !== 'youtube') {
-      const removed = await fileStorage.deleteFile(file, await createClient())
-      if (!removed.success) throw new StorageRemoveError(removed.error)
-    }
-
-    const show = await db.transaction(async (tx) => {
-      let cleared: DeletedFile['show'] = null
-      if (file.showId) {
-        const [current] = await tx
-          .select({ id: shows.id, thumbnailUrl: shows.thumbnailUrl, graphicUrl: shows.graphicUrl })
-          .from(shows)
-          .where(eq(shows.id, file.showId))
-          .limit(1)
-          .for('update')
-        const updates: { thumbnailUrl?: null; graphicUrl?: null } = {}
-        if (current?.thumbnailUrl === file.url) updates.thumbnailUrl = null
-        if (current?.graphicUrl === file.url) updates.graphicUrl = null
-        if (current && Object.keys(updates).length > 0) {
-          const [updated] = await tx
-            .update(shows)
-            .set({ ...updates, updatedAt: new Date() })
-            .where(eq(shows.id, current.id))
-            .returning({ id: shows.id, thumbnailUrl: shows.thumbnailUrl, updatedAt: shows.updatedAt })
-          cleared = { id: updated.id, thumbnailUrl: updated.thumbnailUrl, updatedAt: toIso(updated.updatedAt) ?? '' }
-        }
-      }
-      await tx.delete(files).where(eq(files.id, id))
-      return cleared
-    })
+    // Remove the object first (none for a YouTube link); keep the row if
+    // Storage refuses, so a retry can finish.
+    const removed = await removeFile(db, file, await createClient())
+    if (!removed.ok) throw new StorageRemoveError(removed.error)
+    const show = removed.clearedShow
 
     return { data: { id, show }, invalidate: () => invalidateFileOwner(file) }
   },

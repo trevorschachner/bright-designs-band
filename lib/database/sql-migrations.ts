@@ -50,3 +50,26 @@ export function pendingMigrations(
   }
   return { pending, drifted }
 }
+
+/** A file with this line is never applied by a plain `--apply`, only by `--only <name>`. */
+export const MANUAL_MARKER = /^--\s*migrate:\s*manual\s*$/m
+
+export const isManualMigration = (contents: string): boolean => MANUAL_MARKER.test(contents)
+
+/**
+ * Which pending files a run applies. Without `only`: every pending file that
+ * is not marked manual (manual ones are `held`). With `only`: just that file,
+ * which must be pending (manual or not).
+ */
+export function planApply(
+  pending: string[],
+  contentsByName: Record<string, string>,
+  only: string | null
+): { apply: string[]; held: string[] } {
+  if (only !== null) {
+    if (!pending.includes(only)) throw new Error(`--only ${only}: not a pending migration`)
+    return { apply: [only], held: pending.filter((n) => n !== only && isManualMigration(contentsByName[n] ?? '')) }
+  }
+  const held = pending.filter((n) => isManualMigration(contentsByName[n] ?? ''))
+  return { apply: pending.filter((n) => !held.includes(n)), held }
+}

@@ -63,6 +63,7 @@ vi.mock('@/lib/observability/report-error', () => ({ reportError }))
 
 import { attachYouTube, deleteFile, setShowThumbnail } from '@/lib/actions/files'
 import { deleteArrangement } from '@/lib/actions/arrangements'
+import { deleteShow } from '@/lib/actions/shows'
 
 const SAVED = new Date('2026-10-07T12:05:00.000Z')
 const IMAGE = {
@@ -255,70 +256,53 @@ describe('deleteFile: private bucket', () => {
 
   it('removes from the private bucket; a reported removal needs no lookup and never a public HEAD', async () => {
     const fake = usePrivate()
-    state.listAnswers = [true]
     expect(await deleteFile({ id: 5 })).toMatchObject({ ok: true })
     expect(state.buckets).toEqual(['private'])
+    expect(state.listCalls).toBe(0)
     expect(fetch).not.toHaveBeenCalled()
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
   })
 
-  it('remove() reporting nothing: visible before and gone after (list) is a confirmed removal', async () => {
+  it('private: list empty, no error → row deleted (the object is absent), never a public HEAD', async () => {
     const fake = usePrivate()
     state.removeReports = 'none'
-    state.listAnswers = [true, false]
-    expect(await deleteFile({ id: 5 })).toMatchObject({ ok: true })
-    expect(state.listCalls).toBe(2)
-    expect(fetch).not.toHaveBeenCalled()
-    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
-  })
-
-  it('never uses the public HEAD, even when it would 404 (it 404s on every private object)', async () => {
-    const fake = usePrivate()
-    state.removeReports = 'none'
-    state.publicHeadStatus = 404
-    state.listAnswers = [false, false]
-    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
-    expect(fetch).not.toHaveBeenCalled()
-    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
-  })
-
-  it('not visible before the remove is unclear (absent, or hidden by RLS): failed, row kept', async () => {
-    const fake = usePrivate()
-    state.removeReports = 'none'
+    state.publicHeadStatus = 200 // would say "still there" if it were (wrongly) consulted
     state.listAnswers = [false]
+    expect(await deleteFile({ id: 5 })).toMatchObject({ ok: true })
+    expect(state.listCalls).toBe(1)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
+  })
+
+  it('still listed after the remove: failed, row kept', async () => {
+    const fake = usePrivate()
+    state.removeReports = 'none'
+    state.listAnswers = [true]
     expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
     expect(opsOn(fake.ops, 'shows', 'update')).toHaveLength(0)
   })
 
-  it('still visible after, or a failed lookup: failed, row kept', async () => {
-    let fake = usePrivate()
+  it('a list error is unclear: failed, row kept', async () => {
+    const fake = usePrivate()
     state.removeReports = 'none'
-    state.listAnswers = [true, true]
-    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
-    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
-
-    fake = usePrivate()
-    state.listAnswers = [true, 'error']
-    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
-    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
-
-    fake = usePrivate()
     state.listAnswers = ['error']
     expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(fetch).not.toHaveBeenCalled()
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
   })
 })
 
 describe('deleteArrangement removes its files first', () => {
   const PART_FILES = [
-    { id: 21, storagePath: 'shows/7/arrangements/3/audio/a.mp3', url: 'https://cdn.example/a.mp3', fileType: 'audio' },
-    { id: 22, storagePath: 'shows/7/arrangements/3/score/b.pdf', url: '/api/files/22/download', fileType: 'score' },
-    { id: 23, storagePath: 'shows/7/arrangements/3/youtube/y.url', url: 'https://youtu.be/y', fileType: 'youtube' },
+    { id: 21, storagePath: 'shows/7/arrangements/3/audio/a.mp3', url: 'https://cdn.example/a.mp3', fileType: 'audio', showId: 7, arrangementId: 3 },
+    { id: 22, storagePath: 'shows/7/arrangements/3/score/b.pdf', url: '/api/files/22/download', fileType: 'score', showId: null, arrangementId: 3 },
+    { id: 23, storagePath: 'shows/7/arrangements/3/youtube/y.url', url: 'https://youtu.be/y', fileType: 'youtube', showId: null, arrangementId: 3 },
   ]
-  const usePartDb = () =>
+  const usePartDb = (showArt: { thumbnailUrl: string | null; graphicUrl: string | null } = { thumbnailUrl: null, graphicUrl: null }) =>
     use(filesDb({
       'select:files': () => PART_FILES,
+      'select:shows': () => [{ id: 7, ...showArt }],
       'select:show_arrangements': () => [{ slug: 'my-show' }],
       'delete:arrangements': () => [{ id: 3 }],
     }))
@@ -334,13 +318,68 @@ describe('deleteArrangement removes its files first', () => {
     expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
   })
 
-  it('a Storage failure aborts: failed, part kept, files after it kept', async () => {
+  it('a Storage failure aborts: failed, part kept, files after it kept, removed ones invalidated', async () => {
     state.failRemoveFor = 'files/shows/7/arrangements/3/score/b.pdf'
     const fake = usePartDb()
     expect(await deleteArrangement({ id: 3 })).toEqual({ ok: false, error: 'failed' })
     // The first file's object and row are gone (committed on its own), the rest stay.
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
     expect(opsOn(fake.ops, 'arrangements', 'delete')).toHaveLength(0)
+    // The row already deleted is a public change: invalidated despite `failed`.
+    expect(invalidateArrangement).toHaveBeenCalledWith(3, 'my-show')
+  })
+
+  it('a failure on the first file changed nothing, so nothing is invalidated', async () => {
+    state.failRemoveFor = 'files/shows/7/arrangements/3/audio/a.mp3'
+    const fake = usePartDb()
+    expect(await deleteArrangement({ id: 3 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
     expect(invalidateArrangement).not.toHaveBeenCalled()
+  })
+
+  it('clears a show thumbnail/graphic that pointed at one of its files, and invalidates that show', async () => {
+    const fake = usePartDb({ thumbnailUrl: 'https://cdn.example/a.mp3', graphicUrl: 'https://cdn.example/a.mp3' })
+    expect(await deleteArrangement({ id: 3 })).toEqual({ ok: true, data: { id: 3 } })
+    const [showUpdate] = opsOn(fake.ops, 'shows', 'update')
+    expect(showUpdate.set).toMatchObject({ thumbnailUrl: null, graphicUrl: null })
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ showId: 7 })
+  })
+})
+
+describe('deleteShow removes its files first', () => {
+  const SHOW_FILES = [
+    { id: 31, storagePath: 'shows/7/image/a.png', url: 'https://cdn.example/a.png', fileType: 'image', showId: 7, arrangementId: null },
+    { id: 32, storagePath: 'shows/7/score/b.pdf', url: '/api/files/32/download', fileType: 'score', showId: 7, arrangementId: null },
+  ]
+  const useShowDb = () =>
+    use(filesDb({
+      'select:files': () => SHOW_FILES,
+      'select:shows': () => [{ id: 7, slug: 'my-show', thumbnailUrl: null, graphicUrl: null }],
+      'delete:shows': () => [{ id: 7, slug: 'my-show' }],
+    }))
+
+  it('each object, then its row, then the show', async () => {
+    const fake = useShowDb()
+    expect(await deleteShow(7)).toEqual({ ok: true, data: { id: 7 } })
+    expect(state.removed).toEqual([['files/shows/7/image/a.png'], ['files/shows/7/score/b.pdf']])
+    expect(state.buckets).toEqual(['Bright Designs', 'private'])
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(2)
+    expect(fake.events.lastIndexOf('delete:files')).toBeLessThan(fake.events.indexOf('delete:shows'))
+    expect(invalidateShow).toHaveBeenCalledWith(7, 'my-show')
+  })
+
+  it('a Storage failure aborts: failed, show kept, removed rows invalidated', async () => {
+    state.failRemoveFor = 'files/shows/7/score/b.pdf'
+    const fake = useShowDb()
+    expect(await deleteShow(7)).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
+    expect(opsOn(fake.ops, 'shows', 'delete')).toHaveLength(0)
+    expect(invalidateShow).toHaveBeenCalledWith(7, 'my-show')
+  })
+
+  it('not_found for an unknown show, before any Storage call', async () => {
+    use(filesDb({ 'select:shows': () => [] }))
+    expect(await deleteShow(8)).toEqual({ ok: false, error: 'not_found' })
+    expect(state.removed).toEqual([])
   })
 })

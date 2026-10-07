@@ -107,11 +107,14 @@ not bump anything: the order lives in `show_arrangements`, the credits in
 
 `deleteFile` removes the Storage object first and deletes the row only once
 the object is confirmed gone (lib/storage.ts `deleteFile`: public bucket via
-`exists` + a public-URL HEAD; private bucket via `list` before and after,
-never a public HEAD). Anything unclear is `failed` and the row stays, so the
-object is never orphaned by a half-done delete. `deleteArrangement` does the
-same for each of the part's files (each committed on its own) before it
-deletes the part; one failure aborts with the part kept.
+`exists` + a public-URL HEAD; private bucket via `list`: no exact match is
+absent, a list error is unclear; never a public HEAD). Anything unclear is
+`failed` and the row stays, so the object is never orphaned by a half-done
+delete. `deleteArrangement` and `deleteShow` do the same for each of their
+files (`lib/services/file-removal.ts`, each committed on its own, clearing a
+show thumbnail/graphic that pointed at the file) before deleting the part or
+show; one failure aborts with the owner kept, and what was already removed is
+invalidated before the `failed` result.
 
 ## Uploads (`uploads.ts`)
 
@@ -127,6 +130,23 @@ equal the pending row's; only then is the `files` row written, from the
 pending row. A mismatch removes the object and is `invalid`. Private rows'
 `url` is `/api/files/<id>/download` (staff, 302 to a 60 s signed URL).
 `drizzle/0004_pending_uploads.sql` must be applied with this code.
+
+### Deploying the file changes (in this order)
+
+1. Create the `private` bucket (not public) in the Supabase dashboard. The
+   policy SQL hard-codes `'private'` and `'Bright Designs'`; keep
+   `STORAGE_PRIVATE_BUCKET` / `NEXT_PUBLIC_STORAGE_BUCKET` at those values or
+   edit the SQL.
+2. `npm run db:migrate`: applies `drizzle/0004_pending_uploads.sql` and
+   `drizzle/migrations/2026-10-08_storage_policies_admin.sql` (admin access to
+   both buckets; it raises and aborts if a bucket is missing).
+   `2026-10-09_storage_public_select.sql` is marked `-- migrate: manual`, so
+   it is held back and stays pending in `npm run db:migrate:status`.
+3. `npx tsx scripts/migrate-private-files.ts` (dry run), then `--apply`:
+   moves every `is_public = false` object to the private bucket.
+4. Only then: `npx tsx scripts/apply-sql-migrations.ts --apply --only
+   2026-10-09_storage_public_select.sql` (anyone can list the public bucket;
+   before step 3 that would expose the legacy private objects).
 
 ## Slugs and redirects
 
