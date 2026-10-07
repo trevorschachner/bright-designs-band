@@ -19,7 +19,8 @@
  * Usage (not run by agents):
  *   npx tsx scripts/migrate-private-files.ts                 # dry run: print the plan
  *   npx tsx scripts/migrate-private-files.ts --apply         # move + rewrite
- *   npx tsx scripts/migrate-private-files.ts --revert scripts/.private-files-migration-<ts>.json
+ *   npx tsx scripts/migrate-private-files.ts --revert scripts/.private-files-migration-<ts>.json          # plan only
+ *   npx tsx scripts/migrate-private-files.ts --revert scripts/.private-files-migration-<ts>.json --apply  # revert
  *
  * Needs DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL and (for --apply / --revert)
  * SUPABASE_SERVICE_ROLE_KEY in .env.local. The private bucket must exist.
@@ -80,23 +81,56 @@ async function referencedBy(db: Db, url: string): Promise<string[]> {
   return hits
 }
 
-async function revert(db: Db, manifestPath: string): Promise<void> {
+/**
+ * Undo a run from its manifest. Dry run unless --apply. Per entry, errors are
+ * caught and reported, and the entry is left as it is:
+ *   1. if the public original was removed, copy the private object back and
+ *      verify it;
+ *   2. set files.url back, only if it is still the download route this run
+ *      wrote (rowCount 0 = the row changed or is gone: skip, keep the
+ *      private copy, since the app may be serving it);
+ *   3. remove the private copy.
+ */
+async function revert(db: Db, manifestPath: string, apply: boolean): Promise<void> {
   const manifest: Manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+  console.log(`${apply ? 'Reverting' : 'Would revert'} ${manifest.entries.length} file(s) from ${manifestPath}\n`)
+  if (!apply) {
+    for (const entry of manifest.entries) {
+      console.log(`  #${entry.id}  url ${entry.newUrl} -> ${entry.oldUrl}${entry.sourceRemoved ? `  (copy back to "${manifest.publicBucket}" first)` : ''}`)
+    }
+    console.log('\nDry run. Re-run with --revert <manifest> --apply to revert.')
+    return
+  }
+
   const client = serviceClient()
-  const storageFrom = (bucket: string) => client.storage.from(bucket)
-  console.log(`Reverting ${manifest.entries.length} file(s) from ${manifestPath}\n`)
+  let reverted = 0
+  let skipped = 0
+  let failed = 0
   for (const entry of manifest.entries) {
     const key = withRootPrefix(entry.storagePath)
-    if (entry.sourceRemoved) {
-      const { error } = await storageFrom(manifest.privateBucket).copy(key, key, { destinationBucket: manifest.publicBucket })
-      if (error) throw new Error(`#${entry.id}: copy back to ${manifest.publicBucket} failed: ${error.message}`)
-      if (!(await objectExists(client, manifest.publicBucket, key)).present) throw new Error(`#${entry.id}: copy back not found`)
+    try {
+      if (entry.sourceRemoved && !(await objectExists(client, manifest.publicBucket, key)).present) {
+        const { error } = await client.storage.from(manifest.privateBucket).copy(key, key, { destinationBucket: manifest.publicBucket })
+        if (error) throw new Error(`copy back to "${manifest.publicBucket}" failed: ${error.message}`)
+        if (!(await objectExists(client, manifest.publicBucket, key)).present) throw new Error('copy back not found')
+      }
+      const { rowCount } = await db.query('update files set url = $1, updated_at = now() where id = $2 and url = $3', [entry.oldUrl, entry.id, entry.newUrl])
+      if (!rowCount) {
+        skipped++
+        console.log(`  skip #${entry.id}: the row no longer has url ${entry.newUrl}; private copy kept`)
+        continue
+      }
+      const { error } = await client.storage.from(manifest.privateBucket).remove([key])
+      if (error) console.warn(`  #${entry.id}: reverted, but the private copy was not removed (${error.message}); find-orphan-files will list it`)
+      reverted++
+      console.log(`  reverted #${entry.id} -> ${entry.oldUrl}`)
+    } catch (error) {
+      failed++
+      console.error(`  FAILED #${entry.id}: ${(error as Error).message} (left as is)`)
     }
-    await db.query('update files set url = $1, updated_at = now() where id = $2 and url = $3', [entry.oldUrl, entry.id, entry.newUrl])
-    const { error } = await storageFrom(manifest.privateBucket).remove([key])
-    if (error) console.warn(`  #${entry.id}: private copy not removed (${error.message}); find-orphan-files will list it`)
-    console.log(`  reverted #${entry.id} -> ${entry.oldUrl}`)
   }
+  console.log(`\nReverted ${reverted}, skipped ${skipped}, failed ${failed}.`)
+  if (failed) process.exitCode = 1
 }
 
 async function main() {
@@ -104,7 +138,7 @@ async function main() {
   const revertPath = flagValue('--revert')
   const db = connect()
   try {
-    if (revertPath) return await revert(db, revertPath)
+    if (revertPath) return await revert(db, revertPath, apply)
 
     const rows = await candidates(db)
     const todo: Candidate[] = []
@@ -179,7 +213,7 @@ async function main() {
 
     console.log(`\nMoved ${moved}, failed ${failed}.`)
     console.log(`Manifest: ${manifestPath}`)
-    console.log(`Revert with: npx tsx scripts/migrate-private-files.ts --revert ${manifestPath}`)
+    console.log(`Revert with: npx tsx scripts/migrate-private-files.ts --revert ${manifestPath} --apply`)
   } finally {
     await db.end()
   }

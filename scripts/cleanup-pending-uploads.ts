@@ -40,16 +40,31 @@ async function main() {
     for (const r of rows) {
       const bucket = r.bucket as string
       const path = r.path as string
+      // Lock the row (skipping one a completeUpload holds right now) and
+      // re-check expiry inside the transaction, so an upload completing
+      // concurrently is never cleaned away under it.
+      await db.query('begin')
       try {
+        const { rowCount } = await db.query(
+          'select 1 from pending_uploads where id = $1 and expires_at < now() for update skip locked',
+          [r.id]
+        )
+        if (!rowCount) {
+          await db.query('rollback')
+          console.log(`  skip ${r.id}: completed, locked or no longer expired`)
+          continue
+        }
         if ((await objectExists(client, bucket, path)).present) {
           const { error } = await client.storage.from(bucket).remove([path])
           if (error) throw new Error(error.message)
           if ((await objectExists(client, bucket, path)).present) throw new Error('object still there after remove')
           objectsRemoved++
         }
-        await db.query('delete from pending_uploads where id = $1', [r.id])
+        await db.query('delete from pending_uploads where id = $1 and expires_at < now()', [r.id])
+        await db.query('commit')
         rowsDeleted++
       } catch (error) {
+        await db.query('rollback')
         kept++
         console.error(`  kept ${r.id}: ${(error as Error).message}`)
       }

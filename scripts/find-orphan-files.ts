@@ -10,6 +10,11 @@
  *
  * Uses the service-role key so RLS cannot hide objects from the listing.
  *
+ * CAUTION: objects without a row are often expected (the optimize-media
+ * originals and their derivatives, assets uploaded outside the app, objects
+ * referenced only by a show/resource URL column). Read the list; never
+ * bulk-delete from it.
+ *
  *   npx tsx scripts/find-orphan-files.ts
  */
 import { connect, listAll, PRIVATE_BUCKET, PUBLIC_BUCKET, ROOT_PREFIX, serviceClient, withRootPrefix, bucketForRow } from './_storage-common'
@@ -62,6 +67,9 @@ async function main() {
     for (const line of missing) console.log(`  ${line}`)
     console.log(`\nUploads in flight (pending_uploads) (${flying.length}):`)
     for (const line of flying) console.log(`  ${line}`)
+    console.log('\nCAUTION: objects without a row are often expected (optimize-media originals and derivatives,')
+    console.log('assets uploaded outside the app, objects referenced only by a URL column). Check each one;')
+    console.log('do not bulk-delete anything from this output.')
     console.log(`\nChecked ${rows.length} row(s) against "${PUBLIC_BUCKET}" and "${PRIVATE_BUCKET}" under ${ROOT_PREFIX}/. Nothing was changed.`)
   } finally {
     await db.end()
