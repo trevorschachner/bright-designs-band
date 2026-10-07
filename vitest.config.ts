@@ -4,7 +4,10 @@ import path from 'path';
 export default defineConfig({
   test: {
     globals: true,
+    // Node by default; component tests (.tsx) get a DOM.
     environment: 'node',
+    environmentMatchGlobs: [['**/*.test.tsx', 'jsdom']],
+    setupFiles: ['./vitest.setup.ts'],
     include: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
     coverage: {
       provider: 'v8',

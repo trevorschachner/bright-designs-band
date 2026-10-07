@@ -21,8 +21,9 @@ env:
   NEXT_PUBLIC_SITE_URL: https://brightdesigns.band
 
 jobs:
-  test:
-    name: Lint, typecheck and test
+  # One job, one install. Build used to be a second job that ran npm ci again.
+  verify:
+    name: Lint, typecheck, test and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -33,6 +34,16 @@ jobs:
           # does not run buys nothing.
           node-version: '20'
           cache: 'npm'
+
+      # Next's incremental build cache. Exact hit when neither the lockfile nor
+      # any source changed; otherwise the newest cache for the same lockfile.
+      # Sits before npm ci so hashFiles does not walk node_modules.
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.mjs') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
 
       - run: npm ci
 
@@ -46,20 +57,6 @@ jobs:
       # Not covered by vitest: this one shells out to a tsx script.
       - run: npm run test:email:validate
 
-  build:
-    name: Build
-    needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - run: npm ci
-
       # lib/database throws at import time without DATABASE_URL, and Next
       # collects page data for /shows/[slug] and /arrangements/[id] during the
       # build, so the variable has to be set and well-formed. It does not have to
@@ -71,3 +68,44 @@ jobs:
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
           NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
+
+  # Performance budget (lighthouserc.json): performance >= 0.95, LCP <= 2 s,
+  # script <= 180 KiB, mobile emulation, on /, /shows and /shows/true-north.
+  # Builds and serves the site on the runner instead of waiting on the Netlify
+  # deploy preview, so the result does not depend on Netlify timing. With the
+  # dummy env the catalog pages render their empty/fallback state, so these
+  # numbers are a lower bound on page weight and an upper bound on speed; the
+  # real check is against production after SP2.
+  lighthouse:
+    name: Lighthouse budget (advisory)
+    needs: [verify]
+    if: github.event_name == 'pull_request'
+    # Advisory until SP2 (#59) lands; then make it required.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.mjs') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+
+      - run: npm ci
+
+      # Same dummy env as the verify build (see the comment there); it is set
+      # at job level because `npm run start` needs it too.
+      - run: npm run build
+
+      - run: npm run perf:ci

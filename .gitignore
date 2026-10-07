@@ -60,3 +60,6 @@ scripts/.media-migration-*.json
 .codex/
 .cursor/worktrees.json
 tsconfig.tsbuildinfo
+
+# Lighthouse CI output
+.lighthouseci/
