@@ -61,7 +61,6 @@ const WRITE_HANDLERS: { name: string; load: () => Promise<Handler>; hasParams?: 
   { name: 'DELETE /api/files/[id]', load: async () => (await import('@/app/api/files/[id]/route')).DELETE as unknown as Handler, hasParams: true },
   { name: 'POST /api/files/sign', load: async () => (await import('@/app/api/files/sign/route')).POST as unknown as Handler },
   { name: 'POST /api/files/youtube', load: async () => (await import('@/app/api/files/youtube/route')).POST as unknown as Handler },
-  { name: 'POST /api/admin/shows/backfill-images', load: async () => (await import('@/app/api/admin/shows/backfill-images/route')).POST as unknown as Handler },
   { name: 'POST /api/pieces', load: async () => (await import('@/app/api/pieces/route')).POST as unknown as Handler },
   { name: 'PUT /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).PUT as unknown as Handler, hasParams: true },
   { name: 'DELETE /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).DELETE as unknown as Handler, hasParams: true },

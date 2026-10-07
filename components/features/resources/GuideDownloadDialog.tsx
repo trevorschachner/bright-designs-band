@@ -18,10 +18,9 @@ import { Turnstile, type TurnstileHandle } from '@/components/forms/turnstile';
 interface GuideDownloadDialogProps {
   resourceId: number;
   resourceTitle: string;
-  fileUrl: string;
 }
 
-export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: GuideDownloadDialogProps) {
+export function GuideDownloadDialog({ resourceId, resourceTitle }: GuideDownloadDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -54,27 +53,16 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
       if (!response.ok) throw new Error('Failed to submit');
 
       setIsSuccess(true);
-      
-      // Trigger download after short delay
+
+      // Close dialog after the confirmation has been visible for a moment
       setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.target = '_blank'; // Important for some file types or external URLs
-        link.download = resourceTitle || 'download'; // Hint filename
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Close dialog after download starts
+        setOpen(false);
+        // Reset state after closing
         setTimeout(() => {
-          setOpen(false);
-          // Reset state after closing
-          setTimeout(() => {
-            setIsSuccess(false);
-            setFormData({ name: '', email: '', school: '', role: '' });
-          }, 500);
-        }, 2000);
-      }, 1000);
+          setIsSuccess(false);
+          setFormData({ name: '', email: '', school: '', role: '' });
+        }, 500);
+      }, 3000);
 
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -97,7 +85,7 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
         <DialogHeader>
           <DialogTitle>Download {resourceTitle}</DialogTitle>
           <DialogDescription>
-            Please fill out this quick form to access this resource.
+            Please fill out this quick form and our team will send you this resource.
           </DialogDescription>
         </DialogHeader>
 
@@ -108,7 +96,7 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
             </div>
             <div>
               <h3 className="font-semibold text-lg">You&apos;re all set!</h3>
-              <p className="text-sm text-muted-foreground">Your download should start automatically.</p>
+              <p className="text-sm text-muted-foreground">Thanks! Our team will send the guide to your email.</p>
             </div>
           </div>
         ) : (
@@ -167,7 +155,7 @@ export function GuideDownloadDialog({ resourceId, resourceTitle, fileUrl }: Guid
                   Processing...
                 </>
               ) : (
-                'Download Now'
+                'Request Guide'
               )}
             </Button>
           </form>
