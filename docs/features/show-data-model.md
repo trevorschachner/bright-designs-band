@@ -19,8 +19,15 @@ meant a **piece**; it is being renamed to Pieces.
 A part is built from one or more pieces, in order
 (`arrangement_pieces.order_index`), and a piece can appear in many parts.
 Pieces are linked from the arrangement card in the admin show editor; the
-catalogue itself is at `/admin/pieces`. Pieces are internal for now: their
-API routes are staff-only and RLS gives the anon role no access.
+catalogue itself is at `/admin/pieces`. The pieces API routes are staff-only
+and RLS gives the anon role no access.
+
+The public show and arrangement pages credit a part's pieces as "Features
+music from: Title (Composer), …", read through Drizzle by
+`getPublicPiecesByArrangementIds`, which selects only title and composer.
+Copyright cost and licensing status never reach the public site. A part with
+one piece that repeats its own title and composer gets no credit line
+(`lib/pieces/credits.ts`).
 
 ## Show images: `graphic_url` vs `thumbnail_url`
 

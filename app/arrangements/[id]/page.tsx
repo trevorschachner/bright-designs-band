@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 import { AudioPlayerComponent, audioPlayerStyles } from "@/components/features/audio-player"
-import { getFilesByArrangementId } from "@/lib/database/queries"
+import { getFilesByArrangementId, getPublicPiecesByArrangementIds } from "@/lib/database/queries"
+import { SourcePieces } from '@/components/features/source-pieces'
 import { createClient } from '@/lib/utils/supabase/server'
 import { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
@@ -136,6 +137,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
 
   // Fetch files for audio and images
   const files = await getFilesByArrangementId(arrangementId);
+  const piecesByArrangement = await getPublicPiecesByArrangementIds([arrangementId]);
   const audio = Array.isArray(files) ? files.find((f: any) => f.fileType === 'audio' && f.isPublic) : undefined;
   const arrangementImage = Array.isArray(files) ? files.find((f: any) => f.fileType === 'image' && f.isPublic) : undefined;
 
@@ -278,6 +280,12 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
             {arr.description && (
               <p className="text-lg text-muted-foreground mb-6">{arr.description}</p>
             )}
+
+            <SourcePieces
+              part={arr}
+              pieces={piecesByArrangement.get(arrangementId)}
+              className="mb-6"
+            />
 
             {/* Metadata Grid */}
             <div className="grid grid-cols-2 gap-4 mb-6">

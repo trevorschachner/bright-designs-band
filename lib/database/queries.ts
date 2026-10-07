@@ -1,7 +1,8 @@
 // Database query functions - proper way to use Drizzle
 import { db } from './index';
-import { shows, arrangements, files, tags, contactSubmissions, showArrangements } from './schema';
-import { eq, desc, and, or, ilike, count, sql } from 'drizzle-orm';
+import { shows, arrangements, files, tags, contactSubmissions, showArrangements, pieces, arrangementPieces } from './schema';
+import { eq, desc, and, or, ilike, count, sql, inArray } from 'drizzle-orm';
+import type { PublicPiece } from '@/lib/pieces/credits';
 
 // =======================================
 // SHOWS QUERIES
@@ -216,6 +217,43 @@ export async function getFilesByArrangementId(arrangementId: number) {
     // Return empty array instead of throwing to prevent page crashes
     return [];
   }
+}
+
+/**
+ * Ordered source pieces for each part, keyed by arrangement id. Selects only
+ * title and composer: copyright cost and licensing status are internal. Goes
+ * through Drizzle because RLS gives the anon role no access to pieces.
+ */
+export async function getPublicPiecesByArrangementIds(
+  arrangementIds: number[]
+): Promise<Map<number, PublicPiece[]>> {
+  const byArrangement = new Map<number, PublicPiece[]>();
+  if (arrangementIds.length === 0) return byArrangement;
+  try {
+    const rows = await db
+      .select({
+        arrangementId: arrangementPieces.arrangementId,
+        title: pieces.title,
+        composer: pieces.composer,
+      })
+      .from(arrangementPieces)
+      .innerJoin(pieces, eq(arrangementPieces.pieceId, pieces.id))
+      .where(inArray(arrangementPieces.arrangementId, arrangementIds))
+      .orderBy(arrangementPieces.arrangementId, arrangementPieces.orderIndex);
+
+    for (const { arrangementId, title, composer } of rows) {
+      const list = byArrangement.get(arrangementId) ?? [];
+      list.push({ title, composer });
+      byArrangement.set(arrangementId, list);
+    }
+  } catch (error: any) {
+    // The credit is optional; a failure should not take the page down.
+    console.error('Error fetching arrangement pieces:', {
+      arrangementIds,
+      error: error?.message || error,
+    });
+  }
+  return byArrangement;
 }
 
 /**
