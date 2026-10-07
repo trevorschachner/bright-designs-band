@@ -51,7 +51,7 @@ export interface ReportErrorContext {
   [key: string]: unknown;
 }
 
-export function reportError(error: unknown, context: ReportErrorContext): void {
+export async function reportError(error: unknown, context: ReportErrorContext): Promise<void> {
   const message = error instanceof Error ? error.message : String(error);
 
   // Keep the log line. It is the only trace where no PostHog key is
@@ -67,7 +67,12 @@ export function reportError(error: unknown, context: ReportErrorContext): void {
       undefined,
       { source: 'server', ...context },
     );
-  } catch {
+    // flushAt: 1 only starts the send; a serverless function can freeze before
+    // it completes. Awaiting flush() keeps the invocation alive until the
+    // event has left.
+    await posthog.flush();
+  } catch (reportingError) {
     // Reporting must never escalate a degraded read into a failure.
+    console.error('[reportError] failed to report error', reportingError);
   }
 }

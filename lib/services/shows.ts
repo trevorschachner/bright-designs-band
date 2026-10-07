@@ -156,7 +156,7 @@ export async function getFeaturedShows(): Promise<ShowSummary[]> {
   try {
     return await getFeaturedShowsCached();
   } catch (error) {
-    reportError(error, { operation: 'getFeaturedShows', degradedTo: 'empty list' });
+    await reportError(error, { operation: 'getFeaturedShows', degradedTo: 'empty list' });
     return [];
   }
 }
@@ -278,7 +278,7 @@ export async function getShowsByFilter(filter: { difficulty?: 'Beginner' | 'Inte
   try {
     return await cachedFn();
   } catch (error) {
-    reportError(error, {
+    await reportError(error, {
       operation: 'getShowsByFilter',
       degradedTo: 'empty list',
       filter: JSON.stringify(filter),
