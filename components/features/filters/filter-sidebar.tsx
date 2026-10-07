@@ -41,9 +41,9 @@ interface FilterSidebarProps {
   resultCount?: ReactNode;
   defaultLimit?: number;
   /**
-   * Legacy controlled mode, kept only for the unused
-   * components/features/resources/ResourcePage.tsx. When both are given the
-   * component reports changes instead of writing the URL.
+   * Legacy controlled mode. Its only caller (ResourcePage) was deleted; remove
+   * in a follow-up. When both are given the component reports changes instead
+   * of writing the URL.
    */
   filterState?: FilterState;
   onFilterStateChange?: (state: FilterState) => void;

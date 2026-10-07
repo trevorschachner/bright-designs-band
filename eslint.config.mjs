@@ -20,8 +20,8 @@ const eslintConfig = [
       'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
       // eslint-plugin-react-hooks 7 (via eslint-config-next 16) React Compiler
       // rules (set-state-in-effect, immutability, refs, incompatible-library)
-      // are on at the preset's level. Remaining admin hits carry a line-level
-      // disable with TODO(SP3 #60).
+      // are on at the preset's level. The few hits whose fix would change
+      // behaviour carry a line-level disable tagged TODO(#59-followup).
     },
   },
 ]

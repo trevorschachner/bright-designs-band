@@ -20,23 +20,19 @@ import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
 import { getPublicSiteUrl } from "@/lib/env"
 import { Toaster } from "@/components/ui/toaster"
-import { PostHogProvider } from "@/components/features/analytics/PostHogProvider"
 
-// Inter is only a fallback behind Poppins in the font stacks, so it is never
-// painted; do not preload it.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
-  preload: false,
 })
 
 const poppins = Poppins({
   subsets: ["latin"],
-  // The weights the site uses: 300 (body, font-light), 500 (font-medium),
-  // 600 (font-semibold), 700 (font-bold). font-normal / <strong> (400) match
-  // 500 under CSS font matching.
-  weight: ["300", "500", "600", "700"],
+  // Every weight the site uses: 300 (body, font-light), 400 (font-normal, and
+  // <strong>/<b> = bolder than 300), 500 (font-medium), 600 (font-semibold),
+  // 700 (font-bold), 800 (typography prose h1 on /privacy and /terms).
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-poppins",
   display: "swap",
 })
@@ -74,24 +70,22 @@ export default function RootLayout({
         <JsonLd data={organizationSchema} />
         <JsonLd data={localBusinessSchema} />
         
-        <PostHogProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-            <GlobalBackground />
-            <GlobalSpotlight />
-            <ShowPlanProvider>
-              <AudioProvider>
-                <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
-                <Suspense fallback={<PageLoadingSkeleton />}>
-                  <main>{children}</main>
-                </Suspense>
-                <CTASection />
-                <SiteFooter footer={footer} social={social} />
-                <GlobalAudioPlayerBar />
-              </AudioProvider>
-              <Toaster />
-            </ShowPlanProvider>
-          </ThemeProvider>
-        </PostHogProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <GlobalBackground />
+          <GlobalSpotlight />
+          <ShowPlanProvider>
+            <AudioProvider>
+              <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
+              <Suspense fallback={<PageLoadingSkeleton />}>
+                <main>{children}</main>
+              </Suspense>
+              <CTASection />
+              <SiteFooter footer={footer} social={social} />
+              <GlobalAudioPlayerBar />
+            </AudioProvider>
+            <Toaster />
+          </ShowPlanProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
