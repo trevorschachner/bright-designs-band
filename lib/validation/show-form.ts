@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { showDifficultyEnum } from '@/lib/database/schema'
+import { SHOW_DIFFICULTIES } from './enums'
 import type { EditableShow } from '@/lib/services/admin'
 import type { CreateShowInput, UpdateShowActionInput } from './shows'
 
@@ -17,7 +17,7 @@ import type { CreateShowInput, UpdateShowActionInput } from './shows'
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const SLUG_MESSAGE = 'Slug must be lowercase words separated by hyphens'
 
-const DIFFICULTIES = ['', ...showDifficultyEnum.enumValues] as const
+const DIFFICULTIES = ['', ...SHOW_DIFFICULTIES] as const
 
 export const showFormSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(300, 'Title is too long'),

@@ -148,22 +148,49 @@ export class FileStorageService {
     }
   }
 
-  // Delete file from Supabase Storage
+  /**
+   * Delete a file from Supabase Storage. Success means the object is gone.
+   *
+   * `remove()` answers `{ data: [], error: null }` both when the object was
+   * already absent and when RLS on storage.objects hides it from this caller,
+   * so an empty result is not trusted: the object is looked up (authenticated
+   * `exists`, then an anonymous HEAD on its public URL, which RLS on the
+   * caller cannot hide). Only a confirmed absence counts as success.
+   */
   async deleteFile(storagePath: string, supabase: SupabaseClient): Promise<{ success: boolean; error?: string }> {
+    const fullPath = withRootPrefix(storagePath)
     try {
-      const { error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .remove([withRootPrefix(storagePath)])
-
+      const { data, error } = await supabase.storage.from(STORAGE_BUCKET).remove([fullPath])
       if (error) {
         console.error('Storage delete error:', error)
         return { success: false, error: 'Failed to delete file from storage' }
       }
+      if (data && data.length > 0) return { success: true }
 
-      return { success: true }
+      const present = await this.objectPresent(fullPath, supabase)
+      if (present === false) return { success: true }
+      return {
+        success: false,
+        error: present ? 'Storage did not remove the object (permission?)' : 'Could not confirm the object was removed',
+      }
     } catch (error) {
       console.error('File delete error:', error)
       return { success: false, error: 'An unexpected error occurred during deletion' }
+    }
+  }
+
+  /** true = still there, false = confirmed absent, null = could not tell. */
+  private async objectPresent(fullPath: string, supabase: SupabaseClient): Promise<boolean | null> {
+    // exists() answers false for 400/404 and throws on anything else (caught by deleteFile).
+    const { data: visible } = await supabase.storage.from(STORAGE_BUCKET).exists(fullPath)
+    if (visible) return true
+    try {
+      const head = await fetch(publicStorageUrl(STORAGE_BUCKET, fullPath), { method: 'HEAD', cache: 'no-store' })
+      if (head.ok) return true
+      if (head.status === 400 || head.status === 404) return false
+      return null
+    } catch {
+      return null
     }
   }
 

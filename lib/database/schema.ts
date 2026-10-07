@@ -1,12 +1,14 @@
 import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
+import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, FILE_TYPES, GRADE_BANDS, SHOW_DIFFICULTIES } from '../validation/enums';
 
 // Enums
-export const gradeBandEnum = pgEnum('grade_band', ['1_2', '3_4', '5_plus']);
-export const showDifficultyEnum = pgEnum('difficulty', ['Beginner', 'Intermediate', 'Advanced']);
-export const ensembleSizeEnum = pgEnum('ensemble_size', ['small', 'medium', 'large']);
-export const fileTypeEnum = pgEnum('file_type', ['image', 'audio', 'youtube', 'pdf', 'score', 'other']);
-export const arrangementSceneEnum = pgEnum('arrangement_scene', ['Opener', 'Ballad', 'Closer']);
+// Values live in lib/validation/enums.ts so client forms can use them without drizzle.
+export const gradeBandEnum = pgEnum('grade_band', GRADE_BANDS);
+export const showDifficultyEnum = pgEnum('difficulty', SHOW_DIFFICULTIES);
+export const ensembleSizeEnum = pgEnum('ensemble_size', ENSEMBLE_SIZES);
+export const fileTypeEnum = pgEnum('file_type', FILE_TYPES);
+export const arrangementSceneEnum = pgEnum('arrangement_scene', ARRANGEMENT_SCENES);
 
 // Shows
 export const shows = pgTable('shows', {

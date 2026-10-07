@@ -96,7 +96,8 @@ export function ArrangementForm({ showId, arrangement, showPercussionArranger, a
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
             <span>This part was changed by someone else. Reload to see their changes.</span>
-            <Button type="button" size="sm" variant="outline" onClick={() => window.location.reload()}>
+            {/* eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full reload on purpose: drop every form's state and re-read the editor */}
+            <Button type="button" size="sm" variant="outline" onClick={() => window.location.assign(`${window.location.origin}/admin/shows/${showId}`)}>
               Reload
             </Button>
           </AlertDescription>

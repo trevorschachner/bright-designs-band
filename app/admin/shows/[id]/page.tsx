@@ -25,5 +25,5 @@ export default async function EditShowPage({
   const initial = await getShowForEdit(decodeURIComponent(id));
   if (!initial) notFound();
 
-  return <ShowEditor mode="edit" initial={initial} notice={thumbnail ? NOTICES[thumbnail] : undefined} />;
+  return <ShowEditor key={initial.show.id} mode="edit" initial={initial} notice={thumbnail ? NOTICES[thumbnail] : undefined} />;
 }

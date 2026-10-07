@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { arrangementSceneEnum, ensembleSizeEnum, gradeBandEnum } from '@/lib/database/schema'
+import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, GRADE_BANDS, type ArrangementScene, type EnsembleSize, type GradeBand } from './enums'
 import { parseDuration } from '@/lib/utils'
 import { concurrencyStamp, rowId } from './concurrency'
 
@@ -33,9 +33,9 @@ const fields = {
   arranger: optionalText(300),
   percussionArranger: optionalText(300),
   description: optionalText(5000),
-  grade: optionalEnum(gradeBandEnum.enumValues),
-  scene: optionalEnum(arrangementSceneEnum.enumValues),
-  ensembleSize: optionalEnum(ensembleSizeEnum.enumValues),
+  grade: optionalEnum([...GRADE_BANDS]),
+  scene: optionalEnum([...ARRANGEMENT_SCENES]),
+  ensembleSize: optionalEnum([...ENSEMBLE_SIZES]),
   year: z.number().int('Year must be a whole number').min(1900, 'Year looks wrong').max(2100, 'Year looks wrong').nullable(),
   durationSeconds: z.number().int().min(0, 'Duration cannot be negative').max(60 * 60, 'Duration is over an hour').nullable(),
   youtubeUrl: optionalText(500),
@@ -128,9 +128,9 @@ export function arrangementFormToInput(values: ArrangementFormValues) {
     arranger: blankToNull(values.arranger),
     percussionArranger: blankToNull(values.percussionArranger),
     description: blankToNull(values.description),
-    scene: (blankToNull(values.scene) as (typeof arrangementSceneEnum.enumValues)[number] | null),
-    grade: (blankToNull(values.grade) as (typeof gradeBandEnum.enumValues)[number] | null),
-    ensembleSize: (blankToNull(values.ensembleSize) as (typeof ensembleSizeEnum.enumValues)[number] | null),
+    scene: (blankToNull(values.scene) as ArrangementScene | null),
+    grade: (blankToNull(values.grade) as GradeBand | null),
+    ensembleSize: (blankToNull(values.ensembleSize) as EnsembleSize | null),
     year: values.year.trim() ? Number(values.year) : null,
     durationSeconds: values.duration.trim() ? parseDuration(values.duration) : null,
     youtubeUrl: blankToNull(values.youtubeUrl),

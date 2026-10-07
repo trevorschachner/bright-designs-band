@@ -10,6 +10,10 @@ const state = vi.hoisted(() => ({
   email: 'editor@example.com' as string | null,
   fake: null as unknown as ReturnType<typeof import('./fake-db').createFakeDb>,
   removeError: null as { message: string } | null,
+  /** What remove() reports as removed: 'all' echoes the paths, 'none' is `[]`. */
+  removeReports: 'all' as 'all' | 'none',
+  existsVisible: false,
+  publicHeadStatus: 404,
   removed: [] as string[][],
 }))
 
@@ -20,8 +24,10 @@ vi.mock('@/lib/utils/supabase/server', () => ({
       from: () => ({
         remove: async (paths: string[]) => {
           state.removed.push(paths)
-          return { data: state.removeError ? null : paths.map((name) => ({ name })), error: state.removeError }
+          if (state.removeError) return { data: null, error: state.removeError }
+          return { data: state.removeReports === 'all' ? paths.map((name) => ({ name })) : [], error: null }
         },
+        exists: async () => ({ data: state.existsVisible, error: state.existsVisible ? null : { message: 'not found' } }),
       }),
     },
   }),
@@ -37,7 +43,8 @@ const invalidateFileOwner = vi.hoisted(() => vi.fn(async (..._args: unknown[]) =
 vi.mock('@/lib/services/files', () => ({ invalidateFileOwner }))
 const invalidateShow = vi.hoisted(() => vi.fn((..._args: unknown[]) => state.fake.events.push('invalidate')))
 vi.mock('@/lib/services/invalidate', () => ({ invalidateShow }))
-vi.mock('@/lib/observability/report-error', () => ({ reportError: vi.fn(async () => {}) }))
+const reportError = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => {}))
+vi.mock('@/lib/observability/report-error', () => ({ reportError }))
 
 import { attachYouTube, deleteFile, setShowThumbnail } from '@/lib/actions/files'
 
@@ -73,7 +80,13 @@ function use(respond: Respond) {
 beforeEach(() => {
   state.email = 'editor@example.com'
   state.removeError = null
+  state.removeReports = 'all'
+  state.existsVisible = false
+  state.publicHeadStatus = 404
   state.removed = []
+  reportError.mockClear()
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://project.supabase.co')
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: state.publicHeadStatus })))
   invalidateFileOwner.mockClear()
   invalidateShow.mockClear()
   use(filesDb())
@@ -103,6 +116,36 @@ describe('deleteFile', () => {
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
     expect(opsOn(fake.ops, 'shows', 'update')).toHaveLength(0)
     expect(invalidateFileOwner).not.toHaveBeenCalled()
+  })
+
+  it('remove() reporting nothing: deletes the row only once the object is confirmed absent', async () => {
+    state.removeReports = 'none'
+    const fake = state.fake
+    expect(await deleteFile({ id: 5 })).toMatchObject({ ok: true, data: { id: 5 } })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('files/shows/7/image/a.png'), expect.objectContaining({ method: 'HEAD' }))
+  })
+
+  it('remove() reporting nothing while the object is still there (RLS hid it): failed, row kept, reported', async () => {
+    state.removeReports = 'none'
+    state.publicHeadStatus = 200
+    let fake = state.fake
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
+    expect(reportError).toHaveBeenCalled()
+
+    fake = use(filesDb())
+    state.existsVisible = true
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
+  })
+
+  it('remove() reporting nothing and the lookup failing: failed, row kept', async () => {
+    state.removeReports = 'none'
+    state.publicHeadStatus = 503
+    const fake = state.fake
+    expect(await deleteFile({ id: 5 })).toEqual({ ok: false, error: 'failed' })
+    expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
   })
 
   it('leaves the show alone when its art points elsewhere', async () => {

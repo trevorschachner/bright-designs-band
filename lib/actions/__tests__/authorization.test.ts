@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 /**
@@ -46,23 +48,23 @@ vi.mock('@/lib/database', () => ({
 }))
 vi.mock('@/lib/observability/report-error', () => ({ reportError: vi.fn(async () => {}) }))
 
-const MODULES = {
-  shows: () => import('@/lib/actions/shows'),
-  tags: () => import('@/lib/actions/tags'),
-  resources: () => import('@/lib/actions/resources'),
-  arrangements: () => import('@/lib/actions/arrangements'),
-  pieces: () => import('@/lib/actions/pieces'),
-  files: () => import('@/lib/actions/files'),
-  'admin-users': () => import('@/lib/actions/admin-users'),
-}
+/**
+ * Every action module in lib/actions, read from the directory so a new file
+ * cannot go untested. Not actions: the guard helper and the result type.
+ */
+const NOT_ACTIONS = new Set(['_guarded.ts', 'result.ts'])
+const ACTION_FILES = readdirSync(join(process.cwd(), 'lib/actions'))
+  .filter((file) => file.endsWith('.ts') && !file.endsWith('.d.ts') && !NOT_ACTIONS.has(file))
+  .sort()
 
 type Action = (...args: unknown[]) => Promise<unknown>
 
 async function allActions(): Promise<[string, Action][]> {
   const entries: [string, Action][] = []
-  for (const [file, load] of Object.entries(MODULES)) {
-    for (const [name, value] of Object.entries(await load())) {
-      if (typeof value === 'function') entries.push([`${file}.${name}`, value as Action])
+  for (const file of ACTION_FILES) {
+    const mod: Record<string, unknown> = await import(`@/lib/actions/${file.replace(/\.ts$/, '')}`)
+    for (const [name, value] of Object.entries(mod)) {
+      if (typeof value === 'function') entries.push([`${file.replace(/\.ts$/, '')}.${name}`, value as Action])
     }
   }
   return entries
@@ -78,6 +80,12 @@ beforeEach(() => {
 })
 
 describe('every Server Action is gated on permission', () => {
+  it('covers every action module in lib/actions', () => {
+    expect(ACTION_FILES).toEqual(
+      expect.arrayContaining(['admin-users.ts', 'arrangements.ts', 'files.ts', 'pieces.ts', 'resources.ts', 'shows.ts', 'tags.ts'])
+    )
+  })
+
   it('finds the actions (guards against an empty enumeration)', async () => {
     const names = (await allActions()).map(([name]) => name)
     expect(names).toEqual(

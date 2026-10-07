@@ -196,7 +196,9 @@ export function ShowForm({ mode, show, allTags, updatedAt, thumbnailUrl, onStamp
               variant="outline"
               onClick={() => {
                 leaving.current = true;
-                window.location.reload();
+                // The editor's canonical URL: the current one may carry ?thumbnail= or an old slug.
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full reload on purpose: drop every form's state and re-read the editor
+                window.location.assign(`${window.location.origin}/admin/shows/${show ? show.id : ''}`);
               }}
             >
               Reload
