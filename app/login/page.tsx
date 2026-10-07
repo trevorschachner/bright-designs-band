@@ -27,12 +27,14 @@ function LoginForm() {
   const [showOtpInput, setShowOtpInput] = useState(false)
   const supabase = createClient()
 
-  useEffect(() => {
-    const urlError = searchParams.get('error')
-    if (urlError) {
-      setError(decodeURIComponent(urlError))
-    }
-  }, [searchParams])
+  // Show an `?error=` from the URL whenever it changes (adjusting state
+  // during render rather than in an effect).
+  const urlError = searchParams.get('error')
+  const [shownUrlError, setShownUrlError] = useState<string | null>(null)
+  if (urlError !== shownUrlError) {
+    setShownUrlError(urlError)
+    if (urlError) setError(decodeURIComponent(urlError))
+  }
 
   const sendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()

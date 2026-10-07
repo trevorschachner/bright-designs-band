@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShowCard, type ShowCardItem } from '@/components/features/shows/ShowCard';
@@ -18,27 +18,41 @@ function readViewMode(): ViewMode | null {
   }
 }
 
+// The preference as an external store: localStorage, or memory when storage
+// is blocked (private mode), so the choice still applies until reload.
+let unsavedViewMode: ViewMode | null = null;
+const viewModeListeners = new Set<() => void>();
+
+function subscribeViewMode(onChange: () => void) {
+  viewModeListeners.add(onChange);
+  window.addEventListener('storage', onChange);
+  return () => {
+    viewModeListeners.delete(onChange);
+    window.removeEventListener('storage', onChange);
+  };
+}
+
+const getViewMode = (): ViewMode => unsavedViewMode ?? readViewMode() ?? 'grid';
+
+function saveViewMode(mode: ViewMode) {
+  try {
+    localStorage.setItem(VIEW_MODE_KEY, mode);
+    unsavedViewMode = null;
+  } catch {
+    unsavedViewMode = mode;
+  }
+  viewModeListeners.forEach((listener) => listener());
+}
+
 /**
  * The show grid (or list) for one server-rendered page of results. The only
  * client state is the grid/list preference, kept in localStorage as before;
  * the server renders the grid, so the HTML always carries every show link.
  */
 export function ShowResults({ items, prioritizeFirst }: { items: ShowCardItem[]; prioritizeFirst: boolean }) {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-
-  useEffect(() => {
-    const saved = readViewMode();
-    if (saved) setViewMode(saved);
-  }, []);
-
-  const changeViewMode = (mode: ViewMode) => {
-    setViewMode(mode);
-    try {
-      localStorage.setItem(VIEW_MODE_KEY, mode);
-    } catch {
-      // Storage blocked (private mode): the choice lasts for this page only.
-    }
-  };
+  // The server renders the grid; the saved choice applies after hydration.
+  const viewMode = useSyncExternalStore(subscribeViewMode, getViewMode, () => 'grid' as const);
+  const changeViewMode = saveViewMode;
 
   return (
     <>

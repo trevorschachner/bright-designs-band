@@ -59,6 +59,7 @@ export function useFilterState({
   useEffect(() => {
     if (!syncWithUrl) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(#59-followup): debounced URL push flags loading on every state change, including URL-originated ones
     setIsLoading(true);
     const timer = setTimeout(() => {
       try {
@@ -83,25 +84,21 @@ export function useFilterState({
     };
   }, [filterState, syncWithUrl, baseUrl, router]);
 
-  // Parse URL params when they change (e.g., browser back/forward)
-  useEffect(() => {
-    if (!syncWithUrl || !searchParams) return;
-
+  // Merge URL params into the state when they change (e.g. browser
+  // back/forward), adjusting state during render rather than in an effect.
+  const [syncedParams, setSyncedParams] = useState(searchParams);
+  if (syncWithUrl && searchParams && searchParams !== syncedParams) {
+    setSyncedParams(searchParams);
     try {
       const urlState = FilterUrlManager.fromUrlParams(searchParams);
-      // Only update if URL state differs from current state
-      // Use a more reliable comparison that doesn't depend on filterState in deps
       setInternalFilterState(currentState => {
         const newState = { ...currentState, ...urlState };
-        if (JSON.stringify(newState) !== JSON.stringify(currentState)) {
-          return newState;
-        }
-        return currentState;
+        return JSON.stringify(newState) !== JSON.stringify(currentState) ? newState : currentState;
       });
     } catch (error) {
       console.warn('Failed to parse filter state from URL params:', error);
     }
-  }, [searchParams, syncWithUrl]); // Removed filterState from deps to avoid infinite loop
+  }
 
   const setFilterState = useCallback((newState: FilterState) => {
     setInternalFilterState(newState);

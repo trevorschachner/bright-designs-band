@@ -66,6 +66,7 @@ export function FilterBar({
   // Normalised compare keeps a trailing space the URL dropped.
   useEffect(() => {
     if (hasPendingChange()) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(#59-followup): URL-to-box resync depends on a pending-change ref; doing it in render changes resync timing
     setSearchValue((current) =>
       (normalizeSearch(current) ?? '') === (filterState.search ?? '') ? current : filterState.search || ''
     );

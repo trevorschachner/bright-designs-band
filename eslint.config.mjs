@@ -18,13 +18,10 @@ const eslintConfig = [
       // inside it is destroyed mid-keystroke. That is what FilterSidebar's
       // SidebarContent did to the shows search box.
       'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
-      // eslint-plugin-react-hooks 7 (via eslint-config-next 16) adds React
-      // Compiler rules. Existing code trips them in ~20 places; fixing those
-      // changes runtime behaviour, so they are off until a dedicated pass.
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/immutability': 'off',
-      'react-hooks/refs': 'off',
-      'react-hooks/incompatible-library': 'off',
+      // eslint-plugin-react-hooks 7 (via eslint-config-next 16) React Compiler
+      // rules (set-state-in-effect, immutability, refs, incompatible-library)
+      // are on at the preset's level. Remaining admin hits carry a line-level
+      // disable with TODO(SP3 #60).
     },
   },
 ]

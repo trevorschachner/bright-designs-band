@@ -48,7 +48,9 @@ export function useCatalogUrlState({ filterFields, defaultLimit = CATALOG_DEFAUL
   // The debounced commit runs after later renders; it must compare against
   // the URL as it is then, not as it was when the timer was set.
   const latest = useRef({ queryString, pathname });
-  latest.current = { queryString, pathname };
+  useEffect(() => {
+    latest.current = { queryString, pathname };
+  });
 
   useEffect(() => {
     if (!timer.current) setLocalState(urlState);

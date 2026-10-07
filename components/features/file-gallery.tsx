@@ -109,6 +109,7 @@ export function FileGallery({
   }, [showId, arrangementId, fileType])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(#59-followup): fetch-on-change sets loading synchronously; moving it changes when the spinner shows
     fetchFiles()
   }, [fetchFiles])
 

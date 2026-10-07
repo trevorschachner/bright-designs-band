@@ -18,6 +18,7 @@ describe('security headers', () => {
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain('challenges.cloudflare.com');
     expect(csp).toContain('unpkg.com');
+    expect(csp).toContain("worker-src 'self' blob:");
   });
 
   it('includes the Supabase origin when a hostname is given and omits it otherwise', () => {

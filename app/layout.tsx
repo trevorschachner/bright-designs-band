@@ -18,7 +18,7 @@ import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
 import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
-import { getPublicSiteUrl, getPosthogKey, getPosthogHost } from "@/lib/env"
+import { getPublicSiteUrl } from "@/lib/env"
 import { Toaster } from "@/components/ui/toaster"
 import { PostHogProvider } from "@/components/features/analytics/PostHogProvider"
 
@@ -54,9 +54,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const posthogKey = getPosthogKey()
-  const posthogHost = getPosthogHost()
-  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -77,26 +74,24 @@ export default function RootLayout({
         <JsonLd data={organizationSchema} />
         <JsonLd data={localBusinessSchema} />
         
-        <Suspense fallback={null}>
-          <PostHogProvider apiKey={posthogKey} apiHost={posthogHost} />
-        </Suspense>
-        
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <GlobalBackground />
-          <GlobalSpotlight />
-          <ShowPlanProvider>
-            <AudioProvider>
-              <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
-              <Suspense fallback={<PageLoadingSkeleton />}>
-                <main>{children}</main>
-              </Suspense>
-              <CTASection />
-              <SiteFooter footer={footer} social={social} />
-              <GlobalAudioPlayerBar />
-            </AudioProvider>
-            <Toaster />
-          </ShowPlanProvider>
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+            <GlobalBackground />
+            <GlobalSpotlight />
+            <ShowPlanProvider>
+              <AudioProvider>
+                <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
+                <Suspense fallback={<PageLoadingSkeleton />}>
+                  <main>{children}</main>
+                </Suspense>
+                <CTASection />
+                <SiteFooter footer={footer} social={social} />
+                <GlobalAudioPlayerBar />
+              </AudioProvider>
+              <Toaster />
+            </ShowPlanProvider>
+          </ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   )

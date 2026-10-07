@@ -1,19 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useIsClient } from '@/lib/hooks/use-is-client';
 import Script from 'next/script';
 import { clients } from '@/lib/data/clients';
 
 export default function ClientsMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useIsClient();
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const initMap = () => {
     if (!mapContainerRef.current || mapInstanceRef.current) {

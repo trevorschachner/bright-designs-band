@@ -7,7 +7,6 @@ import { InquiryForm } from '@/components/forms/inquiry-form'
 import { toast } from '@/lib/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Mail } from 'lucide-react'
-import confetti from 'canvas-confetti'
 import { CONTACT_INTEREST_PARAM, readContactInterest } from '@/lib/contact-link'
 
 interface ContactPayload {
@@ -54,30 +53,32 @@ function ContactPageContent({ interest }: { interest: string }) {
         throw new Error('Something went wrong');
       }
 
-      // Trigger confetti
-      const end = Date.now() + 3 * 1000; // 3 seconds
-      const colors = ['#2563eb', '#ffffff'];
+      // Trigger confetti (loaded on demand; a failed load must not fail the submit)
+      void import('canvas-confetti').then(({ default: confetti }) => {
+        const end = Date.now() + 3 * 1000; // 3 seconds
+        const colors = ['#2563eb', '#ffffff'];
 
-      (function frame() {
-        confetti({
-          particleCount: 2,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: colors
-        });
-        confetti({
-          particleCount: 2,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: colors
-        });
+        (function frame() {
+          confetti({
+            particleCount: 2,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: colors
+          });
+          confetti({
+            particleCount: 2,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: colors
+          });
 
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      }());
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        }());
+      }).catch(() => {});
 
       toast({
         title: "Inquiry Submitted!",

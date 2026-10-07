@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -98,7 +98,7 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
     }
   }
 
-  const referralSource = form.watch("referralSource")
+  const referralSource = useWatch({ control: form.control, name: "referralSource" })
   const showReferralBandDirector = referralSource === "band-director"
 
   const showInterestLabel = isGeneralInquiry ? "Inquiry Topic or Project" : "Show of Interest"

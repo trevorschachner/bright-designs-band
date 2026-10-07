@@ -59,6 +59,18 @@ interface FilterSidebarProps {
  * re-renders the list. Reads useSearchParams, so the page must render it
  * inside a <Suspense> boundary.
  */
+function difficultyFrom(conditions: FilterState['conditions']): string[] {
+  const difficultyCond = conditions.find(c => c.field === 'difficulty');
+  if (!difficultyCond) return [];
+  if (difficultyCond.operator === 'in' && Array.isArray(difficultyCond.values)) {
+    return difficultyCond.values as string[];
+  }
+  if (difficultyCond.operator === 'equals' && typeof difficultyCond.value === 'string') {
+    return [difficultyCond.value];
+  }
+  return [];
+}
+
 export function FilterSidebar({
   filterFields,
   presets = [],
@@ -97,28 +109,21 @@ export function FilterSidebar({
   // overwriting the box with it would eat the space the user just typed.
   useEffect(() => {
     if (hasPendingChange()) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(#59-followup): URL-to-box resync depends on a pending-change ref; doing it in render changes resync timing
     setSearchValue((current) =>
       (normalizeSearch(current) ?? '') === (filterState.search ?? '') ? current : filterState.search || ''
     );
   }, [filterState.search, hasPendingChange]);
 
-  useEffect(() => {
-    const difficultyCond = filterState.conditions.find(c => c.field === 'difficulty');
-    if (difficultyCond) {
-      if (difficultyCond.operator === 'in' && Array.isArray(difficultyCond.values)) {
-        setSelectedDifficulty(difficultyCond.values as string[]);
-      } else if (difficultyCond.operator === 'equals' && typeof difficultyCond.value === 'string') {
-        setSelectedDifficulty([difficultyCond.value]);
-      } else {
-        setSelectedDifficulty([]);
-      }
-    } else {
-      setSelectedDifficulty([]);
-    }
-
+  // Mirror the difficulty/featured conditions whenever they change (adjusting
+  // state during render rather than in an effect).
+  const [syncedConditions, setSyncedConditions] = useState<FilterState['conditions'] | null>(null);
+  if (syncedConditions !== filterState.conditions) {
+    setSyncedConditions(filterState.conditions);
+    setSelectedDifficulty(difficultyFrom(filterState.conditions));
     const featuredCond = filterState.conditions.find(c => c.field === 'featured');
     setIsFeaturedOnly(featuredCond?.value === true);
-  }, [filterState.conditions]);
+  }
 
   // One debounce, in useCatalogUrlState. The box used to add its own 400 ms
   // on top of the URL hook's 300 ms.

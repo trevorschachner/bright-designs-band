@@ -1,11 +1,12 @@
 import posthog from "posthog-js"
 import { getPosthogKey } from "@/lib/env"
 
+// The site's only posthog-js init. PostHogProvider just hands this client to
+// React; pageviews come from `capture_pageview: 'history_change'`, so nothing
+// captures `$pageview` by hand. Development stays untracked.
 const posthogKey = getPosthogKey();
 const isDevelopment = process.env.NODE_ENV === "development";
 
-// Only initialize PostHog in production from this file
-// In development, PostHogProvider will handle initialization
 if (posthogKey && typeof window !== 'undefined' && !isDevelopment) {
   // Defer initialization to avoid blocking
   setTimeout(() => {
@@ -14,7 +15,9 @@ if (posthogKey && typeof window !== 'undefined' && !isDevelopment) {
         api_host: "/ingest",
         ui_host: "https://us.posthog.com",
         defaults: '2025-05-24',
+        capture_pageview: 'history_change',
         capture_exceptions: true,
+        disable_session_recording: true,
         debug: false,
         person_profiles: 'always',
       });
