@@ -1,4 +1,4 @@
-import { and, asc, desc, type SQL } from 'drizzle-orm'
+import { and, sql, type SQL } from 'drizzle-orm'
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core'
 import { QueryBuilder } from './query-builder'
 import type { FilterState } from './types'
@@ -89,7 +89,9 @@ function buildOrderBy(table: PgTable, sort: FilterState['sort']): OrderBy[] {
   return sort.map(entry => {
     const column = table[entry.field as keyof typeof table] as PgColumn | undefined
     if (!column) throw new UnknownFilterFieldError(entry.field)
-    return entry.direction === 'asc' ? asc(column) : desc(column)
+    // Blanks last either way: Postgres puts nulls first on desc, which buried
+    // the real values under every row with an unset field.
+    return entry.direction === 'asc' ? sql`${column} asc nulls last` : sql`${column} desc nulls last`
   })
 }
 
