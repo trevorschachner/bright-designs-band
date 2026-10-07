@@ -1,5 +1,5 @@
 import { EmailNotificationData } from './types';
-import { getEnv } from '@/lib/env';
+import { getEnv } from '@/lib/env.server';
 
 const DEFAULT_FROM = 'hello@transactional.brightdesigns.band';
 

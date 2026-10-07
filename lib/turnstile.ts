@@ -1,4 +1,4 @@
-import { getTurnstileSecret } from '@/lib/env'
+import { getTurnstileSecret } from '@/lib/env.server'
 
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 const TIMEOUT_MS = 5000

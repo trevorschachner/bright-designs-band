@@ -6,7 +6,7 @@ import type { ServiceCategory } from '@/lib/email/types';
 import { contactSubmissionSchema, toServiceCategories } from '@/lib/validation/contact';
 import { consume, getClientIp } from '@/lib/rate-limit';
 import { verifyTurnstile } from '@/lib/turnstile';
-import { getEnv } from '@/lib/env';
+import { getEnv } from '@/lib/env.server';
 
 const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 

@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
-import { getEnv } from '@/lib/env';
+import { getEnv } from '@/lib/env.server';
 
 // Optional in the env schema (the Netlify build and CI have none); required
 // the moment the database is actually used.

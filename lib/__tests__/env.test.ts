@@ -5,6 +5,11 @@ const load = async () => {
   return await import('@/lib/env')
 }
 
+const loadServer = async () => {
+  vi.resetModules()
+  return await import('@/lib/env.server')
+}
+
 afterEach(() => {
   vi.unstubAllEnvs()
 })
@@ -81,7 +86,7 @@ describe('server env', () => {
     vi.stubEnv('RESEND_API_KEY', '****')
     vi.stubEnv('TURNSTILE_SECRET_KEY', '****')
     vi.stubEnv('DATABASE_URL', '****')
-    const env = await load()
+    const env = await loadServer()
     const parsed = env.getEnv()
     expect(parsed.EMAIL_SERVICE).toBe('resend')
     expect(parsed.RESEND_API_KEY).toBeUndefined()
@@ -91,41 +96,48 @@ describe('server env', () => {
 
   it('rejects an unknown EMAIL_SERVICE without echoing it', async () => {
     vi.stubEnv('EMAIL_SERVICE', 'carrier-pigeon')
-    const env = await load()
+    const env = await loadServer()
     expect(() => env.getEnv()).toThrow(/EMAIL_SERVICE/)
     expect(() => env.getEnv()).not.toThrow(/carrier-pigeon/)
+  })
+
+  it('accepts EMAIL_SERVICE case-insensitively', async () => {
+    vi.stubEnv('EMAIL_SERVICE', ' Resend ')
+    expect((await loadServer()).getEnv().EMAIL_SERVICE).toBe('resend')
+    vi.stubEnv('EMAIL_SERVICE', 'SMTP')
+    expect((await loadServer()).getEnv().EMAIL_SERVICE).toBe('smtp')
   })
 
   it('coerces SMTP_PORT and SMTP_SECURE', async () => {
     vi.stubEnv('SMTP_PORT', '465')
     vi.stubEnv('SMTP_SECURE', 'true')
-    const parsed = (await load()).getEnv()
+    const parsed = (await loadServer()).getEnv()
     expect(parsed.SMTP_PORT).toBe(465)
     expect(parsed.SMTP_SECURE).toBe(true)
   })
 
   it('rejects a non-numeric SMTP_PORT', async () => {
     vi.stubEnv('SMTP_PORT', 'abc')
-    const env = await load()
+    const env = await loadServer()
     expect(() => env.getEnv()).toThrow(/SMTP_PORT/)
   })
 
   it('splits and trims ADMIN_EMAIL_ADDRESSES', async () => {
     vi.stubEnv('ADMIN_EMAIL_ADDRESSES', ' a@x.com , b@y.com,, ')
-    expect((await load()).getEnv().ADMIN_EMAIL_ADDRESSES).toEqual(['a@x.com', 'b@y.com'])
+    expect((await loadServer()).getEnv().ADMIN_EMAIL_ADDRESSES).toEqual(['a@x.com', 'b@y.com'])
   })
 
   it('accepts postgres and postgresql DATABASE_URLs', async () => {
     vi.stubEnv('DATABASE_URL', 'postgresql://u:p@db.example.com:5432/app')
-    expect((await load()).getEnv().DATABASE_URL).toBe('postgresql://u:p@db.example.com:5432/app')
+    expect((await loadServer()).getEnv().DATABASE_URL).toBe('postgresql://u:p@db.example.com:5432/app')
     vi.stubEnv('DATABASE_URL', 'postgres://u:p@db.example.com/app')
-    expect((await load()).getEnv().DATABASE_URL).toBe('postgres://u:p@db.example.com/app')
+    expect((await loadServer()).getEnv().DATABASE_URL).toBe('postgres://u:p@db.example.com/app')
   })
 
   it('aggregates invalid keys into one error that never echoes values', async () => {
     vi.stubEnv('DATABASE_URL', 'mysql://admin:hunter2@db.example.com/app')
     vi.stubEnv('SMTP_PORT', 'not-a-port')
-    const env = await load()
+    const env = await loadServer()
     let message = ''
     try {
       env.getEnv()
@@ -142,7 +154,7 @@ describe('server env', () => {
 
   it('parses once and caches', async () => {
     vi.stubEnv('EMAIL_FROM', 'first@x.com')
-    const env = await load()
+    const env = await loadServer()
     expect(env.getEnv().EMAIL_FROM).toBe('first@x.com')
     vi.stubEnv('EMAIL_FROM', 'second@x.com')
     expect(env.getEnv().EMAIL_FROM).toBe('first@x.com')
