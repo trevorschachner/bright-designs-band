@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { guard } from '@/lib/auth/guard';
 import { resources, files } from '@/lib/database/schema';
 import { eq } from 'drizzle-orm';
@@ -8,12 +9,6 @@ import { invalidateResources } from '@/lib/services/invalidate';
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     const idNum = parseInt(id, 10);
     const isNumeric = !isNaN(idNum);
@@ -51,12 +46,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const body = await request.json();
     
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     const idNum = parseInt(id, 10);
     const isNumeric = !isNaN(idNum);
@@ -105,12 +94,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const gate = await guard('canManageResources');
     if (gate.denied) return gate.denied;
 
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     const idNum = parseInt(id, 10);
     const isNumeric = !isNaN(idNum);

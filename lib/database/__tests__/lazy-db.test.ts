@@ -37,6 +37,25 @@ describe('lazy database', () => {
     expect(DATABASE_URL_MISSING).toMatch(/DATABASE_URL is not set/)
   })
 
+  it('can be awaited and returned from an async function without creating the client', async () => {
+    delete process.env.DATABASE_URL
+    const { db } = await import('@/lib/database')
+    const viaAsync = async () => db
+    expect(await viaAsync()).toBe(db)
+    expect(await db).toBe(db)
+    expect(postgresFactory).not.toHaveBeenCalled()
+  })
+
+  it('survives `in` and util.inspect without DATABASE_URL', async () => {
+    delete process.env.DATABASE_URL
+    const { db } = await import('@/lib/database')
+    const { inspect } = await import('node:util')
+    expect(() => 'select' in db).not.toThrow()
+    expect('select' in db).toBe(false)
+    expect(() => inspect(db)).not.toThrow()
+    expect(postgresFactory).not.toHaveBeenCalled()
+  })
+
   it('creates one small pool on first use and reuses it', async () => {
     process.env.DATABASE_URL = 'postgresql://u:p@127.0.0.1:5432/x'
     const { db, getDb } = await import('@/lib/database')

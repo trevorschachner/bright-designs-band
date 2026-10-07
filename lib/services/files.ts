@@ -9,7 +9,7 @@ import { getShowSlugForArrangement } from './arrangements';
 import { invalidateArrangement, invalidateShow } from './invalidate';
 
 /** Looks up the slug for the page path; a failed lookup still expires the tags. */
-async function slugOrNull(lookup: () => Promise<string | null>): Promise<string | null> {
+export async function slugOrNull(lookup: () => Promise<string | null>): Promise<string | null> {
   try {
     return await lookup();
   } catch (error) {

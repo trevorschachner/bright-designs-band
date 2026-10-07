@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { guard } from '@/lib/auth/guard';
 import { resources, files } from '@/lib/database/schema';
 import { eq } from 'drizzle-orm';
@@ -33,12 +34,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     // Generate slug if not provided
     let slug = body.slug;

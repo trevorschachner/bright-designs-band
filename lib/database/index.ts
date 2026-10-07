@@ -59,11 +59,19 @@ export function getDb(): Database {
 
 export const db: Database = new Proxy({} as Database, {
   get(_target, prop) {
+    // Probes that are not queries must not create the client: `then` is read
+    // whenever db is returned from an async function or awaited (it is not a
+    // thenable), and symbols are read by util.inspect, console.log and the
+    // like. Answering them from the real instance would throw without
+    // DATABASE_URL, outside any caller's try.
+    if (prop === 'then' || typeof prop === 'symbol') return undefined;
     const real = getDb();
     const value = Reflect.get(real, prop, real);
     return typeof value === 'function' ? value.bind(real) : value;
   },
   has(_target, prop) {
+    // `'x' in db` is a probe too; answer from the env without connecting.
+    if (prop === 'then' || typeof prop === 'symbol' || !isDatabaseConfigured()) return false;
     return Reflect.has(getDb(), prop);
   },
 });

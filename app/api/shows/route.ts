@@ -30,14 +30,13 @@ export async function GET(request: Request) {
 
   try {
     // The admin shows table asks with ?admin=true and must see its own writes
-    // at once, so staff get an uncached read that never enters a shared cache.
-    // Anyone else asking with ?admin=true gets the public (cached) answer.
+    // at once, so staff get an uncached read. Anyone else gets the public
+    // data, but every ?admin=true answer is private: the edge must never store
+    // a body under the URL the admin UI reads.
     if (searchParams.get('admin') === 'true') {
       const gate = await guard('canManageShows');
-      if (!gate.denied) {
-        const { data, total } = await getShowsPageForAdmin(params);
-        return PrivateResponse(QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit }));
-      }
+      const { data, total } = gate.denied ? await getShowsPage(params) : await getShowsPageForAdmin(params);
+      return PrivateResponse(QueryBuilder.buildFilteredResponse(data, total, { ...filterState, limit }));
     }
 
     const { data, total } = await getShowsPage(params);

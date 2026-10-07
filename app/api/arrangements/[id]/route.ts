@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { guard } from '@/lib/auth/guard';
 import { arrangements, arrangementsToTags, showArrangements } from '@/lib/database/schema';
 import { eq, and } from 'drizzle-orm';
 import { PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';
 import { getArrangementForApi, getShowSlugForArrangement } from '@/lib/services/arrangements';
 import { invalidateArrangement } from '@/lib/services/invalidate';
+import { slugOrNull } from '@/lib/services/files';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -37,13 +39,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     console.log('PUT /api/arrangements/' + arrangementId, 'Received data:', JSON.stringify(body, null, 2));
     
     // Use Drizzle to bypass RLS (like shows route does)
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e);
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     // Convert snake_case to camelCase for Drizzle schema
     const drizzlePayload: any = {};
@@ -111,7 +106,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       });
 
       console.log('PUT /api/arrangements/' + arrangementId, 'Successfully updated');
-      invalidateArrangement(arrangementId, await getShowSlugForArrangement(arrangementId));
+      // A failed slug lookup must not skip invalidation (or fail a committed write).
+      invalidateArrangement(arrangementId, await slugOrNull(() => getShowSlugForArrangement(arrangementId)));
       return NextResponse.json(updatedArrangement);
     } catch (dbError: any) {
       console.error('PUT /api/arrangements/' + arrangementId, 'Database error:', dbError);

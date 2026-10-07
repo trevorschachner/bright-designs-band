@@ -4,6 +4,7 @@ import { arrangementPieces, arrangements, pieces } from '@/lib/database/schema';
 import { getArrangementPiecesForAdmin } from '@/lib/services/pieces';
 import { getShowSlugForArrangement } from '@/lib/services/arrangements';
 import { invalidateArrangement } from '@/lib/services/invalidate';
+import { slugOrNull } from '@/lib/services/files';
 import { arrangementPiecesInputSchema } from '@/lib/validation/pieces';
 import {
   BadRequestResponse,
@@ -84,7 +85,7 @@ export async function PUT(request: Request, { params }: Context) {
 
     // The credit list is part of the arrangement, so this is an arrangement
     // change, not a pieces change.
-    invalidateArrangement(arrangementId, await getShowSlugForArrangement(arrangementId));
+    invalidateArrangement(arrangementId, await slugOrNull(() => getShowSlugForArrangement(arrangementId)));
     return SuccessResponse(await getArrangementPiecesForAdmin(arrangementId), 200, 0);
   } catch (error) {
     console.error('Error updating arrangement pieces:', error);
