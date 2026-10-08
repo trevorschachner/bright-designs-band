@@ -1,16 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { buildDeleteUrl, buildListUrl, nextSort } from '@/components/features/admin/admin-table-urls'
+import { buildListUrl, nextSort } from '@/components/features/admin/admin-table-urls'
 
 const sortParam = (url: string) => JSON.parse(new URL(url, 'http://x').searchParams.get('sort') ?? 'null')
-
-describe('buildDeleteUrl', () => {
-  it('appends the id to a clean path', () => {
-    expect(buildDeleteUrl('/api/shows', 5)).toBe('/api/shows/5')
-  })
-  it('drops any query string from the endpoint', () => {
-    expect(buildDeleteUrl('/api/resources?all=true', 12)).toBe('/api/resources/12')
-  })
-})
 
 describe('buildListUrl', () => {
   it('adds listQuery and paging', () => {

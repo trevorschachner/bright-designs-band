@@ -9,9 +9,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
  * survives the migration it exists to protect, and a route added later is only
  * covered once someone adds it to WRITE_HANDLERS.
  *
- * Both rejection paths must return before any database access, so no database
- * mock is needed. lib/database throws at import without DATABASE_URL, so a
- * route that checks permissions too late fails loudly here.
+ * Both rejection paths must return before any content database access. The
+ * role lookup (admin_users) is the one read allowed first, and it is mocked
+ * below; a route that touches anything else before checking fails loudly,
+ * since there is no DATABASE_URL.
  */
 
 let currentUser: { email: string } | null = null
@@ -35,6 +36,13 @@ vi.mock('@/lib/utils/supabase/server', () => ({
   }),
 }))
 
+// Admin access is a row in admin_users, read by getUserRole (lib/auth/roles.ts).
+// Stand in for that lookup: only the test's admin address has a row.
+vi.mock('@/lib/auth/roles', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/auth/roles')>()),
+  getUserRole: async (email?: string | null) => (email === 'admin@brightdesigns.band' ? 'editor' : null),
+}))
+
 beforeEach(() => {
   currentUser = null
   authServerRejects = false
@@ -45,29 +53,14 @@ beforeEach(() => {
 type Handler = (req: never, ctx: never) => Promise<Response>
 
 const WRITE_HANDLERS: { name: string; load: () => Promise<Handler>; hasParams?: boolean }[] = [
-  { name: 'POST /api/shows', load: async () => (await import('@/app/api/shows/route')).POST as unknown as Handler },
-  { name: 'PUT /api/shows/[id]', load: async () => (await import('@/app/api/shows/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/shows/[id]', load: async () => (await import('@/app/api/shows/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/arrangements', load: async () => (await import('@/app/api/arrangements/route')).POST as unknown as Handler },
-  { name: 'PUT /api/arrangements/[id]', load: async () => (await import('@/app/api/arrangements/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/arrangements/[id]', load: async () => (await import('@/app/api/arrangements/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/resources', load: async () => (await import('@/app/api/resources/route')).POST as unknown as Handler },
-  { name: 'PUT /api/resources/[id]', load: async () => (await import('@/app/api/resources/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/resources/[id]', load: async () => (await import('@/app/api/resources/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/tags', load: async () => (await import('@/app/api/tags/route')).POST as unknown as Handler },
-  { name: 'PUT /api/tags/[id]', load: async () => (await import('@/app/api/tags/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/tags/[id]', load: async () => (await import('@/app/api/tags/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/files', load: async () => (await import('@/app/api/files/route')).POST as unknown as Handler },
-  { name: 'DELETE /api/files/[id]', load: async () => (await import('@/app/api/files/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'POST /api/files/sign', load: async () => (await import('@/app/api/files/sign/route')).POST as unknown as Handler },
-  { name: 'POST /api/files/youtube', load: async () => (await import('@/app/api/files/youtube/route')).POST as unknown as Handler },
-  { name: 'POST /api/pieces', load: async () => (await import('@/app/api/pieces/route')).POST as unknown as Handler },
-  { name: 'PUT /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).PUT as unknown as Handler, hasParams: true },
-  { name: 'DELETE /api/pieces/[id]', load: async () => (await import('@/app/api/pieces/[id]/route')).DELETE as unknown as Handler, hasParams: true },
-  { name: 'PUT /api/arrangements/[id]/pieces', load: async () => (await import('@/app/api/arrangements/[id]/pieces/route')).PUT as unknown as Handler, hasParams: true },
-  // Reads, but gated: pieces carry copyright cost and licensing status (#51).
-  { name: 'GET /api/pieces', load: async () => (await import('@/app/api/pieces/route')).GET as unknown as Handler },
-  { name: 'GET /api/arrangements/[id]/pieces', load: async () => (await import('@/app/api/arrangements/[id]/pieces/route')).GET as unknown as Handler, hasParams: true },
+  // The admin writes and uploads moved to Server Actions
+  // (lib/actions/__tests__/authorization.test.ts, uploads.test.ts). What is
+  // left is staff-only reads that must gate the same way.
+  {
+    name: 'GET /api/files/[id]/download',
+    load: async () => (await import('@/app/api/files/[id]/download/route')).GET as unknown as Handler,
+    hasParams: true,
+  },
 ]
 
 // /api/contact POST is deliberately absent: it serves the public contact form.
@@ -92,6 +85,13 @@ describe('every write route is gated on permission', () => {
 
     it(`${entry.name} rejects a signed-in caller without permission with 403`, async () => {
       currentUser = { email: 'nobody@example.com' }
+      const res = await call(entry)
+      expect(res.status).toBe(403)
+    })
+
+    it(`${entry.name} rejects a company-domain address that is not on the allowlist with 403`, async () => {
+      // The old rule made every @brightdesigns.band address staff.
+      currentUser = { email: 'former-staff@brightdesigns.band' }
       const res = await call(entry)
       expect(res.status).toBe(403)
     })

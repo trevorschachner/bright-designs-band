@@ -1,25 +1,26 @@
-import { createClient } from '@/lib/utils/supabase/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, AlertTriangle, FileText, ListMusic } from 'lucide-react';
-import { getUserRole, getUserPermissions } from '@/lib/auth/roles';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, FileText, ListMusic } from 'lucide-react';
+import { permissionsFor } from '@/lib/auth/roles';
+import { guard } from '@/lib/auth/guard';
 import { 
   Breadcrumb, 
   BreadcrumbList, 
   BreadcrumbItem, 
   BreadcrumbPage 
 } from '@/components/ui/breadcrumb';
-import { getDashboardStats } from '@/lib/services/admin';
+import { getDashboardStats, getNeedsAttention, getRecentEdits } from '@/lib/services/admin';
+import { NeedsAttentionCard, RecentEditsCard } from '@/components/features/admin/DashboardLists';
 import { getPosthogHost, getPosthogKey } from '@/lib/env';
 
 export default async function AdminPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  // Access first: nothing is read for someone who is not (or no longer) an admin.
+  const gate = await guard('canAccessAdmin');
+  if (gate.denied) redirect('/');
+
   // Fetch actual stats
   let stats;
   try {
@@ -35,39 +36,29 @@ export default async function AdminPage() {
     };
   }
 
-  if (!user) {
-    return redirect('/login');
-  }
+  // Each list fails on its own: a broken check must not take the dashboard down.
+  const [recentEdits, attention] = await Promise.all([
+    getRecentEdits(10).catch((error: unknown) => {
+      console.error('Error fetching recent edits:', error);
+      return null;
+    }),
+    getNeedsAttention().catch((error: unknown) => {
+      console.error('Error fetching needs-attention lists:', error);
+      return null;
+    }),
+  ]);
 
-  const userRole = getUserRole(user.email || '');
-  const permissions = getUserPermissions(user.email || '');
+  const user = { email: gate.email };
+  const userRole = gate.role;
+  const permissions = permissionsFor(gate.role);
   const posthogKey = getPosthogKey()
   const analyticsConfigured = Boolean(posthogKey);
   const posthogHost = getPosthogHost();
 
-  // Check if user has admin access
-  if (!permissions.canAccessAdmin) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <Alert className="max-w-md mx-auto">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            You don&apos;t have permission to access the admin dashboard. Contact an administrator if you believe this is an error.
-          </AlertDescription>
-        </Alert>
-        <div className="text-center mt-4">
-          <Button asChild>
-            <Link href="/">Return to Home</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
-      case 'staff': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'owner': return 'bg-red-100 text-red-800 border-red-200';
+      case 'editor': return 'bg-blue-100 text-blue-800 border-blue-200';
       default: return 'bg-muted text-foreground border-border';
     }
   };
@@ -218,16 +209,23 @@ export default async function AdminPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">156</div>
-              <p className="text-xs text-muted-foreground">Registered users</p>
-              <Button className="w-full mt-4">
-                Manage Users
-              </Button>
+              <p className="text-xs text-muted-foreground">Who has admin access, and as owner or editor</p>
+              <Link href="/admin/users" className="mt-4 inline-block w-full">
+                <Button className="w-full">
+                  Manage Users
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         )}
       </div>
 
+      {permissions.canManageShows && (
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <RecentEditsCard edits={recentEdits} />
+          <NeedsAttentionCard groups={attention} />
+        </div>
+      )}
     </div>
   );
 } 

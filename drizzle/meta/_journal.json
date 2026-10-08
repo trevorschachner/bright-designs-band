@@ -15,6 +15,27 @@
       "when": 1791146099345,
       "tag": "0001_pieces_and_drop_length_seconds",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791359494185,
+      "tag": "0002_clear_silhouette",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791360052418,
+      "tag": "0003_slug_redirects_updated_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791364092240,
+      "tag": "0004_pending_uploads",
+      "breakpoints": true
     }
   ]
 }

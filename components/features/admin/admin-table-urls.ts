@@ -1,17 +1,11 @@
-/** Path part of an endpoint, with any query string or hash removed. */
-const pathOf = (endpoint: string): string => endpoint.split(/[?#]/)[0].replace(/\/+$/, '');
-
-export function buildDeleteUrl(endpoint: string, id: number | string): string {
-  return `${pathOf(endpoint)}/${encodeURIComponent(String(id))}`;
-}
-
 export type TableSort = { field: string; direction: 'asc' | 'desc' };
 
 /**
  * List URL: endpoint plus optional fixed query (e.g. "all=true") plus paging,
- * plus sort in the filter system's `sort=[...]` format. Sorting adds `id` as a
- * tiebreaker so rows that share a value (e.g. Order 0) keep a stable order and
- * don't repeat or vanish between pages.
+ * plus sort in the filter system's `sort=[...]` format, plus the search term
+ * as `q` (the admin endpoints filter by title on the server; empty is
+ * omitted). Sorting adds `id` as a tiebreaker so rows that share a value
+ * (e.g. Order 0) keep a stable order and don't repeat or vanish between pages.
  */
 export function buildListUrl(
   endpoint: string,
@@ -19,9 +13,11 @@ export function buildListUrl(
   page: number,
   limit: number,
   sort?: TableSort | null,
+  q?: string,
 ): string {
   const base = listQuery ? `${endpoint}${endpoint.includes('?') ? '&' : '?'}${listQuery}` : endpoint;
-  const url = `${base}${base.includes('?') ? '&' : '?'}page=${page}&limit=${limit}`;
+  const term = q?.trim();
+  const url = `${base}${base.includes('?') ? '&' : '?'}page=${page}&limit=${limit}${term ? `&q=${encodeURIComponent(term)}` : ''}`;
   if (!sort) return url;
   const order: TableSort[] = sort.field === 'id' ? [sort] : [sort, { field: 'id', direction: 'asc' }];
   return `${url}&sort=${encodeURIComponent(JSON.stringify(order))}`;

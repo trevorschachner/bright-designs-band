@@ -21,7 +21,7 @@ export default async function ManageShowsPage() {
     redirect('/login');
   }
 
-  if (!requirePermission(user.email, 'canManageShows')) {
+  if (!(await requirePermission(user.email, 'canManageShows'))) {
     redirect('/'); // Or redirect to an unauthorized page
   }
 

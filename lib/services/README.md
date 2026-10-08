@@ -1,12 +1,12 @@
 # lib/services: the read layer and cache invalidation
 
 Every database read a page or API route makes goes through a function here.
-Writes stay in the API routes, and each one ends by calling one helper from
-`invalidate.ts`.
+Writes live in the API routes and in the Server Actions in `lib/actions/`
+(see its README); each one ends by calling one helper from `invalidate.ts`.
 
 | File | What it reads |
 | --- | --- |
-| `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs, the show index for `/llms.txt` |
+| `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs, old-slug redirects (`getSlugRedirect`, tagged `shows`), the show index for `/llms.txt` |
 | `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[id]` page and OG image (`getArrangementDetail`: one relational query) |
 | `catalog.ts` | `queryShows` / `queryArrangements`: parse + bound the catalog query, then one paged read (below) |
 | `pieces.ts` | Public source-piece credits; admin piece lists |
@@ -14,6 +14,7 @@ Writes stay in the API routes, and each one ends by calling one helper from
 | `tags.ts` | All tags; one tag (`/api/tags/[id]`) |
 | `sitemap.ts` | Show slugs and arrangement ids for `/sitemap.xml` (`app/sitemap.ts`) |
 | `admin.ts` | Dashboard counts |
+| `admin-users.ts` | The admin allowlist (`admin_users`) for `/admin/users`, uncached; `mutateAdminUsers()` locks the rows for the owner-protection rules |
 | `files.ts` | No reads: `invalidateFileOwner()` routes a file write to its show or arrangement |
 | `cache.ts` | `cachedRead()`, the build fallback, `toIso()` |
 | `invalidate.ts` | One invalidation helper per entity |
@@ -49,7 +50,9 @@ We use `unstable_cache`, not `'use cache'`. Decided once for the whole layer.
 4. **One error policy: throw.** Nothing here catches a database error. A
    lookup returns `null` for "no such row", and the page calls `notFound()`. A
    failure reaches the route's catch (500) or `app/error.tsx`. An empty list
-   means nothing matched. It never means the query failed.
+   means nothing matched. It never means the query failed. One deliberate
+   exception: `getSlugRedirect` returns null when `slug_redirects` does not
+   exist yet (42P01, before drizzle/0003), so a miss still 404s.
 5. **The one exception is a build without a database.** During `next build`
    with no `DATABASE_URL` (CI) or a masked Supabase env (some Netlify builds),
    `cachedRead` returns `atBuildWithoutDb` without querying or caching, and
@@ -157,25 +160,21 @@ straight after saving.
 | `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[id]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml`, every `/collections/<slug>` |
 | `invalidatePieces()` | `pieces` | same as tags |
 | `invalidateResources()` | `resources` | `/resources`, `/`, `/sitemap.xml` |
-| `invalidateCatalog()` | all five list tags | the whole site (`/`, layout), plus `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` |
 
 Which write calls which:
 
-| Route | Helper |
+| Write | Helper |
 | --- | --- |
-| `POST /api/shows` | `invalidateShow` |
-| `PUT /api/shows/[id]` (incl. setting the thumbnail) | `invalidateShow` (with the previous slug) |
-| `DELETE /api/shows/[id]` | `invalidateShow` |
-| `POST /api/arrangements` | `invalidateArrangement` (parent show slug) |
-| `PUT /api/arrangements/[id]` | `invalidateArrangement` |
-| `DELETE /api/arrangements/[id]` | `invalidateArrangement` (slug read before the delete) |
-| `PUT /api/arrangements/[id]/pieces` | `invalidateArrangement` |
-| `POST /api/tags`, `PUT`/`DELETE /api/tags/[id]` | `invalidateTags` |
-| `POST /api/pieces`, `PUT`/`DELETE /api/pieces/[id]` | `invalidatePieces` |
-| `POST /api/resources`, `PUT`/`DELETE /api/resources/[id]` | `invalidateResources` |
-| `POST /api/files` (both modes), `POST /api/files/youtube`, `DELETE /api/files/[id]` | `invalidateFileOwner` → `invalidateShow` and/or `invalidateArrangement` |
+| `lib/actions/shows.ts` (every action) | `invalidateShow` (`updateShow` passes the previous slug) |
+| `lib/actions/arrangements.ts` create / update / delete / tags / pieces | `invalidateArrangement` (parent show slug; read before a delete) |
+| `lib/actions/arrangements.ts` `reorderArrangements` | `invalidateShow` |
+| `lib/actions/tags.ts` | `invalidateTags` |
+| `lib/actions/pieces.ts` | `invalidatePieces` |
+| `lib/actions/resources.ts` | `invalidateResources` |
+| `lib/actions/files.ts` `setShowThumbnail` | `invalidateShow` |
+| `lib/actions/files.ts` `attachYouTube`, `deleteFile`; `lib/actions/uploads.ts` `completeUpload` | `invalidateFileOwner` → `invalidateShow` and/or `invalidateArrangement` |
 
-A new write route must call one of these. A new read that joins another entity
+A new write (action or route) must call one of these. A new read that joins another entity
 must add that entity's tag.
 
 ## The database client

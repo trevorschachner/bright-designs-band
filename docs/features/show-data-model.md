@@ -45,9 +45,9 @@ value in each.
 
 **Writes.**
 
-- `graphic_url` is set automatically by `POST /api/files` whenever an image is uploaded to a show (not to one of its parts). It has no field in the admin.
+- `graphic_url` is set automatically by the `completeUpload` Server Action (`lib/actions/uploads.ts`) whenever an image is uploaded to a show (not to one of its parts). It has no field in the admin. (Before SP3 this was `POST /api/files`, now deleted.)
 - `thumbnail_url` is the admin's "Thumbnail URL" field, "Set as thumbnail" in the show gallery, the new-show upload.
-- Deleting a file clears whichever of the two pointed at it (`DELETE /api/files/[id]`).
+- Deleting a file clears whichever of the two pointed at it (the `deleteFile` action, through `removeFile` in `lib/services/file-removal.ts`).
 
 So in practice: the latest uploaded show image wins over a manually chosen
 thumbnail, because `graphic_url` is read first.

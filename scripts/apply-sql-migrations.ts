@@ -9,6 +9,13 @@
  *   npx tsx scripts/apply-sql-migrations.ts            # show what is pending
  *   npx tsx scripts/apply-sql-migrations.ts --apply    # apply pending files
  *   npx tsx scripts/apply-sql-migrations.ts --baseline # mark all as applied
+ *   npx tsx scripts/apply-sql-migrations.ts --apply --only <file.sql>
+ *                                                      # apply one pending file
+ *
+ * A file containing the line `-- migrate: manual` is held back from a plain
+ * `--apply` (it stays pending, and is listed as held) and runs only with
+ * `--only <its name>`. For steps that must wait for a human action first
+ * (e.g. 2026-10-09_storage_public_select.sql waits for migrate-private-files).
  *
  * `--baseline` is for adopting this on a database whose migrations were
  * already applied by hand. It records without executing, so use it once.
@@ -17,7 +24,7 @@ import { config } from 'dotenv'
 import { resolve } from 'path'
 import { readdir, readFile } from 'fs/promises'
 import postgres from 'postgres'
-import { checksum, pendingMigrations, selectMigrationFiles } from '../lib/database/sql-migrations'
+import { checksum, pendingMigrations, planApply, selectMigrationFiles } from '../lib/database/sql-migrations'
 
 config({ path: resolve(process.cwd(), '.env.local') })
 
@@ -45,6 +52,10 @@ const DIR = resolve(process.cwd(), 'drizzle/migrations')
 async function main() {
   const apply = process.argv.includes('--apply')
   const baseline = process.argv.includes('--baseline')
+  const onlyIndex = process.argv.indexOf('--only')
+  const only = onlyIndex === -1 ? null : process.argv[onlyIndex + 1] ?? null
+  if (onlyIndex !== -1 && (!only || only.startsWith('--'))) throw new Error('--only requires a migration file name')
+  if (only && baseline) throw new Error('--only cannot be combined with --baseline')
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL not found in .env.local')
 
   const db = connect(process.env.DATABASE_URL)
@@ -84,8 +95,10 @@ async function main() {
       return
     }
 
-    console.log(`${apply ? 'Applying' : 'Pending'} ${pending.length} migration(s):`)
-    for (const name of pending) {
+    const plan = planApply(pending, contents, only)
+    for (const name of plan.held) console.log(`  held (manual; apply with --only ${name}): ${name}`)
+    console.log(`${apply ? 'Applying' : 'Pending'} ${plan.apply.length} migration(s):`)
+    for (const name of plan.apply) {
       if (!apply) { console.log(`  ${name}`); continue }
       await db.query('begin')
       try {

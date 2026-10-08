@@ -28,7 +28,7 @@ import { useFileUpload, UploadingFile, FileType } from '@/lib/hooks/use-file-upl
 interface FileUploadProps {
   showId?: number
   arrangementId?: number
-  onUploadSuccess?: (file: any) => void
+  onUploadSuccess?: (file: { id: number; url: string }) => void
   onUploadError?: (error: string) => void
   allowedTypes?: FileType[]
   maxFiles?: number
@@ -160,8 +160,8 @@ export function FileUpload({
                 {file.status === 'pending' ? (
                   <Select
                     value={file.fileType}
-                    onValueChange={(value: any) => 
-                      updateFile(file.id, { fileType: value })
+                    onValueChange={(value: string) => 
+                      updateFile(file.id, { fileType: value as FileType })
                     }
                   >
                     <SelectTrigger className="h-8">
@@ -335,8 +335,8 @@ export function FileUpload({
                           <Label htmlFor={`fileType-${uploadingFile.id}`}>Type</Label>
                           <Select
                             value={uploadingFile.fileType}
-                            onValueChange={(value: any) => 
-                              updateFile(uploadingFile.id, { fileType: value })
+                            onValueChange={(value: string) => 
+                              updateFile(uploadingFile.id, { fileType: value as FileType })
                             }
                           >
                             <SelectTrigger>

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Shield, Mail, Calendar, Settings } from 'lucide-react'
-import { getUserRole, getUserPermissions } from '@/lib/auth/roles'
+import { getUserRole, permissionsFor } from '@/lib/auth/roles'
 import Link from 'next/link'
 
 export default async function ProfilePage() {
@@ -16,13 +16,14 @@ export default async function ProfilePage() {
     redirect('/login')
   }
 
-  const userRole = getUserRole(user.email || '')
-  const permissions = getUserPermissions(user.email || '')
+  const role = await getUserRole(user.email)
+  const userRole = role ?? 'user'
+  const permissions = permissionsFor(role)
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800 border-red-200'
-      case 'staff': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'owner': return 'bg-red-100 text-red-800 border-red-200'
+      case 'editor': return 'bg-blue-100 text-blue-800 border-blue-200'
       default: return 'bg-muted text-foreground border-border'
     }
   }
@@ -168,15 +169,15 @@ export default async function ProfilePage() {
               <CardTitle>Account Type Info</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
-              {userRole === 'staff' ? (
+              {userRole === 'editor' ? (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="font-medium text-blue-800">Staff Member</p>
-                  <p className="text-blue-700">You have elevated access as a Bright Designs staff member.</p>
+                  <p className="font-medium text-blue-800">Editor</p>
+                  <p className="text-blue-700">You can manage shows, arrangements, tags, pieces and resources.</p>
                 </div>
-              ) : userRole === 'admin' ? (
+              ) : userRole === 'owner' ? (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="font-medium text-red-800">Administrator</p>
-                  <p className="text-red-700">You have full administrative access to the platform.</p>
+                  <p className="font-medium text-red-800">Owner</p>
+                  <p className="text-red-700">You have full access, including who else has admin access.</p>
                 </div>
               ) : (
                 <div className="p-3 bg-muted/30 border border-border rounded-lg">

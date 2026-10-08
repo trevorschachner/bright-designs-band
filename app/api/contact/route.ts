@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email/service';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '@/lib/email/templates';
+import { db } from '@/lib/database';
 import { contactSubmissions } from '@/lib/database/schema';
 import type { ServiceCategory } from '@/lib/email/types';
 import { contactSubmissionSchema, toServiceCategories } from '@/lib/validation/contact';
@@ -84,7 +85,6 @@ export async function POST(request: NextRequest) {
 
     // Save to database
     try {
-      const { db } = await import('@/lib/database');
       await db.insert(contactSubmissions).values({
         firstName: name?.split(' ')?.[0] || name || 'Friend',
         lastName: name?.split(' ')?.slice(1).join(' ') || '',

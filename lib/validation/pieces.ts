@@ -64,3 +64,18 @@ export const arrangementPiecesInputSchema = z.object({
 })
 
 export type ArrangementPiecesInput = z.infer<typeof arrangementPiecesInputSchema>
+
+// ---------------------------------------------------------------------------
+// Server Action payloads (lib/actions/pieces.ts). Strict: unknown keys rejected.
+// ---------------------------------------------------------------------------
+
+export const createPieceSchema = pieceInputSchema.strict()
+export type CreatePieceInput = z.input<typeof createPieceSchema>
+
+export const updatePieceSchema = pieceInputSchema.extend({ id: z.number().int().positive() }).strict()
+export type UpdatePieceInput = z.input<typeof updatePieceSchema>
+
+export const pieceIdSchema = z.object({ id: z.number().int().positive() }).strict()
+
+/** `listPieces` takes nothing. */
+export const listPiecesSchema = z.object({}).strict()

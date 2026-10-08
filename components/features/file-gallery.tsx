@@ -22,8 +22,9 @@ import {
 } from 'lucide-react'
 import { AudioPlayerComponent } from './audio-player'
 import { YouTubePlayer } from './youtube-player'
+import { deleteFile, type DeletedFile } from '@/lib/actions/files'
 
-interface FileRecord {
+export interface GalleryFile {
   id: number
   fileName: string
   originalName: string
@@ -32,37 +33,53 @@ interface FileRecord {
   mimeType: string
   url: string
   storagePath: string
-  showId?: number
-  arrangementId?: number
+  showId?: number | null
+  arrangementId?: number | null
   isPublic: boolean
-  description?: string
+  description?: string | null
   displayOrder: number
   createdAt: string
   updatedAt: string
 }
 
+type FileRecord = GalleryFile
+
 interface FileGalleryProps {
   showId?: number
   arrangementId?: number
   fileType?: 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other'
+  /** When given, the gallery shows these (the caller refreshes them) instead of fetching. */
+  files?: GalleryFile[]
   editable?: boolean
-  onFileDelete?: (fileId: number) => void
-  onSetAsThumbnail?: (url: string) => void
+  onFileDelete?: (fileId: number, result: DeletedFile) => void
+  onSetAsThumbnail?: (url: string, fileId: number) => void
 }
+
+const byDisplayOrder = (a: FileRecord, b: FileRecord) =>
+  a.displayOrder !== b.displayOrder
+    ? a.displayOrder - b.displayOrder
+    : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
 
 export function FileGallery({ 
   showId, 
   arrangementId, 
   fileType, 
+  files: givenFiles,
   editable = false,
   onFileDelete,
   onSetAsThumbnail
 }: FileGalleryProps) {
-  const [files, setFiles] = useState<FileRecord[]>([])
-  const [loading, setLoading] = useState(true)
+  const [fetchedFiles, setFiles] = useState<FileRecord[]>([])
+  const [removedIds, setRemovedIds] = useState<number[]>([])
+  const [loading, setLoading] = useState(givenFiles === undefined)
   const [error, setError] = useState<string | null>(null)
 
+  const files = (givenFiles ? [...givenFiles].sort(byDisplayOrder) : fetchedFiles).filter(
+    (f) => !removedIds.includes(f.id) && (!fileType || f.fileType === fileType)
+  )
+
   const fetchFiles = useCallback(async () => {
+    if (givenFiles) return
     try {
       setLoading(true)
       const params = new URLSearchParams()
@@ -78,35 +95,21 @@ export function FileGallery({
         throw new Error(result.error || 'Failed to fetch files')
       }
 
-      // Extract files from API response (data is wrapped in SuccessResponse)
-      let filteredFiles = Array.isArray(result.data) ? result.data : []
-
-      // Additional filtering (though API already filters by showId/arrangementId/fileType)
-      if (showId) {
-        filteredFiles = filteredFiles.filter((f: FileRecord) => f.showId === showId)
-      }
-      if (arrangementId) {
-        filteredFiles = filteredFiles.filter((f: FileRecord) => f.arrangementId === arrangementId)
-      }
-      if (fileType) {
-        filteredFiles = filteredFiles.filter((f: FileRecord) => f.fileType === fileType)
-      }
-
-      // Sort by display order then by creation date
-      filteredFiles.sort((a: FileRecord, b: FileRecord) => {
-        if (a.displayOrder !== b.displayOrder) {
-          return a.displayOrder - b.displayOrder
-        }
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      })
-
+      // The API already filters by showId/arrangementId/fileType; filter again defensively.
+      const filteredFiles = (Array.isArray(result.data) ? (result.data as FileRecord[]) : []).filter(
+        (f) =>
+          (!showId || f.showId === showId) &&
+          (!arrangementId || f.arrangementId === arrangementId) &&
+          (!fileType || f.fileType === fileType)
+      )
+      filteredFiles.sort(byDisplayOrder)
       setFiles(filteredFiles)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch files')
     } finally {
       setLoading(false)
     }
-  }, [showId, arrangementId, fileType])
+  }, [showId, arrangementId, fileType, givenFiles])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(#59-followup): fetch-on-change sets loading synchronously; moving it changes when the spinner shows
@@ -116,21 +119,19 @@ export function FileGallery({
   const handleDelete = async (fileId: number) => {
     if (!confirm('Are you sure you want to delete this file?')) return
 
-    try {
-      const response = await fetch(`/api/files/${fileId}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) {
-        const result = await response.json()
-        throw new Error(result.error || 'Failed to delete file')
-      }
-
-      setFiles(files.filter(f => f.id !== fileId))
-      onFileDelete?.(fileId)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete file')
+    const result = await deleteFile({ id: fileId })
+    if (!result.ok) {
+      setError(
+        result.error === 'not_found'
+          ? 'That file was already deleted.'
+          : result.error === 'forbidden'
+            ? 'You do not have permission to delete files.'
+            : 'The file could not be deleted from storage. Try again.'
+      )
+      return
     }
+    setRemovedIds((ids) => [...ids, fileId])
+    onFileDelete?.(fileId, result.data)
   }
 
   const getFileIcon = (fileType: string) => {
@@ -171,7 +172,7 @@ export function FileGallery({
                 <Button 
                   size="sm" 
                   variant="secondary" 
-                  onClick={() => onSetAsThumbnail(file.url)}
+                  onClick={() => onSetAsThumbnail(file.url, file.id)}
                   className="shadow-lg"
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
@@ -193,7 +194,7 @@ export function FileGallery({
                tracks={[{
                  id: file.id.toString(),
                  title: file.originalName,
-                 description: file.description,
+                 description: file.description ?? undefined,
                  url: file.url
                }]}
              />

@@ -44,3 +44,11 @@ behind Poppins in every stack) measured `/` 89 / 3.8 s, `/shows` 89 / 3.7 s,
 | 2026-10-07 | Task 5 | `/` | 89 | 3.8 s | 335 | Local, after Task 5: server-rendered JSON-LD (4 blocks), sitemap.ts/robots.ts, generated llms.txt. SEO 100. Two runs, identical |
 | 2026-10-07 | Task 5 | `/shows` | 89 | 3.7 s | 360 | Local, after Task 5. SEO 100. Two runs (3.8 s, 3.7 s) |
 | 2026-10-07 | Task 5 | `/shows/true-north` | 89 | 3.8 s | 339 | Local, after Task 5: 7 JSON-LD blocks (Organization, ProfessionalService, Service, BreadcrumbList, Product, MusicComposition, VideoObject). SEO 100. Two runs, identical |
+
+**Budget (SP3 Task 5, re-set in the SP3 final fixes).** `lighthouserc.json`
+asserts performance ≥ 0.85, LCP ≤ 4000 ms and script ≤ 389120 bytes
+(380 KiB), up from SP1's 0.95 / 2000 ms / 180 KiB: the App Router client
+runtime alone is about 116 KiB, so 180 KiB was unreachable, and the script
+rows above measure 335–360 KB after SP2 with the lazy PostHog chunk counted.
+The CI job stays advisory until a deploy-preview row is recorded here; then
+make it required.

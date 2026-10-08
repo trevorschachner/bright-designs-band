@@ -5,7 +5,8 @@
 
 import { db } from '@/lib/database';
 import { resources } from '@/lib/database/schema';
-import { desc, eq, type SQL } from 'drizzle-orm';
+import { desc, eq, ilike, type SQL } from 'drizzle-orm';
+import { likePattern } from '@/lib/filters/admin-search';
 import { TAGS } from '@/lib/cache-tags';
 import { cachedRead, toIso } from './cache';
 
@@ -60,9 +61,10 @@ export const getActiveResources = cachedRead('active-resources-v2', fetchActiveR
   atBuildWithoutDb: [] as ResourceRow[],
 });
 
-/** Every resource including drafts, newest first. Admin only, uncached. */
-export async function getResourcesForAdmin(): Promise<ResourceRow[]> {
-  const rows = await db.select(RESOURCE_COLUMNS).from(resources).orderBy(desc(resources.createdAt));
+/** Every resource including drafts, newest first, optionally filtered by title (`q`). Admin only, uncached. */
+export async function getResourcesForAdmin(q?: string): Promise<ResourceRow[]> {
+  const base = db.select(RESOURCE_COLUMNS).from(resources);
+  const rows = await (q ? base.where(ilike(resources.title, likePattern(q))) : base).orderBy(desc(resources.createdAt));
   return serialise(rows);
 }
 
@@ -86,3 +88,8 @@ export const getResource = cachedRead('resource-v1', fetchResource, {
   atBuildWithoutDb: null as ResourceRow | null,
 });
 
+
+/** One resource by id or slug, drafts included, uncached. For the admin editor (it saves with `updatedAt`). */
+export function getResourceForAdmin(idOrSlug: string): Promise<ResourceRow | null> {
+  return fetchResource(idOrSlug);
+}

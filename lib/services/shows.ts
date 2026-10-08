@@ -7,8 +7,9 @@
  */
 
 import { db } from '@/lib/database';
-import { shows, showsToTags, showArrangements, files, tags } from '@/lib/database/schema';
-import { and, desc, eq, exists, inArray, sql, count, type SQL } from 'drizzle-orm';
+import { shows, showsToTags, showArrangements, files, tags, slugRedirects } from '@/lib/database/schema';
+import { and, desc, eq, exists, ilike, inArray, sql, count, type SQL } from 'drizzle-orm';
+import { likePattern } from '@/lib/filters/admin-search';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterCondition, SortCondition } from '@/lib/filters/types';
 import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
@@ -16,6 +17,7 @@ import { shouldSkipSupabase } from '@/lib/env';
 import { publicStorageUrl } from '@/lib/media/public-url';
 import { TAGS } from '@/lib/cache-tags';
 import { cachedRead, toIso, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
+import { PG_UNDEFINED_TABLE, postgresCode } from '@/lib/database/errors';
 
 // ---------------------------------------------------------------------------
 // Shared shapes and helpers
@@ -262,7 +264,8 @@ export type AdminShowListItem = ShowListItem & { price: number | null };
  */
 async function fetchShowsRows(
   params: ShowsPageParams,
-  includePrice: boolean
+  includePrice: boolean,
+  titleQuery?: string
 ): Promise<{ data: (ShowListItem | AdminShowListItem)[]; total: number }> {
   const { search, conditions, sort, page, limit, featured } = params;
   const offset = (page - 1) * limit;
@@ -281,7 +284,10 @@ async function fetchShowsRows(
               .where(and(eq(showsToTags.showId, shows.id), inArray(showsToTags.tagId, tagIds)))
           ),
       },
-      extra: featured ? [eq(shows.featured, true)] : [],
+      extra: [
+        ...(featured ? [eq(shows.featured, true)] : []),
+        ...(titleQuery ? [ilike(shows.title, likePattern(titleQuery))] : []),
+      ],
       defaultOrderBy: [shows.displayOrder, desc(shows.createdAt)],
     }
   );
@@ -367,9 +373,13 @@ export const getShowsPage = cachedRead('shows-page-v2', fetchShowsPage, {
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
 });
 
-/** The same page, uncached and with `price`, for the admin shows table. */
-export function getShowsPageForAdmin(params: ShowsPageParams) {
-  return fetchShowsRows(params, true) as Promise<{ data: AdminShowListItem[]; total: number }>;
+/**
+ * The same page, uncached and with `price`, for the admin shows table. `q` is
+ * the table's title search (`ilike`); the public page has no such parameter.
+ */
+export function getShowsPageForAdmin(params: ShowsPageParams & { q?: string }) {
+  const { q, ...page } = params;
+  return fetchShowsRows(page, true, q) as Promise<{ data: AdminShowListItem[]; total: number }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -433,6 +443,44 @@ async function fetchShowBySlug(slug: string): Promise<ShowWithTags | null> {
 export const getShowBySlug = cachedRead('show-by-slug-v3', fetchShowBySlug, {
   tags: () => [TAGS.shows, TAGS.tags],
   atBuildWithoutDb: null as ShowWithTags | null,
+});
+
+let warnedMissingRedirectTable = false;
+
+async function fetchSlugRedirect(oldSlug: string): Promise<string | null> {
+  let row: { slug: string } | undefined;
+  try {
+    [row] = await db
+      .select({ slug: shows.slug })
+      .from(slugRedirects)
+      .innerJoin(shows, eq(shows.id, slugRedirects.showId))
+      .where(eq(slugRedirects.oldSlug, oldSlug))
+      .limit(1);
+  } catch (error) {
+    // The one tolerated failure in this file (README rule 4): before
+    // drizzle/0003 is applied the table does not exist, and a public miss
+    // must still 404, not error. Logged once per process. Anything else throws.
+    if (postgresCode(error) !== PG_UNDEFINED_TABLE) throw error;
+    if (!warnedMissingRedirectTable) {
+      warnedMissingRedirectTable = true;
+      console.error('[getSlugRedirect] slug_redirects does not exist; apply drizzle/0003. Treating as no redirect.');
+    }
+    return null;
+  }
+  // Never redirect a slug to itself (a loop); lib/actions/shows.ts deletes a
+  // redirect row when a show claims its slug, so this is belt and braces.
+  return row && row.slug !== oldSlug ? row.slug : null;
+}
+
+/**
+ * The current slug of the show that used to live at `oldSlug`, or null.
+ * Rows are written by lib/actions/shows.ts `updateShow` on a slug change.
+ * Joined to `shows`, so a show renamed twice redirects straight to its latest
+ * slug. Tagged `shows`: every show write (invalidateShow) expires it.
+ */
+export const getSlugRedirect = cachedRead('slug-redirect-v1', fetchSlugRedirect, {
+  tags: () => [TAGS.shows],
+  atBuildWithoutDb: null as string | null,
 });
 
 export type ShowArrangementFile = {

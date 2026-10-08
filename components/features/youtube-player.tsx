@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { isValidYouTubeUrl } from '@/lib/youtube';
 
 interface YouTubePlayerProps {
   youtubeUrl?: string | null;
@@ -89,18 +90,8 @@ export function YouTubeFacadeIsland({ videoId, title, className, children }: You
   );
 }
 
-// Utility function to validate YouTube URLs
-export function isValidYouTubeUrl(url: string): boolean {
-  const regexes = [
-    /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)/,
-    /^https?:\/\/(www\.)?youtube\.com\/watch\?.*v=/,
-    /^https?:\/\/(www\.)?youtube\.com\/v\//,
-    /^https?:\/\/(www\.)?youtube\.com\/embed\//,
-    /^https?:\/\/youtu\.be\//
-  ]
-
-  return regexes.some(regex => regex.test(url))
-}
+// Utility function to validate YouTube URLs (lives in lib/youtube for server use)
+export { isValidYouTubeUrl };
 
 // Component for YouTube URL input with validation
 interface YouTubeUrlInputProps {

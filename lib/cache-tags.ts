@@ -23,6 +23,7 @@ export const PATHS = {
   home: '/',
   shows: '/shows',
   arrangements: '/arrangements',
+  resources: '/resources',
   sitemap: '/sitemap.xml',
   llms: '/llms.txt',
   llmsFull: '/llms-full.txt',

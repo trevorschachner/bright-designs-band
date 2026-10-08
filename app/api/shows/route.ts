@@ -1,15 +1,12 @@
-import { shows, showsToTags } from '@/lib/database/schema';
+import { shows } from '@/lib/database/schema';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { UnknownFilterFieldError } from '@/lib/filters/table-query';
-import { eq } from 'drizzle-orm';
 import { guard } from '@/lib/auth/guard';
-import { showSchema } from '@/lib/validation/shows';
 import { SuccessResponse, PrivateResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { reportError } from '@/lib/observability/report-error';
 import { getShowsPageForAdmin, type ShowsPageParams } from '@/lib/services/shows';
 import { parseShowsQuery, queryShows } from '@/lib/services/catalog';
-import { invalidateShow } from '@/lib/services/invalidate';
-import { slugFromTitle } from '@/lib/slug';
+import { readAdminSearch } from '@/lib/filters/admin-search';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +37,10 @@ export async function GET(request: Request) {
       const filterState = FilterUrlManager.fromUrlParams(searchParams);
       const limit = filterState.limit || 20;
       const featuredParam = searchParams.get('featured');
-      const params: ShowsPageParams = {
+      const params: ShowsPageParams & { q?: string } = {
         search: filterState.search,
+        // The admin table's title search. Read only here, never by the public parser.
+        q: readAdminSearch(searchParams),
         conditions: filterState.conditions || [],
         sort: filterState.sort || [],
         page: filterState.page || 1,
@@ -68,53 +67,5 @@ export async function GET(request: Request) {
   } catch (error) {
     await reportError(error, { operation: 'GET /api/shows' });
     return ErrorResponse('Failed to load shows', 500);
-  }
-}
-
-export async function POST(request: Request) {
-  const gate = await guard('canManageShows');
-  if (gate.denied) return gate.denied;
-
-  try {
-    const body = await request.json();
-    const parsedData = showSchema.safeParse(body);
-
-    if (!parsedData.success) {
-      return BadRequestResponse(parsedData.error.errors);
-    }
-
-    const { tags: tagIds, ...showData } = parsedData.data;
-    const { db } = await import('@/lib/database');
-
-    let slug = slugFromTitle(showData.title);
-    let suffix = 1;
-    while (await db.query.shows.findFirst({ where: eq(shows.slug, slug), columns: { id: true } })) {
-      slug = `${slugFromTitle(showData.title)}-${suffix++}`;
-    }
-
-    const [inserted] = await db.insert(shows).values({
-      title: showData.title,
-      slug,
-      year: showData.year ?? null,
-      difficulty: showData.difficulty ?? null,
-      duration: showData.duration ?? null,
-      description: showData.description ?? null,
-      price: showData.price ?? null,
-      thumbnailUrl: showData.thumbnailUrl ?? null,
-      videoUrl: showData.videoUrl ?? null,
-      displayOrder: showData.displayOrder ?? 0,
-    }).returning();
-
-    if (Array.isArray(tagIds) && tagIds.length > 0) {
-      await db.insert(showsToTags).values(
-        tagIds.map((tagId: number) => ({ showId: inserted.id, tagId }))
-      ).onConflictDoNothing();
-    }
-
-    invalidateShow(inserted.id, inserted.slug);
-    return SuccessResponse(inserted, 201);
-  } catch (error) {
-    console.error('Error creating show:', error);
-    return ErrorResponse('Failed to create show');
   }
 }

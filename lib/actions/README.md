@@ -1,0 +1,219 @@
+# lib/actions: Server Actions for the admin
+
+Admin writes are Server Actions here. The API write routes they replaced were
+deleted in SP3 Task 3; the upload routes (`POST /api/files/sign`,
+`POST /api/files`) in Task 4.
+
+| File | Actions | Permission | Invalidates |
+| --- | --- | --- | --- |
+| `shows.ts` | `createShow`, `updateShow`, `deleteShow`, `setShowTags`, `setFeatured` | `canManageShows` | `invalidateShow(id, slug, previousSlug?)` |
+| `tags.ts` | `createTag`, `updateTag`, `deleteTag` | `canManageTags` | `invalidateTags()` |
+| `resources.ts` | `createResource`, `updateResource`, `setResourceActive`, `deleteResource` | `canManageResources` | `invalidateResources()` |
+| `arrangements.ts` | `createArrangement`, `updateArrangement`, `deleteArrangement`, `reorderArrangements`, `setArrangementTags`, `setArrangementPieces` | `canCreateArrangements` / `canEditArrangements` / `canDeleteArrangements` | `invalidateArrangement(id, showSlug)`; reorder: `invalidateShow` |
+| `pieces.ts` | `listPieces`, `createPiece`, `updatePiece`, `deletePiece` | `canEditArrangements` | `invalidatePieces()` |
+| `files.ts` | `setShowThumbnail`, `attachYouTube`, `deleteFile` | `canManageShows` / `canCreateArrangements` / `canDeleteFiles` | `invalidateShow` / `invalidateFileOwner(file)` |
+| `uploads.ts` | `signUpload`, `completeUpload` | `canUploadFiles` | (sign: none) / `invalidateFileOwner(file)` |
+| `admin-users.ts` | `listAdminUsers`, `addAdminUser`, `setAdminUserRole`, `removeAdminUser` | `canManageUsers` | (none: not public) |
+
+## Writing an action
+
+```ts
+'use server'
+const runUpdateTag = guarded('canManageTags', updateTagSchema, async (data, { db }) => {
+  const row = await db.transaction(async (tx) => { /* lock, check, write */ })
+  return { data: toResult(row), invalidate: () => invalidateTags() }
+}, 'updateTag')
+
+export async function updateTag(input: UpdateTagInput) {
+  return runUpdateTag(input)
+}
+```
+
+- **Use `guarded()` (`_guarded.ts`).** It runs `guard(permission)`, then
+  `schema.safeParse`, then your function with `{ email, db }`, and maps
+  anything thrown. A Server Action is a public POST endpoint: the admin page
+  being protected protects nothing here.
+- **The schema is strict.** `guarded()` refuses a non-strict `z.object` when
+  the module loads. It inspects only a top-level `ZodObject`: a schema wrapped
+  in `.transform()`/`.refine()`/`z.preprocess` (ZodEffects), or a nested
+  object, is not checked, so make those strict yourself.
+- **Export plain `async function`s** from the `'use server'` file, each
+  calling its `guarded` runner. Positional signatures (`deleteShow(id)`) are
+  fine; pack them into the schema's object.
+- **Open a transaction only when there is more than one statement**, or a
+  read that must hold a lock (`select ... for update`). Single statements and
+  reads do not need one.
+- **Return `{ data, invalidate }`; never call the invalidate helper yourself.**
+  `guarded` runs `invalidate` after `fn` resolves (after commit), so a
+  rolled-back write never purges the cache. It runs outside the error mapping:
+  if invalidation throws, it is logged and reported and the result is still
+  `ok(data)`, because the write committed. Exactly one helper from
+  `lib/services/invalidate.ts` per action.
+  **The one exception: a partial failure in a multi-file delete.**
+  `deleteShow` and `deleteArrangement` remove files one at a time
+  (`removeFilesInOrder` in `lib/services/file-removal.ts`), each file
+  committed on its own. If a later file fails after earlier ones were
+  removed, those removals are already committed but `guarded` will never run
+  `invalidate` (the action throws). So the action passes an
+  `onPartialFailure` callback that invalidates the already-removed rows
+  (the owner, plus any show whose art was cleared) before rethrowing. Failing
+  on the first file invalidates nothing. Invalidation errors there are logged,
+  never allowed to mask the original error.
+- **Return JSON-safe data.** The result is serialised to the browser.
+- **Unknown related ids are `invalid`, not `failed`.** Check them inside the
+  transaction before writing and throw `InvalidError` (e.g. show tags:
+  `{ path: 'tags', message: 'Unknown tag id 9' }`), rather than letting a
+  foreign-key error surface.
+
+## The result type (`result.ts`)
+
+`ActionResult<T>` is `{ ok: true, data }` or `{ ok: false, error, issues? }`,
+with `error` one of:
+
+| error | Meaning | Comes from |
+| --- | --- | --- |
+| `forbidden` | No session, or the role lacks the permission | `guard()` (401/403) |
+| `invalid` | Input failed the schema, or `InvalidError` | zod issues (`path`, schema-authored `message`) |
+| `not_found` | The row does not exist | `throw new NotFoundError()` |
+| `conflict` | A unique constraint (slug, tag name) | Postgres `23505`, on the error or its `cause` |
+| `stale` | The row changed since the caller loaded it | `throw new StaleError()` / `assertFresh()` |
+| `failed` | Anything else, including an auth outage (`guard()` 5xx) | logged with `reportError` |
+
+**Never return an error's message.** Database messages carry SQL, constraint
+names and row values. `guarded()` returns only the vocabulary above; the real
+error goes to `reportError` (console + PostHog). Note drizzle-orm 0.44 wraps
+driver errors in `DrizzleQueryError`, so the SQLSTATE is on `error.cause.code`;
+`postgresCode()` walks the cause chain.
+
+## Concurrency
+
+Editors that save a whole row send back the `updatedAt` they loaded (ISO
+string) as a required field. The action, inside its transaction:
+
+1. `select updated_at ... for update` on the row (blocks a concurrent save
+   until this one commits);
+2. `assertFresh(stored, submitted)`: different instant → `StaleError` →
+   `stale`, nothing written;
+3. writes with `updatedAt: new Date()`, and returns the new `updatedAt` for the
+   caller's next save.
+
+Compared to the millisecond: Postgres keeps microseconds, but every value the
+browser holds passed through a JS `Date`, which truncates both sides alike.
+
+Single-field toggles from list views (`setFeatured`, `setShowTags`,
+`setResourceActive`) are last-writer-wins and take no `updatedAt`, but still
+bump it, so an editor open on the same row gets `stale` instead of undoing the
+toggle. `updated_at` is set by the actions, not by a database trigger; any new
+writer must set it too.
+
+Tables: `shows`, `resources` (existing `updated_at`), `tags`, `arrangements`
+(added in `drizzle/0003_slug_redirects_updated_at.sql`).
+
+`setShowThumbnail` and `deleteFile` (when it clears the show's art) bump the
+show's `updated_at` and return it, so the editor that called them keeps
+saving without a `stale`. `reorderArrangements` and `setArrangementPieces` do
+not bump anything: the order lives in `show_arrangements`, the credits in
+`arrangement_pieces`.
+
+`deleteFile` removes the Storage object first and deletes the row only once
+the object is confirmed gone (lib/storage.ts `deleteFile`: public bucket via
+`exists` + a public-URL HEAD; private bucket via `list`: no exact match is
+absent, a list error is unclear; never a public HEAD). Anything unclear is
+`failed` and the row stays, so the object is never orphaned by a half-done
+delete. `deleteArrangement` and `deleteShow` do the same for each of their
+files (`lib/services/file-removal.ts`, each committed on its own, clearing a
+show thumbnail/graphic that pointed at the file) before deleting the part or
+show; one failure aborts with the owner kept, and what was already removed is
+invalidated before the `failed` result.
+
+## Uploads (`uploads.ts`)
+
+`signUpload` → browser PUT to the signed URL → `completeUpload`. The browser
+sends a display name, MIME type, size, kind and visibility; the server checks
+them against `lib/validation/files.ts` (per-kind MIME allowlist and size
+limit), checks the show exists and the part is on it, builds the path
+(`shows/<id>/[arrangements/<id>/]<kind>/<uuid>.<ext>`, extension from the MIME
+type; `resources/<kind>/...` for resource attachments, which have no show),
+picks the bucket (public / private) and records a `pending_uploads` row.
+`completeUpload` lists the object and requires its size and MIME type to
+equal the pending row's; only then is the `files` row written, from the
+pending row. A mismatch removes the object and is `invalid`. Private rows'
+`url` is `/api/files/<id>/download` (staff, 302 to a 60 s signed URL).
+`drizzle/0004_pending_uploads.sql` must be applied with this code.
+
+### Deploying the file changes
+
+The full, ordered checklist is the README's "Deploying" section; follow that
+one. Two notes specific to the file changes:
+
+- The policy SQL (`2026-10-08_storage_policies_admin.sql`) hard-codes the
+  bucket names `'private'` and `'Bright Designs'` and raises (aborting the
+  migration) if either bucket is missing, so create the `private` bucket
+  first and leave `STORAGE_PRIVATE_BUCKET` / `NEXT_PUBLIC_STORAGE_BUCKET`
+  unset (their defaults are those names), or edit the SQL.
+- `2026-10-09_storage_public_select.sql` is `-- migrate: manual`: held back by
+  `npm run db:migrate` and listed as held by `db:migrate:status`. It lets
+  anyone list the public bucket, so apply it only after
+  `scripts/migrate-private-files.ts` has moved every private object; a dry
+  run must say "0 to move" and end `skipped: 0` (the script exits 2 when
+  anything was skipped).
+
+## Slugs and redirects
+
+`updateShow` changes a slug only when `slug` is sent. On a change it records
+the previous slug in `slug_redirects` and deletes any redirect row whose old
+slug is the new one (a live slug never also redirects). `createShow` skips
+slugs that a show holds or that redirect, and releases a redirect row on the
+slug it takes, too. `/shows/[slug]` resolves a miss in
+this order: exact slug → `getSlugRedirect` (308) → normalised form (308) →
+`notFound()`.
+
+## Deploying
+
+The same checklist as the README's "Deploying" section (keep the two in step):
+
+**Before merging (Supabase dashboard / SQL editor, production):**
+
+- [ ] Auth → Users: trevor@, brighton@ and ryan@brightdesigns.band all exist (these are the seeded owners). Auth → Providers: "Allow new users to sign up" is OFF.
+- [ ] `select schemaname, tablename, policyname, roles, cmd, qual, with_check from pg_policies where schemaname = 'storage';`
+      Drop any policy that mentions brightdesigns.band (the migration stops if one remains) and any policy not limited by bucket_id (it would open the private bucket to every signed-in account).
+- [ ] Storage: create bucket "private", NOT public. Leave `STORAGE_PRIVATE_BUCKET` and `NEXT_PUBLIC_STORAGE_BUCKET` unset in Netlify.
+- [ ] `npm run db:migrate:status` → only SP3 files pending (0002–0004, admin_users, slug_redirects_rls, storage_policies_admin, plus storage_public_select listed as held). If anything older is pending, or the drizzle baseline row (`drizzle/README.md`) is missing, sort that out first.
+- [ ] `ALLOW_DB_MIGRATE=true npm run db:migrate`. It must finish with every file applied. If it stops, do NOT merge; fix and re-run.
+
+**Merge / deploy:**
+
+- [ ] Merge. After the deploy, each owner signs in: /admin loads, and /admin/users lists three owners.
+      Locked out? Run in the SQL editor: `insert into public.admin_users (email, role) values ('<you>@brightdesigns.band','owner') on conflict do nothing;`
+- [ ] `/api/export/shows.csv` returns 200. A renamed show's old `/shows/<slug>` gives a 308.
+
+**Same day:**
+
+- [ ] `npx tsx scripts/migrate-private-files.ts` (dry run), then `--apply`. Keep the manifest it prints.
+- [ ] Dry run again: "0 to move" and no "skip" lines (resolve or accept each one).
+
+**Optional, only after a clean dry run:**
+
+- [ ] `npx tsx scripts/apply-sql-migrations.ts --apply --only 2026-10-09_storage_public_select.sql`
+
+To add an editor: add them at /admin/users AND invite them in Supabase → Authentication → Users.
+
+`drizzle/0003_slug_redirects_updated_at.sql` and
+`drizzle/migrations/2026-10-08_slug_redirects_rls.sql` are in it. If the code
+lands before 0003:
+
+- `getSlugRedirect` tolerates a missing `slug_redirects` table (42P01): no
+  redirect, one console.error per process, so public `/shows/<miss>` still 404s.
+- The public CSV export (`lib/export/load-show-sheet.ts`) names its
+  arrangement and tag columns, so it never reads `updated_at` and works either
+  way.
+- `getTagsForAdmin` selects `tags.updated_at`: **the admin tag pages error
+  until 0003 is applied.** So do `updateTag` and every action that writes or
+  reads `updated_at` on tags.
+
+## Tests
+
+`__tests__/fake-db.ts` is a recording stand-in for the Drizzle client: every
+awaited chain is logged as an op and answered per table and kind, and
+`transaction` logs begin/commit/rollback, so tests can assert what was
+written, what was not, and that invalidation came after the commit.

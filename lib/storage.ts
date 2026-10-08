@@ -1,29 +1,29 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getStorageBucket, getStorageRootPrefix } from '@/lib/env'
+import { getPrivateStorageBucket } from '@/lib/env.server'
 import { publicStorageUrl } from '@/lib/media/public-url'
 
-export interface FileUploadResult {
-  success: boolean
-  data?: {
-    fileName: string
-    url: string
-    storagePath: string
-    fileSize: number
-    mimeType: string
-  }
-  error?: string
-}
+/**
+ * Supabase Storage for `files` rows. Server-only (reads the private bucket
+ * name from lib/env.server). Callers pass a server Supabase client; this
+ * module never constructs one.
+ *
+ * Two buckets:
+ * - the public bucket (`getStorageBucket()`, default "Bright Designs") holds
+ *   isPublic = true objects, served from their public URL;
+ * - the private bucket (`getPrivateStorageBucket()`, default "private") holds
+ *   isPublic = false objects, served only through GET /api/files/<id>/download
+ *   (staff, 60 s signed URL).
+ *
+ * A row is in the private bucket exactly when its `url` is its download route
+ * (uploads write it that way; scripts/migrate-private-files.ts rewrites moved
+ * rows to it). A private row whose url is still a public URL has not been
+ * migrated yet and is still in the public bucket.
+ *
+ * Uploads are signed and verified by lib/actions/uploads.ts.
+ */
 
-export interface FileUploadOptions {
-  showId?: number
-  arrangementId?: number
-  fileType: 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other'
-  isPublic?: boolean
-  description?: string
-  displayOrder?: number
-}
-
-// Centralized storage configuration
+// The public bucket.
 export const STORAGE_BUCKET = getStorageBucket()
 
 // We keep DB storagePath values WITHOUT this prefix, and only prepend it
@@ -35,208 +35,141 @@ export function withRootPrefix(path: string): string {
   return `${STORAGE_ROOT_PREFIX}/${trimmed}`
 }
 
+export const privateStorageBucket = (): string => getPrivateStorageBucket()
+
+/** The bucket an upload goes to. */
+export const bucketForVisibility = (isPublic: boolean): string => (isPublic ? STORAGE_BUCKET : privateStorageBucket())
+
+/** `files.url` of a private-bucket row. */
+export const downloadRoute = (id: number): string => `/api/files/${id}/download`
+
+const DOWNLOAD_ROUTE_RE = /^\/api\/files\/\d+\/download$/
+export const isDownloadRoute = (url: string | null | undefined): boolean => DOWNLOAD_ROUTE_RE.test(String(url ?? ''))
+
+/** The bucket a row's object lives in (see the module comment). */
+export const storageBucketFor = (row: { url: string | null }): string =>
+  isDownloadRoute(row.url) ? privateStorageBucket() : STORAGE_BUCKET
+
+export type StoredObject = { size: number | null; mimetype: string | null }
+
+/**
+ * Looks one object up by its exact key with `list(parent, { search })`.
+ * `object` = found, `absent` = the listing worked and has no such name,
+ * `error` = the listing failed. RLS on storage.objects also hides objects
+ * from `list`, so `absent` only means "not visible to this caller".
+ */
+export async function findObject(
+  supabase: SupabaseClient,
+  bucket: string,
+  fullPath: string
+): Promise<{ status: 'object'; object: StoredObject } | { status: 'absent' } | { status: 'error' }> {
+  const slash = fullPath.lastIndexOf('/')
+  const dir = slash === -1 ? '' : fullPath.slice(0, slash)
+  const name = slash === -1 ? fullPath : fullPath.slice(slash + 1)
+  try {
+    const { data, error } = await supabase.storage.from(bucket).list(dir, { search: name, limit: 100 })
+    if (error || !Array.isArray(data)) return { status: 'error' }
+    const hit = data.find((o) => o?.name === name && o.id !== null)
+    if (!hit) return { status: 'absent' }
+    const meta = (hit.metadata ?? {}) as { size?: unknown; mimetype?: unknown }
+    return {
+      status: 'object',
+      object: {
+        size: typeof meta.size === 'number' ? meta.size : null,
+        mimetype: typeof meta.mimetype === 'string' ? meta.mimetype : null,
+      },
+    }
+  } catch {
+    return { status: 'error' }
+  }
+}
+
 export class FileStorageService {
-  // Callers pass a (server-side, authenticated) Supabase client; this module never constructs one.
-
-  // Upload file to Supabase Storage
-  async uploadFile(file: File, options: FileUploadOptions, supabase: SupabaseClient): Promise<FileUploadResult> {
+  /**
+   * Delete a row's Storage object. Success means the object is confirmed gone;
+   * anything unclear is a failure, so the caller keeps the row.
+   *
+   * `remove()` answers `{ data: [], error: null }` both when the object was
+   * already absent and when RLS on storage.objects hides it from this caller,
+   * so an empty result is not trusted:
+   *
+   * - public bucket: authenticated `exists`, then an anonymous HEAD on the
+   *   public URL (which the caller's RLS cannot hide);
+   * - private bucket: there is no anonymous view (a public-URL HEAD 404s on
+   *   every private object), so only `list` is used. A listing that works and
+   *   has no object of that exact name = absent = success; the name present =
+   *   not removed (permission?); a listing error = unclear = failure. This
+   *   trusts the admin policies on the private bucket
+   *   (drizzle/migrations/2026-10-08_storage_policies_admin.sql), which let
+   *   every admin see every object there.
+   *
+   *   | bucket  | remove()      | lookup                          | result          |
+   *   | any     | error         | -                               | failed, row kept |
+   *   | any     | object listed | -                               | success         |
+   *   | public  | []            | exists() or HEAD 200            | failed          |
+   *   | public  | []            | exists() false + HEAD 400/404   | success         |
+   *   | public  | []            | HEAD other / network error      | failed          |
+   *   | private | []            | list ok, no exact match         | success         |
+   *   | private | []            | list ok, exact match            | failed          |
+   *   | private | []            | list error                      | failed          |
+   */
+  async deleteFile(
+    file: { storagePath: string; url: string | null },
+    supabase: SupabaseClient
+  ): Promise<{ success: boolean; error?: string }> {
+    const fullPath = withRootPrefix(file.storagePath)
+    const isPrivate = isDownloadRoute(file.url)
+    const bucket = storageBucketFor(file)
     try {
-      // Validate file
-      const validation = this.validateFile(file, options.fileType)
-      if (!validation.valid) {
-        return { success: false, error: validation.error }
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now()
-      const randomId = Math.random().toString(36).substring(2, 15)
-      const fileExtension = file.name.split('.').pop()
-      const fileName = `${timestamp}_${randomId}.${fileExtension}`
-      
-      // Determine storage path based on type and association
-      const storagePath = this.generateStoragePath(fileName, options)
-
-      console.log('Uploading file to storage:', {
-        storagePath,
-        fileSize: file.size,
-        fileType: file.type,
-        fileName: file.name,
-        options
-      })
-
-      // Upload to Supabase Storage
-      const { data: storageData, error: storageError } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(withRootPrefix(storagePath), file, {
-          // Encourage CDN caching to reduce repeat egress; long-lived for static assets
-          cacheControl: '2592000', // 30 days
-          upsert: false
-        })
-
-      if (storageError) {
-        console.error('Storage upload error:', {
-          message: storageError.message,
-          error: storageError,
-          storagePath
-        })
-        return { success: false, error: `Failed to upload file to storage: ${storageError.message}` }
-      }
-
-      // Get public URL
-      const publicUrl = publicStorageUrl(STORAGE_BUCKET, withRootPrefix(storagePath))
-
-      return {
-        success: true,
-        data: {
-          fileName,
-          url: publicUrl,
-          storagePath,
-          fileSize: file.size,
-          mimeType: file.type
-        }
-      }
-    } catch (error) {
-      console.error('File upload error:', error)
-      return { success: false, error: 'An unexpected error occurred during upload' }
-    }
-  }
-
-  // Generate a Signed Upload URL for direct client-side upload
-  // Returns the signed URL and the storage path that should be used
-  async createSignedUploadUrl(fileName: string, options: FileUploadOptions, supabase: SupabaseClient): Promise<{ success: boolean; data?: { signedUrl: string; token: string; storagePath: string; publicUrl: string }; error?: string }> {
-    try {
-      // Generate unique filename
-      const timestamp = Date.now()
-      const randomId = Math.random().toString(36).substring(2, 15)
-      const fileExtension = fileName.split('.').pop()
-      const uniqueFileName = `${timestamp}_${randomId}.${fileExtension}`
-      
-      // Determine storage path
-      const storagePath = this.generateStoragePath(uniqueFileName, options)
-      const fullPath = withRootPrefix(storagePath)
-
-      console.log('Generating signed upload URL:', {
-        fullPath,
-        storagePath,
-        options
-      })
-
-      const { data, error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .createSignedUploadUrl(fullPath)
-
-      if (error) {
-        console.error('Signed URL generation error:', error)
-        return { success: false, error: `Failed to generate upload URL: ${error.message}` }
-      }
-
-      // Get public URL
-      const publicUrl = publicStorageUrl(STORAGE_BUCKET, fullPath)
-
-      return {
-        success: true,
-        data: {
-          signedUrl: data.signedUrl,
-          token: data.token,
-          storagePath,
-          publicUrl
-        }
-      }
-    } catch (error) {
-      console.error('Signed URL generation error:', error)
-      return { success: false, error: 'An unexpected error occurred generating upload URL' }
-    }
-  }
-
-  // Delete file from Supabase Storage
-  async deleteFile(storagePath: string, supabase: SupabaseClient): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .remove([withRootPrefix(storagePath)])
-
+      const { data, error } = await supabase.storage.from(bucket).remove([fullPath])
       if (error) {
         console.error('Storage delete error:', error)
         return { success: false, error: 'Failed to delete file from storage' }
       }
+      if (data && data.length > 0) return { success: true }
 
-      return { success: true }
+      if (isPrivate) {
+        const after = await findObject(supabase, bucket, fullPath)
+        if (after.status === 'absent') return { success: true }
+        return {
+          success: false,
+          error: after.status === 'object' ? 'Storage did not remove the object (permission?)' : 'Could not confirm the object was removed',
+        }
+      }
+
+      const present = await this.publicObjectPresent(fullPath, supabase)
+      if (present === false) return { success: true }
+      return {
+        success: false,
+        error: present ? 'Storage did not remove the object (permission?)' : 'Could not confirm the object was removed',
+      }
     } catch (error) {
       console.error('File delete error:', error)
       return { success: false, error: 'An unexpected error occurred during deletion' }
     }
   }
 
-  // Generate storage path based on file type and association
-  private generateStoragePath(fileName: string, options: FileUploadOptions): string {
-    const { fileType, showId, arrangementId } = options
-    
-    // Special case: audio files for shows go into show_mp3s folder
-    if (showId && !arrangementId && fileType === 'audio') {
-      return `show_mp3s/${fileName}`
-    }
-    
-    if (showId && arrangementId) {
-      return `shows/${showId}/arrangements/${arrangementId}/${fileType}/${fileName}`
-    } else if (showId) {
-      return `shows/${showId}/${fileType}/${fileName}`
-    } else if (arrangementId) {
-      return `arrangements/${arrangementId}/${fileType}/${fileName}`
-    } else {
-      return `general/${fileType}/${fileName}`
+  /** Public bucket only. true = still there, false = confirmed absent, null = could not tell. */
+  private async publicObjectPresent(fullPath: string, supabase: SupabaseClient): Promise<boolean | null> {
+    // exists() answers false for 400/404 and throws on anything else (caught by deleteFile).
+    const { data: visible } = await supabase.storage.from(STORAGE_BUCKET).exists(fullPath)
+    if (visible) return true
+    try {
+      const head = await fetch(publicStorageUrl(STORAGE_BUCKET, fullPath), { method: 'HEAD', cache: 'no-store' })
+      if (head.ok) return true
+      if (head.status === 400 || head.status === 404) return false
+      return null
+    } catch {
+      return null
     }
   }
 
-  // Validate file based on type and size constraints
-  private validateFile(file: File, fileType: 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other'): { valid: boolean; error?: string } {
-    const maxSizes: Record<string, number> = {
-      image: 10 * 1024 * 1024, // 10MB
-      audio: 100 * 1024 * 1024, // 100MB
-      youtube: 0, // No file upload for YouTube links
-      pdf: 50 * 1024 * 1024, // 50MB
-      score: 50 * 1024 * 1024, // 50MB
-      other: 100 * 1024 * 1024 // 100MB
-    }
-
-    const allowedMimeTypes: Record<string, string[]> = {
-      image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-      audio: ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/aac'],
-      youtube: [], // No file upload for YouTube links
-      pdf: ['application/pdf'],
-      score: ['application/pdf', 'image/jpeg', 'image/png'],
-      other: [] // Allow any file type for 'other'
-    }
-
-    const maxSize = maxSizes[fileType] || maxSizes.other
-    
-    if (file.size > maxSize) {
-      return { 
-        valid: false, 
-        error: `File size exceeds limit of ${Math.round(maxSize / 1024 / 1024)}MB` 
-      }
-    }
-
-    const allowedTypes = allowedMimeTypes[fileType] || []
-    if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
-      return { 
-        valid: false, 
-        error: `File type ${file.type} is not allowed for ${fileType} files` 
-      }
-    }
-
-    return { valid: true }
-  }
-
-  // Get file URL (handles both public and private files)
-  getFileUrl(storagePath: string, isPublic: boolean = true): string {
-    if (isPublic) {
-      const publicUrl = publicStorageUrl(STORAGE_BUCKET, withRootPrefix(storagePath))
-      return publicUrl
-    } else {
-      // For private files, you'd need to create a signed URL
-      // This is a placeholder - implement signed URLs as needed
-      return `/api/files/download?path=${encodeURIComponent(storagePath)}`
-    }
+  /** URL to hand a caller: the public URL, or the staff-only download route for a private file. */
+  getFileUrl(file: { id: number; storagePath: string; isPublic: boolean; fileType?: string; url?: string | null }): string {
+    // A YouTube row's url is the link itself; there is no object.
+    if (file.fileType === 'youtube' && file.url) return file.url
+    if (file.isPublic) return publicStorageUrl(STORAGE_BUCKET, withRootPrefix(file.storagePath))
+    return downloadRoute(file.id)
   }
 }
 

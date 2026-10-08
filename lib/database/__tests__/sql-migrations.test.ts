@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checksum, pendingMigrations, selectMigrationFiles } from '../sql-migrations'
+import { checksum, pendingMigrations, planApply, selectMigrationFiles } from '../sql-migrations'
 
 describe('selectMigrationFiles', () => {
   it('orders by filename so dated migrations apply chronologically', () => {
@@ -34,5 +34,22 @@ describe('pendingMigrations', () => {
   it('reports nothing to do when everything matches', () => {
     expect(pendingMigrations(['a.sql'], applied, { 'a.sql': 'select 1' }))
       .toEqual({ pending: [], drifted: [] })
+  })
+})
+
+describe('planApply', () => {
+  const contents = { 'a.sql': 'select 1', 'b.sql': '-- migrate: manual\nselect 2', 'c.sql': 'select 3' }
+
+  it('holds manual files back from a plain apply', () => {
+    expect(planApply(['a.sql', 'b.sql', 'c.sql'], contents, null)).toEqual({ apply: ['a.sql', 'c.sql'], held: ['b.sql'] })
+  })
+
+  it('--only applies just that pending file, manual or not', () => {
+    expect(planApply(['a.sql', 'b.sql', 'c.sql'], contents, 'b.sql')).toEqual({ apply: ['b.sql'], held: [] })
+    expect(planApply(['a.sql', 'b.sql'], contents, 'a.sql')).toEqual({ apply: ['a.sql'], held: ['b.sql'] })
+  })
+
+  it('--only refuses a file that is not pending', () => {
+    expect(() => planApply(['a.sql'], contents, 'c.sql')).toThrow(/not a pending migration/)
   })
 })

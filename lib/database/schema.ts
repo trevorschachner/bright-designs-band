@@ -1,12 +1,14 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check, uuid, bigint } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
+import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, FILE_TYPES, GRADE_BANDS, SHOW_DIFFICULTIES } from '../validation/enums';
 
 // Enums
-export const gradeBandEnum = pgEnum('grade_band', ['1_2', '3_4', '5_plus']);
-export const showDifficultyEnum = pgEnum('difficulty', ['Beginner', 'Intermediate', 'Advanced']);
-export const ensembleSizeEnum = pgEnum('ensemble_size', ['small', 'medium', 'large']);
-export const fileTypeEnum = pgEnum('file_type', ['image', 'audio', 'youtube', 'pdf', 'score', 'other']);
-export const arrangementSceneEnum = pgEnum('arrangement_scene', ['Opener', 'Ballad', 'Closer']);
+// Values live in lib/validation/enums.ts so client forms can use them without drizzle.
+export const gradeBandEnum = pgEnum('grade_band', GRADE_BANDS);
+export const showDifficultyEnum = pgEnum('difficulty', SHOW_DIFFICULTIES);
+export const ensembleSizeEnum = pgEnum('ensemble_size', ENSEMBLE_SIZES);
+export const fileTypeEnum = pgEnum('file_type', FILE_TYPES);
+export const arrangementSceneEnum = pgEnum('arrangement_scene', ARRANGEMENT_SCENES);
 
 // Shows
 export const shows = pgTable('shows', {
@@ -61,6 +63,9 @@ export const arrangements = pgTable('arrangements', {
   // Written by the arrangements API but never read for ordering — reads use
   // showArrangements.orderIndex. Retained because 50 rows carry real values.
   displayOrder: integer('display_order').default(0).notNull(),
+  // Added in drizzle/0003 (existing rows get now()). lib/actions/arrangements.ts
+  // sets it on every update and compares it for optimistic concurrency.
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Files (unchanged)
@@ -88,6 +93,9 @@ export const files = pgTable('files', {
 export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
+  // Added in drizzle/0003 (existing rows get now()). lib/actions/tags.ts sets
+  // it on every update and compares it for optimistic concurrency.
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const showsToTags = pgTable('shows_to_tags', {
@@ -156,6 +164,19 @@ export const resources = pgTable('resources', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Old show slugs. When a show's slug changes, lib/actions/shows.ts records the
+// previous one here so /shows/<old> 308s to the current URL
+// (getSlugRedirect in lib/services/shows.ts). A slug that a show claims again
+// has its row deleted, so a live slug never also redirects. Table from
+// drizzle/0003; RLS policies in drizzle/migrations/2026-10-08_slug_redirects_rls.sql.
+export const slugRedirects = pgTable('slug_redirects', {
+  oldSlug: text('old_slug').primaryKey(),
+  showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('slug_redirects_show_id_idx').on(table.showId),
+]);
 
 // Relations
 
@@ -269,6 +290,59 @@ export const contactRateLimits = pgTable('contact_rate_limits', {
 }, (table) => ({
   pk: primaryKey({ columns: [table.ip, table.windowStart] }),
 }));
+
+// Named admin allowlist. Created by drizzle migration 0002; the seed, the RLS
+// helper functions and the policies live in
+// drizzle/migrations/2026-10-08_admin_users.sql. A row here is what grants
+// admin access: lib/auth/roles.ts getUserRole() reads it per request, and RLS
+// policies call public.is_admin_user() over it.
+//
+// Emails are stored lower-case (enforced by admin_users_email_lower) and every
+// lookup compares against lower(<input>), so plain text equality is
+// case-insensitive in effect.
+export const adminUsers = pgTable('admin_users', {
+  email: text('email').primaryKey(),
+  role: text('role', { enum: ['owner', 'editor'] }).notNull(),
+  addedBy: text('added_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, () => [
+  check('admin_users_email_lower', sql`email = lower(email)`),
+  check('admin_users_role_check', sql`role in ('owner','editor')`),
+]);
+
+// Signed-but-not-yet-recorded uploads. lib/actions/uploads.ts signUpload
+// inserts one (the server decides bucket, path, MIME and size), the browser
+// PUTs the object, and completeUpload checks the object against this row
+// before it writes the `files` row and deletes this one. Rows that never
+// complete expire after 24 h (scripts/cleanup-pending-uploads.ts). Server-only:
+// the app reaches it over DATABASE_URL; RLS is enabled with no policies, so
+// PostgREST sees nothing. Table from drizzle/0004.
+//
+// `path` is the full object key inside `bucket` (root prefix included).
+// show_id / arrangement_id carry no foreign keys: a show deleted mid-upload
+// leaves the row for the cleanup script rather than cascading it away and
+// orphaning the object.
+export const pendingUploads = pgTable('pending_uploads', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  bucket: text('bucket').notNull(),
+  path: text('path').notNull(),
+  expectedMime: text('expected_mime').notNull(),
+  expectedSize: bigint('expected_size', { mode: 'number' }).notNull(),
+  showId: integer('show_id'),
+  arrangementId: integer('arrangement_id'),
+  kind: text('kind').notNull(),
+  isPublic: boolean('is_public').notNull(),
+  // Display only: never used to build the path.
+  originalName: text('original_name').notNull(),
+  description: text('description'),
+  displayOrder: integer('display_order').default(0).notNull(),
+  // Admin emails are stored lower-case (admin_users), so text suffices.
+  createdBy: text('created_by').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).default(sql`now() + interval '24 hours'`).notNull(),
+}, (table) => [
+  index('pending_uploads_expires_at_idx').on(table.expiresAt),
+]);
 
 export const contactSubmissionsRelations = relations(contactSubmissions, ({ one }) => ({
   interestedShow: one(shows, {

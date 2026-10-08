@@ -9,41 +9,44 @@
 - **Production**: `https://your-domain.com/api`
 
 ## Authentication
-Most endpoints require authentication via Supabase session tokens.
+The public GETs need no session. Admin writes are not API routes: they are
+Server Actions in `lib/actions/` (see `lib/actions/README.md`). The write
+routes that used to live here (show, arrangement, piece, tag, resource and
+file create/update/delete, plus the upload-signing route) were removed in SP3.
 
 ## Available Endpoints
 
-### Shows
-- `GET /api/shows` - List shows with filtering
-- `GET /api/shows/[id]` - Get specific show
-- `POST /api/shows` - Create new show (auth required)
-- `PUT /api/shows/[id]` - Update show (auth required)
+All of these are `GET` unless noted. `?admin=true` (shows, tags) and
+`?all=true` (resources) return the uncached staff view to an admin session,
+always with `Cache-Control: private, no-store`; anyone else gets the public
+data on the same private response. The shows and resources staff views also
+accept `q`, a title search (`ilike`) used by the admin tables. The public
+variants ignore `q`.
 
-### Arrangements  
+### Shows
+- `GET /api/shows` - List shows with filtering (`?admin=true&q=` for the admin table)
+- `GET /api/shows/[id]` - Get specific show
+
+### Arrangements
 - `GET /api/arrangements` - List arrangements with filtering
 - `GET /api/arrangements/[id]` - Get specific arrangement
-- `POST /api/arrangements` - Create new arrangement (auth required)
-- `PUT /api/arrangements/[id]` - Update arrangement (auth required)
-- `GET /api/arrangements/[id]/pieces` - Ordered source pieces of a part (staff only)
-- `PUT /api/arrangements/[id]/pieces` - Replace a part's ordered pieces, body `{ "pieceIds": [3, 1] }` (staff only)
-
-### Pieces
-Source works a part is built from. Staff only, reads included (copyright cost is internal).
-- `GET /api/pieces` - List pieces with how many parts use each
-- `POST /api/pieces` - Create a piece
-- `PUT /api/pieces/[id]` - Update a piece
-- `DELETE /api/pieces/[id]` - Delete a piece (unlinks it from every part)
 
 ### Tags
 - `GET /api/tags` - List all tags
-- `POST /api/tags` - Create new tag (auth required)
-- `PUT /api/tags/[id]` - Update tag (auth required)
-- `DELETE /api/tags/[id]` - Delete tag (auth required)
+- `GET /api/tags/[id]` - Get one tag
+
+### Resources
+- `GET /api/resources` - Active resources (`?all=true&q=` for staff: drafts too)
+- `GET /api/resources/[id]` - One resource by id or slug
 
 ### Files
-- `GET /api/files` - List files with filtering
-- `POST /api/files` - Upload new file (auth required)
-- `DELETE /api/files/[id]` - Delete file (auth required)
+- `GET /api/files` - List files by `showId` / `arrangementId` / `fileType` (private rows for staff only)
+- `GET /api/files/[id]` - One file's metadata (a private file is staff-only; others get 404)
+- `GET /api/files/[id]/download` - Staff only: 302 to a 60 s signed URL (the `url` of every private-bucket file)
+
+### Contact and export
+- `POST /api/contact` - Contact form (Turnstile, rate-limited, stored in `contact_submissions`)
+- `GET /api/export/[file]` - CSVs for the Show Database sheet (`shows.csv`, `parts.csv`, `pieces.csv`, `links.csv`)
 
 ## Filtering & Pagination
 
