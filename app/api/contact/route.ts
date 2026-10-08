@@ -6,18 +6,17 @@ import type { ServiceCategory } from '@/lib/email/types';
 import { contactSubmissionSchema, toServiceCategories } from '@/lib/validation/contact';
 import { consume, getClientIp } from '@/lib/rate-limit';
 import { verifyTurnstile } from '@/lib/turnstile';
+import { getEnv } from '@/lib/env.server';
 
 const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 
 const ADMIN_EMAIL_FALLBACK = 'hello@brightdesigns.band';
 const ADMIN_EMAIL_ADDRESS = 'hello@brightdesigns.band';
 const getAdminRecipients = (): string[] => {
-  const raw =
-    process.env.ADMIN_EMAIL_ADDRESSES ??
-    process.env.ADMIN_EMAIL ??
-    ADMIN_EMAIL_FALLBACK;
+  const env = getEnv();
+  if (env.ADMIN_EMAIL_ADDRESSES) return env.ADMIN_EMAIL_ADDRESSES;
 
-  return raw
+  return (env.ADMIN_EMAIL ?? ADMIN_EMAIL_FALLBACK)
     .split(',')
     .map(email => email.trim())
     .filter(Boolean);
@@ -149,7 +148,7 @@ export async function POST(request: NextRequest) {
       }, 'customer inquiry confirmation');
 
     } else if (type === 'resource_download') {
-      const subject = `Resource Download: Visual Technique Guide - ${name || 'Unknown'}`;
+      const subject = `Guide request: Visual Technique Guide - ${name || 'Unknown'}`;
       const resourceServices: ServiceCategory[] = ['visual-technique-guide'];
       
       const emailData = {
@@ -159,7 +158,7 @@ export async function POST(request: NextRequest) {
         school: rest.school,
         role: rest.role, // Capture role if provided
         services: resourceServices,
-        message: 'User downloaded the Visual Technique Guide.',
+        message: 'Requested the Visual Technique Guide — please send it to them.',
         privacyAgreed: true,
         source: submissionSource,
       };
@@ -173,7 +172,7 @@ export async function POST(request: NextRequest) {
         html,
         text,
         replyTo: email,
-      }, 'admin resource download notification');
+      }, 'admin guide request notification');
 
       // We could send a specific confirmation/download link email to the user here if we wanted
       // For now, we'll stick to just the notification to admin as requested ("get an internal notification")

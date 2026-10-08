@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { InquiryForm } from "@/components/forms/inquiry-form"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/lib/hooks/use-toast"
 import { Calendar, ArrowRight, Sparkles, CheckCircle } from "lucide-react"
 import confetti from "canvas-confetti"
 

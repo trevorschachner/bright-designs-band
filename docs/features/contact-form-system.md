@@ -34,7 +34,7 @@ Run the database migration to create the contact submissions table:
 
 ```bash
 # Add the migration file to your drizzle migrations
-pnpm db:migrate
+npm run db:migrate
 ```
 
 ### 2. Email Service Configuration

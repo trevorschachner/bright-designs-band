@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/lib/hooks/use-toast';
 
 interface ShowPlanItem {
   id: number;

@@ -21,8 +21,9 @@ env:
   NEXT_PUBLIC_SITE_URL: https://brightdesigns.band
 
 jobs:
-  test:
-    name: Lint, typecheck and test
+  # One job, one install. Build used to be a second job that ran npm ci again.
+  verify:
+    name: Lint, typecheck, test and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -33,6 +34,16 @@ jobs:
           # does not run buys nothing.
           node-version: '20'
           cache: 'npm'
+
+      # Next's incremental build cache. Exact hit when neither the lockfile nor
+      # any source changed; otherwise the newest cache for the same lockfile.
+      # Sits before npm ci so hashFiles does not walk node_modules.
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.mjs') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
 
       - run: npm ci
 
@@ -46,20 +57,6 @@ jobs:
       # Not covered by vitest: this one shells out to a tsx script.
       - run: npm run test:email:validate
 
-  build:
-    name: Build
-    needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - run: npm ci
-
       # lib/database throws at import time without DATABASE_URL, and Next
       # collects page data for /shows/[slug] and /arrangements/[id] during the
       # build, so the variable has to be set and well-formed. It does not have to
@@ -71,3 +68,39 @@ jobs:
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
           NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
+
+  # Deterministic budgets (script and total bytes, SEO, best practices) block.
+  # Performance score and LCP only warn here: a shared runner's timings swing by
+  # 20+ points between runs. The real LCP check is Lighthouse against the Netlify
+  # deploy preview, recorded in docs/perf-baseline.md.
+  lighthouse:
+    name: Lighthouse budget
+    needs: [verify]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.mjs') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+
+      - run: npm ci
+
+      # Same dummy env as the verify build (see the comment there); it is set
+      # at job level because `npm run start` needs it too.
+      - run: npm run build
+
+      - run: npm run perf:ci

@@ -39,7 +39,7 @@ Once configured, test your setup:
 
 ```bash
 # Start your development server
-pnpm dev
+npm run dev
 
 # Visit http://localhost:3000/contact
 # Submit a test form with your email

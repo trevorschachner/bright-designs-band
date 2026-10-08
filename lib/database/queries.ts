@@ -84,96 +84,6 @@ export async function getShowWithTagsBySlug(slug: string) {
 // ARRANGEMENTS QUERIES
 // =======================================
 
-export async function getArrangementsByShowId(showId: number) {
-  try {
-    // First try the Drizzle ORM query
-    const result = await db
-      .select({
-        id: arrangements.id,
-        title: arrangements.title,
-        scene: arrangements.scene,
-        composer: arrangements.composer,
-        arranger: arrangements.arranger,
-        grade: arrangements.grade,
-        year: arrangements.year,
-        durationSeconds: arrangements.durationSeconds,
-        description: arrangements.description,
-        percussionArranger: arrangements.percussionArranger,
-        ensembleSize: arrangements.ensembleSize,
-        youtubeUrl: arrangements.youtubeUrl,
-        commissioned: arrangements.commissioned,
-        sampleScoreUrl: arrangements.sampleScoreUrl,
-        orderIndex: showArrangements.orderIndex,
-      })
-      .from(showArrangements)
-      .innerJoin(arrangements, eq(showArrangements.arrangementId, arrangements.id))
-      .where(eq(showArrangements.showId, showId))
-      .orderBy(showArrangements.orderIndex);
-    
-    return Array.isArray(result) ? result : [];
-  } catch (error: any) {
-    // If Drizzle ORM fails, fall back to raw SQL using Drizzle's sql template
-    try {
-      const rawResult = await db.execute(sql`
-        SELECT 
-          a.id, 
-          a.title, 
-          a.scene, 
-          a.composer,
-          a.arranger,
-          a.grade, 
-          a.year, 
-          a.duration_seconds as "durationSeconds", 
-          a.description, 
-          a.percussion_arranger as "percussionArranger", 
-          a.ensemble_size as "ensembleSize", 
-          a.youtube_url as "youtubeUrl", 
-          a.commissioned, 
-          a.sample_score_url as "sampleScoreUrl", 
-          sa.order_index as "orderIndex"
-        FROM show_arrangements sa
-        INNER JOIN arrangements a ON sa.arrangement_id = a.id
-        WHERE sa.show_id = ${showId}
-        ORDER BY sa.order_index
-      `);
-      
-      if (Array.isArray(rawResult)) {
-        return rawResult;
-      }
-      if (rawResult && typeof rawResult === 'object' && 'rows' in rawResult) {
-        return (rawResult as any).rows;
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  }
-}
-
-export async function getAllArrangements() {
-  try {
-    return await db.select().from(arrangements);
-  } catch (error) {
-    console.error('Error fetching all arrangements:', error);
-    throw error;
-  }
-}
-
-export async function getArrangementById(id: number) {
-  try {
-    const result = await db
-      .select()
-      .from(arrangements)
-      .where(eq(arrangements.id, id))
-      .limit(1);
-    
-    return result[0] || null;
-  } catch (error) {
-    console.error('Error fetching arrangement by ID:', error);
-    throw error;
-  }
-}
-
 // =======================================
 // FILES QUERIES
 // =======================================
@@ -374,15 +284,6 @@ export async function getShowWithArrangementsAndFiles(showId: number) {
 // =======================================
 // TAGS QUERIES
 // =======================================
-
-export async function getAllTags() {
-  try {
-    return await db.select().from(tags);
-  } catch (error) {
-    console.error('Error fetching tags:', error);
-    throw error;
-  }
-}
 
 // =======================================
 // STATISTICS QUERIES

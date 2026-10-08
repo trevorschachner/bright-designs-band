@@ -1,103 +1,99 @@
 # Bright Designs Band
 
-This is the official website and administrative dashboard for Bright Designs, a marching band show design company. This project is built with the Next.js App Router and serves as a catalog for shows, a portal for clients, and a tool for managing the business.
+The website and admin dashboard for Bright Designs, a marching band show design company. Public visitors browse a catalog of shows (with their parts, audio previews and files) that are available for resale and can send an inquiry through the contact form. The owners manage the catalog from `/admin`.
 
-## Tech Stack
+## Stack
 
-This project is built with a modern, full-stack TypeScript architecture.
+- Next.js 16 (App Router), React 19, TypeScript, built with Turbopack
+- Tailwind CSS 3 and shadcn/ui
+- Supabase: Postgres, Auth (magic link) and Storage
+- Drizzle ORM and drizzle-kit
+- Netlify (`netlify.toml`, Node 20, `@netlify/plugin-nextjs`)
+- PostHog for analytics and error reporting
+- Email through Resend by default (plain `fetch`), with Gmail or generic SMTP (nodemailer) as fallbacks
+- Cloudflare Turnstile on the contact form
 
-*   **Framework**: [Next.js](https://nextjs.org/) (App Router)
-*   **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
-*   **Database**: [Supabase](https://supabase.com/) (PostgreSQL)
-*   **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
-*   **Authentication**: [Supabase Auth](https://supabase.com/auth) (with Magic Links)
-*   **Transactional Emails**: [Resend](https://resend.com/)
-*   **Deployment**: [Netlify](https://www.netlify.com/) (`netlify.toml`, Node 20, `@netlify/plugin-nextjs`)
+## Getting started
 
-## Getting Started
+Requires Node 20 and a Supabase project.
 
-To get a local copy up and running, follow these steps.
+```sh
+npm ci
+cp .env.example .env.local   # then fill in the values
+npm run dev
+```
 
-### Prerequisites
+Open http://localhost:3000.
 
-*   Node.js (v18 or later)
-*   pnpm (or your preferred package manager)
-*   A Supabase account and project
-*   A Resend account for handling emails
+## Scripts
 
-### Installation & Setup
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Start the dev server. |
+| `npm run build` | Production build. |
+| `npm start` | Serve the production build. |
+| `npm run lint` | ESLint over `.ts`/`.tsx`, zero warnings allowed. |
+| `npm run typecheck` | `tsc --noEmit`. |
+| `npm test` | Run the Vitest suite once. |
+| `npm run test:watch` | Vitest in watch mode. |
+| `npm run test:ci` | Vitest once, with coverage. |
+| `npm run test:email` | Only the email tests (`lib/email/__tests__`). |
+| `npm run test:email:validate` | Validate the email templates and inputs (`scripts/test-email-validation.ts`). |
+| `npm run test:email:preview` | Render email previews (`scripts/preview-emails.ts`). |
+| `npm run db:generate` | Generate a drizzle-kit migration from `lib/database/schema.ts`. |
+| `npm run db:migrate` | Run the drizzle-kit migration, then apply pending hand-written SQL migrations. Refuses `NODE_ENV=production` unless `ALLOW_DB_MIGRATE=true`. |
+| `npm run db:migrate:status` | Show which hand-written SQL migrations are pending (dry run). |
+| `npm run db:push` | Push the schema directly with drizzle-kit. Refuses unless `ALLOW_DB_PUSH=true`, and never in production. |
+| `npm run media:optimize` | Re-encodes Supabase Storage media and, with `--apply`, rewrites production DB rows. Production; read its header first. |
+| `npm run export:shows` | Export shows, parts and pieces as CSVs for the Show Database sheet. Read-only. |
+| `npm run perf:ci` | Lighthouse CI against `lighthouserc.json`: starts `npm run start` (build first) and checks the performance budget. |
 
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/your-username/bright-designs-band.git
-    cd bright-designs-band
-    ```
+## Testing
 
-2.  **Install dependencies:**
-    ```sh
-    pnpm install
-    ```
+```sh
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
 
-3.  **Set up environment variables:**
-    Create a `.env.local` file in the root of the project by copying the example file:
-    ```sh
-    cp .env.example .env.local
-    ```
-    You will need to populate this file with your credentials from Supabase and Resend.
+CI runs lint, typecheck and tests, then the build, in one job on every pull request and every push to `main`. Component tests (`*.test.tsx`) run under jsdom with Testing Library (`vitest.setup.ts` registers the jest-dom matchers); everything else runs under node.
 
-4.  **Run the database migrations:**
-    Ensure your Supabase database schema is up to date by running the Drizzle Kit push command:
-    ```sh
-    pnpm run db:push
-    ```
+### Performance budget
 
-5.  **Run the development server:**
-    ```sh
-    pnpm dev
-    ```
+`lighthouserc.json` sets the budget for `/`, `/shows` and `/about` under Lighthouse's mobile emulation (three runs, median). Blocking: script at most 425 KiB (435139 bytes), total transfer at most 1.5 MiB, SEO score at least 0.95, best-practices score at least 0.9. Warn-only: performance score at least 0.85 and Largest Contentful Paint at most 4 s, because a shared runner's timings swing by 20+ points between runs. The App Router's own client runtime is about 116 KiB of script before any page code, so SP1's original 180 KiB / 0.95 / 2 s budget was unreachable. The `lighthouse` job in `.github/workflows/test.yml` builds the site on the runner with dummy env and runs `npm run perf:ci` on every pull request; the real LCP check is Lighthouse against the Netlify deploy preview, recorded in `docs/perf-baseline.md`.
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
+## Database migrations
 
-## Project Structure
+There are two tracks, and both matter (details in `drizzle/README.md`):
 
-The project follows a feature-centric architecture, organized to keep related logic together and maintain a clean separation of concerns.
+1. Schema: edit `lib/database/schema.ts`, then `npm run db:generate`. drizzle-kit writes `drizzle/*.sql`.
+2. Hand-written SQL in `drizzle/migrations/*.sql` (RLS policies, backfills), applied and checksummed by `scripts/apply-sql-migrations.ts`.
 
-*   **/app**: Contains all the routes and pages of the application, following the Next.js App Router convention.
-    *   **/app/api**: All API routes are defined here, providing a backend for the application.
-    *   **/app/(admin|auth|...)**: Route groups are used to structure different sections of the site.
+Never run migrations against the production database from an agent or a dev machine by habit. Production changes are applied deliberately by a person, and `migrate-db.js` refuses `NODE_ENV=production` unless `ALLOW_DB_MIGRATE=true`.
 
-*   **/components**: Contains all reusable React components.
-    *   **/components/ui**: Core UI components, largely from shadcn/ui (Button, Card, etc.).
-    *   **/components/features**: Larger, feature-specific components (e.g., components for the "shows" catalog, the "admin" dashboard, etc.).
+## Environment
 
-*   **/lib**: Contains shared libraries, helper functions, and core business logic.
-    *   **/lib/database**: Drizzle ORM schema, queries, and database connection logic.
-    *   **/lib/supabase**: Supabase client configurations for server, client, and middleware.
-    *   **/lib/filters**: Logic for the advanced filtering and sorting system used in the resource catalogs.
+Every variable is listed and described in `.env.example`. Server-side variables are validated with zod in `lib/env.server.ts` (`getEnv()`) the first time they are used, so a bad value fails with a clear message rather than at some later call site. Public helpers live in `lib/env.ts`.
 
-*   **/drizzle**: Holds the Drizzle ORM migration files and configuration.
+## Docs
 
-*   **/supabase**: Contains Supabase-specific database migrations and configuration.
+- `CONTEXT.md`: one-page orientation (data model, where things live, auth, caching, current program).
+- `docs/adr/`: architecture decision records. Start with `0001-overhaul-program.md`.
+- `docs/README.md`: index of everything else (setup guides, feature docs, API and component indexes).
 
-*   **/docs**: Comprehensive project documentation - **[Start Here](./docs/README.md)**
-    *   **/docs/GETTING_STARTED.md**: Quick start guide for new developers
-    *   **/docs/SYSTEMS_OVERVIEW.md**: Complete technology stack and architecture reference
-    *   **/docs/features**: In-depth feature documentation
-    *   **/docs/setup**: Configuration and deployment guides
+## Agent skills
 
-## 📚 Documentation
+Agent tooling is configured in `CLAUDE.md` (`AGENTS.md` points to it).
 
-**Complete documentation for the entire project:**
+### Issue tracker
 
-- **[Documentation Hub](./docs/README.md)** - Start here for navigation to all docs
-- **[Getting Started](./docs/GETTING_STARTED.md)** - Set up your development environment (15 min)
-- **[Systems Overview](./docs/SYSTEMS_OVERVIEW.md)** - Understand all technologies and architecture
-- **[Developer Onboarding](./docs/DEVELOPER_ONBOARDING.md)** - Learn coding patterns and standards
+Issues live as GitHub issues in `trevorschachner/bright-designs-band`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
-**Quick Links:**
-- [API Documentation](./docs/api/API_INDEX.md)
-- [Component Library](./docs/components/COMPONENT_INDEX.md)
-- [Feature Guides](./docs/features/FEATURE_INDEX.md)
-- [Setup & Deployment](./docs/setup/)
+### Triage labels
 
-All documentation is designed to help team members work independently without the original developer.
+Five canonical triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), each label string equal to its name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single context: a root `CONTEXT.md` plus `docs/adr/`. See `docs/agents/domain.md`.

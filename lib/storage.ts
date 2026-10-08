@@ -1,6 +1,6 @@
-import { createClient } from '@/lib/utils/supabase/client'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getStorageBucket, getStorageRootPrefix } from '@/lib/env'
+import { publicStorageUrl } from '@/lib/media/public-url'
 
 export interface FileUploadResult {
   success: boolean
@@ -36,28 +36,11 @@ export function withRootPrefix(path: string): string {
 }
 
 export class FileStorageService {
-  private supabase: SupabaseClient | null = null
-
-  // Set the Supabase client (should be server-side authenticated client for uploads)
-  setClient(client: SupabaseClient) {
-    this.supabase = client
-  }
-
-  // Get or create a client (fallback to client-side for backward compatibility)
-  private getClient(): SupabaseClient {
-    if (this.supabase) {
-      return this.supabase
-    }
-    // Fallback to client-side client (for backward compatibility)
-    return createClient() as any
-  }
+  // Callers pass a (server-side, authenticated) Supabase client; this module never constructs one.
 
   // Upload file to Supabase Storage
-  async uploadFile(file: File, options: FileUploadOptions, supabaseClient?: SupabaseClient): Promise<FileUploadResult> {
+  async uploadFile(file: File, options: FileUploadOptions, supabase: SupabaseClient): Promise<FileUploadResult> {
     try {
-      // Use provided client or fallback to instance client
-      const supabase = supabaseClient || this.getClient()
-
       // Validate file
       const validation = this.validateFile(file, options.fileType)
       if (!validation.valid) {
@@ -100,9 +83,7 @@ export class FileStorageService {
       }
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(withRootPrefix(storagePath))
+      const publicUrl = publicStorageUrl(STORAGE_BUCKET, withRootPrefix(storagePath))
 
       return {
         success: true,
@@ -122,10 +103,8 @@ export class FileStorageService {
 
   // Generate a Signed Upload URL for direct client-side upload
   // Returns the signed URL and the storage path that should be used
-  async createSignedUploadUrl(fileName: string, options: FileUploadOptions, supabaseClient?: SupabaseClient): Promise<{ success: boolean; data?: { signedUrl: string; token: string; storagePath: string; publicUrl: string }; error?: string }> {
+  async createSignedUploadUrl(fileName: string, options: FileUploadOptions, supabase: SupabaseClient): Promise<{ success: boolean; data?: { signedUrl: string; token: string; storagePath: string; publicUrl: string }; error?: string }> {
     try {
-      const supabase = supabaseClient || this.getClient()
-      
       // Generate unique filename
       const timestamp = Date.now()
       const randomId = Math.random().toString(36).substring(2, 15)
@@ -152,9 +131,7 @@ export class FileStorageService {
       }
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(fullPath)
+      const publicUrl = publicStorageUrl(STORAGE_BUCKET, fullPath)
 
       return {
         success: true,
@@ -172,9 +149,8 @@ export class FileStorageService {
   }
 
   // Delete file from Supabase Storage
-  async deleteFile(storagePath: string, supabaseClient?: SupabaseClient): Promise<{ success: boolean; error?: string }> {
+  async deleteFile(storagePath: string, supabase: SupabaseClient): Promise<{ success: boolean; error?: string }> {
     try {
-      const supabase = supabaseClient || this.getClient()
       const { error } = await supabase.storage
         .from(STORAGE_BUCKET)
         .remove([withRootPrefix(storagePath)])
@@ -252,12 +228,9 @@ export class FileStorageService {
   }
 
   // Get file URL (handles both public and private files)
-  getFileUrl(storagePath: string, isPublic: boolean = true, supabaseClient?: SupabaseClient): string {
-    const supabase = supabaseClient || this.getClient()
+  getFileUrl(storagePath: string, isPublic: boolean = true): string {
     if (isPublic) {
-      const { data: { publicUrl } } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(withRootPrefix(storagePath))
+      const publicUrl = publicStorageUrl(STORAGE_BUCKET, withRootPrefix(storagePath))
       return publicUrl
     } else {
       // For private files, you'd need to create a signed URL

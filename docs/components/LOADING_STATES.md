@@ -162,7 +162,7 @@ export default function Loading() {
 
 ### Next.js Streaming
 
-Loading states leverage Next.js 13+ Streaming:
+Loading states leverage Next.js App Router streaming:
 - Suspense boundaries enable partial page rendering
 - Server can stream content as it becomes ready
 - Improves Time to First Byte (TTFB)

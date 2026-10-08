@@ -132,7 +132,6 @@ export default async function ResourcesPage() {
                         <GuideDownloadDialog 
                           resourceId={resource.id}
                           resourceTitle={resource.title}
-                          fileUrl={resource.fileUrl || '#'}
                         />
                       ) : (
                         <Button className="w-full" asChild>

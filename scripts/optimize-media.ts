@@ -18,7 +18,7 @@
  */
 import { config } from 'dotenv'
 import { resolve } from 'path'
-import { Client } from 'pg'
+import postgres from 'postgres'
 import { createClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
 import { execFile } from 'child_process'
@@ -37,6 +37,25 @@ import {
 } from '../lib/media/optimize-plan'
 
 config({ path: resolve(process.cwd(), '.env.local') })
+
+/** Thin query wrapper over one `postgres` connection (max: 1 keeps begin/commit on the same session). */
+type Db = {
+  query: (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number }>
+  end: () => Promise<void>
+}
+
+function connect(url: string): Db {
+  const sql = postgres(url, { max: 1, prepare: false, ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer' })
+  return {
+    query: async (text, params) => {
+      const result = params
+        ? await sql.unsafe(text, params as postgres.ParameterOrJSON<never>[])
+        : await sql.unsafe(text)
+      return { rows: [...result] as Record<string, unknown>[], rowCount: result.count }
+    },
+    end: () => sql.end(),
+  }
+}
 
 const execFileAsync = promisify(execFile)
 
@@ -114,7 +133,7 @@ async function assertFfmpegAvailable(): Promise<void> {
   }
 }
 
-async function fetchCandidates(db: Client, target: OptimizationTarget): Promise<FilePlan[]> {
+async function fetchCandidates(db: Db, target: OptimizationTarget): Promise<FilePlan[]> {
   const { rows } = await db.query(
     `select id, storage_path, url, original_name, file_name, mime_type, file_size
        from files
@@ -135,7 +154,7 @@ async function fetchCandidates(db: Client, target: OptimizationTarget): Promise<
 }
 
 /** Repoint the files row and every column that referenced the old URL. */
-async function applyPlan(db: Client, entry: ManifestEntry): Promise<void> {
+async function applyPlan(db: Db, entry: ManifestEntry): Promise<void> {
   await db.query('begin')
   try {
     await db.query(
@@ -165,7 +184,7 @@ async function applyPlan(db: Client, entry: ManifestEntry): Promise<void> {
   }
 }
 
-async function revert(db: Client, manifestPath: string): Promise<void> {
+async function revert(db: Db, manifestPath: string): Promise<void> {
   const manifest: Manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
   console.log(`Reverting ${manifest.entries.length} file(s) from ${manifestPath}\n`)
   for (const entry of manifest.entries) {
@@ -200,8 +219,7 @@ async function main() {
 
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL not found in .env.local')
 
-  const db = new Client({ connectionString: process.env.DATABASE_URL })
-  await db.connect()
+  const db = connect(process.env.DATABASE_URL)
 
   try {
     if (revertPath) {

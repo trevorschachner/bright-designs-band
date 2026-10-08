@@ -66,7 +66,7 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
     'copyright': 'Copyright Acquisition',
     'percussion': 'Percussion Writing/Right-Sizing',
     'solos': 'Solo Adjustments',
-    'visual-technique-guide': 'Visual Technique Guide Download'
+    'visual-technique-guide': 'Visual Technique Guide Request'
   };
 
   const selectedServices = data.services
@@ -392,7 +392,7 @@ export function generateCustomerConfirmationTemplate(
     'copyright': 'Copyright Acquisition',
     'percussion': 'Percussion Writing/Right-Sizing',
     'solos': 'Solo Adjustments',
-    'visual-technique-guide': 'Visual Technique Guide Download'
+    'visual-technique-guide': 'Visual Technique Guide Request'
   };
 
   // This email goes to whatever address was submitted, so it must not carry

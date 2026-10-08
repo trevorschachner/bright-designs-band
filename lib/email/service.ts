@@ -1,4 +1,7 @@
 import { EmailNotificationData } from './types';
+import { getEnv } from '@/lib/env.server';
+
+const DEFAULT_FROM = 'hello@transactional.brightdesigns.band';
 
 /**
  * Email service using Resend (recommended) or Nodemailer as fallback
@@ -13,7 +16,7 @@ interface EmailServiceResult {
 
 // Resend implementation (recommended for production)
 async function sendWithResend(data: EmailNotificationData): Promise<EmailServiceResult> {
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const { RESEND_API_KEY, EMAIL_FROM } = getEnv();
   
   if (!RESEND_API_KEY) {
     return {
@@ -30,7 +33,7 @@ async function sendWithResend(data: EmailNotificationData): Promise<EmailService
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'hello@transactional.brightdesigns.band',
+        from: EMAIL_FROM ?? DEFAULT_FROM,
         to: Array.isArray(data.to) ? data.to : [data.to],
         subject: data.subject,
         html: data.html,
@@ -65,19 +68,20 @@ async function sendWithNodemailer(data: EmailNotificationData): Promise<EmailSer
   try {
     // Dynamic import to avoid bundling if not used
     const nodemailer = await import('nodemailer');
-    
+    const env = getEnv();
+
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT ?? 587,
+      secure: env.SMTP_SECURE ?? false,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
       },
     });
 
     const result = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || 'hello@transactional.brightdesigns.band',
+      from: env.EMAIL_FROM ?? DEFAULT_FROM,
       to: Array.isArray(data.to) ? data.to.join(', ') : data.to,
       subject: data.subject,
       html: data.html,
@@ -101,17 +105,18 @@ async function sendWithNodemailer(data: EmailNotificationData): Promise<EmailSer
 async function sendWithGmail(data: EmailNotificationData): Promise<EmailServiceResult> {
   try {
     const nodemailer = await import('nodemailer');
-    
+    const { GMAIL_USER, GMAIL_APP_PASSWORD } = getEnv();
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD, // Use App Password, not regular password
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD, // Use App Password, not regular password
       },
     });
 
     const result = await transporter.sendMail({
-      from: `"Bright Designs Band" <${process.env.GMAIL_USER}>`,
+      from: `"Bright Designs Band" <${GMAIL_USER}>`,
       to: Array.isArray(data.to) ? data.to.join(', ') : data.to,
       subject: data.subject,
       html: data.html,
@@ -131,31 +136,16 @@ async function sendWithGmail(data: EmailNotificationData): Promise<EmailServiceR
   }
 }
 
-// Main email sending function
+// Main email sending function. EMAIL_SERVICE is validated by lib/env.ts
+// (resend | gmail | smtp, default resend).
 export async function sendEmail(data: EmailNotificationData): Promise<EmailServiceResult> {
-  // Try services in order of preference
-  const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'resend';
-  
-  switch (EMAIL_SERVICE) {
-    case 'resend':
-      return await sendWithResend(data);
+  switch (getEnv().EMAIL_SERVICE) {
     case 'gmail':
       return await sendWithGmail(data);
     case 'smtp':
       return await sendWithNodemailer(data);
+    case 'resend':
     default:
-      // Auto-detect based on available environment variables
-      if (process.env.RESEND_API_KEY) {
-        return await sendWithResend(data);
-      } else if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-        return await sendWithGmail(data);
-      } else if (process.env.SMTP_HOST) {
-        return await sendWithNodemailer(data);
-      } else {
-        return {
-          success: false,
-          error: 'No email service configured. Please set up Resend, Gmail, or SMTP credentials.'
-        };
-      }
+      return await sendWithResend(data);
   }
 }

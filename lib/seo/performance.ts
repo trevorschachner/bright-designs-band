@@ -204,7 +204,6 @@ export function generateResourceHints() {
   return [
     // DNS prefetch for external resources
     { rel: 'dns-prefetch', href: '//fonts.googleapis.com' },
-    { rel: 'dns-prefetch', href: '//www.google-analytics.com' },
     
     // Preconnect for critical external resources
     { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

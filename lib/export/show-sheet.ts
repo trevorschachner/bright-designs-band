@@ -9,6 +9,8 @@
  * Pure: the script does the reading, this does the shaping.
  */
 
+import { publicStorageUrl } from '../media/public-url';
+
 export const SHOW_COLUMNS = [
   'id',
   'title',
@@ -198,6 +200,5 @@ export function publicFileUrl(
   if (/^https?:\/\//.test(urlOrPath)) return urlOrPath;
   const base = opts.supabaseUrl?.trim().replace(/\/$/, '');
   if (!base) return null;
-  const path = `${opts.rootPrefix}/${urlOrPath.replace(/^\/+/, '')}`;
-  return `${base}/storage/v1/object/public/${encodeURIComponent(opts.bucket)}/${path}`;
+  return publicStorageUrl(opts.bucket, `${opts.rootPrefix}/${urlOrPath}`, base);
 }

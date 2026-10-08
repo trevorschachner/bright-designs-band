@@ -13,14 +13,7 @@
   SECRETS_SCAN_OMIT_PATHS = ".netlify/**,.next/**,node_modules/**,docs/**"
   
   # Allow NEXT_PUBLIC_ prefixed variables (these are meant to be public)
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_GA_MEASUREMENT_ID,EMAIL_FROM,EMAIL_SERVICE"
-
-# Redirect rules for Next.js image optimization
-[[redirects]]
-  from = "/_next/image"
-  to = "/.netlify/images?url=:url&w=:width&q=:quality"
-  status = 200
-  query = {url = ":url", w = ":width", q = ":quality"}
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,EMAIL_FROM,EMAIL_SERVICE"
 
 # Cache static assets
 [[headers]]

@@ -10,16 +10,15 @@ import { showSchema } from '@/lib/validation/shows';
 import { SuccessResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { reportError } from '@/lib/observability/report-error';
 import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
+import { publicStorageUrl } from '@/lib/media/public-url';
 
 export const dynamic = 'force-dynamic';
-
-const SUPABASE_STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, '')}/storage/v1/object/public`;
 
 function toPublicUrl(urlOrPath: string | null | undefined): string | null {
   if (!urlOrPath) return null;
   if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) return urlOrPath;
   try {
-    return `${SUPABASE_STORAGE_BASE}/${STORAGE_BUCKET}/${withRootPrefix(urlOrPath)}`;
+    return publicStorageUrl(STORAGE_BUCKET, withRootPrefix(urlOrPath));
   } catch {
     return null;
   }

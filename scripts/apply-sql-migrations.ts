@@ -16,10 +16,29 @@
 import { config } from 'dotenv'
 import { resolve } from 'path'
 import { readdir, readFile } from 'fs/promises'
-import { Client } from 'pg'
+import postgres from 'postgres'
 import { checksum, pendingMigrations, selectMigrationFiles } from '../lib/database/sql-migrations'
 
 config({ path: resolve(process.cwd(), '.env.local') })
+
+/** Thin query wrapper over one `postgres` connection (max: 1 keeps begin/commit on the same session). */
+type Db = {
+  query: (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number }>
+  end: () => Promise<void>
+}
+
+function connect(url: string): Db {
+  const sql = postgres(url, { max: 1, prepare: false, ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer' })
+  return {
+    query: async (text, params) => {
+      const result = params
+        ? await sql.unsafe(text, params as postgres.ParameterOrJSON<never>[])
+        : await sql.unsafe(text)
+      return { rows: [...result] as Record<string, unknown>[], rowCount: result.count }
+    },
+    end: () => sql.end(),
+  }
+}
 
 const DIR = resolve(process.cwd(), 'drizzle/migrations')
 
@@ -28,8 +47,7 @@ async function main() {
   const baseline = process.argv.includes('--baseline')
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL not found in .env.local')
 
-  const db = new Client({ connectionString: process.env.DATABASE_URL })
-  await db.connect()
+  const db = connect(process.env.DATABASE_URL)
   try {
     await db.query(`create table if not exists public.__sql_migrations (
       name text primary key, checksum text not null, applied_at timestamptz not null default now())`)
@@ -38,8 +56,9 @@ async function main() {
     const contents: Record<string, string> = {}
     for (const name of files) contents[name] = await readFile(resolve(DIR, name), 'utf8')
 
-    const { rows } = await db.query<{ name: string; checksum: string }>(
+    const { rows: rawRows } = await db.query(
       'select name, checksum from public.__sql_migrations')
+    const rows = rawRows as { name: string; checksum: string }[]
     const { pending, drifted } = pendingMigrations(files, rows, contents)
 
     if (drifted.length) {

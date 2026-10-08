@@ -1,9 +1,4 @@
-import js from '@eslint/js'
-import { FlatCompat } from '@eslint/eslintrc'
-
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-})
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
 
 const eslintConfig = [
   {
@@ -14,7 +9,7 @@ const eslintConfig = [
       "email-previews/*"
     ]
   },
-  ...compat.extends('next/core-web-vitals'),
+  ...nextCoreWebVitals,
   {
     rules: {
       // A component defined inside another component's render body gets a new
@@ -23,6 +18,13 @@ const eslintConfig = [
       // inside it is destroyed mid-keystroke. That is what FilterSidebar's
       // SidebarContent did to the shows search box.
       'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
+      // eslint-plugin-react-hooks 7 (via eslint-config-next 16) adds React
+      // Compiler rules. Existing code trips them in ~20 places; fixing those
+      // changes runtime behaviour, so they are off until a dedicated pass.
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/incompatible-library': 'off',
     },
   },
 ]

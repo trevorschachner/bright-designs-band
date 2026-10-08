@@ -1,14 +1,17 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
+import { getEnv } from '@/lib/env.server';
 
-// Validate DATABASE_URL exists
-if (!process.env.DATABASE_URL) {
+// Optional in the env schema (the Netlify build and CI have none); required
+// the moment the database is actually used.
+const databaseUrl = getEnv().DATABASE_URL;
+if (!databaseUrl) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
 // Disable prefetch as it is not supported for "Transaction" pool mode
-const client = postgres(process.env.DATABASE_URL, {
+const client = postgres(databaseUrl, {
   prepare: false,
   ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer',
   max: 20, // Connection pool limit

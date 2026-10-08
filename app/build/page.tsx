@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, ArrowRight } from 'lucide-react';
 import { InquiryForm } from '@/components/forms/inquiry-form';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/lib/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
 export default function BuildShowPage() {

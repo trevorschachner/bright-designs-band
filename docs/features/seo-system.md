@@ -75,11 +75,8 @@ The SEO system combines open-source tools and custom implementations to provide:
 
 ### 📈 **Analytics & Monitoring**
 
-#### Google Analytics Integration
-- Enhanced measurement enabled
-- Core Web Vitals tracking
-- Custom events for marching band actions
-- Conversion tracking for inquiries
+#### Analytics
+- PostHog (`instrumentation-client.ts`) handles traffic analytics and error capture; there is no Google Analytics integration
 
 #### SEO Health Monitoring
 - Automated SEO health checks
@@ -141,15 +138,6 @@ const imageProps = getOptimizedImageProps('/show-image.jpg', 'Marching band perf
 <Image {...imageProps} width={1200} height={630} />
 ```
 
-### 4. Track Performance
-
-```typescript
-import { trackMarchingBandEvent } from '@/lib/seo/monitoring'
-
-// Track user interactions
-trackMarchingBandEvent('show_inquiry', { showType: 'custom', source: 'homepage' })
-```
-
 ## Configuration
 
 ### Environment Variables
@@ -157,8 +145,6 @@ trackMarchingBandEvent('show_inquiry', { showType: 'custom', source: 'homepage' 
 ```bash
 # Required for SEO
 NEXT_PUBLIC_SITE_URL="https://www.brightdesigns.band"
-NEXT_PUBLIC_GA_MEASUREMENT_ID="G-XXXXXXXXXX"
-NEXT_PUBLIC_ENABLE_SEO_MONITORING="true"
 ```
 
 ### Target Keywords Configuration
@@ -287,11 +273,10 @@ Monitor these key areas:
 
 ### Open Source Tools Used
 - **Next.js**: Built-in SEO features and performance optimization
-- **Unlighthouse**: Site-wide Lighthouse auditing
 - **React SEO Tools**: Head tag and sitemap generation utilities
 
 ### Analytics Tools
-- Google Analytics 4 with enhanced measurement
+- PostHog for traffic analytics
 - Google Search Console for search performance
 - Core Web Vitals monitoring
 - Custom performance tracking

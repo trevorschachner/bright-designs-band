@@ -5,8 +5,8 @@ Welcome to the Bright Designs Band codebase! This guide will help you understand
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- pnpm (package manager)
+- Node.js 20+ (matches netlify.toml)
+- npm (ships with Node)
 - TypeScript knowledge
 - React/Next.js experience
 
@@ -14,14 +14,14 @@ Welcome to the Bright Designs Band codebase! This guide will help you understand
 ```bash
 git clone <repository>
 cd bright-designs-band
-pnpm install
-pnpm dev
+npm ci
+npm run dev
 ```
 
 ## 📁 Project Structure
 
 ```
-├── app/                    # Next.js 13+ App Router
+├── app/                    # Next.js 16 App Router
 │   ├── (routes)/          # Page components
 │   ├── api/               # API routes
 │   └── layout.tsx         # Root layout
@@ -69,12 +69,11 @@ We use **shadcn/ui** components with custom styling:
 - Validation with Zod schemas
 
 ### Import Pattern
+There is no component barrel. Import each component from the file that defines it:
 ```tsx
-// ✅ Good - Use component index
-import { Button, Card, ShowCard } from '@/components'
-
-// ❌ Avoid - Direct imports
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { ShowCard } from '@/components/features/shows/ShowCard'
 ```
 
 ## 🔧 Key Patterns
@@ -82,7 +81,7 @@ import { Button } from '@/components/ui/button'
 ### 1. **Loading States**
 Always implement skeleton loading:
 ```tsx
-import { ShowCard, ShowCardSkeleton } from '@/components'
+import { ShowCard, ShowCardSkeleton } from '@/components/features/shows/ShowCard'
 
 {isLoading ? <ShowCardSkeleton /> : <ShowCard item={data} />}
 ```
@@ -90,7 +89,7 @@ import { ShowCard, ShowCardSkeleton } from '@/components'
 ### 2. **Error Handling**
 Use toast notifications:
 ```tsx
-import { toast } from '@/components'
+import { toast } from '@/lib/hooks/use-toast'
 
 toast({
   title: "Success!",
@@ -101,7 +100,14 @@ toast({
 ### 3. **Navigation**
 Use breadcrumbs for complex pages:
 ```tsx
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem } from '@/components'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 
 <Breadcrumb>
   <BreadcrumbList>
@@ -132,7 +138,7 @@ const form = useForm<FormData>({
 ### 5. **Help Text**
 Use tooltips for user guidance:
 ```tsx
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 <TooltipProvider>
   <Tooltip>
@@ -233,8 +239,8 @@ const featuredShows = await db.query.shows.findMany({
 
 ### Database Changes
 1. Update schema in `lib/database/schema.ts`
-2. Generate migration: `pnpm db:generate`
-3. Apply migration: `pnpm db:push`
+2. Generate migration: `npm run db:generate`
+3. Apply migration: `npm run db:push`
 4. Update types if needed
 
 ### Adding Features
