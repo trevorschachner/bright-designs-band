@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -47,7 +46,7 @@ export function SpotlightCard({
           )}
       {...props}
     >
-      <motion.div
+      <div
         className="pointer-events-none absolute -inset-px z-0 transition-opacity duration-300"
         style={{
           opacity,

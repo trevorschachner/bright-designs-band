@@ -1,50 +1,27 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { guard } from '@/lib/auth/guard';
-import { revalidateTag } from 'next/cache';
-import { arrangements, arrangementsToTags, showArrangements, files } from '@/lib/database/schema';
+import { arrangements, arrangementsToTags, showArrangements } from '@/lib/database/schema';
 import { eq, and } from 'drizzle-orm';
+import { PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';
+import { getArrangementForApi, getShowSlugForArrangement } from '@/lib/services/arrangements';
+import { invalidateArrangement } from '@/lib/services/invalidate';
+import { slugOrNull } from '@/lib/services/files';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const arrangementId = parseInt(id, 10);
-    const { db } = await import('@/lib/database');
+    const arrangementId = Number(id);
+    if (!Number.isInteger(arrangementId) || arrangementId <= 0) {
+      return NextResponse.json({ error: 'Arrangement not found' }, { status: 404 });
+    }
 
-    const arrangement = await db.query.arrangements.findFirst({
-      where: eq(arrangements.id, arrangementId),
-      columns: {
-        id: true,
-        title: true,
-        composer: true,
-        arranger: true,
-        percussionArranger: true,
-        description: true,
-        grade: true,
-        year: true,
-        durationSeconds: true,
-        scene: true,
-        ensembleSize: true,
-        youtubeUrl: true,
-        commissioned: true,
-        sampleScoreUrl: true,
-        displayOrder: true,
-      },
-      with: {
-        files: { where: eq(files.isPublic, true), orderBy: files.displayOrder },
-        showArrangements: {
-          with: {
-            show: { columns: { id: true, title: true, thumbnailUrl: true, graphicUrl: true } },
-          },
-        },
-        arrangementsToTags: { with: { tag: true } },
-      },
-    });
-
+    const arrangement = await getArrangementForApi(arrangementId);
     if (!arrangement) {
       return NextResponse.json({ error: 'Arrangement not found' }, { status: 404 });
     }
 
-    return NextResponse.json(arrangement);
+    return NextResponse.json(arrangement, { headers: PUBLIC_CACHE_HEADERS });
   } catch (error) {
     console.error('Error fetching arrangement:', error);
     return NextResponse.json({ error: 'Failed to fetch arrangement' }, { status: 500 });
@@ -62,13 +39,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     console.log('PUT /api/arrangements/' + arrangementId, 'Received data:', JSON.stringify(body, null, 2));
     
     // Use Drizzle to bypass RLS (like shows route does)
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e);
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     // Convert snake_case to camelCase for Drizzle schema
     const drizzlePayload: any = {};
@@ -136,8 +106,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       });
 
       console.log('PUT /api/arrangements/' + arrangementId, 'Successfully updated');
-      // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-      revalidateTag('arrangements');
+      // A failed slug lookup must not skip invalidation (or fail a committed write).
+      invalidateArrangement(arrangementId, await slugOrNull(() => getShowSlugForArrangement(arrangementId)));
       return NextResponse.json(updatedArrangement);
     } catch (dbError: any) {
       console.error('PUT /api/arrangements/' + arrangementId, 'Database error:', dbError);
@@ -162,17 +132,19 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     if (gate.denied) return gate.denied;
 
     const { db } = await import('@/lib/database');
+    const arrangementId = parseInt(id, 10);
+    // Read before the delete: the cascade removes the link to the show.
+    const showSlug = await getShowSlugForArrangement(arrangementId);
     const [deleted] = await db
       .delete(arrangements)
-      .where(eq(arrangements.id, parseInt(id, 10)))
+      .where(eq(arrangements.id, arrangementId))
       .returning();
 
     if (!deleted) {
       return NextResponse.json({ error: 'Arrangement not found' }, { status: 404 });
     }
 
-    // @ts-expect-error - revalidateTag expects 1 arg but types mismatch
-    revalidateTag('arrangements');
+    invalidateArrangement(deleted.id, showSlug);
     return NextResponse.json(deleted);
   } catch (error) {
     console.error('Error deleting arrangement:', error);

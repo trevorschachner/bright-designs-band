@@ -88,8 +88,8 @@ const config: Config = {
       fontFamily: {
         primary: ["var(--font-poppins)", "Georgia", "serif"],
         secondary: ["var(--font-poppins)", '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
-        sans: ["var(--font-poppins)", "var(--font-inter)", '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
-        display: ["var(--font-poppins)", "var(--font-inter)", "Impact", "sans-serif"],
+        sans: ["var(--font-poppins)", '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
+        display: ["var(--font-poppins)", "Impact", "sans-serif"],
         heading: ["var(--font-poppins)", "sans-serif"],
       },
       letterSpacing: {

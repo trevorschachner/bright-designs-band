@@ -147,7 +147,7 @@ export default function AboutPage() {
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-electric">
               <CardContent className="p-6">
                 <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-electric/20 shadow-lg relative">
-                  <Image src="/trevor-schachner-headshot.jpeg" alt="Trevor Schachner" fill className="object-cover" />
+                  <Image src="/trevor-schachner-headshot.jpeg" alt="Trevor Schachner" fill className="object-cover" sizes="(max-width: 768px) 50vw, 300px" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Trevor Schachner</h3>
                 <p className="text-brand-electric font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
@@ -157,7 +157,7 @@ export default function AboutPage() {
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-sky">
               <CardContent className="p-6">
                 <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-sky/20 shadow-lg relative">
-                  <Image src="/brighton-barrineau-headshot.jpg" alt="Brighton Barrineau" fill className="object-cover" />
+                  <Image src="/brighton-barrineau-headshot.jpg" alt="Brighton Barrineau" fill className="object-cover" sizes="(max-width: 768px) 50vw, 300px" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Brighton Barrineau</h3>
                 <p className="text-brand-sky font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Music + Visual Designer</p>
@@ -167,7 +167,7 @@ export default function AboutPage() {
             <Card className="frame-card text-center hover:-translate-y-1 transition-transform duration-300 border-t-4 border-t-brand-turf">
               <CardContent className="p-6">
                 <div className="w-32 h-32 rounded-full mx-auto mb-6 overflow-hidden border-4 border-brand-turf/20 shadow-lg relative">
-                  <Image src="/ryan-wilhite-headshot.jpg" alt="Ryan Wilhite" fill className="object-cover" />
+                  <Image src="/ryan-wilhite-headshot.jpg" alt="Ryan Wilhite" fill className="object-cover" sizes="(max-width: 768px) 50vw, 300px" />
                 </div>
                 <h3 className="text-2xl font-bold mb-1 font-heading text-brand-midnight">Ryan Wilhite</h3>
                 <p className="text-brand-turf font-medium mb-4 uppercase tracking-wide text-sm">Owner, Educator, Program Coordinator</p>

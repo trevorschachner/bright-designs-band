@@ -110,44 +110,19 @@ Pagination controls with configurable page sizes:
 
 ### Custom Hooks
 
-#### **useFilterState** (`hooks/use-filter-state.ts`)
-Manages filter state with URL synchronization:
-- Automatic URL parameter updates
-- Browser history support
-- Debounced state changes
+#### **useCatalogUrlState** (`lib/hooks/use-catalog-url-state.ts`)
+The URL is the filter state. The hook mirrors it locally so inputs respond at
+once, debounces writes back to the URL (`router.replace`), and resyncs on
+back/forward. `FilterBar` and `FilterSidebar` call it themselves.
 
 ## Usage Examples
 
 ### Basic Implementation
 
-```tsx
-import { FilterBar, Pagination } from '@/components/filters';
-import { useFilterState } from '@/hooks/use-filter-state';
-import { SHOWS_FILTER_FIELDS, SHOWS_PRESETS } from '@/lib/filters';
-
-export default function ShowsPage() {
-  const { filterState, setFilterState } = useFilterState();
-  
-  return (
-    <div>
-      <FilterBar
-        filterState={filterState}
-        onFilterStateChange={setFilterState}
-        filterFields={SHOWS_FILTER_FIELDS}
-        presets={SHOWS_PRESETS}
-      />
-      
-      {/* Your data display */}
-      
-      <Pagination
-        pagination={response.pagination}
-        onPageChange={(page) => setFilterState({ ...filterState, page })}
-        onLimitChange={(limit) => setFilterState({ ...filterState, limit, page: 1 })}
-      />
-    </div>
-  );
-}
-```
+The catalog pages are server components: they parse `searchParams`, query
+through the service layer, and render `FilterSidebar` (a client component
+that reads and writes the URL itself) next to the server-rendered results.
+See `app/shows/page.tsx`.
 
 ### API Integration
 
@@ -292,15 +267,8 @@ export const MY_CUSTOM_PRESETS: FilterPreset[] = [
 ### Common Issues
 
 1. **Filters not working**: Check that the field exists in both schema definition and database
-2. **URL not updating**: Ensure `syncWithUrl` is enabled in `useFilterState`
+2. **URL not updating**: The filter components must render inside a `<Suspense>` boundary (they read `useSearchParams`)
 3. **Performance issues**: Consider adding database indexes for frequently filtered fields
 4. **Type errors**: Verify that filter field types match database column types
-
-### Debug Mode
-
-Enable detailed logging by setting:
-```tsx
-const { filterState } = useFilterState({ debugMode: true });
-```
 
 This system provides a robust, scalable solution for filtering and sorting that grows with your application!

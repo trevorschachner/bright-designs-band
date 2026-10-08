@@ -11,10 +11,12 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Clock, Users, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText, MessageSquare } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
+import { YouTubeFacade } from '@/components/features/youtube-facade'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
-import { getShowWithTagsBySlug, getShowWithArrangementsAndFiles, getPublicFilesByShowId, getPublicPiecesByArrangementIds } from '@/lib/database/queries'
+import { getShowBySlug, getShowArrangements, getPublicShowFiles, getAllShowSlugs } from '@/lib/services/shows'
+import { getPublicPiecesByArrangementIds } from '@/lib/services/pieces'
 import { SourcePieces } from '@/components/features/source-pieces'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
 import { ResaleCallout } from '@/components/features/resale-callout'
@@ -22,78 +24,35 @@ import { arrangementContactHref } from '@/lib/contact-link'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/features/seo/JsonLd'
-import { createCreativeWorkSchema, createBreadcrumbSchema, createProductSchema, createVideoObjectSchema } from '@/lib/seo/structured-data'
-import { notFound } from 'next/navigation'
-import { db } from '@/lib/database'
-import { shows } from '@/lib/database/schema'
-import { eq } from 'drizzle-orm'
-import { Suspense } from 'react'
+import { createMusicCompositionSchema, createBreadcrumbSchema, createVideoObjectSchema, showUploadDate } from '@/lib/seo/structured-data'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { normaliseSlug } from '@/lib/slug'
+import { cache } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
 
 export const revalidate = 3600;
 
+/**
+ * One show lookup per request: generateMetadata and the page both call this,
+ * and React's request cache dedupes them in front of the cached service read.
+ */
+const getShow = cache((slug: string) => getShowBySlug(slug))
+
 export async function generateStaticParams() {
+  // Prerendering is an optimisation: a show missing here renders on first
+  // request, so a database failure at build degrades to that, not a failed build.
   try {
-    const allShows = await db.select({ slug: shows.slug }).from(shows);
-    return allShows
-      .filter(s => s.slug)
-      .map(s => ({ slug: s.slug! }));
+    return (await getAllShowSlugs()).map(slug => ({ slug }))
   } catch {
-    return [];
+    return []
   }
 }
-
-interface ShowWithTagsResult {
-  show: any
-  showsToTags: Array<{ tag: any }>
-}
-
-async function getShowByIdentifier(identifier: string): Promise<ShowWithTagsResult | null> {
-  const slugResult = await getShowWithTagsBySlug(identifier)
-  if (slugResult) {
-    return slugResult
-  }
-
-  if (!/^\d+$/.test(identifier)) {
-    return null
-  }
-
-  const numericId = parseInt(identifier, 10)
-  const show = await db.query.shows.findFirst({
-    where: eq(shows.id, numericId),
-    with: {
-      showsToTags: {
-        with: {
-          tag: true,
-        },
-      },
-    },
-  })
-
-  if (!show) {
-    return null
-  }
-
-    const { showsToTags: tagRelations = [], ...rest } = show as any
-    const formattedTags = Array.isArray(tagRelations)
-      ? tagRelations
-          .map((relation: any) => ({
-            tag: relation?.tag ?? null,
-          }))
-          .filter((relation) => relation.tag)
-      : []
-
-    return {
-      show: rest,
-      showsToTags: formattedTags,
-    }
-  }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   try {
-    // Optimized: Use the same helper function, React 18+ will deduplicate this request
-    const showResult = await getShowByIdentifier(slug)
+    // Same per-request lookup as the page body, so this costs no extra query.
+    const showResult = await getShow(slug)
     const showRow = showResult?.show
     const tags = showResult?.showsToTags || []
 
@@ -138,9 +97,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ShowDetailBySlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const showResult = await getShowByIdentifier(slug)
+  const showResult = await getShow(slug)
 
   if (!showResult) {
+    // Old links in another case or with underscores: send them to the
+    // canonical form (no query; that URL does its own exact lookup).
+    const canonical = normaliseSlug(slug.replace(/_/g, '-'))
+    if (canonical && canonical !== slug) permanentRedirect(`/shows/${canonical}`)
     notFound()
   }
 
@@ -162,7 +125,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     duration: showRow.duration as string | null,
     thumbnailUrl: showRow.thumbnailUrl ?? null,
     graphicUrl: showRow.graphicUrl ?? null,
-    createdAt: showRow.createdAt instanceof Date ? showRow.createdAt.toISOString() : (showRow as any).createdAt,
+    createdAt: showRow.createdAt,
   }
 
   const displayDifficulty = (() => {
@@ -173,17 +136,15 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     return String(show.difficulty || '')
   })()
 
-  // Optimized: Fetch all arrangements with their files in a single query
-  // This eliminates N+1 queries - previously was 1 + N queries (N = number of arrangements)
-  // Now it's just 1 query total
-  const arrangements = await getShowWithArrangementsAndFiles(showId)
-  const piecesByArrangement = await getPublicPiecesByArrangementIds(arrangements.map((a: any) => a.id))
-
-  // Fetch show image files as fallback if graphicUrl/thumbnailUrl are not set
-  const showFiles = await getPublicFilesByShowId(showId)
-  const showImageFile = Array.isArray(showFiles) 
-    ? showFiles.find((f: any) => f.fileType === 'image' && f.isPublic) 
-    : null
+  // Everything below keys off the show id: the arrangements (then their
+  // source pieces) and the show's own files load in parallel.
+  const [[arrangements, piecesByArrangement], showFiles] = await Promise.all([
+    getShowArrangements(showId).then(async (rows) =>
+      [rows, await getPublicPiecesByArrangementIds(rows.map((a) => a.id))] as const
+    ),
+    getPublicShowFiles(showId),
+  ])
+  const showImageFile = showFiles.find((f) => f.fileType === 'image' && f.isPublic) ?? null
 
   // Determine display image: graphicUrl > thumbnailUrl > show image file > null
   const displayImageUrl = show.graphicUrl || show.thumbnailUrl || showImageFile?.url || null
@@ -195,38 +156,34 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     return `${m}:${String(s).padStart(2, '0')}`
   }
 
-  const creativeWorkSchema = createCreativeWorkSchema({
-    name: show.title,
-    description: show.description || '',
-    creator: 'Bright Designs',
-    year: show.year ? String(show.year) : undefined,
-    difficulty: displayDifficulty || undefined,
-    duration: show.duration || undefined,
-  })
+  const showPath = `/shows/${show.slug}`
 
   const breadcrumbSchema = createBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Shows', url: '/shows' },
-    { name: show.title, url: `/shows/${show.slug}` },
+    { name: show.title, url: showPath },
   ])
 
-  // Every show is for sale; pricing is by conversation, so no price is published.
-  const productSchema = createProductSchema({
+  // No Product schema: Google requires an Offer.price for one, and pricing is
+  // quoted per program, never published.
+  // The source pieces the arrangement cards already loaded, in show order.
+  const compositionSchema = createMusicCompositionSchema({
     name: show.title,
-    description: show.description ?? undefined,
-    url: `/shows/${show.slug}`,
-    imageUrl: displayImageUrl,
+    description: show.description,
+    url: showPath,
+    year: show.year,
+    pieces: arrangements.flatMap((a) => piecesByArrangement[a.id] ?? []),
   })
 
-  const videoObjectSchema = showRow.youtubeUrl
-    ? createVideoObjectSchema({
-        name: show.title,
-        description: show.description ?? undefined,
-        youtubeUrl: showRow.youtubeUrl,
-        thumbnailUrl: displayImageUrl,
-        uploadDate: show.year ? `${show.year}-01-01` : null,
-      })
-    : null
+  // Null without a YouTube URL (or one no video id can be read from).
+  const videoObjectSchema = createVideoObjectSchema({
+    name: show.title,
+    description: show.description,
+    youtubeUrl: showRow.youtubeUrl,
+    uploadDate: showUploadDate(show.createdAt, show.year),
+  })
+
+  const schemas = [breadcrumbSchema, compositionSchema, ...(videoObjectSchema ? [videoObjectSchema] : [])]
 
   return (
     <div className="min-h-screen bg-background">
@@ -257,7 +214,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
         {/* Show Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Left side - Image */}
-          <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video" id="listen">
+          <div className="relative bg-muted rounded-lg shadow-lg overflow-hidden aspect-video">
             {displayImageUrl ? (
               <Image
                 src={displayImageUrl}
@@ -265,6 +222,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                 fill
                 className="object-cover rounded-lg"
                 priority
+                fetchPriority="high"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             ) : (
@@ -335,7 +293,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           {arrangements.filter((a: any) => a.audioUrl).length > 0 && (
             <div id="master-player">
               <AudioPlayerComponent
-                playerId="master-player"
+                showTitle={show.title}
                 className="border-primary/20 shadow-sm"
                 tracks={arrangements
                   .filter((a: any) => a.audioUrl)
@@ -353,7 +311,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       title: arrangement.title || `Movement ${index + 1}`,
                       description: description,
                       url: arrangement.audioUrl,
-                      imageUrl: displayImageUrl || arrangement.graphicUrl || arrangement.thumbnailUrl || undefined,
+                      imageUrl: displayImageUrl || undefined,
                     };
                   })}
                 title="Listen to Full Show"
@@ -364,10 +322,21 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           )}
         </div>
 
+        {/* The performance video. Shown whenever a VideoObject is emitted: the
+            same youtubeUrl drives both, and both render nothing without an id. */}
+        {videoObjectSchema && (
+          <section className="mb-8" aria-labelledby="watch-heading">
+            <h2 id="watch-heading" className="text-2xl font-heading font-bold text-foreground mb-4">
+              Watch the Performance
+            </h2>
+            <YouTubeFacade youtubeUrl={showRow.youtubeUrl} title={`${show.title} performance`} className="max-w-3xl" />
+          </section>
+        )}
+
         <ResaleCallout kind="show" title={show.title} className="mb-8" />
 
         {/* Show Arrangements Section */}
-        <div className="space-y-4">
+        <div className="space-y-4" id="listen">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-heading font-bold text-foreground">Show Arrangements</h2>
             <Badge variant="secondary" className="text-sm font-medium">
@@ -396,7 +365,6 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
               <Card 
                 key={arrangement.id} 
                 className="frame-card overflow-hidden group hover:shadow-lg transition-all duration-200 border border-border hover:border-primary/20"
-                id={index === 0 ? 'listen' : undefined}
               >
                 <CardContent className="p-4">
                   {/* Header Row */}
@@ -472,7 +440,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
 
                   <SourcePieces
                     part={arrangement}
-                    pieces={piecesByArrangement.get(arrangement.id)}
+                    pieces={piecesByArrangement[arrangement.id]}
                     className="mb-3 ml-12"
                   />
 
@@ -506,10 +474,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
         </div>
       </div>
 
-      <JsonLd data={creativeWorkSchema} />
-      <JsonLd data={breadcrumbSchema} />
-      <JsonLd data={productSchema} />
-      {videoObjectSchema && <JsonLd data={videoObjectSchema} />}
+      <JsonLd data={schemas} />
     </div>
   )
 }

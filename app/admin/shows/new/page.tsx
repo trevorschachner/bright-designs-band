@@ -38,7 +38,7 @@ export default function NewShowPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   useEffect(() => {
-    fetch('/api/tags')
+    fetch('/api/tags?admin=true')
       .then(res => res.json())
       .then(data => setTags(data));
   }, []);

@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import { InquiryForm } from "@/components/forms/inquiry-form"
 import { toast } from "@/lib/hooks/use-toast"
 import { Calendar, ArrowRight, Sparkles, CheckCircle } from "lucide-react"
-import confetti from "canvas-confetti"
 
 interface CheckAvailabilityModalProps {
   showTitle: string
@@ -66,27 +65,30 @@ export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvaila
         throw new Error('Something went wrong')
       }
 
-      const end = Date.now() + 1500
-      const colors = ['#2563eb', '#ffffff']
-      ;(function frame() {
-        confetti({
-          particleCount: 2,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors,
-        })
-        confetti({
-          particleCount: 2,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors,
-        })
-        if (Date.now() < end) {
-          requestAnimationFrame(frame)
-        }
-      })()
+      // canvas-confetti is loaded on demand; a failed load must not fail the submit.
+      void import("canvas-confetti").then(({ default: confetti }) => {
+        const end = Date.now() + 1500
+        const colors = ['#2563eb', '#ffffff']
+        ;(function frame() {
+          confetti({
+            particleCount: 2,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors,
+          })
+          confetti({
+            particleCount: 2,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors,
+          })
+          if (Date.now() < end) {
+            requestAnimationFrame(frame)
+          }
+        })()
+      }).catch(() => {})
 
       toast({
         title: "Inquiry Submitted!",

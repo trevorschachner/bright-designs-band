@@ -1,25 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { type ThemeProviderProps } from "next-themes"
+import { ThemeProvider as NextThemesProvider, type ThemeProviderProps } from "next-themes"
 
+// next-themes injects its own blocking script to set the theme class before
+// paint, so there is no flash to guard against and no need to wait for mount.
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return <>{children}</>
-  }
-
-  return (
-    <NextThemesProvider 
-      {...props}
-    >
-      {children}
-    </NextThemesProvider>
-  )
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }

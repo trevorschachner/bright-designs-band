@@ -1,279 +1,69 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
+import { useAudioActions, useAudioState, useAudioTime } from "@/components/features/audio/AudioProvider"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X } from "lucide-react"
 
+const MOBILE_QUERY = '(max-width: 640px)'
+
+function subscribeMobile(onChange: () => void) {
+  const mq = window.matchMedia(MOBILE_QUERY)
+  mq.addEventListener('change', onChange)
+  return () => mq.removeEventListener('change', onChange)
+}
+
+function useIsMobile() {
+  return useSyncExternalStore(
+    subscribeMobile,
+    () => window.matchMedia(MOBILE_QUERY).matches,
+    () => false,
+  )
+}
+
+/** Fixed bottom bar for the site-wide audio (AudioProvider). */
 export function GlobalAudioPlayerBar() {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(0.8)
-  const [isMuted, setIsMuted] = useState(false)
-  const [trackTitle, setTrackTitle] = useState<string | null>(null)
-  const [trackImage, setTrackImage] = useState<string | null>(null)
-  const [hasHadAudio, setHasHadAudio] = useState(false) // Track if we've ever had audio
-  const [highlight, setHighlight] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [isDismissed, setIsDismissed] = useState(false)
-  const activeAudioRef = useRef<HTMLAudioElement | null>(null)
+  const audio = useAudioActions()
+  const { track, playing: isPlaying, volume, muted: isMuted, playId } = useAudioState()
+  const { currentTime, duration } = useAudioTime()
+  const isMobile = useIsMobile()
+  // Dismissal (mobile only) lasts until playback starts again.
+  const [dismissedAt, setDismissedAt] = useState<number | null>(null)
+  const isDismissed = isMobile && dismissedAt === playId
+  // Ring highlight for 1.5 s each time playback starts.
+  const [highlightDoneFor, setHighlightDoneFor] = useState(0)
+  const highlight = isPlaying && highlightDoneFor !== playId
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)')
-    const update = (matches: boolean) => setIsMobile(matches)
-    const handleChange = (event: MediaQueryListEvent) => update(event.matches)
+    if (!isPlaying) return
+    const timer = setTimeout(() => setHighlightDoneFor(playId), 1500)
+    return () => clearTimeout(timer)
+  }, [isPlaying, playId])
 
-    update(mq.matches)
-    if (typeof mq.addEventListener === 'function') {
-      mq.addEventListener('change', handleChange)
-      return () => mq.removeEventListener('change', handleChange)
-    }
+  const trackTitle = track?.title ?? null
+  const trackImage = track?.imageUrl?.trim() ? track.imageUrl : null
 
-    mq.addListener(handleChange)
-    return () => mq.removeListener(handleChange)
-  }, [])
-
-  useEffect(() => {
-    if (!isMobile && isDismissed) {
-      setIsDismissed(false)
-    }
-  }, [isMobile, isDismissed])
-
-  // Trigger highlight when playback starts
-  useEffect(() => {
-    if (isPlaying) {
-      setHighlight(true)
-      const timer = setTimeout(() => setHighlight(false), 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [isPlaying])
-
-  useEffect(() => {
-    if (isPlaying && isDismissed) {
-      setIsDismissed(false)
-    }
-  }, [isPlaying, isDismissed])
-
-  // Find and track the currently playing or recently played audio element
-  useEffect(() => {
-    const findActiveAudio = () => {
-      const audioElements = document.querySelectorAll('audio')
-      
-      // First, try to find currently playing audio
-      for (const audio of audioElements) {
-        if (!audio.paused && !audio.ended) {
-          activeAudioRef.current = audio
-          setHasHadAudio(true)
-          return audio
-        }
-      }
-      
-      // If no playing audio, check if we have a previously tracked audio that still exists
-      if (activeAudioRef.current && document.contains(activeAudioRef.current)) {
-        setHasHadAudio(true)
-        return activeAudioRef.current
-      }
-      
-      // If we've had audio before, try to find any audio element (even if paused)
-      if (hasHadAudio && audioElements.length > 0) {
-        // Prefer the first audio element that has been interacted with
-        for (const audio of audioElements) {
-          if (audio.currentTime > 0 || audio.duration > 0) {
-            activeAudioRef.current = audio
-            return audio
-          }
-        }
-        // Fallback to first audio element
-        activeAudioRef.current = audioElements[0]
-        return audioElements[0]
-      }
-      
-      // If no audio has been played yet, use first available
-      if (audioElements.length > 0) {
-        activeAudioRef.current = audioElements[0]
-        setHasHadAudio(true)
-        return audioElements[0]
-      }
-      
-      return null
-    }
-
-    const updateState = () => {
-      const audio = findActiveAudio()
-      if (audio) {
-        setIsPlaying(!audio.paused && !audio.ended)
-        setCurrentTime(audio.currentTime)
-        if (audio.duration) {
-          setDuration(audio.duration)
-        }
-        const container = audio.closest('[data-track-title]')
-        if (container) {
-          const title = container.getAttribute('data-track-title')
-          if (title) {
-            setTrackTitle(title)
-          }
-        } else {
-          const audioTitle = audio.getAttribute('data-track-title') || 
-                           audio.getAttribute('aria-label') ||
-                           'Audio'
-          setTrackTitle(audioTitle)
-        }
-
-        const imageFromContainer = container?.getAttribute('data-track-image')
-        const imageFromAudio = audio.getAttribute('data-track-image')
-        const nextImage = imageFromContainer || imageFromAudio || null
-        setTrackImage(nextImage && nextImage.trim() ? nextImage : null)
-      } else {
-        // Only hide if we've never had audio or all audio elements are gone
-        const audioElements = document.querySelectorAll('audio')
-        if (audioElements.length === 0 && !hasHadAudio) {
-          setIsPlaying(false)
-          setCurrentTime(0)
-          setDuration(0)
-          setTrackTitle(null)
-          setTrackImage(null)
-          setHasHadAudio(false)
-          activeAudioRef.current = null
-        } else if (hasHadAudio && activeAudioRef.current) {
-          // Keep player visible with last known state
-          setIsPlaying(false)
-          setCurrentTime(activeAudioRef.current.currentTime)
-          if (activeAudioRef.current.duration) {
-            setDuration(activeAudioRef.current.duration)
-          }
-          // Keep track title
-          const container = activeAudioRef.current.closest('[data-track-title]')
-          if (container) {
-            const title = container.getAttribute('data-track-title')
-            if (title) setTrackTitle(title)
-            const imageFromContainer = container.getAttribute('data-track-image')
-            setTrackImage(imageFromContainer && imageFromContainer.trim() ? imageFromContainer : null)
-          }
-        }
-      }
-    }
-
-    // Initial update
-    updateState()
-
-    // Set up interval for updates
-    const interval = setInterval(updateState, 100)
-
-    // Listen to all audio events
-    const handleAudioEvent = () => {
-      updateState()
-    }
-
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach(audio => {
-      audio.addEventListener('play', handleAudioEvent)
-      audio.addEventListener('pause', handleAudioEvent)
-      audio.addEventListener('timeupdate', handleAudioEvent)
-      audio.addEventListener('loadedmetadata', handleAudioEvent)
-      audio.addEventListener('ended', handleAudioEvent)
-    })
-
-    // Watch for new audio elements
-    const observer = new MutationObserver(() => {
-      const newAudioElements = document.querySelectorAll('audio')
-      newAudioElements.forEach(audio => {
-        audio.addEventListener('play', handleAudioEvent)
-        audio.addEventListener('pause', handleAudioEvent)
-        audio.addEventListener('timeupdate', handleAudioEvent)
-        audio.addEventListener('loadedmetadata', handleAudioEvent)
-        audio.addEventListener('ended', handleAudioEvent)
-      })
-      updateState()
-    })
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    })
-
-    return () => {
-      clearInterval(interval)
-      observer.disconnect()
-      audioElements.forEach(audio => {
-        audio.removeEventListener('play', handleAudioEvent)
-        audio.removeEventListener('pause', handleAudioEvent)
-        audio.removeEventListener('timeupdate', handleAudioEvent)
-        audio.removeEventListener('loadedmetadata', handleAudioEvent)
-        audio.removeEventListener('ended', handleAudioEvent)
-      })
-    }
-  }, [hasHadAudio])
-
-  // Update volume on all audio elements
-  useEffect(() => {
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach(audio => {
-      audio.volume = isMuted ? 0 : volume
-    })
-  }, [volume, isMuted])
-
-  const getActiveAudio = () => {
-    if (typeof document === 'undefined') {
-      return activeAudioRef.current
-    }
-
-    return activeAudioRef.current || document.querySelector('audio')
-  }
-
-  const togglePlayPause = () => {
-    const audio = getActiveAudio()
-    if (audio) {
-      if (audio.paused) {
-        audio.play().catch(() => setIsPlaying(false))
-      } else {
-        audio.pause()
-      }
-    }
-  }
+  const togglePlayPause = () => audio.toggle()
 
   const toggleMute = () => {
-    setIsMuted(!isMuted)
+    audio.setMuted(!isMuted)
   }
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0]
-    setVolume(newVolume)
-    setIsMuted(newVolume === 0)
+    audio.setVolume(newVolume)
+    audio.setMuted(newVolume === 0)
   }
 
   const handleProgressChange = (value: number[]) => {
-    const newTime = value[0]
-    setCurrentTime(newTime)
-    const audio = getActiveAudio()
-    if (audio) {
-      audio.currentTime = newTime
-    }
+    audio.seek(value[0])
   }
 
-  const seekBy = (delta: number) => {
-    const audio = getActiveAudio()
-    if (!audio) return
+  const skipBackward = () => audio.seek(currentTime - 10)
+  const skipForward = () => audio.seek(currentTime + 10)
 
-    const trackDuration = isFinite(audio.duration) && audio.duration > 0
-      ? audio.duration
-      : duration > 0
-        ? duration
-        : undefined
-
-    const unclampedTime = audio.currentTime + delta
-    const clampedTime = trackDuration
-      ? Math.min(Math.max(unclampedTime, 0), trackDuration)
-      : Math.max(unclampedTime, 0)
-
-    audio.currentTime = clampedTime
-    setCurrentTime(clampedTime)
-  }
-
-  const skipBackward = () => seekBy(-10)
-  const skipForward = () => seekBy(10)
-
-  const canSeek = Boolean(hasHadAudio && (duration > 0 || activeAudioRef.current))
+  const canSeek = track !== null
 
   const formatTime = (seconds: number) => {
     if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
@@ -283,16 +73,11 @@ export function GlobalAudioPlayerBar() {
   }
 
   const handleDismiss = () => {
-    const audio = getActiveAudio()
-    if (audio) {
-      audio.pause()
-    }
-    setIsPlaying(false)
-    setIsDismissed(true)
+    audio.pause()
+    setDismissedAt(playId)
   }
 
-  // Show player if we have a track title OR if we've had audio before (even if paused)
-  if ((!trackTitle && !hasHadAudio) || (isMobile && isDismissed)) return null
+  if (!track || isDismissed) return null
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-sm border-t border-border shadow-lg transition-all duration-500 ${highlight ? 'ring-2 ring-primary border-primary shadow-[0_-5px_20px_-5px_hsl(var(--primary)/0.3)]' : ''}`}>

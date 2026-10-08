@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Poppins } from "next/font/google"
+import { Poppins } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
 import { SiteHeader } from "@/components/layout/site-header"
@@ -11,27 +11,27 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
-import { generateResourceHints } from "@/lib/seo/performance"
 import { ShowPlanProvider } from "@/lib/hooks/use-show-plan"
 import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
+import { AudioProvider } from "@/components/features/audio/AudioProvider"
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
 import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
-import { getPublicSiteUrl, getPosthogKey, getPosthogHost } from "@/lib/env"
+import { getPublicSiteUrl } from "@/lib/env"
 import { Toaster } from "@/components/ui/toaster"
-import { PostHogProvider } from "@/components/features/analytics/PostHogProvider"
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-  preload: true,
-})
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  // Every weight the site uses: 300 (body, font-light), 400 (font-normal, and
+  // <strong>/<b> = bolder than 300), 500 (font-medium), 600 (font-semibold),
+  // 700 (font-bold), 800 (typography prose h1 on /privacy and /terms).
+  // One instance on purpose: next/font gives each instance its own generated
+  // family name, and the browser does not fall through a font stack per
+  // weight, so a second (preload: false) instance for 400/500/800 would never
+  // be used where the first family is present. next/font has no per-weight
+  // preload, so all six weights preload.
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-poppins",
   display: "swap",
 })
@@ -49,18 +49,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const resourceHints = generateResourceHints()
-  const posthogKey = getPosthogKey()
-  const posthogHost = getPosthogHost()
-  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Resource hints for performance */}
-        {resourceHints.map((hint, index) => (
-          <link key={index} {...hint} />
-        ))}
-        
         {/* Additional SEO meta tags */}
         <meta name="robots" content="index,follow" />
         <meta name="googlebot" content="index,follow,max-video-preview:-1,max-image-preview:large,max-snippet:-1" />
@@ -73,26 +64,23 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logos/apple-touch-icon.png" />
         <link rel="manifest" href="/logos/manifest.json" />
       </head>
-      <body suppressHydrationWarning className={`${inter.variable} ${poppins.variable} font-sans font-light`}>
+      <body suppressHydrationWarning className={`${poppins.variable} font-sans font-light`}>
         {/* Organization and Local Business structured data */}
-        <JsonLd data={organizationSchema} />
-        <JsonLd data={localBusinessSchema} />
-        
-        <Suspense fallback={null}>
-          <PostHogProvider apiKey={posthogKey} apiHost={posthogHost} />
-        </Suspense>
+        <JsonLd data={[organizationSchema, localBusinessSchema]} />
         
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <GlobalBackground />
           <GlobalSpotlight />
           <ShowPlanProvider>
-            <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
-            <Suspense fallback={<PageLoadingSkeleton />}>
-              <main>{children}</main>
-            </Suspense>
-            <CTASection />
-            <SiteFooter footer={footer} social={social} />
-            <GlobalAudioPlayerBar />
+            <AudioProvider>
+              <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
+              <Suspense fallback={<PageLoadingSkeleton />}>
+                <main>{children}</main>
+              </Suspense>
+              <CTASection />
+              <SiteFooter footer={footer} social={social} />
+              <GlobalAudioPlayerBar />
+            </AudioProvider>
             <Toaster />
           </ShowPlanProvider>
         </ThemeProvider>

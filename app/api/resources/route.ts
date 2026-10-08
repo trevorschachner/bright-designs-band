@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { guard } from '@/lib/auth/guard';
 import { resources, files } from '@/lib/database/schema';
-import { desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { SuccessResponse, PrivateResponse, ErrorResponse } from '@/lib/utils/api-helpers';
+import { getActiveResources, getResourcesForAdmin } from '@/lib/services/resources';
+import { invalidateResources } from '@/lib/services/invalidate';
 
 export async function GET(request: NextRequest) {
   try {
-    // Lazy import DB
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return ErrorResponse('Database not configured', 500);
-    }
-
     // Inactive resources are drafts. Only staff who manage resources may ask
     // for them, and only explicitly with ?all=true.
     const wantsAll = new URL(request.url).searchParams.get('all') === 'true';
@@ -21,20 +16,11 @@ export async function GET(request: NextRequest) {
       // Never answer ?all=true from the shared public cache: the cache key is
       // the query string only, so staff could be served the active-only list.
       const gate = await guard('canManageResources');
-      const query = db.select().from(resources);
-      const data = gate.denied
-        ? await query.where(eq(resources.isActive, true)).orderBy(desc(resources.createdAt))
-        : await query.orderBy(desc(resources.createdAt));
+      const data = gate.denied ? await getActiveResources() : await getResourcesForAdmin();
       return PrivateResponse(data);
     }
 
-    const data = await db
-      .select()
-      .from(resources)
-      .where(eq(resources.isActive, true))
-      .orderBy(desc(resources.createdAt));
-
-    return SuccessResponse(data);
+    return SuccessResponse(await getActiveResources());
   } catch (error) {
     console.error('Error fetching resources:', error);
     return ErrorResponse('Failed to fetch resources', 500);
@@ -48,12 +34,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     // Generate slug if not provided
     let slug = body.slug;
@@ -69,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure unique slug
-    const existing = await db.select().from(resources).where(eq(resources.slug, slug));
+    const existing = await db.select({ id: resources.id }).from(resources).where(eq(resources.slug, slug));
     if (existing.length > 0) {
       slug = `${slug}-${Date.now()}`;
     }
@@ -95,6 +75,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    invalidateResources();
     return NextResponse.json(newResource);
   } catch (error: any) {
     console.error('Error creating resource:', error);

@@ -11,7 +11,6 @@ interface ShowPlanItem {
 
 interface ShowPlanContextType {
   plan: ShowPlanItem[];
-  addToPlan: (item: ShowPlanItem) => void;
   removeFromPlan: (id: number) => void;
   clearPlan: () => void;
   itemCount: number;
@@ -21,23 +20,6 @@ const ShowPlanContext = createContext<ShowPlanContextType | undefined>(undefined
 
 export function ShowPlanProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<ShowPlanItem[]>([]);
-
-  const addToPlan = (item: ShowPlanItem) => {
-    setPlan(prevPlan => {
-      if (prevPlan.find(p => p.id === item.id && p.type === item.type)) {
-        toast({
-          title: "Already in Plan",
-          description: `"${item.title}" is already in your show plan.`,
-        });
-        return prevPlan;
-      }
-      toast({
-        title: "Added to Plan",
-        description: `"${item.title}" has been added to your show plan.`,
-      });
-      return [...prevPlan, item];
-    });
-  };
 
   const removeFromPlan = (id: number) => {
     setPlan(prevPlan => prevPlan.filter(item => item.id !== id));
@@ -52,7 +34,7 @@ export function ShowPlanProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ShowPlanContext.Provider value={{ plan, addToPlan, removeFromPlan, clearPlan, itemCount: plan.length }}>
+    <ShowPlanContext.Provider value={{ plan, removeFromPlan, clearPlan, itemCount: plan.length }}>
       {children}
     </ShowPlanContext.Provider>
   );

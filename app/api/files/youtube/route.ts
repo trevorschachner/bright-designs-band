@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/database'
 import { files } from '@/lib/database/schema'
 import { guard } from '@/lib/auth/guard'
 import { isValidYouTubeUrl } from '@/components/features/youtube-player'
+import { invalidateFileOwner } from '@/lib/services/files'
 
 export async function POST(request: NextRequest) {
   // canCreateArrangements, not canUploadFiles, is what this route has always
@@ -72,13 +74,6 @@ export async function POST(request: NextRequest) {
           : `general/youtube/${fileName}`
 
     // Save YouTube link metadata to database
-    let db: any
-    try {
-      ({ db } = await import('@/lib/database'))
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e)
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
     const fileRecord = await db.insert(files).values({
       fileName,
       originalName: description || `YouTube Video ${videoId}`,
@@ -93,6 +88,8 @@ export async function POST(request: NextRequest) {
       description,
       displayOrder,
     }).returning()
+
+    await invalidateFileOwner(fileRecord[0])
 
     return NextResponse.json({ 
       success: true,

@@ -78,7 +78,7 @@ sheet mirrors the site with no job or credentials: cell A1 of each tab is an
 `app/api/export/[file]/route.ts` serves them with the same reader and column
 order as `export:shows`, except Pieces is public-safe: `id, title, composer`
 only (copyright cost and licensing status stay in /admin and `export:shows`).
-The route caches for an hour and drops the cache when an admin edit
-revalidates `shows` or `arrangements`. Google refreshes IMPORTDATA on its own
+The route caches for an hour (`cachedRead`) and drops the cache when an admin
+edit revalidates any tag it reads: `shows`, `arrangements`, `tags` or `pieces`. Google refreshes IMPORTDATA on its own
 schedule, roughly hourly. The tabs are formula output: edit in /admin, not in
 the sheet.

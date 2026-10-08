@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { files, fileTypeEnum } from '@/lib/database/schema';
 import { publicStorageUrl } from '@/lib/media/public-url';
 import { fileStorage, withRootPrefix, STORAGE_BUCKET } from '@/lib/storage';
@@ -7,6 +8,7 @@ import { and, eq } from 'drizzle-orm';
 import { SuccessResponse, PrivateResponse, ErrorResponse, UnauthorizedResponse, ForbiddenResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { fileUploadSchema } from '@/lib/validation/files';
 import { z } from 'zod';
+import { invalidateFileOwner } from '@/lib/services/files';
 
 type FileType = typeof fileTypeEnum.enumValues[number];
 
@@ -83,7 +85,8 @@ export async function POST(request: NextRequest) {
           .update({ graphic_url: inserted.url })
           .eq('id', metadata.showId);
       }
-      
+
+      await invalidateFileOwner(metadata);
       return SuccessResponse(inserted, 201);
 
     } else {
@@ -147,7 +150,8 @@ export async function POST(request: NextRequest) {
           .update({ graphic_url: inserted.url })
           .eq('id', metadata.showId);
       }
-  
+
+      await invalidateFileOwner(metadata);
       return SuccessResponse(inserted, 201);
     }
 
@@ -188,13 +192,6 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(files.isPublic, true));
     }
 
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      console.error('Database import failed (likely no DATABASE_URL).', e);
-      return ErrorResponse('Database not configured');
-    }
     const fileList = await db.select().from(files).where(and(...conditions));
 
     const withUrls = fileList.map((f: any) => ({

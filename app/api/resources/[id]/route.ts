@@ -1,26 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { guard } from '@/lib/auth/guard';
 import { resources, files } from '@/lib/database/schema';
 import { eq } from 'drizzle-orm';
 import { PrivateResponse } from '@/lib/utils/api-helpers';
+import { invalidateResources } from '@/lib/services/invalidate';
+import { getResource } from '@/lib/services/resources';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
-
-    const idNum = parseInt(id, 10);
-    const isNumeric = !isNaN(idNum);
-
-    const [resource] = await db
-      .select()
-      .from(resources)
-      .where(isNumeric ? eq(resources.id, idNum) : eq(resources.slug, id));
+    const resource = await getResource(id);
 
     if (!resource) {
       return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
@@ -50,12 +40,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const body = await request.json();
     
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     const idNum = parseInt(id, 10);
     const isNumeric = !isNaN(idNum);
@@ -90,6 +74,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    invalidateResources();
     return NextResponse.json(updatedResource);
   } catch (error: any) {
     console.error('Error updating resource:', error);
@@ -103,12 +88,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const gate = await guard('canManageResources');
     if (gate.denied) return gate.denied;
 
-    let db: any;
-    try {
-      ({ db } = await import('@/lib/database'));
-    } catch (e) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-    }
 
     const idNum = parseInt(id, 10);
     const isNumeric = !isNaN(idNum);
@@ -122,6 +101,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
     }
 
+    invalidateResources();
     return NextResponse.json(deletedResource);
   } catch (error: any) {
     console.error('Error deleting resource:', error);

@@ -13,7 +13,7 @@ import {
   BreadcrumbItem, 
   BreadcrumbPage 
 } from '@/components/ui/breadcrumb';
-import { getDashboardStats } from '@/lib/database/queries';
+import { getDashboardStats } from '@/lib/services/admin';
 import { getPosthogHost, getPosthogKey } from '@/lib/env';
 
 export default async function AdminPage() {

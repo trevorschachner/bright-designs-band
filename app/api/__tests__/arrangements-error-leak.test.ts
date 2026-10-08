@@ -7,7 +7,11 @@ vi.mock('@/lib/utils/supabase/server', () => ({
     auth: { getUser: async () => ({ data: { user: { email: 'admin@brightdesigns.band' } }, error: null }) },
   }),
 }))
-vi.mock('next/cache', () => ({ revalidateTag: vi.fn() }))
+vi.mock('next/cache', () => ({
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+  unstable_cache: <T extends (...a: never[]) => unknown>(fn: T) => fn,
+}))
 vi.mock('@/lib/database', () => ({
   db: {
     transaction: async () => {

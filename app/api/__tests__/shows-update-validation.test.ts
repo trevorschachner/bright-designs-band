@@ -19,7 +19,11 @@ vi.mock('@/lib/utils/supabase/server', () => ({
   }),
 }))
 
-vi.mock('next/cache', () => ({ revalidateTag: vi.fn() }))
+vi.mock('next/cache', () => ({
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+  unstable_cache: <T extends (...a: never[]) => unknown>(fn: T) => fn,
+}))
 
 type Pred = { col: string; val: unknown }
 vi.mock('drizzle-orm', async (orig) => {
@@ -42,7 +46,7 @@ const tableName = (t: unknown) =>
 const fakeDb = {
   select: () => ({
     from: () => ({
-      where: (p: Pred) => ({ limit: async () => rows.filter((r) => matches(r, p)).map((r) => ({ id: r.id })) }),
+      where: (p: Pred) => ({ limit: async () => rows.filter((r) => matches(r, p)).map((r) => ({ id: r.id, slug: r.slug })) }),
     }),
   }),
   update: () => ({

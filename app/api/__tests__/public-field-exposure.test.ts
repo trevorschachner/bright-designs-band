@@ -15,6 +15,12 @@ vi.mock('@/lib/utils/supabase/server', () => ({
   }),
 }))
 
+vi.mock('next/cache', () => ({
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+  unstable_cache: <T extends (...a: never[]) => unknown>(fn: T) => fn,
+}))
+
 type Row = Record<string, unknown>
 
 const project = (row: Row, columns?: Record<string, boolean>): Row =>
@@ -56,6 +62,32 @@ const applyOpts = (opts: { columns?: Record<string, boolean>; with?: Record<stri
   return out
 }
 
+// A catalog row as stored, price included. The route must never select it.
+const SHOW_ROW: Row = {
+  id: 7,
+  slug: 'show',
+  title: 'Show',
+  description: 'd',
+  year: 2025,
+  difficulty: 'Intermediate',
+  duration: '7:00',
+  price: '900.00',
+  graphicUrl: null,
+  thumbnailUrl: null,
+  featured: false,
+  displayOrder: 0,
+  createdAt: new Date('2025-01-01T00:00:00Z'),
+}
+
+const applyShowOpts = (opts: { columns?: Record<string, boolean> }) => ({
+  ...project(SHOW_ROW, opts.columns),
+  files: [],
+  showsToTags: [],
+  showArrangements: [
+    { arrangement: { id: 1, title: 'Arr', scene: null, durationSeconds: 60, sampleScoreUrl: null } },
+  ],
+})
+
 const RESOURCES = [
   { id: 1, title: 'Live', isActive: true },
   { id: 2, title: 'Draft', isActive: false },
@@ -75,14 +107,20 @@ vi.mock('drizzle-orm', async (orig) => {
 vi.mock('@/lib/database', () => ({
   db: {
     query: {
+      shows: {
+        findMany: async (opts: Parameters<typeof applyShowOpts>[0]) => [applyShowOpts(opts)],
+      },
       arrangements: {
         findMany: async (opts: Parameters<typeof applyOpts>[0]) => [applyOpts(opts)],
         findFirst: async (opts: Parameters<typeof applyOpts>[0]) => applyOpts(opts),
       },
     },
-    select: (fields?: unknown) => ({
+    select: (fields?: Record<string, unknown>) => ({
       from: (table: { isActive?: unknown }) => {
-        if (fields) return Promise.resolve([{ count: 1 }])
+        if (fields && 'count' in fields) {
+          const counted = Promise.resolve([{ count: 1 }])
+          return Object.assign(counted, { where: () => counted })
+        }
         const isResources = 'isActive' in table
         const run = (activeOnly: boolean) =>
           (isResources ? RESOURCES : []).filter((r) => !activeOnly || r.isActive)
@@ -91,7 +129,7 @@ vi.mock('@/lib/database', () => ({
             requestedActiveOnly = cond?.activeFilter === true
             return {
               orderBy: async () => run(requestedActiveOnly),
-              then: (resolve: (v: unknown) => void) => resolve(idLookup ? [idLookup] : []),
+              limit: async () => (idLookup ? [idLookup] : []),
             }
           },
           orderBy: async () => {
@@ -116,6 +154,23 @@ const hasKeyDeep = (value: unknown, key: string): boolean => {
   }
   return false
 }
+
+describe('GET /api/shows (public)', () => {
+  it('never returns price on any row, even when asked to sort or filter on it', async () => {
+    const { GET } = await import('@/app/api/shows/route')
+    const qs = new URLSearchParams({
+      sort: JSON.stringify([{ field: 'price', direction: 'desc' }]),
+      filters: JSON.stringify([{ field: 'price', operator: 'gte', value: 1 }]),
+    })
+    const res = await GET(new Request(`http://localhost/api/shows?${qs}`))
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    expect(JSON.stringify(body)).toContain('"Show"')
+    // Deep: not on rows, not in appliedFilters, not anywhere.
+    expect(hasKeyDeep(body, 'price')).toBe(false)
+    expect(JSON.stringify(body)).not.toContain('price')
+  })
+})
 
 describe('GET /api/arrangements', () => {
   it('never returns copyrightAmountUsd on any row', async () => {

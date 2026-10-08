@@ -1,6 +1,7 @@
-import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/database';
-import { readShowSheetTables, storageFromEnv } from '@/lib/export/load-show-sheet';
+import { TAGS } from '@/lib/cache-tags';
+import { cachedRead } from '@/lib/services/cache';
+import { readShowSheetTables, storageFromEnv, type ShowSheetTables } from '@/lib/export/load-show-sheet';
 import { EXPORT_FILES, publicExportCsv } from '@/lib/export/public-export';
 import { reportError } from '@/lib/observability/report-error';
 
@@ -9,14 +10,19 @@ import { reportError } from '@/lib/observability/report-error';
  *
  * Public CSVs the "Active Assets on Website" Google Sheet pulls with
  * =IMPORTDATA(...). Public fields only; see lib/export/public-export.ts.
- * Cached for an hour and dropped when an admin edit revalidates the `shows`
- * or `arrangements` tag, the same signals the rest of the site uses.
+ * Cached for an hour through cachedRead, tagged with every entity the export
+ * reads (shows, arrangements, tags, pieces), so an admin edit to any of them
+ * drops it, the same signals the rest of the site uses.
  */
 export const dynamic = 'force-dynamic';
 
-const getTables = unstable_cache(() => readShowSheetTables(db, storageFromEnv()), ['sheet-export'], {
-  revalidate: 3600,
-  tags: ['shows', 'arrangements'],
+const EXPORT_TAGS = () => [TAGS.shows, TAGS.arrangements, TAGS.tags, TAGS.pieces];
+
+const EMPTY_TABLES: ShowSheetTables = { shows: [], parts: [], pieces: [], links: [] };
+
+const getTables = cachedRead('sheet-export-v2', () => readShowSheetTables(db, storageFromEnv()), {
+  tags: EXPORT_TAGS,
+  atBuildWithoutDb: EMPTY_TABLES,
 });
 
 export async function GET(_request: Request, { params }: { params: Promise<{ file: string }> }) {

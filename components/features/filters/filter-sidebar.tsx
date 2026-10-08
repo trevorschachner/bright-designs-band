@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useId, type ReactNode } from 'react';
 import { Search, X, SortAsc, SortDesc, RotateCcw, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,72 +26,118 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
-import { FilterState, FilterField, SortCondition, FilterPreset } from '@/lib/filters/types';
+import { FilterField, FilterState, SortCondition, FilterPreset } from '@/lib/filters/types';
+import { useCatalogUrlState } from '@/lib/hooks/use-catalog-url-state';
+import { normalizeSearch } from '@/lib/filters/catalog-params';
 
 interface FilterSidebarProps {
-  filterState: FilterState;
-  onFilterStateChange: (state: FilterState) => void;
+  /** The allowlist from lib/filters/filter-definitions.ts, passed from the server page. */
   filterFields: FilterField[];
   presets?: FilterPreset[];
-  isLoading?: boolean;
+  /**
+   * The result count, rendered by the server inside its own Suspense boundary
+   * (the sidebar renders before the list's data is in).
+   */
+  resultCount?: ReactNode;
+  defaultLimit?: number;
+  /**
+   * Legacy controlled mode. Its only caller (ResourcePage) was deleted; remove
+   * in a follow-up. When both are given the component reports changes instead
+   * of writing the URL.
+   */
+  filterState?: FilterState;
+  onFilterStateChange?: (state: FilterState) => void;
+  /** Legacy: a plain count instead of `resultCount`. */
   totalResults?: number;
+  isLoading?: boolean;
   isMobile?: boolean;
 }
 
+/**
+ * The catalog's filter controls. State lives in the URL (useCatalogUrlState):
+ * every control writes there, after one 300 ms debounce, and the server page
+ * re-renders the list. Reads useSearchParams, so the page must render it
+ * inside a <Suspense> boundary.
+ */
+function difficultyFrom(conditions: FilterState['conditions']): string[] {
+  const difficultyCond = conditions.find(c => c.field === 'difficulty');
+  if (!difficultyCond) return [];
+  if (difficultyCond.operator === 'in' && Array.isArray(difficultyCond.values)) {
+    return difficultyCond.values as string[];
+  }
+  if (difficultyCond.operator === 'equals' && typeof difficultyCond.value === 'string') {
+    return [difficultyCond.value];
+  }
+  return [];
+}
+
 export function FilterSidebar({
-  filterState,
-  onFilterStateChange,
   filterFields,
   presets = [],
-  isLoading = false,
+  resultCount,
+  defaultLimit,
+  filterState: controlledState,
+  onFilterStateChange: controlledChange,
   totalResults,
+  isLoading = false,
   isMobile = false
 }: FilterSidebarProps) {
+  const url = useCatalogUrlState({ filterFields, defaultLimit });
+  const controlled = Boolean(controlledState && controlledChange);
+  const filterState = controlled ? controlledState! : url.filterState;
+  const onFilterStateChange = (next: FilterState, options?: { immediate?: boolean }) =>
+    controlled ? controlledChange!(next) : url.setFilterState(next, options);
+  const { hasPendingChange } = url;
+  const isPending = url.isPending || isLoading;
+  const countLabel =
+    resultCount ?? (totalResults !== undefined ? `${totalResults} result${totalResults !== 1 ? 's' : ''} found` : undefined);
   const [searchValue, setSearchValue] = useState(filterState.search || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
   const [isFeaturedOnly, setIsFeaturedOnly] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const filterStateRef = useRef(filterState);
-  filterStateRef.current = filterState;
+  // The desktop sidebar and the mobile sheet are both mounted (a CSS
+  // breakpoint picks one), so every id is prefixed per instance.
+  const idPrefix = useId();
+  const ids = {
+    search: `${idPrefix}-search`,
+    sort: `${idPrefix}-sort`,
+    difficulty: (level: string) => `${idPrefix}-difficulty-${level}`,
+  };
 
-  // Sync input when filterState.search is cleared externally (not when debounce fires)
+  // Follow the URL (back/forward, a chip removed elsewhere) unless the user is
+  // mid-edit: then the box keeps what they typed.
+  // Compare normalised: the URL stores `gold` for a box reading `gold `, and
+  // overwriting the box with it would eat the space the user just typed.
   useEffect(() => {
-    if (!debounceRef.current) {
-      setSearchValue(filterState.search || '');
-    }
-  }, [filterState.search]);
+    if (hasPendingChange()) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(#59-followup): URL-to-box resync depends on a pending-change ref; doing it in render changes resync timing
+    setSearchValue((current) =>
+      (normalizeSearch(current) ?? '') === (filterState.search ?? '') ? current : filterState.search || ''
+    );
+  }, [filterState.search, hasPendingChange]);
 
-  useEffect(() => {
-    const difficultyCond = filterState.conditions.find(c => c.field === 'difficulty');
-    if (difficultyCond) {
-      if (difficultyCond.operator === 'in' && Array.isArray(difficultyCond.values)) {
-        setSelectedDifficulty(difficultyCond.values as string[]);
-      } else if (difficultyCond.operator === 'equals' && typeof difficultyCond.value === 'string') {
-        setSelectedDifficulty([difficultyCond.value]);
-      } else {
-        setSelectedDifficulty([]);
-      }
-    } else {
-      setSelectedDifficulty([]);
-    }
-
+  // Mirror the difficulty/featured conditions whenever they change (adjusting
+  // state during render rather than in an effect).
+  const [syncedConditions, setSyncedConditions] = useState<FilterState['conditions'] | null>(null);
+  if (syncedConditions !== filterState.conditions) {
+    setSyncedConditions(filterState.conditions);
+    setSelectedDifficulty(difficultyFrom(filterState.conditions));
     const featuredCond = filterState.conditions.find(c => c.field === 'featured');
     setIsFeaturedOnly(featuredCond?.value === true);
-  }, [filterState.conditions]);
+  }
 
+  // One debounce, in useCatalogUrlState. The box used to add its own 400 ms
+  // on top of the URL hook's 300 ms.
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      debounceRef.current = null;
-      onFilterStateChange({ ...filterStateRef.current, search: value || undefined, page: 1 });
-    }, 400);
+    onFilterStateChange({ ...filterState, search: value || undefined, page: 1 });
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      onFilterStateChange({ ...filterStateRef.current, search: (e.target as HTMLInputElement).value || undefined, page: 1 });
+      onFilterStateChange(
+        { ...filterState, search: (e.target as HTMLInputElement).value || undefined, page: 1 },
+        { immediate: true }
+      );
     }
   };
 
@@ -101,7 +147,7 @@ export function FilterSidebar({
       ...filterState,
       search: undefined,
       page: 1
-    });
+    }, { immediate: true });
   };
 
   const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
@@ -175,7 +221,7 @@ export function FilterSidebar({
       sort: [],
       page: 1,
       limit: filterState.limit
-    });
+    }, { immediate: true });
     setSearchValue('');
     setSelectedDifficulty([]);
     setIsFeaturedOnly(false);
@@ -228,13 +274,13 @@ export function FilterSidebar({
 
           {/* Search */}
           <div className="space-y-2">
-            <Label htmlFor="search" className="text-sm font-medium">
+            <Label htmlFor={ids.search} className="text-sm font-medium">
               Search
             </Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                id="search"
+                id={ids.search}
                 placeholder="Search shows..."
                 value={searchValue}
                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -297,11 +343,11 @@ export function FilterSidebar({
                           >
                             <Checkbox
                               checked={checked}
-                              id={`difficulty-${level}`}
+                              id={ids.difficulty(level)}
                               onCheckedChange={() => handleDifficultyToggle(level)}
                             />
                             <label
-                              htmlFor={`difficulty-${level}`}
+                              htmlFor={ids.difficulty(level)}
                               className="flex-1 select-none cursor-pointer"
                             >
                               {level}
@@ -365,7 +411,7 @@ export function FilterSidebar({
 
           {/* Sort */}
           <div className="space-y-2">
-            <Label htmlFor="sort" className="text-sm font-medium">
+            <Label htmlFor={ids.sort} className="text-sm font-medium">
               Sort By
             </Label>
             <Select
@@ -377,7 +423,7 @@ export function FilterSidebar({
                 }
               }}
             >
-              <SelectTrigger id="sort">
+              <SelectTrigger id={ids.sort}>
                 <SelectValue placeholder="Select sort order...">
                   {filterState.sort.length > 0 ? (
                     <div className="flex items-center gap-2">
@@ -482,13 +528,9 @@ export function FilterSidebar({
           )}
 
           {/* Results Summary */}
-          {totalResults !== undefined && (
+          {countLabel !== undefined && (
             <div className="text-sm text-muted-foreground">
-              {isLoading ? (
-                'Loading...'
-              ) : (
-                `${totalResults} result${totalResults !== 1 ? 's' : ''} found`
-              )}
+              {isPending ? 'Loading...' : countLabel}
             </div>
           )}
         </div>

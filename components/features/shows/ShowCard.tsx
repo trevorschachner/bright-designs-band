@@ -3,11 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
-import { Show } from "@/lib/types/shows";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 // Define a flexible type that covers both Show (full) and ShowSummary (partial)
 export interface ShowCardItem {
@@ -31,13 +30,18 @@ interface ShowCardProps {
   priority?: boolean;
 }
 
+/**
+ * Grid sizes for the one card image. Below `sm` the card is a compact row
+ * with an 80 px thumbnail, so the phone breakpoint asks for 80 px, not 100vw
+ * (which fetched a file five times wider than it is drawn).
+ */
+export const SHOW_CARD_IMAGE_SIZES = "(max-width: 640px) 80px, (max-width: 1024px) 50vw, 33vw";
+
 export function ShowCard({ item: show, isLoading, priority = false }: ShowCardProps) {
-  const router = useRouter();
-  
   if (isLoading || !show) {
     return <ShowCardSkeleton />;
   }
-  const href = `/shows/${(show as any).slug ?? show.id}`;
+  const href = `/shows/${show.slug}`;
 
   const displayDifficulty = (() => {
     const value = String(show.difficulty || '').toLowerCase();
@@ -48,76 +52,64 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
     return show.difficulty as unknown as string;
   })();
 
+  // One card, one image. Below `sm` it lays out as the compact row (80 px
+  // thumbnail beside the title); from `sm` up as the full card. It used to be
+  // two cards, one hidden by CSS, each with its own <Image>, so every show
+  // downloaded two images. The whole card is one <Link> (an overlay, so the
+  // arrangement links inside it are not nested anchors).
   return (
-    <div
-      role="link"
-      tabIndex={0}
-      onClick={() => router.push(href)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          router.push(href);
-        }
-      }}
-      className="block"
-    >
-      {/* Mobile: horizontal compact card */}
-      <Card className="frame-card group cursor-pointer hover:shadow-lg transition-shadow sm:hidden">
-        <div className="flex gap-3 p-3">
-          <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-accent-gradient">
-            <Image
-              src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
-              alt={show.title || 'Show thumbnail'}
-              fill
-              className="object-cover"
-              sizes="80px"
-              priority={priority}
-              onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <p className="font-heading font-bold text-sm leading-tight line-clamp-2">{show.title}</p>
-              <Badge className="text-xs shrink-0">{show.year}</Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mb-1">{displayDifficulty} · {show.duration || 'TBD'}</p>
-            {show.showsToTags && show.showsToTags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {show.showsToTags.slice(0, 2).map((st) => (
-                  <span key={st.tag.id} className="text-[10px] bg-muted rounded px-1.5 py-0.5">{st.tag.name}</span>
-                ))}
-                {show.showsToTags.length > 2 && (
-                  <span className="text-[10px] text-muted-foreground">+{show.showsToTags.length - 2}</span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      {/* Desktop: full card */}
-      <Card className="frame-card group cursor-pointer hover:shadow-lg transition-shadow hidden sm:block">
-        <div className="relative overflow-hidden rounded-t-lg bg-accent-gradient aspect-video">
+    <Card className="frame-card group relative cursor-pointer hover:shadow-lg transition-shadow">
+      <Link
+        href={href}
+        aria-label={show.title}
+        className="absolute inset-0 z-[1] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <div className="flex gap-3 p-3 sm:block sm:p-0">
+        <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-accent-gradient sm:w-full sm:h-auto sm:aspect-video sm:rounded-none sm:rounded-t-lg">
           <Image
             src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
             alt={show.title || 'Show thumbnail'}
-            width={400}
-            height={225}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 1024px) 50vw, 33vw"
+            fill
+            className="object-cover transition-transform duration-300 sm:group-hover:scale-105"
+            sizes={SHOW_CARD_IMAGE_SIZES}
             priority={priority}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/placeholder.svg";
-            }}
+            onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <Button
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
+          <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <span
+            aria-hidden="true"
+            className={cn(
+              buttonVariants(),
+              "hidden sm:inline-flex absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-background/90 text-foreground hover:bg-background hover-lift"
+            )}
           >
             <Play className="w-4 h-4 mr-2" />
             Preview
-          </Button>
+          </span>
         </div>
+
+        {/* Compact row text (below sm) */}
+        <div className="flex-1 min-w-0 sm:hidden">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <p className="font-heading font-bold text-sm leading-tight line-clamp-2">{show.title}</p>
+            <Badge className="text-xs shrink-0">{show.year}</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mb-1">{displayDifficulty} · {show.duration || 'TBD'}</p>
+          {show.showsToTags && show.showsToTags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {show.showsToTags.slice(0, 2).map((st) => (
+                <span key={st.tag.id} className="text-[10px] bg-muted rounded px-1.5 py-0.5">{st.tag.name}</span>
+              ))}
+              {show.showsToTags.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{show.showsToTags.length - 2}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Full card text (sm and up) */}
+      <div className="hidden sm:block">
         <CardHeader>
           <div className="flex justify-between items-start mb-2">
             <CardTitle className="text-xl transition-colors font-primary">
@@ -161,12 +153,12 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
                 {show.arrangements.length} {show.arrangements.length !== 1 ? 'arrangements' : 'arrangement'}:
               </div>
               <ul className="space-y-1">
-                {show.arrangements.slice(0, 3).map((a: any) => (
+                {show.arrangements.slice(0, 3).map((a) => (
                   <li key={a.id} className="text-sm">
                     <Link
                       href={`/arrangements/${a.id}`}
-                      className="hover:underline"
-                      onClick={(e) => e.stopPropagation()}
+                      className="relative z-[2] hover:underline"
+                      prefetch={false}
                     >
                       {a.scene ? <Badge variant="outline" className="mr-2 text-[10px]">{String(a.scene)}</Badge> : null}
                       <span>{a.title || 'Untitled'}</span>
@@ -182,8 +174,8 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
             </div>
           )}
         </CardContent>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 }
 

@@ -3,6 +3,7 @@ import { files } from '@/lib/database/schema'
 import { eq } from 'drizzle-orm'
 import { fileStorage } from '@/lib/storage'
 import { guard } from '@/lib/auth/guard'
+import { invalidateFileOwner } from '@/lib/services/files'
 
 const noStore = { 'Cache-Control': 'private, no-store' }
 
@@ -54,6 +55,7 @@ export async function DELETE(
     }
 
     await db.delete(files).where(eq(files.id, fileId))
+    await invalidateFileOwner(file)
 
     return NextResponse.json({ 
       success: true,

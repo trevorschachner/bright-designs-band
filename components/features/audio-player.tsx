@@ -1,11 +1,17 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, Volume2, VolumeX, Download, SkipBack, SkipForward } from "lucide-react"
 import { Waveform } from "@/components/ui/waveform"
+import {
+  useAudioActions,
+  useAudioState,
+  useAudioTime,
+  type AudioTrack as PlayableTrack,
+} from "@/components/features/audio/AudioProvider"
 
 export interface AudioTrack {
   id: string
@@ -22,281 +28,135 @@ interface AudioPlayerComponentProps {
   title?: string
   className?: string
   compact?: boolean
-  playerId?: string // Unique ID for this player instance
-  onTrackSelect?: (trackIndex: number) => void // Callback when track should be selected in master player
   onPreviousTrack?: () => void // Callback for previous track navigation
   onNextTrack?: () => void // Callback for next track navigation
   showNavigation?: boolean // Show previous/next buttons
   allowDownload?: boolean // Allow downloading the audio file
+  showTitle?: string // Show these tracks belong to (shown in analytics/bar metadata)
 }
 
-// Custom event for master player control
-const MASTER_PLAYER_EVENT = 'master-player-play-track'
+const toPlayable = (track: AudioTrack, showTitle?: string): PlayableTrack => ({
+  src: track.url,
+  title: track.title,
+  showTitle,
+  arrangementId: track.id,
+  imageUrl: track.imageUrl,
+})
 
-export function AudioPlayerComponent({ 
-  tracks, 
-  title, 
-  className, 
+const formatTime = (seconds: number) => {
+  if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+function Progress({ currentTime, duration, compact, onSeek }: {
+  currentTime: number
+  duration: number
+  compact: boolean
+  onSeek?: (time: number) => void
+}) {
+  return (
+    <div className={compact ? "mb-2" : "mb-4"}>
+      <Slider
+        value={[currentTime]}
+        max={duration || 100}
+        step={0.1}
+        onValueChange={(value) => onSeek?.(value[0])}
+        className="w-full cursor-pointer"
+      />
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+        <span>{formatTime(currentTime)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+    </div>
+  )
+}
+
+/** The only part of a page player that re-renders on `timeupdate`. */
+function LiveProgress({ compact }: { compact: boolean }) {
+  const { currentTime, duration } = useAudioTime()
+  const { seek } = useAudioActions()
+  return <Progress currentTime={currentTime} duration={duration} compact={compact} onSeek={seek} />
+}
+
+/**
+ * Track list and controls for one page's audio. Playback happens in the
+ * site-wide AudioProvider (one <audio> element in the root layout), so this
+ * component only reflects and drives that shared state.
+ */
+export function AudioPlayerComponent({
+  tracks,
+  title,
+  className,
   compact = false,
-  playerId,
-  onTrackSelect,
   onPreviousTrack,
   onNextTrack,
   showNavigation = false,
-  allowDownload = true
+  allowDownload = true,
+  showTitle,
 }: AudioPlayerComponentProps) {
-  const [currentTrack, setCurrentTrack] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(0.8)
-  const [isMuted, setIsMuted] = useState(false)
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const isMasterPlayer = playerId === 'master-player'
+  const actions = useAudioActions()
+  const audio = useAudioState()
+  const [selectedTrack, setSelectedTrack] = useState(0)
 
+  const queue = useMemo(() => tracks.map((t) => toPlayable(t, showTitle)), [tracks, showTitle])
+  const loadedIndex = audio.track ? tracks.findIndex((t) => t.url === audio.track?.src) : -1
+  const isMine = loadedIndex >= 0
+  const currentTrack = isMine ? loadedIndex : selectedTrack
   const currentTrackData = tracks[currentTrack]
+  const isPlaying = isMine && audio.playing
+  const volume = audio.volume
+  const isMuted = audio.muted
 
-  // Listen for master player events (only master player listens)
+  // Until anything has played, the global bar shows this page's first track,
+  // as it did when it scanned the page for <audio> elements. The cue is
+  // released when the player unmounts so the next page can cue its own.
+  const { started } = audio
+  const { cue, release } = actions
+  const hasLoaded = audio.track !== null
+  // The track this player last cued (not played); released on unmount.
+  const cuedSrc = useRef<string | null>(null)
+  const cueTrack = (index: number) => {
+    cuedSrc.current = queue[index].src
+    cue(queue[index], queue)
+  }
   useEffect(() => {
-    if (!isMasterPlayer) return
-
-    const handleMasterPlay = (e: CustomEvent) => {
-      const { trackIndex } = e.detail
-      if (typeof trackIndex === 'number' && trackIndex >= 0 && trackIndex < tracks.length) {
-        setCurrentTrack(trackIndex)
-        setIsPlaying(true)
-        // Force play after a short delay to ensure audio is loaded
-        setTimeout(() => {
-          if (audioRef.current) {
-            audioRef.current.play().catch(() => setIsPlaying(false))
-          }
-        }, 100)
-      }
-    }
-
-    window.addEventListener(MASTER_PLAYER_EVENT as any, handleMasterPlay as EventListener)
+    if (started || hasLoaded || !queue[0]) return
+    cuedSrc.current = queue[0].src
+    cue(queue[0], queue)
+  }, [started, hasLoaded, queue, cue])
+  useEffect(() => {
+    const cued = cuedSrc
     return () => {
-      window.removeEventListener(MASTER_PLAYER_EVENT as any, handleMasterPlay as EventListener)
+      if (cued.current) release(cued.current)
     }
-  }, [isMasterPlayer, tracks.length])
-
-  // Initialize audio element
-  useEffect(() => {
-    if (!audioRef.current) return
-
-    const audio = audioRef.current
-    audio.volume = volume
-
-    const updateTime = () => setCurrentTime(audio.currentTime)
-    const updateDuration = () => {
-      if (audio.duration) {
-        setDuration(audio.duration)
-      }
-    }
-    const handleEnded = () => {
-      setCurrentTime(0)
-      if (currentTrack < tracks.length - 1) {
-        // Auto-play next track
-        shouldAutoPlayRef.current = true
-        setCurrentTrack(currentTrack + 1)
-      } else {
-        // Reached the end
-        setIsPlaying(false)
-      }
-    }
-    const handlePlay = () => setIsPlaying(true)
-    const handlePause = () => setIsPlaying(false)
-
-    audio.addEventListener('timeupdate', updateTime)
-    audio.addEventListener('loadedmetadata', updateDuration)
-    audio.addEventListener('canplay', updateDuration)
-    audio.addEventListener('ended', handleEnded)
-    audio.addEventListener('play', handlePlay)
-    audio.addEventListener('pause', handlePause)
-
-    return () => {
-      audio.removeEventListener('timeupdate', updateTime)
-      audio.removeEventListener('loadedmetadata', updateDuration)
-      audio.removeEventListener('canplay', updateDuration)
-      audio.removeEventListener('ended', handleEnded)
-      audio.removeEventListener('play', handlePlay)
-      audio.removeEventListener('pause', handlePause)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTrack, tracks.length])
-
-  // Track if we should auto-play (used for seamless transitions)
-  const shouldAutoPlayRef = useRef(false)
-
-  // Enforce single track playback: pause this player if another player starts
-  useEffect(() => {
-    const handleGlobalPlay = (e: Event) => {
-      // If the event target is an audio element and it's not our audio element
-      if (e.target instanceof HTMLAudioElement && e.target !== audioRef.current) {
-        // Pause our audio if it's playing
-        if (audioRef.current && !audioRef.current.paused) {
-          audioRef.current.pause()
-        }
-      }
-    }
-
-    // Use capture phase to ensure we catch the event
-    window.addEventListener('play', handleGlobalPlay, true)
-    return () => {
-      window.removeEventListener('play', handleGlobalPlay, true)
-    }
-  }, [])
-
-  // Update audio source when track changes (NOT when isPlaying changes)
-  useEffect(() => {
-    if (audioRef.current && currentTrackData) {
-      const wasPlaying = isPlaying
-      audioRef.current.load()
-      
-      // Auto-play if explicitly requested (for auto-play next track)
-      if (shouldAutoPlayRef.current) {
-        shouldAutoPlayRef.current = false
-        const playTimer = setTimeout(() => {
-          audioRef.current?.play()
-            .then(() => setIsPlaying(true))
-            .catch(() => setIsPlaying(false))
-        }, 200)
-        return () => clearTimeout(playTimer)
-      } else if (wasPlaying) {
-        // Only auto-play if it was playing before track change
-        audioRef.current.play().catch(() => setIsPlaying(false))
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTrack, currentTrackData]) // Removed isPlaying from dependencies
-
-  // Handle play/pause separately (don't reload audio)
-  useEffect(() => {
-    if (!audioRef.current) return
-    
-    // If we are in delegate mode (not master and has callback), DO NOT control local audio
-    // The master player handles the actual playback
-    if (!isMasterPlayer && onTrackSelect) return
-
-    if (isPlaying && audioRef.current.paused) {
-      audioRef.current.play().catch(() => setIsPlaying(false))
-    } else if (!isPlaying && !audioRef.current.paused) {
-      audioRef.current.pause()
-    }
-  }, [isPlaying, isMasterPlayer, onTrackSelect])
-
-  // In delegate mode, sync isPlaying state with the global audio state
-  // This ensures the "Audio Preview" button shows as playing when the master player is playing its track
-  useEffect(() => {
-    if (isMasterPlayer || !onTrackSelect) return
-
-    const checkAudioState = () => {
-      const myTrackUrl = tracks[currentTrack]?.url
-      if (!myTrackUrl) return
-
-      // Check if any audio element on the page is playing our URL
-      const audioElements = document.querySelectorAll('audio')
-      let isMyTrackPlaying = false
-      let myTrackTime = 0
-      let myTrackDuration = 0
-
-      for (const audio of audioElements) {
-        if (!audio.paused && !audio.ended) {
-          // Check for URL match (handle relative vs absolute)
-          if (audio.src === myTrackUrl || audio.src.endsWith(myTrackUrl) || (audio.currentSrc && (audio.currentSrc === myTrackUrl || audio.currentSrc.endsWith(myTrackUrl)))) {
-            isMyTrackPlaying = true
-            myTrackTime = audio.currentTime
-            myTrackDuration = audio.duration || 0
-            break
-          }
-        }
-      }
-
-      setIsPlaying(isMyTrackPlaying)
-      if (isMyTrackPlaying) {
-        setCurrentTime(myTrackTime)
-        if (myTrackDuration > 0) {
-          setDuration(myTrackDuration)
-        }
-      }
-    }
-
-    // Check immediately
-    checkAudioState()
-
-    // Listen for play/pause events globally to update UI
-    // Use capture=true to catch events from audio elements that don't bubble
-    window.addEventListener('play', checkAudioState, true)
-    window.addEventListener('pause', checkAudioState, true)
-    window.addEventListener('ended', checkAudioState, true)
-    window.addEventListener('timeupdate', checkAudioState, true)
-
-    return () => {
-      window.removeEventListener('play', checkAudioState, true)
-      window.removeEventListener('pause', checkAudioState, true)
-      window.removeEventListener('ended', checkAudioState, true)
-      window.removeEventListener('timeupdate', checkAudioState, true)
-    }
-  }, [isMasterPlayer, onTrackSelect, tracks, currentTrack])
-
-  // Update volume
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume
-    }
-  }, [volume, isMuted])
+  }, [release])
 
   const togglePlayPause = () => {
-    if (!audioRef.current) return
-    
-    // If this is not the master player and has onTrackSelect, trigger master player instead
-    if (!isMasterPlayer && onTrackSelect && tracks.length === 1) {
-      // Find this track in the master player's track list
-      onTrackSelect(0) // For single-track players, always select track 0
-      return
-    }
-    
-    if (audioRef.current.paused) {
-      audioRef.current.play().catch(() => setIsPlaying(false))
-    } else {
-      audioRef.current.pause()
-    }
-  }
-
-  const handleProgressChange = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0]
-      setCurrentTime(value[0])
+    if (isMine) {
+      actions.toggle()
+    } else if (currentTrackData) {
+      actions.play(queue[currentTrack], queue)
     }
   }
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0]
-    setVolume(newVolume)
-    setIsMuted(newVolume === 0)
+    actions.setVolume(newVolume)
+    actions.setMuted(newVolume === 0)
   }
 
   const toggleMute = () => {
-    setIsMuted(!isMuted)
-  }
-
-  const formatTime = (seconds: number) => {
-    if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    actions.setMuted(!isMuted)
   }
 
   const handleTrackChange = (index: number, autoPlay: boolean = false) => {
-    setCurrentTrack(index)
-    setCurrentTime(0)
-    shouldAutoPlayRef.current = autoPlay
-    // If master player, start playing the selected track
-    if (isMasterPlayer && autoPlay) {
-      setIsPlaying(true)
-      // Audio will auto-play when track changes due to useEffect
-    } else if (!autoPlay) {
-      setIsPlaying(false)
+    setSelectedTrack(index)
+    if (autoPlay) {
+      actions.play(queue[index], queue)
+    } else if (isMine) {
+      cueTrack(index)
     }
   }
 
@@ -437,19 +297,11 @@ export function AudioPlayerComponent({
         )}
 
         {/* Progress Bar */}
-        <div className={compact ? "mb-2" : "mb-4"}>
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={0.1}
-            onValueChange={handleProgressChange}
-            className="w-full cursor-pointer"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
+        {isMine ? (
+          <LiveProgress compact={compact} />
+        ) : (
+          <Progress currentTime={0} duration={0} compact={compact} />
+        )}
 
         {/* Main Controls Row */}
         <div className={`flex items-center ${compact ? 'gap-2' : 'gap-4'} ${compact ? 'justify-between' : 'justify-between'}`}>
@@ -537,19 +389,6 @@ export function AudioPlayerComponent({
             </Button>
           )}
         </div>
-      </div>
-
-      {/* Hidden audio element */}
-      <div
-        data-track-title={currentTrackData?.title || 'Audio'}
-        data-track-image={currentTrackData?.imageUrl || ''}
-      >
-        <audio
-          ref={audioRef}
-          src={currentTrackData?.url}
-          preload="metadata"
-          className="hidden"
-        />
       </div>
     </div>
   )

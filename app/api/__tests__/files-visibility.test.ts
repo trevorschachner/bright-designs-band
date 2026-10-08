@@ -89,7 +89,7 @@ describe('SuccessResponse', () => {
   it('still sets the public cache headers for caller-independent routes', async () => {
     const { SuccessResponse } = await import('@/lib/utils/api-helpers')
     const res = SuccessResponse({ ok: true })
-    expect(res.headers.get('cache-control')).toContain('public, s-maxage=')
+    expect(res.headers.get('cache-control')).toBe('public, max-age=0, s-maxage=60, stale-while-revalidate=300')
     expect(res.headers.get('netlify-vary')).toBe('query')
   })
 })

@@ -1,16 +1,6 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-
+// Static field-grid backdrop. It used to wait for mount before rendering;
+// nothing in it depends on the client, so it is server-rendered.
 export function GlobalBackground() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
   return (
     <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none select-none bg-background">
       {/* 1. The Field Grid */}
