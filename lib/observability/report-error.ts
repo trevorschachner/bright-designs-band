@@ -1,9 +1,4 @@
-import { PostHog } from 'posthog-node';
-import { getPosthogHost, getPosthogKey } from '@/lib/env';
-
-// posthog-node needs an absolute host; the public default (`/ingest`) is a
-// client-side rewrite and means nothing on the server.
-const SERVER_POSTHOG_HOST = 'https://us.i.posthog.com';
+import { getPosthogClient } from './client';
 
 /**
  * Reports a server-side error that the caller is deliberately swallowing.
@@ -24,31 +19,6 @@ const SERVER_POSTHOG_HOST = 'https://us.i.posthog.com';
  * a degraded read must never turn that degraded read into a crash.
  */
 
-let client: PostHog | null = null;
-let disabled = false;
-
-function getClient(): PostHog | null {
-  if (disabled) return null;
-  if (client) return client;
-
-  const key = getPosthogKey();
-  if (!key) {
-    // No key configured (local dev, CI, preview builds). Not an error.
-    disabled = true;
-    return null;
-  }
-
-  const host = getPosthogHost(SERVER_POSTHOG_HOST);
-  client = new PostHog(key, {
-    host: host.startsWith('/') ? SERVER_POSTHOG_HOST : host,
-    // Server rendering is short-lived; don't sit on events waiting for a batch
-    // to fill, or the invocation ends before they flush.
-    flushAt: 1,
-    flushInterval: 0,
-  });
-  return client;
-}
-
 export interface ReportErrorContext {
   /** Where this happened, e.g. `getFeaturedShows`. */
   operation: string;
@@ -65,7 +35,7 @@ export async function reportError(error: unknown, context: ReportErrorContext): 
   console.error(`[${context.operation}] ${message}`, error);
 
   try {
-    const posthog = getClient();
+    const posthog = getPosthogClient();
     if (!posthog) return;
 
     posthog.captureException(

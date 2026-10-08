@@ -133,6 +133,8 @@ Every variable is listed and described in `.env.example`. Server-side variables 
 
 - `CONTEXT.md`: one-page orientation (data model, where things live, auth, caching, current program).
 - `docs/adr/`: architecture decision records. Start with `0001-overhaul-program.md`.
+- `docs/sheet-sync.md`: how the Google Sheets mirror the site (IMPORTDATA tabs, site-owned vs sheet-only columns).
+- `docs/observability.md`: server events and the PostHog dashboard.
 - `docs/README.md`: index of everything else (setup guides, feature docs, API and component indexes).
 
 ## Agent skills

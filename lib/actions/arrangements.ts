@@ -13,6 +13,7 @@ import {
   tags,
 } from '@/lib/database/schema'
 import { invalidateArrangement, invalidateShow } from '@/lib/services/invalidate'
+import { trackServerEvent } from '@/lib/observability/events'
 import { toIso } from '@/lib/services/cache'
 import { getArrangementPiecesForAdmin } from '@/lib/services/pieces'
 import { invalidateShowsById, REMOVABLE_FILE_COLUMNS, removeFilesInOrder } from '@/lib/services/file-removal'
@@ -93,16 +94,20 @@ async function lockShow(tx: Tx, id: number) {
   return row
 }
 
-/** Slug of the (first) show the part belongs to, for the show page path. */
-async function showSlugFor(tx: Tx | Database, arrangementId: number): Promise<string | null> {
+/** The (first) show the part belongs to: its slug for the show page path, its id for events. */
+async function firstShowFor(tx: Tx | Database, arrangementId: number): Promise<{ id: number; slug: string } | null> {
   const [row] = await tx
-    .select({ slug: shows.slug })
+    .select({ id: shows.id, slug: shows.slug })
     .from(showArrangements)
     .innerJoin(shows, eq(shows.id, showArrangements.showId))
     .where(eq(showArrangements.arrangementId, arrangementId))
     .orderBy(asc(showArrangements.orderIndex))
     .limit(1)
-  return row?.slug ?? null
+  return row ?? null
+}
+
+async function showSlugFor(tx: Tx | Database, arrangementId: number): Promise<string | null> {
+  return (await firstShowFor(tx, arrangementId))?.slug ?? null
 }
 
 // ---------------------------------------------------------------------------
@@ -110,7 +115,7 @@ async function showSlugFor(tx: Tx | Database, arrangementId: number): Promise<st
 const runCreateArrangement = guarded(
   'canCreateArrangements',
   createArrangementSchema,
-  async (data, { db }) => {
+  async (data, { db, email }) => {
     const { showId, tags: tagIds, ...fields } = data
     const { row, slug } = await db.transaction(async (tx) => {
       const show = await lockShow(tx, showId)
@@ -129,7 +134,16 @@ const runCreateArrangement = guarded(
       if (tagIds && tagIds.length > 0) await replaceArrangementTags(tx, inserted.id, tagIds)
       return { row: inserted, slug: show.slug }
     })
-    return { data: toResult(row), invalidate: () => invalidateArrangement(row.id, slug) }
+    return {
+      data: toResult(row),
+      invalidate: async () => {
+        try {
+          await invalidateArrangement(row.id, slug)
+        } finally {
+          await trackServerEvent('arrangement.saved', { arrangementId: row.id, showId }, email)
+        }
+      },
+    }
   },
   'createArrangement'
 )
@@ -144,9 +158,9 @@ export async function createArrangement(input: CreateArrangementInput): Promise<
 const runUpdateArrangement = guarded(
   'canEditArrangements',
   updateArrangementSchema,
-  async (data, { db }) => {
+  async (data, { db, email }) => {
     const { id, updatedAt, tags: tagIds, ...fields } = data
-    const { row, slug } = await db.transaction(async (tx) => {
+    const { row, slug, showId } = await db.transaction(async (tx) => {
       const current = await lockArrangement(tx, id)
       assertFresh(current.updatedAt, updatedAt, 'arrangement')
       const [updated] = await tx
@@ -155,9 +169,19 @@ const runUpdateArrangement = guarded(
         .where(eq(arrangements.id, id))
         .returning(COLUMNS)
       if (tagIds !== undefined) await replaceArrangementTags(tx, id, tagIds)
-      return { row: updated, slug: await showSlugFor(tx, id) }
+      const owner = await firstShowFor(tx, id)
+      return { row: updated, slug: owner?.slug ?? null, showId: owner?.id ?? null }
     })
-    return { data: toResult(row), invalidate: () => invalidateArrangement(row.id, slug) }
+    return {
+      data: toResult(row),
+      invalidate: async () => {
+        try {
+          await invalidateArrangement(row.id, slug)
+        } finally {
+          await trackServerEvent('arrangement.saved', { arrangementId: row.id, showId }, email)
+        }
+      },
+    }
   },
   'updateArrangement'
 )
