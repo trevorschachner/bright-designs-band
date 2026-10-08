@@ -70,6 +70,8 @@ There are two tracks, and both matter (details in `drizzle/README.md`):
 1. Schema: edit `lib/database/schema.ts`, then `npm run db:generate`. drizzle-kit writes `drizzle/*.sql`.
 2. Hand-written SQL in `drizzle/migrations/*.sql` (RLS policies, backfills), applied and checksummed by `scripts/apply-sql-migrations.ts`.
 
+A hand-written file containing the line `-- migrate: manual` is held back from `npm run db:migrate` (it stays pending, listed as held, in `npm run db:migrate:status`) because it must wait for a human step. Apply it alone with `npx tsx scripts/apply-sql-migrations.ts --apply --only <file.sql>` once that step is done. `2026-10-09_storage_public_select.sql` is the current example.
+
 Never run migrations against the production database from an agent or a dev machine by habit. Production changes are applied deliberately by a person, and `migrate-db.js` refuses `NODE_ENV=production` unless `ALLOW_DB_MIGRATE=true`.
 
 ## Admin

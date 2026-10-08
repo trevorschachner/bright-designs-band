@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EditableShow } from '@/lib/services/admin'
@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   updateShow: vi.fn(),
   createShow: vi.fn(),
   setShowThumbnail: vi.fn(),
+  uploadFileDirect: vi.fn(),
   push: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
@@ -22,7 +23,7 @@ vi.mock('next/navigation', () => ({
 }))
 vi.mock('@/lib/actions/shows', () => ({ updateShow: mocks.updateShow, createShow: mocks.createShow }))
 vi.mock('@/lib/actions/files', () => ({ setShowThumbnail: mocks.setShowThumbnail }))
-vi.mock('@/lib/uploads/direct-upload', () => ({ uploadFileDirect: vi.fn() }))
+vi.mock('@/lib/uploads/direct-upload', () => ({ uploadFileDirect: mocks.uploadFileDirect }))
 
 import { ShowForm } from '@/components/features/admin/show-editor/ShowForm'
 
@@ -148,5 +149,42 @@ describe('ShowForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add Show' }))
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/admin/shows/42'))
     expect(mocks.createShow.mock.calls[0][0]).toMatchObject({ title: 'New', difficulty: 'Intermediate' })
+  })
+
+  // #70: the thumbnail picked on the new-show form must be saved on the new show.
+  const createWithThumbnail = async () => {
+    mocks.createShow.mockResolvedValue({ ok: true, data: { id: 42, slug: 'new', title: 'New', featured: false, updatedAt: LOADED } })
+    render(<ShowForm mode="create" allTags={TAGS} />)
+    await userEvent.type(screen.getByLabelText(/Title/), 'New')
+    const poster = new File(['png'], 'poster.png', { type: 'image/png' })
+    fireEvent.change(screen.getByLabelText('Upload thumbnail'), { target: { files: [poster] } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add Show' }))
+    return poster
+  }
+
+  it('create mode with a thumbnail: createShow, upload to data.id, setShowThumbnail, then opens the show', async () => {
+    mocks.uploadFileDirect.mockResolvedValue({ id: 9 })
+    mocks.setShowThumbnail.mockResolvedValue({ ok: true, data: { updatedAt: LOADED, thumbnailUrl: 'https://cdn/poster.png' } })
+    const poster = await createWithThumbnail()
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/admin/shows/42'))
+    expect(mocks.uploadFileDirect).toHaveBeenCalledWith(expect.objectContaining({ file: poster, fileType: 'image', showId: 42 }))
+    expect(mocks.setShowThumbnail).toHaveBeenCalledWith({ showId: 42, fileId: 9 })
+    expect(mocks.createShow.mock.invocationCallOrder[0]).toBeLessThan(mocks.uploadFileDirect.mock.invocationCallOrder[0])
+    expect(mocks.uploadFileDirect.mock.invocationCallOrder[0]).toBeLessThan(mocks.setShowThumbnail.mock.invocationCallOrder[0])
+  })
+
+  it('create mode: a failed thumbnail save is reported, not hidden', async () => {
+    mocks.uploadFileDirect.mockResolvedValue({ id: 9 })
+    mocks.setShowThumbnail.mockResolvedValue({ ok: false, error: 'failed' })
+    await createWithThumbnail()
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/admin/shows/42?thumbnail=failed'))
+
+    mocks.push.mockReset()
+    mocks.setShowThumbnail.mockReset()
+    mocks.uploadFileDirect.mockRejectedValue(new Error('Storage upload failed'))
+    cleanup()
+    await createWithThumbnail()
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/admin/shows/42?thumbnail=failed'))
+    expect(mocks.setShowThumbnail).not.toHaveBeenCalled()
   })
 })
