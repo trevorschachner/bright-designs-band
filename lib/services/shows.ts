@@ -233,7 +233,7 @@ async function fetchShowsByFilter(filter: ShowFilter): Promise<ShowSummary[]> {
   const rows = await db.query.shows.findMany({
     columns: SUMMARY_COLUMNS,
     where: conditions.length > 0 ? and(...conditions) : undefined,
-    orderBy: [desc(shows.year), desc(shows.createdAt)],
+    orderBy: [sql`${shows.year} desc nulls last`, desc(shows.createdAt)],
     limit: 60,
     with: summaryRelations(),
   });
@@ -248,7 +248,7 @@ export const getShowsByFilter = cachedRead('collection-shows-v4', fetchShowsByFi
 
 async function fetchCollectionCounts(): Promise<Record<string, number>> {
   const rows = await db.query.shows.findMany({
-    columns: { id: true, difficulty: true, year: true },
+    columns: { difficulty: true, year: true },
     with: { showsToTags: { with: { tag: { columns: { name: true } } } } },
   });
   const facts = rows.map((r) => ({

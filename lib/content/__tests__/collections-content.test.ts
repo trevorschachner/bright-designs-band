@@ -10,4 +10,10 @@ describe('collection content files', () => {
       expect(intro + faq.map((f) => f.answer).join(' ')).not.toContain('$')
     })
   }
+  it('rejects unknown slugs', () => {
+    expect(() => getCollectionContent('../etc/passwd')).toThrow('Unknown collection')
+  })
+  it('memoizes reads', () => {
+    expect(getCollectionContent(collections[0].slug)).toBe(getCollectionContent(collections[0].slug))
+  })
 })

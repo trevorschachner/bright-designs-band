@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/services/shows', () => ({ getCollectionCounts: vi.fn() }))
 
-import { collections, collectionsForShow, getCollectionBySlug, MIN_COLLECTION_SHOWS, publishedCollections } from '@/lib/collections'
+import { collections, collectionsForShow, getCollectionBySlug, matchesFilter, MIN_COLLECTION_SHOWS, publishedCollections } from '@/lib/collections'
 import { getCollectionCounts } from '@/lib/services/shows'
 
 describe('collections config', () => {
@@ -12,6 +12,8 @@ describe('collections config', () => {
     for (const c of collections) {
       expect(c.description.length).toBeGreaterThanOrEqual(100)
       expect(c.description.length).toBeLessThanOrEqual(160)
+      expect(c.description).toMatch(/[.!?]$/)
+      expect(c.description).not.toMatch(/\b(nineteen|seven|eighteen|six|three|four)\b/i)
       expect(['level', 'size', 'theme', 'season']).toContain(c.group)
       for (const r of c.relatedCollections) expect(getCollectionBySlug(r)).toBeDefined()
     }
@@ -25,5 +27,14 @@ describe('collections config', () => {
   it('publishes only collections with at least MIN_COLLECTION_SHOWS shows', async () => {
     vi.mocked(getCollectionCounts).mockResolvedValue({ 'easy-marching-band-shows': 2, 'space-marching-band-shows': 1 })
     expect((await publishedCollections()).map((c) => c.slug)).toEqual(['easy-marching-band-shows'])
+  })
+  it('matchesFilter handles year and all-of tags', () => {
+    const base = { difficulty: null, tagNames: [] as string[] }
+    expect(matchesFilter({ ...base, year: null }, { yearMin: 2025 })).toBe(false)
+    expect(matchesFilter({ ...base, year: 2024 }, { yearMin: 2025 })).toBe(false)
+    expect(matchesFilter({ ...base, year: 2025 }, { yearMin: 2025 })).toBe(true)
+    const f = { tags: ['Theme: Space', 'Small Band'] }
+    expect(matchesFilter({ ...base, year: 1, tagNames: ['Theme: Space'] }, f)).toBe(false)
+    expect(matchesFilter({ ...base, year: 1, tagNames: ['Theme: Space', 'Small Band'] }, f)).toBe(true)
   })
 })
