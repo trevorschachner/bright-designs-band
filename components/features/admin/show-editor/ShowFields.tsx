@@ -5,6 +5,7 @@ import type { FieldErrors, UseFormRegister, UseFormSetValue } from 'react-hook-f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { SHOW_INCLUDES } from '@/lib/validation/enums';
 import type { ShowFormValues } from '@/lib/validation/show-form';
 
 /** Label + control + error, the one layout every show and part field uses. */
@@ -85,6 +86,18 @@ const CREDITS: { name: keyof ShowFormValues; label: string }[] = [
   { name: 'commissioned', label: 'Commissioned' },
 ];
 
+const PROGRAM_NOTES_PLACEHOLDER = `One-sentence concept. Written for <school> (<year>); <difficulty>, about <runtime>.
+
+The music
+- Part 1 (opener): <pieces + composers>. <What it does dramatically.>
+- Part 2 ...
+
+Who it suits
+<Winds size range, percussion and front-ensemble needs, guard load, staging or props.>
+
+What you get
+Winds, percussion, sound design files, show graphic, and <anything else>. Parts can be swapped: <one concrete swap idea>.`;
+
 type FieldsProps = {
   register: UseFormRegister<ShowFormValues>;
   errors: FieldErrors<ShowFormValues>;
@@ -125,10 +138,12 @@ export function ShowDetailFields({
   register,
   errors,
   featured,
+  includes,
   setValue,
   thumbnailControl,
 }: FieldsProps & {
   featured: boolean;
+  includes: string;
   setValue: UseFormSetValue<ShowFormValues>;
   thumbnailControl: ReactNode;
 }) {
@@ -158,6 +173,43 @@ export function ShowDetailFields({
             Featured
           </label>
         </div>
+      </div>
+      <Field id="programNotes" label="Program notes" error={errors.programNotes?.message}>
+        <Textarea id="programNotes" rows={14} placeholder={PROGRAM_NOTES_PLACEHOLDER} {...register('programNotes')} />
+      </Field>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field id="ensembleSize" label="Ensemble size" error={errors.ensembleSize?.message}>
+          <select id="ensembleSize" className="w-full h-10 px-3 border rounded-md bg-background text-sm" {...register('ensembleSize')}>
+            <option value="">Select size...</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </Field>
+        <Field id="includes" label="Includes" error={errors.includes?.message}>
+          <div className="grid grid-cols-2 gap-2 p-3 border rounded bg-muted/30">
+            {SHOW_INCLUDES.map((item) => {
+              const chosen = includes.split(',').map((s) => s.trim()).filter(Boolean);
+              return (
+                <div key={item} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`includes-${item}`}
+                    checked={chosen.includes(item)}
+                    onChange={() => {
+                      const next = chosen.includes(item) ? chosen.filter((c) => c !== item) : [...chosen, item];
+                      setValue('includes', SHOW_INCLUDES.filter((i) => next.includes(i)).join(', '), { shouldDirty: true });
+                    }}
+                    className="mr-2"
+                  />
+                  <label htmlFor={`includes-${item}`} className="text-sm cursor-pointer">
+                    {item}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        </Field>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {CREDITS.map(({ name, label }) => (

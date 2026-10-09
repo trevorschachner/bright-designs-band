@@ -17,6 +17,7 @@ import { shouldSkipSupabase } from '@/lib/env';
 import { publicStorageUrl } from '@/lib/media/public-url';
 import { TAGS } from '@/lib/cache-tags';
 import { cachedRead, toIso, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
+import type { EnsembleSize } from '@/lib/validation/enums';
 import { PG_UNDEFINED_TABLE, postgresCode } from '@/lib/database/errors';
 
 // ---------------------------------------------------------------------------
@@ -78,6 +79,9 @@ export const SHOW_DETAIL_COLUMNS = {
   year: true,
   difficulty: true,
   duration: true,
+  programNotes: true,
+  ensembleSize: true,
+  includes: true,
   thumbnailUrl: true,
   graphicUrl: true,
   videoUrl: true,
@@ -394,6 +398,9 @@ export type ShowDetailRow = {
   year: number | null;
   difficulty: ShowDifficulty | null;
   duration: string | null;
+  programNotes: string | null;
+  ensembleSize: EnsembleSize | null;
+  includes: string | null;
   thumbnailUrl: string | null;
   graphicUrl: string | null;
   videoUrl: string | null;
@@ -664,6 +671,7 @@ export type ShowIndexEntry = {
   description: string | null;
   year: number | null;
   difficulty: ShowDifficulty | null;
+  programNotes: string | null;
 };
 
 async function fetchShowIndex(): Promise<ShowIndexEntry[]> {
@@ -674,6 +682,7 @@ async function fetchShowIndex(): Promise<ShowIndexEntry[]> {
       description: shows.description,
       year: shows.year,
       difficulty: shows.difficulty,
+      programNotes: shows.programNotes,
     })
     .from(shows)
     .orderBy(desc(shows.year), shows.title);

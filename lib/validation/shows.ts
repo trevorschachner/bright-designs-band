@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createInsertSchema } from 'drizzle-zod';
 import { shows, showDifficultyEnum } from '@/lib/database/schema';
+import { ENSEMBLE_SIZES, SHOW_INCLUDES } from './enums';
 import { concurrencyStamp, rowId } from './concurrency';
 
 /**
@@ -33,6 +34,7 @@ const CREATABLE = {
   difficulty: true,
   duration: true,
   price: true,
+  programNotes: true,
   thumbnailUrl: true,
   videoUrl: true,
   displayOrder: true,
@@ -97,6 +99,9 @@ const UPDATABLE = {
   year: true,
   difficulty: true,
   duration: true,
+  programNotes: true,
+  ensembleSize: true,
+  includes: true,
   thumbnailUrl: true,
   videoUrl: true,
   displayOrder: true,
@@ -123,6 +128,17 @@ export const updateShowSchema = showInsertSchema
       value => (value === '' ? null : value),
       z.enum(showDifficultyEnum.enumValues).nullable()
     ),
+    includes: z
+      .string()
+      .trim()
+      .nullable()
+      .optional()
+      .refine(
+        v => !v || v.split(',').map(s => s.trim()).every(s => (SHOW_INCLUDES as readonly string[]).includes(s)),
+        'includes must be a comma-separated list from: ' + SHOW_INCLUDES.join(', ')
+      ),
+    /** The editor's empty size option sends `''`, read as no size (as difficulty). */
+    ensembleSize: z.preprocess(value => (value === '' ? null : value), z.enum(ENSEMBLE_SIZES).nullable()),
     /** Tag ids. When present they replace the show's tags; when absent tags are untouched. */
     tags: z.array(rowId).max(200),
   })

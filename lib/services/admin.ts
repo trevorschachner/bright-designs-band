@@ -69,6 +69,9 @@ export type EditableShow = {
   year: number | null;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | null;
   duration: string | null;
+  programNotes: string | null;
+  ensembleSize: 'small' | 'medium' | 'large' | null;
+  includes: string | null;
   thumbnailUrl: string | null;
   videoUrl: string | null;
   youtubeUrl: string | null;
@@ -173,6 +176,9 @@ export async function getShowForEdit(idOrSlug: string): Promise<ShowForEdit | nu
       year: row.year,
       difficulty: row.difficulty,
       duration: row.duration,
+      programNotes: row.programNotes,
+      ensembleSize: row.ensembleSize,
+      includes: row.includes,
       thumbnailUrl: row.thumbnailUrl,
       videoUrl: row.videoUrl,
       youtubeUrl: row.youtubeUrl,

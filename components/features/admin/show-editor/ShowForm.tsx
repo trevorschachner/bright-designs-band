@@ -81,7 +81,7 @@ export function ShowForm({ mode, show, allTags, updatedAt, thumbnailUrl, onStamp
     resetField('thumbnailUrl', { defaultValue: thumbnailUrl ?? '' });
   }, [thumbnailUrl, resetField, formState.dirtyFields.thumbnailUrl]);
 
-  const [slug, tags, featured] = useWatch({ control, name: ['slug', 'tags', 'featured'] });
+  const [slug, tags, featured, includes] = useWatch({ control, name: ['slug', 'tags', 'featured', 'includes'] });
   const slugChanged = editSlug && show !== undefined && slug !== show.slug;
 
   const fail = (error: keyof typeof ERROR_TEXT, issues?: { path: string; message: string }[]) => {
@@ -250,6 +250,7 @@ export function ShowForm({ mode, show, allTags, updatedAt, thumbnailUrl, onStamp
               register={register}
               errors={errors}
               featured={featured}
+              includes={includes}
               setValue={setValue}
               thumbnailControl={thumbnailButton}
             />

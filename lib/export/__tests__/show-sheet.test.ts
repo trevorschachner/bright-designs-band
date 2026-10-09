@@ -21,7 +21,7 @@ describe('column order matches the sheet', () => {
       'id', 'title', 'slug', 'description', 'duration', 'difficulty', 'thumbnail_url', 'graphic_url',
       'youtube_url', 'video_url', 'year', 'commissioned', 'program_coordinator', 'percussion_arranger',
       'sound_designer', 'wind_arranger', 'drill_writer', 'ensemble_size', 'includes', 'tags', 'featured',
-      'display_order',
+      'display_order', 'program_notes',
     ])
   })
 
@@ -53,11 +53,12 @@ const part: PartRecord = {
 }
 
 describe('row builders', () => {
-  it('fill every column of a show, leaving missing ensemble_size and includes blank', () => {
+  it('fill every column of a show, leaving missing ensemble_size, includes and program_notes blank', () => {
     const row = showRow(show)
     expect(Object.keys(row)).toEqual([...SHOW_COLUMNS])
     expect(row.ensemble_size).toBeNull()
     expect(row.includes).toBeNull()
+    expect(row.program_notes).toBeNull()
     expect(row.tags).toBe('Energetic, Cinematic')
   })
 

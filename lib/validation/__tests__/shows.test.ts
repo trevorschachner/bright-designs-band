@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getTableColumns } from 'drizzle-orm';
 import { shows } from '@/lib/database/schema';
-import { showSchema } from '../shows';
+import { showSchema, updateShowActionSchema as updateShowSchema } from '../shows';
 
 // showSchema used to be hand-written and had drifted: it declared seven
 // columns that do not exist on `shows` and omitted nine that do. It is now
@@ -96,5 +96,34 @@ describe('column constraints come from the table', () => {
   it('accepts the tags relation', () => {
     const result = parse({ tags: [1, 2] });
     expect(result.success && result.data.tags).toEqual([1, 2]);
+  });
+});
+
+describe('program notes, ensemble size and includes', () => {
+  const base = { id: 1, updatedAt: '2026-10-09T00:00:00.000Z', slug: 'apex' };
+
+  it('accepts programNotes, ensembleSize and includes on update', () => {
+    const parsed = updateShowSchema.parse({
+      ...base,
+      programNotes: 'A wolf-pack show.\n\n- Part 1: Hungry Like the Wolf',
+      ensembleSize: 'medium',
+      includes: 'winds, percussion, sound design',
+    });
+    expect(parsed.programNotes).toContain('wolf');
+    expect(parsed.ensembleSize).toBe('medium');
+    expect(parsed.includes).toBe('winds, percussion, sound design');
+  });
+
+  it('rejects an includes value outside the vocabulary', () => {
+    expect(() => updateShowSchema.parse({ ...base, includes: 'winds, kazoo' })).toThrow();
+  });
+
+  it('reads an empty ensembleSize select as no size', () => {
+    expect(updateShowSchema.parse({ ...base, ensembleSize: '' }).ensembleSize).toBeNull();
+  });
+
+  it('accepts programNotes at create time', () => {
+    const result = parse({ programNotes: 'Notes' });
+    expect(result.success && result.data.programNotes).toBe('Notes');
   });
 });

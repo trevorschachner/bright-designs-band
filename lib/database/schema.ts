@@ -34,6 +34,11 @@ export const shows = pgTable('shows', {
   windArranger: text('wind_arranger'),
   drillWriter: text('drill_writer'),
   duration: text('duration'),
+  // Long-form program notes shown on the public page (paragraphs + "- " bullets).
+  programNotes: text('program_notes'),
+  ensembleSize: ensembleSizeEnum('ensemble_size'),
+  // Comma-separated subset of SHOW_INCLUDES (lib/validation/enums.ts).
+  includes: text('includes'),
   price: numeric('price', { precision: 10, scale: 2 }),
   thumbnailUrl: text('thumbnail_url'),
   videoUrl: text('video_url'),

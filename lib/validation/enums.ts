@@ -13,3 +13,6 @@ export type GradeBand = (typeof GRADE_BANDS)[number]
 export type ShowDifficulty = (typeof SHOW_DIFFICULTIES)[number]
 export type EnsembleSize = (typeof ENSEMBLE_SIZES)[number]
 export type ArrangementScene = (typeof ARRANGEMENT_SCENES)[number]
+
+export const SHOW_INCLUDES = ['winds', 'percussion', 'sound design', 'drill', 'choreography', 'props', 'graphic'] as const
+export type ShowInclude = (typeof SHOW_INCLUDES)[number]
