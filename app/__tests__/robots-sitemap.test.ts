@@ -10,10 +10,13 @@ vi.mock('@/lib/services/sitemap', () => ({
   })),
 }))
 
+vi.mock('@/lib/services/shows', () => ({
+  getCollectionCounts: vi.fn(async () => ({ 'competitive-marching-band-shows': 3, 'easy-marching-band-shows': 2, 'space-marching-band-shows': 5, 'indoor-winds-shows': 1 })),
+}))
+
 import robots from '../robots'
 import sitemap from '../sitemap'
 import { AI_CRAWLERS } from '@/lib/seo/crawlers'
-import { collections } from '@/lib/collections'
 
 beforeEach(() => {
   vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://brightdesigns.band')
@@ -55,8 +58,12 @@ describe('sitemap', () => {
     const urls = entries.map((e) => e.url)
     expect(urls).toContain('https://brightdesigns.band')
     expect(urls).toContain('https://brightdesigns.band/faqs')
-    expect(urls).toContain(`https://brightdesigns.band/collections/${collections[0].slug}`)
-    expect(urls.filter((u) => u.includes('/collections/'))).toHaveLength(collections.length)
+    expect(urls).toContain(`https://brightdesigns.band/collections/${'competitive-marching-band-shows'}`)
+    expect(urls.filter((u) => u.includes('/collections/')).sort()).toEqual([
+      'https://brightdesigns.band/collections/competitive-marching-band-shows',
+      'https://brightdesigns.band/collections/easy-marching-band-shows',
+      'https://brightdesigns.band/collections/space-marching-band-shows',
+    ])
     expect(urls).toContain('https://brightdesigns.band/shows/true-north')
     expect(urls).toContain('https://brightdesigns.band/arrangements/pipeline')
     expect(urls).not.toContain('https://brightdesigns.band/arrangements/thin')

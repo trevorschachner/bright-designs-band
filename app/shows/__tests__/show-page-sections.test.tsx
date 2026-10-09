@@ -15,6 +15,7 @@ vi.mock('@/lib/services/shows', () => ({
   getAllShowSlugs: vi.fn(async () => ['apex']),
   getSlugRedirect: vi.fn(async () => null),
   getRelatedShows: vi.fn(async () => []),
+  getCollectionCounts: vi.fn(async () => ({ 'grade-3-marching-band-shows': 2 })),
 }))
 vi.mock('@/lib/services/pieces', () => ({ getPublicPiecesByArrangementIds: vi.fn(async () => ({ 10: [{ title: 'Hungry Like the Wolf', composer: 'Duran Duran' }] })) }))
 

@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import {
   createBreadcrumbSchema,
+  createCollectionPageSchema,
   createFAQSchema,
   createMusicCompositionSchema,
   createOrganizationSchema,
@@ -171,5 +172,17 @@ describe('createMusicCompositionSchema (show fields)', () => {
     expect(s).not.toHaveProperty('duration')
     expect(s).not.toHaveProperty('educationalLevel')
     expect(s).not.toHaveProperty('offers')
+  })
+})
+
+describe('createCollectionPageSchema', () => {
+  it('is a CollectionPage whose mainEntity is an ItemList with absolute URLs', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://brightdesigns.band')
+    const s = createCollectionPageSchema({ name: 'Easy Shows', description: 'd', url: '/collections/easy', items: [{ name: 'A', url: '/shows/a' }, { name: 'B', url: '/shows/b' }] }) as any
+    expect(s['@type']).toBe('CollectionPage')
+    expect(s.url).toBe('https://brightdesigns.band/collections/easy')
+    expect(s.mainEntity['@type']).toBe('ItemList')
+    expect(s.mainEntity.itemListElement[1]).toEqual({ '@type': 'ListItem', position: 2, name: 'B', url: 'https://brightdesigns.band/shows/b' })
+    expect(JSON.stringify(s)).not.toMatch(/price/i)
   })
 })

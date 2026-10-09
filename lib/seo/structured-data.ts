@@ -158,6 +158,31 @@ export function createFAQSchema(faqs: Faq[]): Schema {
   }
 }
 
+/** CollectionPage whose mainEntity is the ItemList of shows on the page. */
+export function createCollectionPageSchema(input: {
+  name: string
+  description: string
+  url: string
+  items: Array<{ name: string; url: string }>
+}): Schema {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: input.name,
+    description: input.description,
+    url: absoluteUrl(input.url),
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: input.items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        url: absoluteUrl(item.url),
+      })),
+    },
+  }
+}
+
 /** BreadcrumbList. Paths become absolute URLs (Google requires them). */
 export function createBreadcrumbSchema(breadcrumbs: Array<{ name: string; url: string }>): Schema {
   return {

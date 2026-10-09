@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getSitemapEntries } from '@/lib/services/sitemap'
-import { collections } from '@/lib/collections'
+import { publishedCollections } from '@/lib/collections'
 import { BLOG_POSTS, CASE_STUDIES } from '@/lib/blog/posts'
 import { getPublicSiteUrl } from '@/lib/env'
 
@@ -36,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...STATIC_PAGES.map(({ path, changeFrequency, priority }) => ({ url: url(path), changeFrequency, priority })),
-    ...collections.map((c) => ({
+    ...(await publishedCollections()).map((c) => ({
       url: url(`/collections/${c.slug}`),
       changeFrequency: 'weekly' as const,
       priority: 0.7,

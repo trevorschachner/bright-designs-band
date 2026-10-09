@@ -9,6 +9,7 @@ const SHOWS: ShowIndexEntry[] = [
 
 vi.mock('@/lib/services/shows', () => ({
   getShowIndex: vi.fn(async () => SHOWS),
+  getCollectionCounts: vi.fn(async () => ({ 'competitive-marching-band-shows': 3, 'easy-marching-band-shows': 2, 'space-marching-band-shows': 5, 'indoor-winds-shows': 1 })),
 }))
 
 import { GET as getLlms } from '../llms.txt/route'
@@ -30,6 +31,8 @@ describe('/llms.txt', () => {
     expect(body).toContain('quoted per program')
     expect(body).toContain('- [True North](https://brightdesigns.band/shows/true-north) — 2025, Advanced, A journey north.')
     expect(body).toContain('/collections/competitive-marching-band-shows')
+    expect(body.match(/\/collections\/[a-z0-9-]+/g)).toHaveLength(3)
+    expect(body).not.toContain('/collections/indoor-winds-shows')
     expect(body).not.toContain('Deep notes here.')
   })
 })

@@ -30,7 +30,7 @@ import { parseProgramNotes, type ProgramNotes as ParsedNotes } from '@/lib/conte
 import { ProgramNotes } from '@/components/features/program-notes'
 import { isoDuration } from '@/lib/seo/duration'
 import { showFaqs } from '@/lib/seo/show-faq'
-import { collectionsForShow } from '@/lib/collections'
+import { matchesFilter, publishedCollections } from '@/lib/collections'
 import { ShowCard } from '@/components/features/shows/ShowCard'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { normaliseSlug } from '@/lib/slug'
@@ -54,9 +54,10 @@ function trimDescription(text: string, max = 155): string {
   return (at > 0 ? cut.slice(0, at) : cut).replace(/[\s,;:.-]+$/, '')
 }
 
-/** Collections this show belongs to (Task 10 adds the published filter). */
-function matchingCollections(displayDifficulty: string, tagNames: string[], year: number | null) {
-  return collectionsForShow({ difficulty: displayDifficulty || null, year, tagNames })
+/** Published collections this show belongs to. */
+async function matchingCollections(displayDifficulty: string, tagNames: string[], year: number | null) {
+  const facts = { difficulty: displayDifficulty || null, year, tagNames }
+  return (await publishedCollections()).filter((c) => matchesFilter(facts, c.filter))
 }
 
 const ENSEMBLE_LABEL: Record<string, string> = { small: 'small bands', medium: 'medium-sized bands', large: 'large bands' }
@@ -242,7 +243,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   )
 
   const tagNames = (showsToTags ?? []).map((r) => r.tag.name)
-  const collectionLinks = matchingCollections(displayDifficulty, tagNames, show.year ?? null)
+  const collectionLinks = await matchingCollections(displayDifficulty, tagNames, show.year ?? null)
   const related = await getRelatedShows(showId, (displayDifficulty || null) as ShowDifficulty | null, tagNames)
 
   const aboutSections = notes.sections.filter((s) => !KNOWN_HEADINGS.has(s.heading?.toLowerCase() ?? ''))

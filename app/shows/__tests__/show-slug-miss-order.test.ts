@@ -25,6 +25,7 @@ vi.mock('@/lib/services/shows', () => ({
   getRelatedShows: vi.fn(async () => []),
   getPublicShowFiles: vi.fn(async () => []),
   getAllShowSlugs: vi.fn(async () => []),
+  getCollectionCounts: vi.fn(async () => ({})),
 }))
 vi.mock('@/lib/services/pieces', () => ({ getPublicPiecesByArrangementIds: vi.fn(async () => new Map()) }))
 
