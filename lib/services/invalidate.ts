@@ -56,6 +56,7 @@ export function invalidateShow(id: number, slug: string | null | undefined, prev
     PATHS.sitemap,
     PATHS.llms,
     PATHS.llmsFull,
+    PATHS.collections,
     ...collectionPaths()
   );
 }
@@ -88,7 +89,7 @@ export function invalidateTags() {
   expireTags(TAGS.tags);
   expireAllPagesOf(SHOW_PAGES, ARRANGEMENT_PAGES);
   // A tag collection (e.g. "Small Band") filters on the tag's name.
-  expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap, ...collectionPaths());
+  expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap, PATHS.collections, ...collectionPaths());
 }
 
 /** A source piece was created, edited or deleted. Credits show on every part. */

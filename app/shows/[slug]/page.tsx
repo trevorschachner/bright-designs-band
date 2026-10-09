@@ -36,6 +36,7 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import { normaliseSlug } from '@/lib/slug'
 import { cache } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
+import { displayTagName } from '@/lib/tags'
 
 export const revalidate = 3600;
 
@@ -364,7 +365,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
             <div className="flex flex-wrap gap-2 mb-6">
               {showsToTags?.map((relation: any) => (
                 <Badge key={relation.tag.id} variant="outline" className="text-xs">
-                  {relation.tag.name}
+                  {displayTagName(relation.tag.name)}
                 </Badge>
               ))}
             </div>

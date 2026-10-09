@@ -8,7 +8,7 @@ Format rules the parser relies on: the first line is a plain paragraph (never a 
 
 ## easy-marching-band-shows
 
-Easy marching band shows are the ones we wrote for younger or smaller bands: grade 2 winds, percussion books that a first-year battery can clean, and a runtime under seven and a half minutes. Six shows in the catalog fit that description, and every one of them was performed by a real high school program before it went on sale.
+Easy marching band shows are the ones we wrote for younger or smaller bands: grade 2 winds, percussion books that a first-year battery can clean, and a runtime under seven and a half minutes. Every show here fits that description, and every one of them was performed by a real high school program before it went on sale.
 
 Who these shows are for
 
@@ -44,7 +44,7 @@ A: They were written for small and medium bands. We can rebalance any of them fo
 
 ## grade-3-marching-band-shows
 
-Grade 3 is where most competitive high school bands live, and it is where most of our catalog lives: nineteen shows written at grade 3 to 4 for programs across South Carolina, Georgia, Colorado, Kansas and North Carolina. Each one was a custom show for a real band first, which means the pacing, the ballad placement and the closer have all been tested in front of judges.
+Grade 3 is where most competitive high school bands live, and it is where most of our catalog lives: shows written at grade 3 to 4 for programs across South Carolina, Georgia, Colorado, Kansas and North Carolina. Each one was a custom show for a real band first, which means the pacing, the ballad placement and the closer have all been tested in front of judges.
 
 What intermediate means here
 
@@ -76,7 +76,7 @@ A: Pre-written shows ship as soon as licensing clears. Custom work follows our c
 
 ## competitive-marching-band-shows
 
-These are the shows we wrote for bands chasing state finals and Bands of America regional placements: grade 4 to 5 winds, full percussion and sound design, and runtimes up to 8:30. Nine shows carry the Advanced label, including the three we wrote for Alpharetta High School in Georgia and two for Lexington High School in South Carolina.
+These are the shows we wrote for bands chasing state finals and Bands of America regional placements: grade 4 to 5 winds, full percussion and sound design, and runtimes up to 8:30. These shows carry the Advanced label, including the three we wrote for Alpharetta High School in Georgia and two for Lexington High School in South Carolina.
 
 What advanced means in our catalog
 
@@ -176,7 +176,7 @@ A: Sometimes. A three-part fall show with a strong ballad can be trimmed to six 
 
 ## new-marching-band-shows-2027
 
-Every show on this page was written and performed in 2025 or later, which means it is new to the circuit for the 2027 season. Nineteen shows qualify. They were custom shows for real bands first, so each one has been through a full competitive season, been recorded, and been cleaned up for resale.
+Every show on this page was written and performed in 2025 or later, which means it is new to the circuit for the 2027 season. They were custom shows for real bands first, so each one was performed by the band it was written for and recorded before it went on sale.
 
 Why a recent show matters
 
@@ -212,7 +212,7 @@ A: By January if you want music before spring break. Custom shows need a concept
 
 ## space-marching-band-shows
 
-Space shows work because the music already exists: Holst, Zimmer, the Voyager story, the aurora. The three shows here each take a different angle on the sky, from a beginner show about the famous photo of Earth to an advanced show about the distance between galaxies and between people.
+Space shows work because the music already exists: Holst, Zimmer, the Voyager story, the aurora. The shows here each take a different angle on the sky, from a beginner show about the famous photo of Earth to an advanced show about the distance between galaxies and between people.
 
 Pale Blue Dot
 
@@ -248,7 +248,7 @@ A: Yes. Space is one of the most requested themes we write, and we start custom 
 
 ## western-marching-band-shows
 
-Western shows give a band a story the whole stadium already knows: the gold rush, the railroad, the open plain. The three shows here were written for bands in South Carolina and Kansas, and they borrow from Morricone, Copland, Vivaldi and Ozzy Osbourne without apology.
+Western shows give a band a story the whole stadium already knows: the gold rush, the railroad, the open plain. The shows here were written for bands in South Carolina and Kansas, and they borrow from Morricone, Copland, Vivaldi and Ozzy Osbourne without apology.
 
 Gold Rush
 
@@ -284,7 +284,7 @@ A: No. The original performances used a few set pieces, but the music and drill 
 
 ## dark-marching-band-shows
 
-Dark shows are the ones directors ask about in October: haunted houses, vampires, gargoyles, the deep sea. Seven shows in the catalog carry this theme, from a grade 2 vampire show for a small band to an advanced show set on the ocean floor. All of them were written for real programs and performed for a full season.
+Dark shows are the ones directors ask about in October: haunted houses, vampires, gargoyles, the deep sea. These shows carry the dark theme, from a grade 2 vampire show for a small band to an advanced show set on the ocean floor. All of them were written for real programs and performed for a full season.
 
 Shows in this collection
 
@@ -316,7 +316,7 @@ A: Yes. Build-your-own and partial custom cover that. Uninvited and Adagio in G 
 
 ## rock-and-pop-marching-band-shows
 
-Rock and pop shows are the ones the stands sing along to. Six shows in the catalog are built on songs by Queen, Metallica, Tears for Fears, the Beatles, Kenny Loggins and Olivia Rodrigo, arranged for marching band by designers who write competitive shows for a living, so the energy comes with a structure judges reward.
+Rock and pop shows are the ones the stands sing along to. The shows here are built on songs by Queen, Metallica, Tears for Fears, the Beatles, Kenny Loggins and Olivia Rodrigo, arranged for marching band by designers who write competitive shows for a living, so the energy comes with a structure judges reward.
 
 Shows in this collection
 
@@ -348,7 +348,7 @@ A: Yes. Every arrangement is available on its own, and partial custom shows ofte
 
 ## art-marching-band-shows
 
-Art shows give a band a visual identity before the first note: a colour, a dot, a sketch, a stencil on a wall. The four shows here take their themes from Yayoi Kusama, Banksy, the primary colours and a painter bringing a world to life, and each one was written for a specific high school program.
+Art shows give a band a visual identity before the first note: a colour, a dot, a sketch, a stencil on a wall. The shows here take their themes from Yayoi Kusama, Banksy, the primary colours and a painter bringing a world to life, and each one was written for a specific high school program.
 
 Shows in this collection
 
@@ -380,7 +380,7 @@ A: The show graphic and colour direction are included. Flag design, props and ch
 
 ## classical-marching-band-shows
 
-Classical and opera shows give a band music that is out of copyright, plays well in the open air and has already survived two centuries of audiences. Six shows in the catalog are built mainly on classical and operatic sources, from a beginner Arthurian show on Mozart and Purcell to an advanced marionette show that quotes Pinocchio.
+Classical and opera shows give a band music that is out of copyright, plays well in the open air and has already survived two centuries of audiences. The shows here are built mainly on classical and operatic sources, from a beginner Arthurian show on Mozart and Purcell to an advanced marionette show that quotes Pinocchio.
 
 Shows in this collection
 
@@ -412,7 +412,7 @@ A: Yes. Tell us the mood you want and we will assemble one from the arrangements
 
 ## nature-marching-band-shows
 
-Nature shows run from a caterpillar becoming a butterfly to a wolf pack hunting under the moon. Eight shows in the catalog take their themes from seasons, animals, fire, water and the northern sky, and the range covers grade 2 to grade 5.
+Nature shows run from a caterpillar becoming a butterfly to a wolf pack hunting under the moon. The shows here take their themes from seasons, animals, fire, water and the northern sky, and the range covers grade 2 to grade 5.
 
 Shows in this collection
 
@@ -444,7 +444,7 @@ A: Yes. Swapping or rewriting a closer is a partial custom job and one of the mo
 
 ## story-marching-band-shows
 
-Story shows have a plot: a worker eating lunch on a steel beam, a newsroom on deadline, a revolution, a marionette cutting its strings. Eighteen shows in the catalog carry a narrative the audience can follow from opener to closer, which is also what judges score under general effect.
+Story shows have a plot: a worker eating lunch on a steel beam, a newsroom on deadline, a revolution, a marionette cutting its strings. The shows here carry a narrative the audience can follow from opener to closer, which is also what judges score under general effect.
 
 Shows in this collection
 

@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/features/seo/JsonLd";
 import { createServiceSchema } from "@/lib/seo/structured-data";
 
 // Generate metadata for contact page
-export const metadata: Metadata = generateMetadata({ title: "Contact Bright Designs - Professional Marching Band Design Services", description: "Ready to elevate your competitive success? Contact Bright Designs for custom marching band shows, reliable arrangements with on-time delivery, and comprehensive design packages for BOA and state competition.", path: '/contact' });
+export const metadata: Metadata = generateMetadata({ title: "Contact Bright Designs - Professional Marching Band Design Services", description: "Contact Bright Designs for custom marching band shows, reliable arrangements with on-time delivery, and design packages for BOA and state competition.", path: '/contact' });
 
 // Create consultation service schema
 const consultationSchema = createServiceSchema({

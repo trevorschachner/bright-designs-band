@@ -1,4 +1,4 @@
-Dark shows are the ones directors ask about in October: haunted houses, vampires, gargoyles, the deep sea. Seven shows in the catalog carry this theme, from a grade 2 vampire show for a small band to an advanced show set on the ocean floor. All of them were written for real programs and performed for a full season.
+Dark shows are the ones directors ask about in October: haunted houses, vampires, gargoyles, the deep sea. These shows carry the dark theme, from a grade 2 vampire show for a small band to an advanced show set on the ocean floor. All of them were written for real programs and performed for a full season.
 
 Shows in this collection
 

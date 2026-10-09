@@ -15,7 +15,7 @@ export interface SEOConfig {
 
 export const defaultSEOConfig: SEOConfig = {
   title: "Marching Band Show Design: Custom Shows and Shows for Sale | Bright Designs",
-  description: "Custom marching band shows, pre-written shows for sale, arrangements, drill and program coordination from a South Carolina design team. Music by May 1, drill by Labor Day.",
+  description: "Custom marching band shows, pre-written shows for sale, arrangements, drill and program coordination from a South Carolina design team.",
   keywords: [
     "marching band shows",
     "marching band show design",

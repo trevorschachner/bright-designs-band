@@ -1,4 +1,4 @@
-Classical and opera shows give a band music that is out of copyright, plays well in the open air and has already survived two centuries of audiences. Six shows in the catalog are built mainly on classical and operatic sources, from a beginner Arthurian show on Mozart and Purcell to an advanced marionette show that quotes Pinocchio.
+Classical and opera shows give a band music that is out of copyright, plays well in the open air and has already survived two centuries of audiences. The shows here are built mainly on classical and operatic sources, from a beginner Arthurian show on Mozart and Purcell to an advanced marionette show that quotes Pinocchio.
 
 Shows in this collection
 

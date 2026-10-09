@@ -97,7 +97,7 @@ async function main() {
 
     for (const l of lines) console.log(l)
     console.log(`\nShows found: ${found}, missing: ${missing}. Links ${apply ? 'added' : 'to add'}: ${linksAdded}, already present: ${linksSkipped}.`)
-    if (apply) console.log('Cached reads expire within 1 hour (revalidate = 3600); trigger a Netlify deploy to refresh sooner.')
+    if (apply) console.log('Theme tags applied. If the site is already deployed, collection pages refresh within 1 hour (revalidate = 3600); trigger a Netlify deploy to refresh sooner.')
     else console.log('Dry run: nothing written. Re-run with --apply to write.')
   } finally {
     await sql.end()

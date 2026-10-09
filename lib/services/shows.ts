@@ -739,7 +739,7 @@ async function fetchShowIndex(): Promise<ShowIndexEntry[]> {
 }
 
 /** Every show's title, year, difficulty and description, for /llms.txt and /llms-full.txt. */
-export const getShowIndex = cachedRead('show-index-v1', fetchShowIndex, {
+export const getShowIndex = cachedRead('show-index-v2', fetchShowIndex, {
   tags: () => [TAGS.shows],
   atBuildWithoutDb: [] as ShowIndexEntry[],
 });
@@ -804,7 +804,7 @@ async function fetchShowForApi(id: string): Promise<ShowApiDetail | null> {
   };
 }
 
-export const getShowForApi = cachedRead('show-api-v2', fetchShowForApi, {
+export const getShowForApi = cachedRead('show-api-v3', fetchShowForApi, {
   tags: (id) => [TAGS.shows, TAGS.arrangements, TAGS.tags, ...(/^\d+$/.test(id) ? [TAGS.show(id)] : [])],
   atBuildWithoutDb: null as ShowApiDetail | null,
 });

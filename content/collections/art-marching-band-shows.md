@@ -1,4 +1,4 @@
-Art shows give a band a visual identity before the first note: a colour, a dot, a sketch, a stencil on a wall. The four shows here take their themes from Yayoi Kusama, Banksy, the primary colours and a painter bringing a world to life, and each one was written for a specific high school program.
+Art shows give a band a visual identity before the first note: a colour, a dot, a sketch, a stencil on a wall. The shows here take their themes from Yayoi Kusama, Banksy, the primary colours and a painter bringing a world to life, and each one was written for a specific high school program.
 
 Shows in this collection
 

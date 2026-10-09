@@ -1,4 +1,4 @@
-Story shows have a plot: a worker eating lunch on a steel beam, a newsroom on deadline, a revolution, a marionette cutting its strings. Eighteen shows in the catalog carry a narrative the audience can follow from opener to closer, which is also what judges score under general effect.
+Story shows have a plot: a worker eating lunch on a steel beam, a newsroom on deadline, a revolution, a marionette cutting its strings. The shows here carry a narrative the audience can follow from opener to closer, which is also what judges score under general effect.
 
 Shows in this collection
 

@@ -6,6 +6,8 @@ import PageHero from "@/components/layout/page-hero";
 import { Metadata } from "next";
 import { generateMetadata as buildMetadata } from "@/lib/seo/metadata";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = buildMetadata({
   title: "Marching Band Show Collections - Curated Lists | Bright Designs",
   description: "Explore curated collections of marching band shows by style, difficulty, and ensemble size. Find the perfect show for your band's unique needs.",

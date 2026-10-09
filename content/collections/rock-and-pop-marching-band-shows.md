@@ -1,4 +1,4 @@
-Rock and pop shows are the ones the stands sing along to. Six shows in the catalog are built on songs by Queen, Metallica, Tears for Fears, the Beatles, Kenny Loggins and Olivia Rodrigo, arranged for marching band by designers who write competitive shows for a living, so the energy comes with a structure judges reward.
+Rock and pop shows are the ones the stands sing along to. The shows here are built on songs by Queen, Metallica, Tears for Fears, the Beatles, Kenny Loggins and Olivia Rodrigo, arranged for marching band by designers who write competitive shows for a living, so the energy comes with a structure judges reward.
 
 Shows in this collection
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import { MessageSquare, Lightbulb, FileText, PenTool, CheckCircle, Headphones, Music, Eye, Calendar, Users, Play, ArrowRight, Sparkles, Layers, GraduationCap } from "lucide-react"
 
-export const metadata: Metadata = buildMetadata({ title: "Custom Marching Band Show Design, Drill and Arrangements | Bright Designs", description: "Custom music, drill, choreography and program coordination for competitive high school bands. Clear timelines, music by May 1, drill by Labor Day, quoted per program.", path: '/services' })
+export const metadata: Metadata = buildMetadata({ title: "Custom Marching Band Show Design, Drill and Arrangements | Bright Designs", description: "Custom music, drill, choreography and program coordination for competitive high school bands. Clear timelines, music by May 1, drill by Labor Day.", path: '/services' })
 import { SpotlightCard } from "@/components/ui/spotlight-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

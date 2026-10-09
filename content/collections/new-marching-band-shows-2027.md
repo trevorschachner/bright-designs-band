@@ -1,4 +1,4 @@
-Every show on this page was written and performed in 2025 or later, which means it is new to the circuit for the 2027 season. Nineteen shows qualify. They were custom shows for real bands first, so each one has been through a full competitive season, been recorded, and been cleaned up for resale.
+Every show on this page was written and performed in 2025 or later, which means it is new to the circuit for the 2027 season. They were custom shows for real bands first, so each one was performed by the band it was written for and recorded before it went on sale.
 
 Why a recent show matters
 

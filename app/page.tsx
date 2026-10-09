@@ -11,6 +11,7 @@ import { Metadata } from "next"
 import { generateMetadata as buildMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { marchingBandSchemas } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
+import { displayTagName } from "@/lib/tags"
 
 export const metadata: Metadata = buildMetadata({ ...defaultSEOConfig, path: "/" })
 
@@ -161,7 +162,7 @@ export default async function HomePage() {
                   <div className="flex flex-wrap gap-2 mb-6">
                     {show.showsToTags.map((st) => (
                       <span key={st.tag.id} className="plus-surface px-2 py-1 plus-caption">
-                        {st.tag.name}
+                        {displayTagName(st.tag.name)}
                       </span>
                     ))}
                   </div>

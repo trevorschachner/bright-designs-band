@@ -1,4 +1,4 @@
-These are the shows we wrote for bands chasing state finals and Bands of America regional placements: grade 4 to 5 winds, full percussion and sound design, and runtimes up to 8:30. Nine shows carry the Advanced label, including the three we wrote for Alpharetta High School in Georgia and two for Lexington High School in South Carolina.
+These are the shows we wrote for bands chasing state finals and Bands of America regional placements: grade 4 to 5 winds, full percussion and sound design, and runtimes up to 8:30. These shows carry the Advanced label, including the three we wrote for Alpharetta High School in Georgia and two for Lexington High School in South Carolina.
 
 What advanced means in our catalog
 

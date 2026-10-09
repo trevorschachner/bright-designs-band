@@ -143,7 +143,7 @@ export function showRow(s: ShowRecord): Row<typeof SHOW_COLUMNS> {
     tags: list(s.tagNames),
     featured: s.featured,
     display_order: s.displayOrder,
-    program_notes: s.programNotes ?? null,
+    program_notes: s.programNotes ? s.programNotes.replace(/(?:\r?\n)+/g, ' ') : null,
   };
 }
 

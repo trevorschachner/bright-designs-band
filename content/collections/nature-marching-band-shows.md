@@ -1,4 +1,4 @@
-Nature shows run from a caterpillar becoming a butterfly to a wolf pack hunting under the moon. Eight shows in the catalog take their themes from seasons, animals, fire, water and the northern sky, and the range covers grade 2 to grade 5.
+Nature shows run from a caterpillar becoming a butterfly to a wolf pack hunting under the moon. The shows here take their themes from seasons, animals, fire, water and the northern sky, and the range covers grade 2 to grade 5.
 
 Shows in this collection
 

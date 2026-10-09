@@ -1,4 +1,4 @@
-Space shows work because the music already exists: Holst, Zimmer, the Voyager story, the aurora. The three shows here each take a different angle on the sky, from a beginner show about the famous photo of Earth to an advanced show about the distance between galaxies and between people.
+Space shows work because the music already exists: Holst, Zimmer, the Voyager story, the aurora. The shows here each take a different angle on the sky, from a beginner show about the famous photo of Earth to an advanced show about the distance between galaxies and between people.
 
 Pale Blue Dot
 

@@ -25,7 +25,22 @@ describe('publicExportCsv', () => {
     const [header] = csv.split('\r\n')
     expect(header.endsWith(',program_notes')).toBe(true)
     expect(csv).toContain('medium,"winds, percussion"')
-    expect(csv).toContain('"Line one.\n\n- Part 1, ""opener"""')
+    expect(csv).toContain('"Line one. - Part 1, ""opener"""')
+  })
+
+  it('flattens newlines in the program_notes cell only', () => {
+    const csv = publicExportCsv('shows.csv', {
+      ...tables,
+      shows: [showRow({
+        id: 1, title: 'Apex', slug: 'apex', description: 'Keep\nthis', duration: null, difficulty: null,
+        thumbnailUrl: null, graphicUrl: null, youtubeUrl: null, videoUrl: null, year: 2026,
+        commissioned: null, programCoordinator: null, percussionArranger: null, soundDesigner: null,
+        windArranger: null, drillWriter: null, featured: false, displayOrder: 0, tagNames: [],
+        programNotes: 'Line one.\r\n\r\nLine two.\nLine three.',
+      })],
+    } as unknown as ShowSheetTables)!
+    expect(csv).toContain('Line one. Line two. Line three.')
+    expect(csv).toContain('Keep\nthis')
   })
 
   it('serves the four sheet files', () => {

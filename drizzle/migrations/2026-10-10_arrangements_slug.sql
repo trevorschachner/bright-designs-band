@@ -1,4 +1,6 @@
 -- Public URL slug for arrangements (/arrangements/<slug>); numeric ids 308 to it.
+-- NOT NULL comes in a follow-up (2026-10-11_arrangements_slug_not_null.sql), applied
+-- after the deploy that writes slugs is live, so the old code can keep inserting.
 -- Guarantees after this runs: every slug is (1) non-empty, (2) not all digits
 -- (all-digit paths are read as legacy ids), (3) unique.
 ALTER TABLE arrangements ADD COLUMN IF NOT EXISTS slug text;
@@ -22,5 +24,4 @@ UPDATE arrangements a SET slug = a.slug || '-' || a.id
 WHERE a.slug IN (SELECT slug FROM arrangements GROUP BY slug HAVING count(*) > 1)
   AND a.id <> (SELECT min(id) FROM arrangements b WHERE b.slug = a.slug);
 
-ALTER TABLE arrangements ALTER COLUMN slug SET NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS arrangements_slug_unique_idx ON arrangements (slug);

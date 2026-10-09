@@ -1,4 +1,4 @@
-Western shows give a band a story the whole stadium already knows: the gold rush, the railroad, the open plain. The three shows here were written for bands in South Carolina and Kansas, and they borrow from Morricone, Copland, Vivaldi and Ozzy Osbourne without apology.
+Western shows give a band a story the whole stadium already knows: the gold rush, the railroad, the open plain. The shows here were written for bands in South Carolina and Kansas, and they borrow from Morricone, Copland, Vivaldi and Ozzy Osbourne without apology.
 
 Gold Rush
 

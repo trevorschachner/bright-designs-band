@@ -22,6 +22,7 @@ export const PATHS = {
   collection: (slug: string) => `/collections/${slug}`,
   home: '/',
   shows: '/shows',
+  collections: '/collections',
   arrangements: '/arrangements',
   resources: '/resources',
   sitemap: '/sitemap.xml',

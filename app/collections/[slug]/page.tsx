@@ -13,6 +13,8 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 import { Metadata } from "next";
 import { generateMetadata as buildMetadata } from "@/lib/seo/metadata";
 
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   try {
     return (await publishedCollections()).map((collection) => ({ slug: collection.slug }));

@@ -1,4 +1,4 @@
-Grade 3 is where most competitive high school bands live, and it is where most of our catalog lives: nineteen shows written at grade 3 to 4 for programs across South Carolina, Georgia, Colorado, Kansas and North Carolina. Each one was a custom show for a real band first, which means the pacing, the ballad placement and the closer have all been tested in front of judges.
+Grade 3 is where most competitive high school bands live, and it is where most of our catalog lives: shows written at grade 3 to 4 for programs across South Carolina, Georgia, Colorado, Kansas and North Carolina. Each one was a custom show for a real band first, which means the pacing, the ballad placement and the closer have all been tested in front of judges.
 
 What intermediate means here
 

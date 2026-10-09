@@ -1,4 +1,4 @@
-Easy marching band shows are the ones we wrote for younger or smaller bands: grade 2 winds, percussion books that a first-year battery can clean, and a runtime under seven and a half minutes. Six shows in the catalog fit that description, and every one of them was performed by a real high school program before it went on sale.
+Easy marching band shows are the ones we wrote for younger or smaller bands: grade 2 winds, percussion books that a first-year battery can clean, and a runtime under seven and a half minutes. Every show here fits that description, and every one of them was performed by a real high school program before it went on sale.
 
 Who these shows are for
 

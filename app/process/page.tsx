@@ -9,7 +9,7 @@ import {
   Headphones,
 } from "lucide-react"
 
-export const metadata: Metadata = buildMetadata({ title: "Our Design Process - How We Build Your Marching Band Show | Bright Designs", description: "See how Bright Designs takes your vision from concept to competition-ready. Our proven process delivers custom marching band shows on time with full support from first concept to final product.", path: '/process' })
+export const metadata: Metadata = buildMetadata({ title: "Our Design Process - How We Build Your Marching Band Show | Bright Designs", description: "See how Bright Designs takes your vision from concept to competition-ready. Our proven process delivers custom marching band shows on time.", path: '/process' })
 
 export default function ProcessPage() {
   return (
