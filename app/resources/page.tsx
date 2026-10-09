@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { canonicalFor } from "@/lib/seo/metadata"
 import PageHero from "@/components/layout/page-hero"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { GuideDownloadDialog } from "@/components/features/resources/GuideDownloadDialog"
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
   title: "Marching Band Director Resources - Free Guides & Tools | Bright Designs",
   description: "Free resources, guides, and tools for marching band directors and educators. Show design tips, arrangement guides, competition prep, and more.",
   keywords: "marching band director resources, marching band show design guide, band director tools, competitive marching band tips, BOA preparation, marching band arrangements guide",
+  alternates: { canonical: canonicalFor("/resources") },
 }
 
 // Use revalidation instead of force-dynamic for better performance

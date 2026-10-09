@@ -25,13 +25,13 @@ export const metadata: Metadata = buildMetadata({
     'South Carolina marching band design',
     'Georgia marching band design',
   ],
-  canonical: 'https://www.brightdesigns.band/blog/case-studies',
+  path: '/blog/case-studies',
 })
 
 const breadcrumbSchema = createBreadcrumbSchema([
-  { name: 'Home', url: 'https://www.brightdesigns.band' },
-  { name: 'Blog', url: 'https://www.brightdesigns.band/blog' },
-  { name: 'Success Stories', url: 'https://www.brightdesigns.band/blog/case-studies' },
+  { name: 'Home', url: '/' },
+  { name: 'Blog', url: '/blog' },
+  { name: 'Success Stories', url: '/blog/case-studies' },
 ])
 
 const itemListSchema = {

@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: study.title + ' | Bright Designs',
     description: study.description,
     keywords: study.tags as string[],
-    canonical: `https://www.brightdesigns.band${study.href}`,
+    path: study.href,
   })
 }
 
@@ -287,10 +287,10 @@ export default async function CaseStudyPage({ params }: Props) {
   })
 
   const breadcrumbSchema = createBreadcrumbSchema([
-    { name: 'Home', url: 'https://www.brightdesigns.band' },
-    { name: 'Blog', url: 'https://www.brightdesigns.band/blog' },
-    { name: 'Success Stories', url: 'https://www.brightdesigns.band/blog/case-studies' },
-    { name: study.school, url: `https://www.brightdesigns.band${study.href}` },
+    { name: 'Home', url: '/' },
+    { name: 'Blog', url: '/blog' },
+    { name: 'Success Stories', url: '/blog/case-studies' },
+    { name: study.school, url: study.href },
   ])
 
   return (

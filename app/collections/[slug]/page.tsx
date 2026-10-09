@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { Metadata } from "next";
+import { canonicalFor } from "@/lib/seo/metadata";
 
 export async function generateStaticParams() {
   return collections.map((collection) => ({
@@ -27,6 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: collection.title,
     description: collection.description,
     keywords: collection.keywords,
+    alternates: { canonical: canonicalFor(`/collections/${collection.slug}`) },
     openGraph: {
       title: collection.title,
       description: collection.description,

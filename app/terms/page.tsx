@@ -1,4 +1,12 @@
 import React from 'react';
+import { Metadata } from 'next';
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata';
+
+export const metadata: Metadata = buildMetadata({
+  title: 'Terms of Service | Bright Designs',
+  description: 'The terms that govern use of the Bright Designs website and inquiries about our services.',
+  path: '/terms',
+});
 
 export default function TermsOfServicePage() {
   return (

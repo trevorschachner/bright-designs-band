@@ -12,7 +12,7 @@ import { JsonLd } from '@/components/features/seo/JsonLd'
 import { createFAQSchema } from '@/lib/seo/structured-data'
 import { FAQ_SECTIONS, FAQS } from '@/lib/content/faqs'
 
-export const metadata: Metadata = buildMetadata(pageSEOConfigs.faqs)
+export const metadata: Metadata = buildMetadata({ ...pageSEOConfigs.faqs, path: '/faqs' })
 
 // Built from the same array the page renders, so the schema never drifts from the copy.
 const faqSchema = createFAQSchema(FAQS)

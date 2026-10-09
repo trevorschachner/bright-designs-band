@@ -8,6 +8,8 @@ export interface SEOConfig {
   ogImage?: string
   structuredData?: Record<string, unknown>
   canonical?: string
+  /** Site-relative path of this page ('/faqs'). Builds the canonical on the public origin. */
+  path?: string
   noindex?: boolean
 }
 
@@ -31,12 +33,18 @@ export const defaultSEOConfig: SEOConfig = {
   ]
 }
 
+export function canonicalFor(path: string): string {
+  const origin = (getOptionalPublicSiteUrl() || 'https://brightdesigns.band').replace(/\/+$/, '')
+  const clean = path === '/' ? '' : '/' + path.replace(/^\/+/, '').replace(/\/+$/, '')
+  return origin + clean
+}
+
 export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
   const config = { ...defaultSEOConfig, ...seoConfig }
   
   // Set metadataBase to resolve social open graph and twitter images
   const siteUrl = getOptionalPublicSiteUrl()
-  const canonical = sanitizePublicUrl(config.canonical)
+  const canonical = sanitizePublicUrl(config.canonical) ?? (config.path ? canonicalFor(config.path) : undefined)
   const baseUrl = siteUrl || canonical || 'https://brightdesigns.band'
   
   const metadata: Metadata = {
@@ -87,9 +95,7 @@ export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
       description: config.description,
       ...(config.ogImage && { images: [config.ogImage] }),
     },
-    alternates: {
-      canonical: config.canonical,
-    },
+    alternates: canonical ? { canonical } : undefined,
   }
 
   return metadata

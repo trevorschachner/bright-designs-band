@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/features/seo/JsonLd";
 import { createServiceSchema } from "@/lib/seo/structured-data";
 
 // Generate metadata for contact page
-export const metadata: Metadata = generateMetadata(pageSEOConfigs.contact);
+export const metadata: Metadata = generateMetadata({ ...pageSEOConfigs.contact, path: '/contact' });
 
 // Create consultation service schema
 const consultationSchema = createServiceSchema({

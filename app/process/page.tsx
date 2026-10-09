@@ -9,7 +9,7 @@ import {
   Headphones,
 } from "lucide-react"
 
-export const metadata: Metadata = buildMetadata(pageSEOConfigs.process)
+export const metadata: Metadata = buildMetadata({ ...pageSEOConfigs.process, path: '/process' })
 
 export default function ProcessPage() {
   return (

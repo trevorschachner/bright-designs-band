@@ -7,8 +7,12 @@ import { JsonLd } from "@/components/features/seo/JsonLd"
 import PageHero from "@/components/layout/page-hero"
 import Link from "next/link"
 import Image from "next/image"
+import { Metadata } from "next"
+import { generateMetadata as buildMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { marchingBandSchemas } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
+
+export const metadata: Metadata = buildMetadata({ ...defaultSEOConfig, path: "/" })
 
 // Revalidate every hour - service layer also caches for 1 hour
 export const revalidate = 3600;

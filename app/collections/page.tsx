@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ArrowRight } from "lucide-react";
 import PageHero from "@/components/layout/page-hero";
 import { Metadata } from "next";
+import { canonicalFor } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = {
   title: "Marching Band Show Collections - Curated Lists | Bright Designs",
   description: "Explore curated collections of marching band shows by style, difficulty, and ensemble size. Find the perfect show for your band's unique needs.",
+  alternates: { canonical: canonicalFor("/collections") },
 };
 
 export default function CollectionsIndexPage() {

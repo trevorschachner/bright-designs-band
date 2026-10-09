@@ -30,7 +30,7 @@ export const metadata: Metadata = buildMetadata({
     'competitive marching band blog',
     'marching band success stories',
   ],
-  canonical: 'https://www.brightdesigns.band/blog',
+  path: '/blog',
 })
 
 const blogListSchema = {
@@ -63,8 +63,8 @@ const blogListSchema = {
 }
 
 const breadcrumbSchema = createBreadcrumbSchema([
-  { name: 'Home', url: 'https://www.brightdesigns.band' },
-  { name: 'Blog', url: 'https://www.brightdesigns.band/blog' },
+  { name: 'Home', url: '/' },
+  { name: 'Blog', url: '/blog' },
 ])
 
 const featuredPost = BLOG_POSTS.find((p) => p.featured) ?? BLOG_POSTS[0]

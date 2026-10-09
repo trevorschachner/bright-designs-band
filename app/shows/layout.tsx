@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/features/seo/JsonLd";
 import { marchingBandSchemas } from "@/lib/seo/structured-data";
 
 // Generate metadata for shows page
-export const metadata: Metadata = generateMetadata(pageSEOConfigs.shows);
+export const metadata: Metadata = generateMetadata({ ...pageSEOConfigs.shows, path: '/shows' });
 
 export default function ShowsLayout({
   children,
