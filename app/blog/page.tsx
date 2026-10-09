@@ -14,7 +14,7 @@ import {
   formatDate,
   type BlogPost,
 } from '@/lib/blog/posts'
-import { createBreadcrumbSchema } from '@/lib/seo/structured-data'
+import { absoluteUrl, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 
 export const metadata: Metadata = buildMetadata({
   title: 'Blog & Resources for Marching Band Directors | Bright Designs',
@@ -38,21 +38,21 @@ const blogListSchema = {
   '@type': 'Blog',
   name: 'Bright Designs Blog',
   description: 'Expert insights, guides, and success stories for competitive marching band directors.',
-  url: 'https://www.brightdesigns.band/blog',
+  url: absoluteUrl('/blog'),
   publisher: {
     '@type': 'Organization',
     name: 'Bright Designs',
-    url: 'https://www.brightdesigns.band',
+    url: absoluteUrl('/'),
     logo: {
       '@type': 'ImageObject',
-      url: 'https://www.brightdesigns.band/logos/brightdesignslogo-main.svg',
+      url: absoluteUrl('/logos/brightdesignslogo-main.svg'),
     },
   },
   blogPost: [...BLOG_POSTS, ...CASE_STUDIES].map((post) => ({
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.description,
-    url: `https://www.brightdesigns.band${post.href}`,
+    url: absoluteUrl(post.href),
     datePublished: post.datePublished,
     dateModified: post.dateModified || post.datePublished,
     author: {

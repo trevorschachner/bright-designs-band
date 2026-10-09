@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { generateMetadata as buildMetadata, pageSEOConfigs } from '@/lib/seo/metadata'
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import {
   Accordion,
   AccordionContent,
@@ -12,7 +12,7 @@ import { JsonLd } from '@/components/features/seo/JsonLd'
 import { createFAQSchema } from '@/lib/seo/structured-data'
 import { FAQ_SECTIONS, FAQS } from '@/lib/content/faqs'
 
-export const metadata: Metadata = buildMetadata({ ...pageSEOConfigs.faqs, path: '/faqs' })
+export const metadata: Metadata = buildMetadata({ title: "Marching Band Design FAQs - Common Questions Answered | Bright Designs", description: "Answers to the most common questions about custom marching band show design, arrangements, timelines, pricing, and working with Bright Designs.", path: '/faqs' })
 
 // Built from the same array the page renders, so the schema never drifts from the copy.
 const faqSchema = createFAQSchema(FAQS)

@@ -23,6 +23,7 @@ import { ResaleCallout } from '@/components/features/resale-callout'
 import { arrangementContactHref } from '@/lib/contact-link'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { showTitle } from '@/lib/seo/titles'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { createMusicCompositionSchema, createBreadcrumbSchema, createVideoObjectSchema, showUploadDate } from '@/lib/seo/structured-data'
 import { notFound, permanentRedirect } from 'next/navigation'
@@ -78,7 +79,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     ]
     
     return buildMetadata({
-      title: `${showRow.title} | Bright Designs`,
+      title: showTitle({ title: showRow.title, difficulty: showRow.difficulty, year: showRow.year }),
       description: showRow.description ?? 'Award-winning marching band show from Bright Designs.',
       // No ogImage: opengraph-image.tsx renders a 1200x630 PNG card (show art
       // + title + logo), which unfurls more reliably than raw WebP art.

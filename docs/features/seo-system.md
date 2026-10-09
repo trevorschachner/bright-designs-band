@@ -101,11 +101,11 @@ captured by PostHog when its web-vitals capture is on for the project. See `docs
 
 ```typescript
 // Update your page with SEO
-import { generateMetadata, pageSEOConfigs } from '@/lib/seo/metadata'
+import { generateMetadata } from '@/lib/seo/metadata'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { createServiceSchema } from '@/lib/seo/structured-data'
 
-export const metadata = generateMetadata(pageSEOConfigs.arrangements)
+export const metadata = generateMetadata({ title: "Marching Band Arrangements ... | Bright Designs", description: "120-155 characters that say what the page offers", path: "/arrangements" })
 ```
 
 ### 2. Add Structured Data

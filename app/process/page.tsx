@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { generateMetadata as buildMetadata, pageSEOConfigs } from '@/lib/seo/metadata'
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
 import {
   MessageSquare,
   Lightbulb,
@@ -9,7 +9,7 @@ import {
   Headphones,
 } from "lucide-react"
 
-export const metadata: Metadata = buildMetadata({ ...pageSEOConfigs.process, path: '/process' })
+export const metadata: Metadata = buildMetadata({ title: "Our Design Process - How We Build Your Marching Band Show | Bright Designs", description: "See how Bright Designs takes your vision from concept to competition-ready. Our proven process delivers custom marching band shows on time with full support from first concept to final product.", path: '/process' })
 
 export default function ProcessPage() {
   return (

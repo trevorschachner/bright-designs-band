@@ -19,6 +19,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { arrangementTitle } from '@/lib/seo/titles'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { ResaleCallout } from '@/components/features/resale-callout'
 import { createMusicCompositionSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
@@ -51,9 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // A null composer is left out rather than printed as "null".
   const byComposer = arr.composer ? ` by ${arr.composer}` : ''
   return buildMetadata({
-    title: arr.composer
-      ? `${arr.title} - ${arr.composer} | Bright Designs Arrangements`
-      : `${arr.title} | Bright Designs Arrangements`,
+    title: arrangementTitle({ title: arr.title, composer: arr.composer }),
     description: arr.description || `Custom arrangement of ${arr.title}${byComposer}. Professional marching band music design.`,
     // OG Image is automatically handled by opengraph-image.tsx
   })
