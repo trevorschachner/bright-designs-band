@@ -204,10 +204,18 @@ export function createMusicCompositionSchema({
   year,
   pieces,
   partOf,
+  duration,
+  educationalLevel,
+  inStock,
 }: {
   name: string
   description?: string | null
   url: string
+  /** ISO 8601 duration, e.g. PT7M30S. */
+  duration?: string | null
+  educationalLevel?: string | null
+  /** Emits a price-less Offer; we never publish prices. */
+  inStock?: boolean
   /** The arrangement's composer credit; shows leave it out. */
   composer?: string | null
   year?: number | string | null
@@ -227,6 +235,9 @@ export function createMusicCompositionSchema({
     creator: organizationRef(),
     ...(composerName ? { composer: { '@type': 'Person', name: composerName } } : {}),
     ...(year ? { dateCreated: String(year) } : {}),
+    ...(duration ? { duration } : {}),
+    ...(educationalLevel ? { educationalLevel } : {}),
+    ...(inStock ? { offers: { '@type': 'Offer', availability: 'https://schema.org/InStock', url: absoluteUrl(url), seller: organizationRef() } } : {}),
     ...(sources.length > 0 ? { isBasedOn: sources } : {}),
     ...(partOf ? { isPartOf: { '@type': 'MusicComposition', name: partOf.name, url: absoluteUrl(partOf.url) } } : {}),
   }

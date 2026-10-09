@@ -157,3 +157,19 @@ describe('JsonLd', () => {
     expect(html).toContain('\\u003c/script>')
   })
 })
+
+describe('createMusicCompositionSchema (show fields)', () => {
+  it('adds ISO duration, level and a price-less offer', () => {
+    const s = createMusicCompositionSchema({ name: 'Apex', url: '/shows/apex', duration: 'PT7M30S', educationalLevel: 'Intermediate', inStock: true }) as any
+    expect(s.duration).toBe('PT7M30S')
+    expect(s.educationalLevel).toBe('Intermediate')
+    expect(s.offers).toEqual({ '@type': 'Offer', availability: 'https://schema.org/InStock', url: 'https://brightdesigns.band/shows/apex', seller: expect.objectContaining({ '@type': 'Organization' }) })
+    expect(JSON.stringify(s)).not.toMatch(/price/i)
+  })
+  it('omits duration and level when null', () => {
+    const s = createMusicCompositionSchema({ name: 'Apex', url: '/shows/apex', duration: null, educationalLevel: null }) as any
+    expect(s).not.toHaveProperty('duration')
+    expect(s).not.toHaveProperty('educationalLevel')
+    expect(s).not.toHaveProperty('offers')
+  })
+})
