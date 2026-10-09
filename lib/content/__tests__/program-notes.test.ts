@@ -28,4 +28,35 @@ describe('parseProgramNotes', () => {
   it('returns an empty structure for null', () => {
     expect(parseProgramNotes(null)).toEqual({ sections: [], wordCount: 0, summary: '' })
   })
+  it('first line is never a heading', () => {
+    const notes = parseProgramNotes('Short title\n\nBody text.')
+    expect(notes.sections).toHaveLength(1)
+    expect(notes.sections[0].heading).toBe(null)
+    expect(notes.sections[0].blocks[0]).toEqual({ kind: 'p', text: 'Short title' })
+  })
+  it('CRLF input parses the same as LF', () => {
+    const lf = parseProgramNotes('First\n\nSecond')
+    const crlf = parseProgramNotes('First\r\n\r\nSecond')
+    expect(crlf).toEqual(lf)
+  })
+  it('whitespace-only input returns empty structure', () => {
+    expect(parseProgramNotes('   \n\n  \t  ')).toEqual({ sections: [], wordCount: 0, summary: '' })
+  })
+  it('heading-looking line as last line is a paragraph', () => {
+    const notes = parseProgramNotes('Body text.\n\nShort heading')
+    expect(notes.sections).toHaveLength(1)
+    expect(notes.sections[0].heading).toBe(null)
+    expect(notes.sections[0].blocks[1]).toEqual({ kind: 'p', text: 'Short heading' })
+  })
+  it('summary cuts at sentence end within 300 chars', () => {
+    const twoSentences = 'First sentence. ' + 'x'.repeat(300) + ' Second sentence that is much longer and goes on and on to make sure we have enough text here to test that we cut at the first sentence end.'
+    const notes = parseProgramNotes(twoSentences)
+    expect(notes.summary).toBe('First sentence.')
+  })
+  it('summary without sentence end within 300 chars appends ellipsis', () => {
+    const longSentence = 'A'.repeat(350)
+    const notes = parseProgramNotes(longSentence)
+    expect(notes.summary.length).toBeLessThanOrEqual(301)
+    expect(notes.summary).toMatch(/…$/)
+  })
 })
