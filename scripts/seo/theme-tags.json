@@ -1,0 +1,13 @@
+{
+  "themes": ["Theme: Space", "Theme: Western", "Theme: Dark", "Theme: Rock & Pop", "Theme: Art", "Theme: Classical", "Theme: Nature", "Theme: Story"],
+  "shows": {
+    "pale-blue-dot": ["Theme: Space"], "worlds-apart": ["Theme: Space"], "true-north": ["Theme: Nature", "Theme: Space"],
+    "gold-rush": ["Theme: Western", "Theme: Story"], "off-the-rails": ["Theme: Western", "Theme: Story"], "4-seasons-of-kansas": ["Theme: Nature", "Theme: Western"],
+    "the-uninvited": ["Theme: Dark"], "immortal": ["Theme: Dark"], "gargoyle": ["Theme: Dark", "Theme: Story"], "undercurrents": ["Theme: Dark", "Theme: Nature"], "strings-of-fate": ["Theme: Dark", "Theme: Story"],
+    "turn-it-up": ["Theme: Rock & Pop"], "takeover": ["Theme: Rock & Pop"], "make-some-noise": ["Theme: Rock & Pop"], "fast-lane": ["Theme: Rock & Pop", "Theme: Story"], "ride-the-wave": ["Theme: Rock & Pop", "Theme: Nature"], "in-the-key-of-cool": ["Theme: Rock & Pop"],
+    "dot-by-dot": ["Theme: Art"], "art-of-rebellion": ["Theme: Art", "Theme: Story"], "drawn-to-life": ["Theme: Art", "Theme: Story"], "in-living-color": ["Theme: Art"],
+    "a-night-at-the-opera": ["Theme: Classical", "Theme: Story"], "excalibur": ["Theme: Classical", "Theme: Story"], "thats-amore": ["Theme: Classical", "Theme: Story"], "no-strings-attached": ["Theme: Classical", "Theme: Story"],
+    "feathered-flame": ["Theme: Nature", "Theme: Story"], "the-caterpillar": ["Theme: Nature"], "apex": ["Theme: Nature", "Theme: Dark"], "head-in-the-clouds": ["Theme: Nature", "Theme: Story"],
+    "lunch-atop-a-skyscraper": ["Theme: Story"], "let-them-eat-cake": ["Theme: Story", "Theme: Classical"], "the-times": ["Theme: Story"], "spices-perfumes-toxins": ["Theme: Story", "Theme: Dark"], "aromatic": ["Theme: Story", "Theme: Classical"]
+  }
+}
