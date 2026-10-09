@@ -543,7 +543,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 mb-1.5">
                         <h3 className="text-lg font-heading font-bold text-foreground group-hover:text-primary transition-colors">
-                          <Link href={`/arrangements/${arrangement.id}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
+                          <Link href={`/arrangements/${arrangement.slug}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
                             {arrangement.title}
                           </Link>
                         </h3>
@@ -620,7 +620,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       </Button>
                     )}
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/arrangements/${arrangement.id}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                      <Link href={`/arrangements/${arrangement.slug}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                         View Details
                         <ArrowLeft className="w-4 h-4 ml-2 rotate-180" aria-hidden="true" />
                       </Link>

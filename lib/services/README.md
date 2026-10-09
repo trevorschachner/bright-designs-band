@@ -156,7 +156,7 @@ straight after saving.
 | Helper | Tags | Paths |
 | --- | --- | --- |
 | `invalidateShow(id, slug, previousSlug?)` | `show:<id>`, `shows` | `/shows/<slug>` (and the old slug), `/`, `/shows`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt`, every `/collections/<slug>` |
-| `invalidateArrangement(id, showSlug?)` | `arrangement:<id>`, `arrangements` | `/arrangements/<id>`, `/shows/<showSlug>`, `/`, `/arrangements`, `/sitemap.xml` |
+| `invalidateArrangement(id, slug, showSlug?, previousSlug?)` | `arrangement:<id>`, `arrangements` | `/arrangements/<slug>` (and the previous slug), `/shows/<showSlug>`, `/`, `/arrangements`, `/sitemap.xml` |
 | `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[id]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml`, every `/collections/<slug>` |
 | `invalidatePieces()` | `pieces` | same as tags |
 | `invalidateResources()` | `resources` | `/resources`, `/`, `/sitemap.xml` |

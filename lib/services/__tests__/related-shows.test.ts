@@ -51,10 +51,10 @@ describe('getRelatedShows', () => {
     expect(await getRelatedShows(1, 'Advanced', [])).toEqual([])
   })
 
-  it('is cached under related-shows-v1 with shows, arrangements and tags tags', async () => {
+  it('is cached under related-shows-v2 with shows, arrangements and tags tags', async () => {
     findMany.mockResolvedValue([])
     await getRelatedShows(1, null, [])
-    const call = unstableCache.mock.calls.find((c) => c[1].includes('related-shows-v1'))
+    const call = unstableCache.mock.calls.find((c) => c[1].includes('related-shows-v2'))
     expect(call).toBeTruthy()
     expect([...call![2].tags].sort()).toEqual(['arrangements', 'shows', 'tags'])
   })

@@ -20,7 +20,7 @@ export interface ShowCardItem {
   thumbnailUrl: string | null;
   graphicUrl: string | null;
   showsToTags?: { tag: { id: number; name: string } }[];
-  arrangements?: { id: number; title: string | null; scene?: string | null }[];
+  arrangements?: { id: number; slug: string; title: string | null; scene?: string | null }[];
   [key: string]: any; // Allow other properties
 }
 
@@ -156,7 +156,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
                 {show.arrangements.slice(0, 3).map((a) => (
                   <li key={a.id} className="text-sm">
                     <Link
-                      href={`/arrangements/${a.id}`}
+                      href={`/arrangements/${a.slug}`}
                       className="relative z-[2] hover:underline"
                       prefetch={false}
                     >

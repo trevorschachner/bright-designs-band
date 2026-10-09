@@ -64,7 +64,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                 <TableRow key={arrangement.id} className="group">
                   <TableCell className="font-medium">
                     <Link 
-                      href={`/arrangements/${arrangement.id}`}
+                      href={`/arrangements/${arrangement.slug}`}
                       className="text-brand-midnight hover:underline font-primary text-lg"
                     >
                       {title}
@@ -116,7 +116,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                         </Link>
                       </Button>
                       <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                        <Link href={`/arrangements/${arrangement.id}`} title="View Details">
+                        <Link href={`/arrangements/${arrangement.slug}`} title="View Details">
                           <ExternalLink className="w-4 h-4" />
                           <span className="sr-only">View Details</span>
                         </Link>
@@ -157,7 +157,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
               {/* Title + show + meta */}
               <div className="flex-1 min-w-0">
                 <Link
-                  href={`/arrangements/${arrangement.id}`}
+                  href={`/arrangements/${arrangement.slug}`}
                   className="font-semibold text-sm text-brand-midnight hover:underline line-clamp-1"
                 >
                   {title}
@@ -192,7 +192,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                   </Link>
                 </Button>
                 <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                  <Link href={`/arrangements/${arrangement.id}`} title="View Details">
+                  <Link href={`/arrangements/${arrangement.slug}`} title="View Details">
                     <ExternalLink className="w-4 h-4" />
                     <span className="sr-only">View Details</span>
                   </Link>

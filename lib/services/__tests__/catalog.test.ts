@@ -169,11 +169,11 @@ describe('cache keys', () => {
     )
   })
 
-  it('queryShows makes one cached read, keyed shows-page-v2 plus the canonical params, under the list tags', async () => {
+  it('queryShows makes one cached read, keyed shows-page-v3 plus the canonical params, under the list tags', async () => {
     await queryShows(parseShowsQuery(q({ page: '2', limit: '12' })))
     expect(cacheCalls).toHaveLength(1)
     const [call] = cacheCalls
-    expect(call.key).toEqual(['shows-page-v2'])
+    expect(call.key).toEqual(['shows-page-v3'])
     expect(call.args).toEqual([{ conditions: [], sort: [], page: 2, limit: 12 }])
     expect(call.opts.tags).toEqual(expect.arrayContaining(['shows', 'arrangements', 'tags']))
     expect(call.opts.revalidate).toBe(3600)
@@ -187,9 +187,9 @@ describe('cache keys', () => {
 
   it('queryArrangements uses its own key and the trimmed projection', async () => {
     await queryArrangements(parseArrangementsQuery(q({})))
-    expect(cacheCalls[0].key).toEqual(['arrangements-page-v3'])
+    expect(cacheCalls[0].key).toEqual(['arrangements-page-v4'])
     const opts = arrangementsFindMany.mock.calls[0][0] as { columns: Record<string, boolean>; with: Record<string, unknown> }
-    expect(Object.keys(opts.columns).sort()).toEqual(['composer', 'durationSeconds', 'id', 'sampleScoreUrl', 'title'])
+    expect(Object.keys(opts.columns).sort()).toEqual(['composer', 'durationSeconds', 'id', 'sampleScoreUrl', 'slug', 'title'])
     expect(opts.with).not.toHaveProperty('arrangementsToTags')
   })
 })

@@ -75,7 +75,7 @@ describe('getFeaturedShows', () => {
     )
     expect(opts.columns).not.toHaveProperty('price')
     expect(opts.with?.showsToTags.with.tag.columns).toEqual({ id: true, name: true })
-    expect(opts.with?.showArrangements.with.arrangement.columns).toEqual({ id: true, title: true, scene: true })
+    expect(opts.with?.showArrangements.with.arrangement.columns).toEqual({ id: true, slug: true, title: true, scene: true })
     expect(opts.with?.files.columns).toEqual({ storagePath: true })
   })
 

@@ -57,7 +57,10 @@ function partsDb(overrides: Partial<Record<string, (op: Op) => unknown[]>> = {})
     const custom = overrides[`${op.kind}:${op.table}`]
     if (custom) return custom(op)
     if (op.kind === 'select' && op.table === 'shows') return [{ id: 7, slug: 'my-show' }]
-    if (op.kind === 'select' && op.table === 'arrangements') return [{ id: 11, updatedAt: new Date(LOADED) }]
+    // The locking read is the part itself; an unlocked read is the slug lookup (free by default).
+    if (op.kind === 'select' && op.table === 'arrangements') {
+      return op.lock ? [{ id: 11, slug: 'pipeline', updatedAt: new Date(LOADED) }] : []
+    }
     if (op.kind === 'select' && op.table === 'show_arrangements') {
       return [11, 12, 13].map((arrangementId, i) => ({ arrangementId, orderIndex: i + 1, slug: 'my-show' }))
     }
@@ -115,7 +118,7 @@ describe('createArrangement', () => {
     expect(insert.values).toMatchObject({ title: 'Part 4', grade: null })
     expect(opsOn(fake.ops, 'show_arrangements', 'insert')[0].values).toEqual({ showId: 7, arrangementId: 14, orderIndex: 4 })
     expect(opsOn(fake.ops, 'arrangements_to_tags', 'insert')[0].values).toEqual([{ arrangementId: 14, tagId: 2 }])
-    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(14, 'my-show')
+    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(14, 'part-4', 'my-show')
     expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
   })
 
@@ -145,7 +148,20 @@ describe('updateArrangement', () => {
     expect(update.set).toMatchObject({ percussionArranger: 'Ryan', durationSeconds: 270, scene: 'Closer' })
     expect(update.set?.updatedAt).toBeInstanceOf(Date)
     expect(opsOn(fake.ops, 'arrangements_to_tags')).toHaveLength(0)
-    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'my-show')
+    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'pipeline', 'my-show', 'pipeline')
+  })
+
+  it('an explicit slug change is saved and passes the previous slug to invalidation', async () => {
+    const fake = state.fake
+    await updateArrangement({ id: 11, updatedAt: LOADED, slug: 'pipeline-chantays' })
+    expect(opsOn(fake.ops, 'arrangements', 'update')[0].set).toMatchObject({ slug: 'pipeline-chantays' })
+    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'pipeline-chantays', 'my-show', 'pipeline')
+  })
+
+  it('a slug another part already uses is invalid, nothing written', async () => {
+    const fake = use(partsDb({ 'select:arrangements': (op) => (op.lock ? [{ id: 11, slug: 'pipeline', updatedAt: new Date(LOADED) }] : [{ id: 12 }]) }))
+    expect(await updateArrangement({ id: 11, updatedAt: LOADED, slug: 'taken' })).toMatchObject({ ok: false, error: 'invalid' })
+    expect(opsOn(fake.ops, 'arrangements', 'update')).toHaveLength(0)
   })
 
   it('setArrangementTags: unknown tag is invalid, links untouched', async () => {
@@ -161,11 +177,11 @@ describe('updateArrangement', () => {
 
 describe('deleteArrangement', () => {
   it('reads the show slug before the cascade, then invalidates', async () => {
-    const fake = state.fake
+    const fake = use(partsDb({ 'select:arrangements': () => [{ slug: 'pipeline' }] }))
     expect(await deleteArrangement({ id: 11 })).toEqual({ ok: true, data: { id: 11 } })
     const kinds = fake.ops.map((op) => `${op.kind}:${op.table}`)
     expect(kinds.indexOf('select:show_arrangements')).toBeLessThan(kinds.indexOf('delete:arrangements'))
-    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'my-show')
+    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'pipeline', 'my-show')
   })
 
   it('not_found when nothing was deleted', async () => {
@@ -209,7 +225,7 @@ describe('setArrangementPieces', () => {
       { arrangementId: 11, pieceId: 22, orderIndex: 1 },
       { arrangementId: 11, pieceId: 21, orderIndex: 2 },
     ])
-    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'my-show')
+    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'pipeline', 'my-show')
   })
 
   it('an unknown piece is invalid and nothing is relinked; duplicates fail the schema', async () => {

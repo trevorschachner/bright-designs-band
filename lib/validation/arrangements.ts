@@ -45,6 +45,12 @@ const fields = {
   tags: z.array(rowId).max(200),
 }
 
+/** Same pattern as show slugs: lowercase words separated by single hyphens. */
+export const arrangementSlugSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase words separated by hyphens')
+  .max(200, 'Slug is too long')
+
 const optionalFields = z.object(fields).partial().omit({ title: true })
 
 /** `createArrangement`: a new part, appended to the end of the show's list. */
@@ -55,7 +61,7 @@ export type CreateArrangementInput = z.input<typeof createArrangementSchema>
 
 /** `updateArrangement`: partial (only the keys sent change); `id` and `updatedAt` required. */
 export const updateArrangementSchema = optionalFields
-  .extend({ id: rowId, updatedAt: concurrencyStamp, title: fields.title.optional() })
+  .extend({ id: rowId, updatedAt: concurrencyStamp, title: fields.title.optional(), slug: arrangementSlugSchema.optional() })
   .strict()
 export type UpdateArrangementInput = z.input<typeof updateArrangementSchema>
 

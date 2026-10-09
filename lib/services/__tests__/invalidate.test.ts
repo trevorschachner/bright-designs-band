@@ -34,7 +34,7 @@ beforeEach(() => {
 describe('every tag is expired immediately', () => {
   it('passes { expire: 0 }, never the single-argument form', () => {
     invalidateShow(1, 'a')
-    invalidateArrangement(2, 'a')
+    invalidateArrangement(2, 'pipeline', 'a')
     invalidateTags()
     invalidatePieces()
     invalidateResources()
@@ -66,14 +66,19 @@ describe('invalidateShow', () => {
 
 describe('invalidateArrangement', () => {
   it('expires the arrangement and the list, its page, the parent show page, home, the list and the sitemap', () => {
-    invalidateArrangement(12, 'apex')
+    invalidateArrangement(12, 'pipeline', 'apex')
     expect(tags()).toEqual(['arrangement:12', 'arrangements'])
-    expect(paths()).toEqual(['/arrangements/12', '/shows/apex', '/', '/arrangements', '/sitemap.xml'])
+    expect(paths()).toEqual(['/arrangements/pipeline', '/shows/apex', '/', '/arrangements', '/sitemap.xml'])
   })
 
   it('works without a parent show', () => {
-    invalidateArrangement(12)
-    expect(paths()).toEqual(['/arrangements/12', '/', '/arrangements', '/sitemap.xml'])
+    invalidateArrangement(12, 'pipeline')
+    expect(paths()).toEqual(['/arrangements/pipeline', '/', '/arrangements', '/sitemap.xml'])
+  })
+
+  it('drops the old URL too when the slug changed', () => {
+    invalidateArrangement(12, 'pipeline-2', 'apex', 'pipeline')
+    expect(paths()).toEqual(['/arrangements/pipeline-2', '/arrangements/pipeline', '/shows/apex', '/', '/arrangements', '/sitemap.xml'])
   })
 })
 
@@ -83,7 +88,7 @@ describe('invalidateTags and invalidatePieces', () => {
     expect(tags()).toEqual(['tags'])
     expect(paths()).toEqual([
       '/shows/[slug] (page)',
-      '/arrangements/[id] (page)',
+      '/arrangements/[slug] (page)',
       '/',
       '/shows',
       '/arrangements',
@@ -96,7 +101,7 @@ describe('invalidateTags and invalidatePieces', () => {
     invalidatePieces()
     expect(tags()).toEqual(['pieces'])
     expect(paths()).toContain('/shows/[slug] (page)')
-    expect(paths()).toContain('/arrangements/[id] (page)')
+    expect(paths()).toContain('/arrangements/[slug] (page)')
   })
 })
 

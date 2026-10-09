@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { getArrangementDetail } from '@/lib/services/arrangements'
+import { getArrangementBySlug } from '@/lib/services/arrangements'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -18,12 +18,12 @@ export const size = {
 
 export const contentType = 'image/png'
 
-export default async function Image({ params }: { params: { id: string } }) {
-  const { id } = await params
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
 
   // The page's own cached read: a card render costs no query when the page
   // (or another card) has already loaded this arrangement.
-  const arr = /^\d+$/.test(id) ? await getArrangementDetail(Number(id)) : null
+  const arr = /^\d+$/.test(slug) ? null : await getArrangementBySlug(slug)
 
   // Fallback values
   const title = arr?.title || 'Custom Arrangement'

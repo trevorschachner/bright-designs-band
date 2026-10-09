@@ -30,7 +30,7 @@ const STATIC_PAGES: { path: string; changeFrequency: 'weekly' | 'monthly' | 'yea
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getPublicSiteUrl().replace(/\/+$/, '')
   const url = (path: string) => (path === '/' ? base : `${base}${path}`)
-  const { shows, arrangementIds } = await getSitemapEntries()
+  const { shows, arrangements } = await getSitemapEntries()
 
   const posts = [...BLOG_POSTS, ...CASE_STUDIES]
 
@@ -47,8 +47,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
-    ...arrangementIds.map((id) => ({
-      url: url(`/arrangements/${id}`),
+    ...arrangements.map((a) => ({
+      url: url(`/arrangements/${a.slug}`),
+      ...(a.updatedAt ? { lastModified: a.updatedAt } : {}),
       changeFrequency: 'monthly' as const,
       priority: 0.6,
     })),

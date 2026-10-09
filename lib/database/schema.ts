@@ -65,6 +65,9 @@ export const arrangements = pgTable('arrangements', {
   // the display name and interpolates it unguarded. Zero nulls exist, so the
   // constraint matches how the column is actually used.
   title: text('title').notNull(),
+  // Public URL slug (/arrangements/<slug>); unique via arrangements_slug_unique_idx
+  // (drizzle/migrations/2026-10-10_arrangements_slug.sql).
+  slug: text('slug').notNull().unique(),
   // Written by the arrangements API but never read for ordering — reads use
   // showArrangements.orderIndex. Retained because 50 rows carry real values.
   displayOrder: integer('display_order').default(0).notNull(),

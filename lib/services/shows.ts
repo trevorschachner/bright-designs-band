@@ -40,7 +40,7 @@ export type ShowSummary = {
   featured: boolean;
   createdAt: string | null;
   showsToTags: { tag: TagRef }[];
-  arrangements: { id: number; title: string | null; scene: string | null }[];
+  arrangements: { id: number; slug: string; title: string | null; scene: string | null }[];
 };
 
 /** Storage path or absolute URL to a public URL. Null when it cannot be built. */
@@ -114,7 +114,7 @@ function summaryRelations() {
     showArrangements: {
       columns: {},
       orderBy: [showArrangements.orderIndex],
-      with: { arrangement: { columns: { id: true, title: true, scene: true } } },
+      with: { arrangement: { columns: { id: true, slug: true, title: true, scene: true } } },
     },
     files: {
       columns: { storagePath: true },
@@ -137,7 +137,7 @@ type SummaryRow = {
   featured: boolean;
   createdAt: Date | string;
   showsToTags: { tag: TagRef | null }[];
-  showArrangements: { arrangement: { id: number; title: string | null; scene: string | null } | null }[];
+  showArrangements: { arrangement: { id: number; slug: string; title: string | null; scene: string | null } | null }[];
   files: { storagePath: string }[];
 };
 
@@ -158,7 +158,7 @@ function toSummary(s: SummaryRow): ShowSummary {
     showsToTags: presentTags(s.showsToTags),
     arrangements: s.showArrangements
       .map((sa) => sa.arrangement)
-      .filter((a): a is { id: number; title: string | null; scene: string | null } => Boolean(a)),
+      .filter((a): a is { id: number; slug: string; title: string | null; scene: string | null } => Boolean(a)),
   };
 }
 
@@ -181,7 +181,7 @@ async function fetchRelatedShows(showId: number, difficulty: ShowDifficulty | nu
 }
 
 /** Up to 3 shows to link from a show page: same theme tag first, then same difficulty. */
-export const getRelatedShows = cachedRead('related-shows-v1', fetchRelatedShows, {
+export const getRelatedShows = cachedRead('related-shows-v2', fetchRelatedShows, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
@@ -205,7 +205,7 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
  * Whatever is featured, newest first, at most six. An empty list is a real
  * answer (nothing featured), and the home page renders its fallback copy.
  */
-export const getFeaturedShows = cachedRead('featured-shows-v4', fetchFeaturedShows, {
+export const getFeaturedShows = cachedRead('featured-shows-v5', fetchFeaturedShows, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
@@ -238,7 +238,7 @@ async function fetchShowsByFilter(filter: ShowFilter): Promise<ShowSummary[]> {
 }
 
 /** Shows for a collection landing page (difficulty and/or tag name). */
-export const getShowsByFilter = cachedRead('collection-shows-v2', fetchShowsByFilter, {
+export const getShowsByFilter = cachedRead('collection-shows-v3', fetchShowsByFilter, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
@@ -271,6 +271,7 @@ export type ShowListItem = {
   createdAt: string | null;
   arrangements: {
     id: number;
+    slug: string;
     title: string;
     scene: string | null;
     durationSeconds: number | null;
@@ -343,7 +344,7 @@ async function fetchShowsRows(
           orderBy: [showArrangements.orderIndex],
           with: {
             arrangement: {
-              columns: { id: true, title: true, scene: true, durationSeconds: true, sampleScoreUrl: true },
+              columns: { id: true, slug: true, title: true, scene: true, durationSeconds: true, sampleScoreUrl: true },
             },
           },
         },
@@ -392,7 +393,7 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
  * page lives 5 minutes instead of an hour: free text is the one input with a
  * long tail of one-off values.
  */
-export const getShowsPage = cachedRead('shows-page-v2', fetchShowsPage, {
+export const getShowsPage = cachedRead('shows-page-v3', fetchShowsPage, {
   tags: LIST_TAGS,
   atBuildWithoutDb: { data: [] as ShowListItem[], total: 0 },
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
@@ -468,7 +469,7 @@ async function fetchShowBySlug(slug: string): Promise<ShowWithTags | null> {
   return findShowWithTags(eq(shows.slug, slug));
 }
 
-export const getShowBySlug = cachedRead('show-by-slug-v3', fetchShowBySlug, {
+export const getShowBySlug = cachedRead('show-by-slug-v4', fetchShowBySlug, {
   tags: () => [TAGS.shows, TAGS.tags],
   atBuildWithoutDb: null as ShowWithTags | null,
 });
@@ -527,6 +528,7 @@ export type ShowArrangementFile = {
 
 export type ShowArrangement = {
   id: number;
+  slug: string;
   title: string;
   scene: string | null;
   composer: string | null;
@@ -550,6 +552,7 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
   const result = await db.execute(sql`
     SELECT
       a.id as arrangement_id,
+      a.slug as arrangement_slug,
       a.title as arrangement_title,
       a.scene,
       a.composer,
@@ -591,6 +594,7 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
     if (!arrangement) {
       arrangement = {
         id: arrId,
+        slug: row.arrangement_slug,
         title: row.arrangement_title,
         scene: row.scene ?? null,
         composer: row.composer ?? null,
@@ -633,7 +637,7 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
   }));
 }
 
-export const getShowArrangements = cachedRead('show-arrangements-v2', fetchShowArrangements, {
+export const getShowArrangements = cachedRead('show-arrangements-v3', fetchShowArrangements, {
   tags: (showId) => [TAGS.shows, TAGS.show(showId), TAGS.arrangements],
   atBuildWithoutDb: [] as ShowArrangement[],
 });

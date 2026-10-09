@@ -23,3 +23,14 @@ export function slugFromTitle(title: string): string {
       .replace(/[\s_]+/g, '-')
   );
 }
+
+/**
+ * A public slug for a new arrangement: the title's slug, then `-2`, `-3`...
+ * until `exists` says the candidate is free.
+ */
+export async function uniqueArrangementSlug(title: string, exists: (slug: string) => Promise<boolean>): Promise<string> {
+  const base = slugFromTitle(title) || 'arrangement'
+  let candidate = base
+  for (let n = 2; await exists(candidate); n++) candidate = `${base}-${n}`
+  return candidate
+}
