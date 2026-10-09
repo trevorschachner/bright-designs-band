@@ -182,7 +182,7 @@ async function fetchRelatedShows(showId: number, difficulty: ShowDifficulty | nu
 
 /** Up to 3 shows to link from a show page: same theme tag first, then same difficulty. */
 export const getRelatedShows = cachedRead('related-shows-v1', fetchRelatedShows, {
-  tags: () => [TAGS.shows, TAGS.tags],
+  tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
 

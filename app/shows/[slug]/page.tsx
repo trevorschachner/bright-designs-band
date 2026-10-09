@@ -68,6 +68,11 @@ function matchingCollections(displayDifficulty: string, tagNames: string[]) {
 
 const ENSEMBLE_LABEL: Record<string, string> = { small: 'small bands', medium: 'medium-sized bands', large: 'large bands' }
 
+/** Headings with their own section; any other section renders under the about H2. */
+const KNOWN_HEADINGS = new Set(['the music', 'who it suits', 'what you get'])
+
+const pieceLabel = (p: { title: string; composer?: string | null }) => (p.composer ? `${p.title} (${p.composer})` : p.title)
+
 const notesOnly = (notes: ParsedNotes, heading: string): ParsedNotes => ({
   ...notes,
   sections: notes.sections.filter((s) => s.heading?.toLowerCase() === heading),
@@ -239,15 +244,19 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     arrangements.map((a) => ({
       title: a.title ?? '',
       scene: a.scene ?? null,
-      pieces: (piecesByArrangement[a.id] ?? []).map((p) => (p.composer ? `${p.title} (${p.composer})` : p.title)),
+      pieces: (piecesByArrangement[a.id] ?? []).map(pieceLabel),
     }))
   )
 
-  const tagNames = (showsToTags ?? []).map((r: any) => r.tag.name as string)
+  const tagNames = (showsToTags ?? []).map((r) => r.tag.name)
   const collectionLinks = matchingCollections(displayDifficulty, tagNames)
   const related = await getRelatedShows(showId, (displayDifficulty || null) as ShowDifficulty | null, tagNames)
 
-  const aboutNotes: ParsedNotes = { ...notes, sections: notes.sections.filter((s) => s.heading === null) }
+  const aboutSections = notes.sections.filter((s) => !KNOWN_HEADINGS.has(s.heading?.toLowerCase() ?? ''))
+  const aboutNotes: ParsedNotes = {
+    ...notes,
+    sections: [...aboutSections.filter((s) => s.heading === null), ...aboutSections.filter((s) => s.heading !== null)],
+  }
   const musicNotes = notesOnly(notes, 'the music')
   const suitsNotes = notesOnly(notes, 'who it suits')
   const getNotes = notesOnly(notes, 'what you get')
@@ -384,7 +393,9 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
               <section aria-labelledby="music-heading" className="mb-10">
                 <h2 id="music-heading" className="text-2xl font-heading font-bold text-foreground mb-4">What music is in {show.title}?</h2>
                 {arrangements.length > 0 && (
-                  <table className="w-full text-sm mb-4">
+                  <div className="overflow-x-auto mb-4">
+                  <table className="w-full text-sm">
+                    <caption className="sr-only">Parts of {show.title}</caption>
                     <thead>
                       <tr className="text-left text-muted-foreground border-b border-border">
                         <th className="py-2 pr-3 font-medium">Part</th>
@@ -401,13 +412,14 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                           <td className="py-2 pr-3">{a.scene ?? ''}</td>
                           <td className="py-2 pr-3">{a.title}</td>
                           <td className="py-2 pr-3">
-                            {(piecesByArrangement[a.id] ?? []).map((p) => (p.composer ? `${p.title} (${p.composer})` : p.title)).join('; ')}
+                            {(piecesByArrangement[a.id] ?? []).map(pieceLabel).join('; ')}
                           </td>
                           <td className="py-2">{a.durationSeconds ? formatSeconds(a.durationSeconds) : ''}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
                 <ProgramNotes notes={musicNotes} />
               </section>
