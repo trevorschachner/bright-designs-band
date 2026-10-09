@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { collections } from '@/lib/collections'
 import {
   invalidateShow,
   invalidateArrangement,
@@ -16,12 +17,7 @@ vi.mock('next/cache', () => ({ revalidateTag, revalidatePath }))
 
 // Prerendered collection landing pages, named because one built without a
 // database holds no tagged read to expire.
-const COLLECTIONS = [
-  '/collections/competitive-marching-band-shows',
-  '/collections/small-band-marching-shows',
-  '/collections/easy-marching-band-shows',
-  '/collections/grade-3-marching-band-shows',
-]
+const COLLECTIONS = collections.map((c) => `/collections/${c.slug}`)
 
 const tags = () => revalidateTag.mock.calls.map(([tag]) => tag)
 const paths = () => revalidatePath.mock.calls.map(([path, type]) => (type ? `${path} (${type})` : path))

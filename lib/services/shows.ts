@@ -8,7 +8,7 @@
 
 import { db } from '@/lib/database';
 import { shows, showsToTags, showArrangements, files, tags, slugRedirects } from '@/lib/database/schema';
-import { and, desc, eq, exists, ilike, inArray, ne, sql, count, type SQL } from 'drizzle-orm';
+import { and, desc, eq, exists, gte, ilike, inArray, ne, sql, count, type SQL } from 'drizzle-orm';
 import { likePattern } from '@/lib/filters/admin-search';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterCondition, SortCondition } from '@/lib/filters/types';
@@ -16,6 +16,7 @@ import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 import { shouldSkipSupabase } from '@/lib/env';
 import { publicStorageUrl } from '@/lib/media/public-url';
 import { TAGS } from '@/lib/cache-tags';
+import { collections, matchesFilter } from '@/lib/collections';
 import { cachedRead, toIso, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
 import type { EnsembleSize } from '@/lib/validation/enums';
 import { PG_UNDEFINED_TABLE, postgresCode } from '@/lib/database/errors';
@@ -210,19 +211,21 @@ export const getFeaturedShows = cachedRead('featured-shows-v5', fetchFeaturedSho
   atBuildWithoutDb: [] as ShowSummary[],
 });
 
-export type ShowFilter = { difficulty?: ShowDifficulty; tag?: string };
+export type ShowFilter = { difficulty?: ShowDifficulty; tags?: string[]; yearMin?: number };
 
 async function fetchShowsByFilter(filter: ShowFilter): Promise<ShowSummary[]> {
   const conditions: SQL[] = [];
   if (filter.difficulty) conditions.push(eq(shows.difficulty, filter.difficulty));
-  if (filter.tag) {
+  if (filter.yearMin) conditions.push(gte(shows.year, filter.yearMin));
+  // All-of: one exists subquery per tag.
+  for (const tagName of filter.tags ?? []) {
     conditions.push(
       exists(
         db
           .select({ one: sql`1` })
           .from(showsToTags)
           .innerJoin(tags, eq(tags.id, showsToTags.tagId))
-          .where(and(eq(showsToTags.showId, shows.id), eq(tags.name, filter.tag)))
+          .where(and(eq(showsToTags.showId, shows.id), eq(tags.name, tagName)))
       )
     );
   }
@@ -230,17 +233,38 @@ async function fetchShowsByFilter(filter: ShowFilter): Promise<ShowSummary[]> {
   const rows = await db.query.shows.findMany({
     columns: SUMMARY_COLUMNS,
     where: conditions.length > 0 ? and(...conditions) : undefined,
-    orderBy: [desc(shows.createdAt)],
-    limit: 12,
+    orderBy: [desc(shows.year), desc(shows.createdAt)],
+    limit: 60,
     with: summaryRelations(),
   });
   return (rows as SummaryRow[]).map(toSummary);
 }
 
-/** Shows for a collection landing page (difficulty and/or tag name). */
-export const getShowsByFilter = cachedRead('collection-shows-v3', fetchShowsByFilter, {
+/** Shows for a collection landing page (difficulty, all-of tag names, minimum year). */
+export const getShowsByFilter = cachedRead('collection-shows-v4', fetchShowsByFilter, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
+});
+
+async function fetchCollectionCounts(): Promise<Record<string, number>> {
+  const rows = await db.query.shows.findMany({
+    columns: { id: true, difficulty: true, year: true },
+    with: { showsToTags: { with: { tag: { columns: { name: true } } } } },
+  });
+  const facts = rows.map((r) => ({
+    difficulty: r.difficulty as string | null,
+    year: r.year,
+    tagNames: r.showsToTags.map((t) => t.tag?.name).filter((n): n is string => Boolean(n)),
+  }));
+  const counts: Record<string, number> = {};
+  for (const c of collections) counts[c.slug] = facts.filter((f) => matchesFilter(f, c.filter)).length;
+  return counts;
+}
+
+/** How many shows each collection holds, by slug. Drives which collection pages are published. */
+export const getCollectionCounts = cachedRead('collection-counts-v1', fetchCollectionCounts, {
+  tags: () => [TAGS.shows, TAGS.tags],
+  atBuildWithoutDb: {} as Record<string, number>,
 });
 
 // ---------------------------------------------------------------------------

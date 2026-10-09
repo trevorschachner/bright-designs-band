@@ -14,6 +14,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(target)
   }
 
+  // Renamed collection: /collections/small-band-marching-shows -> ...-band-shows (308)
+  if (/^\/collections\/small-band-marching-shows\/?$/.test(request.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL('/collections/small-band-marching-band-shows', request.url), 308)
+  }
+
   if (shouldSkipSupabase()) {
     return response
   }
