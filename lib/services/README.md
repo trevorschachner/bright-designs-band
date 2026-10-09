@@ -7,7 +7,7 @@ Writes live in the API routes and in the Server Actions in `lib/actions/`
 | File | What it reads |
 | --- | --- |
 | `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs, old-slug redirects (`getSlugRedirect`, tagged `shows`), the show index for `/llms.txt` |
-| `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[id]` page and OG image (`getArrangementDetail`: one relational query) |
+| `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[slug]` page and OG image (`getArrangementBySlug`: one relational query; `getArrangementSlugById` for the numeric-id 308) |
 | `catalog.ts` | `queryShows` / `queryArrangements`: parse + bound the catalog query, then one paged read (below) |
 | `pieces.ts` | Public source-piece credits; admin piece lists |
 | `resources.ts` | Active resources; one resource by id or slug (`/api/resources/[id]`); admin list including drafts |

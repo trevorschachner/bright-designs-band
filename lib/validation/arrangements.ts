@@ -50,6 +50,7 @@ export const arrangementSlugSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase words separated by hyphens')
   .max(200, 'Slug is too long')
+  .refine((v) => !/^\d+$/.test(v), 'Slug cannot be all digits')
 
 const optionalFields = z.object(fields).partial().omit({ title: true })
 

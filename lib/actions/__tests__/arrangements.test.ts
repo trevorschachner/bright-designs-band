@@ -115,7 +115,7 @@ describe('createArrangement', () => {
     const result = await createArrangement({ showId: 7, title: 'Part 4', grade: '', tags: [2] })
     expect(result).toEqual({ ok: true, data: { id: 14, title: 'Part', updatedAt: SAVED.toISOString() } })
     const [insert] = opsOn(fake.ops, 'arrangements', 'insert')
-    expect(insert.values).toMatchObject({ title: 'Part 4', grade: null })
+    expect(insert.values).toMatchObject({ title: 'Part 4', grade: null, slug: 'part-4' })
     expect(opsOn(fake.ops, 'show_arrangements', 'insert')[0].values).toEqual({ showId: 7, arrangementId: 14, orderIndex: 4 })
     expect(opsOn(fake.ops, 'arrangements_to_tags', 'insert')[0].values).toEqual([{ arrangementId: 14, tagId: 2 }])
     expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(14, 'part-4', 'my-show')
