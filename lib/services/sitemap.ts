@@ -4,26 +4,27 @@ import { db } from '@/lib/database';
 import { arrangements, shows } from '@/lib/database/schema';
 import { asc, desc } from 'drizzle-orm';
 import { TAGS } from '@/lib/cache-tags';
+import { isIndexableArrangement } from '@/lib/seo/indexable';
 import { cachedRead, toIso } from './cache';
 
 export type SitemapEntries = {
   shows: { slug: string; updatedAt: string | null }[];
-  arrangements: { slug: string; updatedAt: string | null }[];
+  arrangements: { slug: string; indexable: boolean; updatedAt: string | null }[];
 };
 
 async function fetchSitemapEntries(): Promise<SitemapEntries> {
   const [showRows, arrangementRows] = await Promise.all([
     db.select({ slug: shows.slug, updatedAt: shows.updatedAt }).from(shows).orderBy(desc(shows.updatedAt)),
-    db.select({ slug: arrangements.slug, updatedAt: arrangements.updatedAt }).from(arrangements).orderBy(asc(arrangements.id)),
+    db.select({ slug: arrangements.slug, description: arrangements.description, updatedAt: arrangements.updatedAt }).from(arrangements).orderBy(asc(arrangements.id)),
   ]);
   return {
     shows: showRows.filter((r) => r.slug).map((r) => ({ slug: r.slug, updatedAt: toIso(r.updatedAt) })),
-    arrangements: arrangementRows.filter((r) => r.slug).map((r) => ({ slug: r.slug, updatedAt: toIso(r.updatedAt) })),
+    arrangements: arrangementRows.filter((r) => r.slug).map((r) => ({ slug: r.slug, indexable: isIndexableArrangement(r.description), updatedAt: toIso(r.updatedAt) })),
   };
 }
 
 /** Show slugs (newest edit first) and arrangement slugs for /sitemap.xml. */
-export const getSitemapEntries = cachedRead('sitemap-entries-v2', fetchSitemapEntries, {
+export const getSitemapEntries = cachedRead('sitemap-entries-v3', fetchSitemapEntries, {
   tags: () => [TAGS.shows, TAGS.arrangements],
   atBuildWithoutDb: { shows: [], arrangements: [] } as SitemapEntries,
 });

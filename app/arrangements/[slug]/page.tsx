@@ -19,6 +19,7 @@ import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { cache } from 'react'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { isIndexableArrangement } from '@/lib/seo/indexable'
 import { arrangementTitle } from '@/lib/seo/titles'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { ResaleCallout } from '@/components/features/resale-callout'
@@ -54,6 +55,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: arrangementTitle({ title: arr.title, composer: arr.composer }),
     description: arr.description || `Custom arrangement of ${arr.title}${byComposer}. Professional marching band music design.`,
     path: `/arrangements/${arr.slug}`,
+    noindex: !isIndexableArrangement(arr.description),
     // OG Image is automatically handled by opengraph-image.tsx
   })
 }

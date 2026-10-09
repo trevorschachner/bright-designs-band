@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/services/sitemap', () => ({
   getSitemapEntries: vi.fn(async () => ({
     shows: [{ slug: 'true-north', updatedAt: '2026-09-01T00:00:00.000Z' }],
-    arrangements: [{ slug: 'pipeline', updatedAt: '2026-09-02T00:00:00.000Z' }],
+    arrangements: [
+      { slug: 'pipeline', indexable: true, updatedAt: '2026-09-02T00:00:00.000Z' },
+      { slug: 'thin', indexable: false, updatedAt: null },
+    ],
   })),
 }))
 
@@ -56,6 +59,7 @@ describe('sitemap', () => {
     expect(urls.filter((u) => u.includes('/collections/'))).toHaveLength(collections.length)
     expect(urls).toContain('https://brightdesigns.band/shows/true-north')
     expect(urls).toContain('https://brightdesigns.band/arrangements/pipeline')
+    expect(urls).not.toContain('https://brightdesigns.band/arrangements/thin')
     expect(urls).toContain('https://brightdesigns.band/blog/how-to-choose-a-designer')
     expect(urls).toContain('https://brightdesigns.band/blog/case-studies/dorman')
     expect(new Set(urls).size).toBe(urls.length)

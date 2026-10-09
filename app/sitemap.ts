@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
-    ...arrangements.map((a) => ({
+    ...arrangements.filter((a) => a.indexable).map((a) => ({
       url: url(`/arrangements/${a.slug}`),
       ...(a.updatedAt ? { lastModified: a.updatedAt } : {}),
       changeFrequency: 'monthly' as const,
