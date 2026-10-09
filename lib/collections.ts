@@ -68,7 +68,7 @@ export const collections: CollectionConfig[] = [
     slug: 'indoor-winds-shows',
     title: 'Indoor Winds Shows | Bright Designs',
     h1: 'Indoor Winds Shows',
-    description: 'Indoor winds shows written for the gym: a short runtime, tight movements, heavier sound design and music that lands fast up close.',
+    description: 'Indoor winds shows written for the gym: five to six minutes, three movements, heavier sound design and music that lands fast up close.',
     group: 'size',
     keywords: ['indoor winds shows', 'winter winds show', 'indoor winds marching band show', 'winds show for sale'],
     filter: { tags: ['Indoor Winds'] },

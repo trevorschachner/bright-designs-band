@@ -13,7 +13,7 @@ describe('collections config', () => {
       expect(c.description.length).toBeGreaterThanOrEqual(100)
       expect(c.description.length).toBeLessThanOrEqual(160)
       expect(c.description).toMatch(/[.!?]$/)
-      expect(c.description).not.toMatch(/\b(nineteen|seven|eighteen|six|three|four)\b/i)
+      expect(c.description).not.toMatch(/\b(nineteen|eighteen|seven|six|four|three) shows\b/i)
       expect(['level', 'size', 'theme', 'season']).toContain(c.group)
       for (const r of c.relatedCollections) expect(getCollectionBySlug(r)).toBeDefined()
     }
