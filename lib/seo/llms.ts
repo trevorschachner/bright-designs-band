@@ -70,6 +70,7 @@ export function buildLlmsFullTxt(shows: ShowIndexEntry[], faqs: Faq[], opts?: Op
       `### [${clean(show.title)}](${root}/shows/${show.slug})`,
       ...(meta ? ['', meta] : []),
       ...(show.description ? ['', clean(show.description)] : []),
+      ...(clean(show.programNotes) ? ['', clean(show.programNotes)] : []),
     ].join('\n')
   })
   const faqBlocks = faqs.map((faq) => `### ${clean(faq.question)}\n\n${clean(faq.answer)}`)

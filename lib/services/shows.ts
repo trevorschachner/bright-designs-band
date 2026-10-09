@@ -8,7 +8,7 @@
 
 import { db } from '@/lib/database';
 import { shows, showsToTags, showArrangements, files, tags, slugRedirects } from '@/lib/database/schema';
-import { and, desc, eq, exists, ilike, inArray, sql, count, type SQL } from 'drizzle-orm';
+import { and, desc, eq, exists, ilike, inArray, ne, sql, count, type SQL } from 'drizzle-orm';
 import { likePattern } from '@/lib/filters/admin-search';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterCondition, SortCondition } from '@/lib/filters/types';
@@ -164,6 +164,27 @@ function toSummary(s: SummaryRow): ShowSummary {
 
 /** Card and list reads join arrangements and tags, so they carry those tags too. */
 const LIST_TAGS = () => [TAGS.shows, TAGS.arrangements, TAGS.tags];
+
+async function fetchRelatedShows(showId: number, difficulty: ShowDifficulty | null, tagNames: string[]): Promise<ShowSummary[]> {
+  const themes = tagNames.filter((t) => t.startsWith('Theme: '));
+  const rows = await db.query.shows.findMany({
+    columns: SUMMARY_COLUMNS,
+    where: ne(shows.id, showId),
+    orderBy: [desc(shows.createdAt)],
+    limit: 40,
+    with: summaryRelations(),
+  });
+  const summaries = (rows as SummaryRow[]).map(toSummary);
+  const sameTheme = summaries.filter((s) => s.showsToTags.some((r) => themes.includes(r.tag.name)));
+  const sameLevel = summaries.filter((s) => s.difficulty === difficulty && !sameTheme.includes(s));
+  return [...sameTheme, ...sameLevel].slice(0, 3);
+}
+
+/** Up to 3 shows to link from a show page: same theme tag first, then same difficulty. */
+export const getRelatedShows = cachedRead('related-shows-v1', fetchRelatedShows, {
+  tags: () => [TAGS.shows, TAGS.tags],
+  atBuildWithoutDb: [] as ShowSummary[],
+});
 
 // ---------------------------------------------------------------------------
 // Home page and collections
