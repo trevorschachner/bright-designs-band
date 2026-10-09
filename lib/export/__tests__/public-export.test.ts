@@ -22,11 +22,10 @@ describe('publicExportCsv', () => {
         ensembleSize: 'medium', includes: 'winds, percussion', programNotes: 'Line one.\n\n- Part 1, "opener"',
       })],
     } as unknown as ShowSheetTables)!
-    const [header, ...rest] = csv.split('\r\n')
+    const [header] = csv.split('\r\n')
     expect(header.endsWith(',program_notes')).toBe(true)
     expect(csv).toContain('medium,"winds, percussion"')
     expect(csv).toContain('"Line one.\n\n- Part 1, ""opener"""')
-    expect(rest.join('')).toBeTruthy()
   })
 
   it('serves the four sheet files', () => {

@@ -227,6 +227,18 @@ describe('createShow', () => {
     expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
   })
 
+  it('stores programNotes sent at create time', async () => {
+    const fake = use((op) => {
+      if (op.kind === 'insert' && op.table === 'shows') {
+        const v = op.values as { slug: string; title: string }
+        return [{ id: 9, slug: v.slug, title: v.title, featured: false, updatedAt: SAVED }]
+      }
+      return []
+    })
+    await createShow({ title: 'Neon Nights', programNotes: 'A neon show.' })
+    expect(opsOn(fake.ops, 'shows', 'insert')[0].values).toMatchObject({ programNotes: 'A neon show.' })
+  })
+
   it('rejects a title with nothing to build a slug from', async () => {
     expect(await createShow({ title: '!!!' })).toMatchObject({ ok: false, error: 'invalid', issues: [{ path: 'title' }] })
   })

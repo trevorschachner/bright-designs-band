@@ -147,6 +147,7 @@ export function ShowDetailFields({
   setValue: UseFormSetValue<ShowFormValues>;
   thumbnailControl: ReactNode;
 }) {
+  const chosen = includes.split(',').map((s) => s.trim()).filter(Boolean);
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,7 +190,6 @@ export function ShowDetailFields({
         <Field id="includes" label="Includes" error={errors.includes?.message}>
           <div className="grid grid-cols-2 gap-2 p-3 border rounded bg-muted/30">
             {SHOW_INCLUDES.map((item) => {
-              const chosen = includes.split(',').map((s) => s.trim()).filter(Boolean);
               return (
                 <div key={item} className="flex items-center">
                   <input
