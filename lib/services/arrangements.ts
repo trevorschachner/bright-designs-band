@@ -18,6 +18,7 @@ type TagRef = { id: number; name: string };
 /** Columns a public arrangement exposes. No internal or copyright fields. */
 export const ARRANGEMENT_PUBLIC_COLUMNS = {
   id: true,
+  slug: true,
   title: true,
   composer: true,
   arranger: true,
@@ -45,6 +46,7 @@ export const ARRANGEMENT_PUBLIC_COLUMNS = {
  */
 export type ArrangementListItem = {
   id: number;
+  slug: string;
   title: string;
   composer: string | null;
   durationSeconds: number | null;
@@ -97,6 +99,7 @@ async function fetchArrangementsPage(
       // arranger and scene; they act in SQL and need no projection.
       columns: {
         id: true,
+        slug: true,
         title: true,
         composer: true,
         durationSeconds: true,
@@ -129,7 +132,7 @@ async function fetchArrangementsPage(
 }
 
 /** Cached per serialised filter; call it through `queryArrangements` (./catalog.ts). */
-export const getArrangementsPage = cachedRead('arrangements-page-v3', fetchArrangementsPage, {
+export const getArrangementsPage = cachedRead('arrangements-page-v4', fetchArrangementsPage, {
   tags: () => [TAGS.arrangements, TAGS.shows, TAGS.tags],
   atBuildWithoutDb: { data: [] as ArrangementListItem[], total: 0 },
   revalidate: (filterState) => (filterState.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
@@ -177,13 +180,13 @@ async function fetchArrangementForApi(id: number) {
 
 export type ArrangementApiDetail = NonNullable<Awaited<ReturnType<typeof fetchArrangementForApi>>>;
 
-export const getArrangementForApi = cachedRead('arrangement-api-v2', fetchArrangementForApi, {
+export const getArrangementForApi = cachedRead('arrangement-api-v3', fetchArrangementForApi, {
   tags: (id) => [TAGS.arrangements, TAGS.arrangement(id), TAGS.shows, TAGS.tags],
   atBuildWithoutDb: null as ArrangementApiDetail | null,
 });
 
 // ---------------------------------------------------------------------------
-// /arrangements/[id] (page, metadata and OG image)
+// /arrangements/[slug] (page, metadata and OG image)
 // ---------------------------------------------------------------------------
 
 /** The parent show as the detail page renders it: link, title and art. */
@@ -199,6 +202,7 @@ export type ArrangementDetailShow = {
 
 export type ArrangementDetail = {
   id: number;
+  slug: string;
   title: string;
   composer: string | null;
   arranger: string | null;
@@ -220,15 +224,16 @@ export type ArrangementDetail = {
 };
 
 /**
- * What /arrangements/[id] renders, in one relational query (Drizzle compiles
+ * What /arrangements/[slug] renders, in one relational query (Drizzle compiles
  * the nested `with` into a single SQL statement with lateral joins).
  */
-async function fetchArrangementDetail(id: number): Promise<ArrangementDetail | null> {
-  if (!Number.isInteger(id) || id <= 0) return null;
+async function fetchArrangementDetail(slug: string): Promise<ArrangementDetail | null> {
+  if (!slug) return null;
   const row = await db.query.arrangements.findFirst({
-    where: eq(arrangements.id, id),
+    where: eq(arrangements.slug, slug),
     columns: {
       id: true,
+      slug: true,
       title: true,
       composer: true,
       arranger: true,
@@ -306,18 +311,27 @@ async function fetchArrangementDetail(id: number): Promise<ArrangementDetail | n
 }
 
 /**
- * An arrangement's detail page data, or null. Tagged with everything it
- * reads: the arrangement, its parent show (and that show's art files, which
- * invalidate through `invalidateShow`), and its pieces.
+ * An arrangement's detail page data by public slug, or null. Tagged with
+ * everything it reads: the arrangements list tag (every arrangement write
+ * expires it; the per-id tag cannot be named from a slug), its parent show
+ * (and that show's art files, which invalidate through `invalidateShow`), and
+ * its pieces.
  */
-export const getArrangementDetail = cachedRead('arrangement-detail-v1', fetchArrangementDetail, {
-  tags: (id) => [TAGS.arrangement(id), TAGS.arrangements, TAGS.shows, TAGS.pieces],
+export const getArrangementBySlug = cachedRead('arrangement-detail-v2', fetchArrangementDetail, {
+  tags: () => [TAGS.arrangements, TAGS.shows, TAGS.pieces],
   atBuildWithoutDb: null as ArrangementDetail | null,
 });
 
 // ---------------------------------------------------------------------------
 // Uncached lookups for invalidation
 // ---------------------------------------------------------------------------
+
+/** The public slug of an arrangement, uncached; null when no such id. */
+export async function getArrangementSlugById(id: number): Promise<string | null> {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const [row] = await db.select({ slug: arrangements.slug }).from(arrangements).where(eq(arrangements.id, id)).limit(1);
+  return row?.slug ?? null;
+}
 
 /** Slug of the (first) show an arrangement belongs to, uncached. */
 export async function getShowSlugForArrangement(arrangementId: number): Promise<string | null> {

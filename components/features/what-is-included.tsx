@@ -52,10 +52,10 @@ const optionalItems = [
   },
 ]
 
-export function WhatIsIncluded() {
+export function WhatIsIncluded({ title = "What's Included" }: { title?: string } = {}) {
   return (
     <div className="bg-card rounded-lg shadow-lg p-8 border h-full flex flex-col">
-      <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">What&apos;s Included</h2>
+      <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">{title}</h2>
       <div className="space-y-4 flex-1">
         {includedItems.map((item) => (
           <div key={item.title} className="flex items-start gap-4">

@@ -3,14 +3,14 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 /**
- * /arrangements/[id] must stay cacheable: reading cookies (directly or via
+ * /arrangements/[slug] must stay cacheable: reading cookies (directly or via
  * the cookie-bound Supabase server client) would make every request dynamic.
  * A static check on the source, so it holds without rendering the page.
  */
 
-const source = readFileSync(join(process.cwd(), 'app/arrangements/[id]/page.tsx'), 'utf8')
+const source = readFileSync(join(process.cwd(), 'app/arrangements/[slug]/page.tsx'), 'utf8')
 
-describe('app/arrangements/[id]/page.tsx', () => {
+describe('app/arrangements/[slug]/page.tsx', () => {
   it('never calls cookies()', () => {
     expect(source).not.toMatch(/cookies\(/)
     expect(source).not.toMatch(/from ['"]next\/headers['"]/)

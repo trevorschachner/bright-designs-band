@@ -332,7 +332,7 @@ describe('deleteArrangement removes its files first', () => {
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
     expect(opsOn(fake.ops, 'arrangements', 'delete')).toHaveLength(0)
     // The row already deleted is a public change: invalidated despite `failed`.
-    expect(invalidateArrangement).toHaveBeenCalledWith(3, 'my-show')
+    expect(invalidateArrangement).toHaveBeenCalledWith(3, null, 'my-show')
   })
 
   it('a failure on the first file changed nothing, so nothing is invalidated', async () => {

@@ -22,7 +22,7 @@ function toCardItem(show: ShowListItem): ShowCardItem {
     thumbnailUrl: show.thumbnailUrl,
     graphicUrl: show.graphicUrl,
     showsToTags: show.showsToTags,
-    arrangements: show.arrangements.map(({ id, title, scene }) => ({ id, title, scene })),
+    arrangements: show.arrangements.map(({ id, slug, title, scene }) => ({ id, slug, title, scene })),
   };
 }
 

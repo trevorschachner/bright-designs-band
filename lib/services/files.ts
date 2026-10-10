@@ -5,7 +5,7 @@
  */
 
 import { getShowSlugById } from './shows';
-import { getShowSlugForArrangement } from './arrangements';
+import { getArrangementSlugById, getShowSlugForArrangement } from './arrangements';
 import { invalidateArrangement, invalidateShow } from './invalidate';
 
 /** Looks up the slug for the page path; a failed lookup still expires the tags. */
@@ -24,7 +24,11 @@ export async function invalidateFileOwner(owner: {
 }): Promise<void> {
   const { showId, arrangementId } = owner;
   if (arrangementId) {
-    invalidateArrangement(arrangementId, await slugOrNull(() => getShowSlugForArrangement(arrangementId)));
+    invalidateArrangement(
+      arrangementId,
+      await slugOrNull(() => getArrangementSlugById(arrangementId)),
+      await slugOrNull(() => getShowSlugForArrangement(arrangementId))
+    );
   }
   if (showId) {
     invalidateShow(showId, await slugOrNull(() => getShowSlugById(showId)));

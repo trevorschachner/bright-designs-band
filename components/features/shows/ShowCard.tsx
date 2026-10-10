@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { displayTagName } from "@/lib/tags";
 
 // Define a flexible type that covers both Show (full) and ShowSummary (partial)
 export interface ShowCardItem {
@@ -20,7 +21,7 @@ export interface ShowCardItem {
   thumbnailUrl: string | null;
   graphicUrl: string | null;
   showsToTags?: { tag: { id: number; name: string } }[];
-  arrangements?: { id: number; title: string | null; scene?: string | null }[];
+  arrangements?: { id: number; slug: string; title: string | null; scene?: string | null }[];
   [key: string]: any; // Allow other properties
 }
 
@@ -98,7 +99,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
           {show.showsToTags && show.showsToTags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {show.showsToTags.slice(0, 2).map((st) => (
-                <span key={st.tag.id} className="text-[10px] bg-muted rounded px-1.5 py-0.5">{st.tag.name}</span>
+                <span key={st.tag.id} className="text-[10px] bg-muted rounded px-1.5 py-0.5">{displayTagName(st.tag.name)}</span>
               ))}
               {show.showsToTags.length > 2 && (
                 <span className="text-[10px] text-muted-foreground">+{show.showsToTags.length - 2}</span>
@@ -136,7 +137,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
               {show.showsToTags.slice(0, 3).map((st: { tag: { id: number; name: string } }) => (
                 <li key={st.tag.id}>
                   <span className="sr-only">Tag</span>
-                  <span className="text-xs">{st.tag.name}</span>
+                  <span className="text-xs">{displayTagName(st.tag.name)}</span>
                 </li>
               ))}
               {show.showsToTags.length > 3 && (
@@ -156,7 +157,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
                 {show.arrangements.slice(0, 3).map((a) => (
                   <li key={a.id} className="text-sm">
                     <Link
-                      href={`/arrangements/${a.id}`}
+                      href={`/arrangements/${a.slug}`}
                       className="relative z-[2] hover:underline"
                       prefetch={false}
                     >

@@ -21,7 +21,7 @@ const EXPIRE_NOW = { expire: 0 };
 
 /** Dynamic route patterns, for "every page of this route". */
 const SHOW_PAGES = '/shows/[slug]';
-const ARRANGEMENT_PAGES = '/arrangements/[id]';
+const ARRANGEMENT_PAGES = '/arrangements/[slug]';
 
 function expireTags(...tags: string[]) {
   for (const tag of new Set(tags)) revalidateTag(tag, EXPIRE_NOW);
@@ -56,6 +56,7 @@ export function invalidateShow(id: number, slug: string | null | undefined, prev
     PATHS.sitemap,
     PATHS.llms,
     PATHS.llmsFull,
+    PATHS.collections,
     ...collectionPaths()
   );
 }
@@ -63,12 +64,19 @@ export function invalidateShow(id: number, slug: string | null | undefined, prev
 /**
  * An arrangement (show part) was created, updated or deleted, its pieces were
  * relinked, or one of its files changed. Pass the parent show's slug so the
- * show page that lists it is refreshed too.
+ * show page that lists it is refreshed too, and `previousSlug` when the
+ * arrangement's own slug changed so the old URL is dropped.
  */
-export function invalidateArrangement(id: number, showSlug?: string | null) {
+export function invalidateArrangement(
+  id: number,
+  slug: string | null | undefined,
+  showSlug?: string | null,
+  previousSlug?: string | null
+) {
   expireTags(TAGS.arrangement(id), TAGS.arrangements);
   expirePaths(
-    PATHS.arrangement(id),
+    slug ? PATHS.arrangement(slug) : null,
+    previousSlug && previousSlug !== slug ? PATHS.arrangement(previousSlug) : null,
     showSlug ? PATHS.show(showSlug) : null,
     PATHS.home,
     PATHS.arrangements,
@@ -81,7 +89,7 @@ export function invalidateTags() {
   expireTags(TAGS.tags);
   expireAllPagesOf(SHOW_PAGES, ARRANGEMENT_PAGES);
   // A tag collection (e.g. "Small Band") filters on the tag's name.
-  expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap, ...collectionPaths());
+  expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap, PATHS.collections, ...collectionPaths());
 }
 
 /** A source piece was created, edited or deleted. Credits show on every part. */

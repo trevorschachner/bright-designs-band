@@ -13,12 +13,14 @@ import {
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 import { AudioPlayerComponent, audioPlayerStyles } from "@/components/features/audio-player"
-import { getArrangementDetail } from "@/lib/services/arrangements"
+import { getArrangementBySlug, getArrangementSlugById } from "@/lib/services/arrangements"
 import { SourcePieces } from '@/components/features/source-pieces'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { cache } from 'react'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { isIndexableArrangement } from '@/lib/seo/indexable'
+import { arrangementTitle } from '@/lib/seo/titles'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { ResaleCallout } from '@/components/features/resale-callout'
 import { createMusicCompositionSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
@@ -33,13 +35,12 @@ export function generateStaticParams() {
 }
 
 /** One lookup per request, shared by generateMetadata and the page. */
-const getArrangement = cache((id: string) =>
-  /^\d+$/.test(id) ? getArrangementDetail(Number(id)) : Promise.resolve(null)
-)
+const getArrangement = cache((slug: string) => getArrangementBySlug(slug))
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params
-  const arr = await getArrangement(id)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  // A numeric id is redirected by the page; it has no metadata of its own.
+  const arr = /^\d+$/.test(slug) ? null : await getArrangement(slug)
 
   if (!arr) {
     return buildMetadata({
@@ -51,17 +52,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // A null composer is left out rather than printed as "null".
   const byComposer = arr.composer ? ` by ${arr.composer}` : ''
   return buildMetadata({
-    title: arr.composer
-      ? `${arr.title} - ${arr.composer} | Bright Designs Arrangements`
-      : `${arr.title} | Bright Designs Arrangements`,
+    title: arrangementTitle({ title: arr.title, composer: arr.composer }),
     description: arr.description || `Custom arrangement of ${arr.title}${byComposer}. Professional marching band music design.`,
+    path: `/arrangements/${arr.slug}`,
+    noindex: !isIndexableArrangement(arr.description),
     // OG Image is automatically handled by opengraph-image.tsx
   })
 }
 
-export default async function ArrangementDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const arr = await getArrangement(id);
+export default async function ArrangementDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+
+  // Numeric ids are the old URLs: 308 to the slug, 404 when no such id.
+  if (/^\d+$/.test(slug)) {
+    const real = await getArrangementSlugById(Number(slug));
+    if (real) permanentRedirect(`/arrangements/${real}`);
+    notFound();
+  }
+
+  const arr = await getArrangement(slug);
 
   if (!arr) {
     notFound();
@@ -72,7 +81,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
 
   // Structured data. The breadcrumb mirrors the visible one: through the
   // parent show when there is one, else through /arrangements.
-  const arrangementPath = `/arrangements/${arr.id}`
+  const arrangementPath = `/arrangements/${arr.slug}`
   const breadcrumbSchema = createBreadcrumbSchema(
     parentShow
       ? [

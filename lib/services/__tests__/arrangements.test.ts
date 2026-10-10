@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 /**
- * getArrangementDetail: one relational query with explicit columns at every
+ * getArrangementBySlug: one relational query with explicit columns at every
  * level, no licensing cost, the parent show projected to what the page
  * renders, and cache tags for everything the read touches.
  */
 
-import { getArrangementDetail } from '@/lib/services/arrangements'
+import { getArrangementBySlug } from '@/lib/services/arrangements'
 
 type Opts = { columns?: Record<string, boolean>; with?: Record<string, any>; where?: unknown }
 
@@ -57,10 +57,10 @@ beforeEach(() => {
   unstableCache.mockClear()
 })
 
-describe('getArrangementDetail', () => {
+describe('getArrangementBySlug', () => {
   it('makes one query with explicit columns and never licensing cost', async () => {
     findFirst.mockResolvedValue(row)
-    await getArrangementDetail(7)
+    await getArrangementBySlug('pipeline')
     expect(findFirst).toHaveBeenCalledTimes(1)
     const opts = findFirst.mock.calls[0][0]
     expect(opts.columns).toBeDefined()
@@ -74,7 +74,7 @@ describe('getArrangementDetail', () => {
 
   it('projects the parent show to exactly what the page renders', async () => {
     findFirst.mockResolvedValue(row)
-    const result = await getArrangementDetail(7)
+    const result = await getArrangementBySlug('pipeline')
     const showOpts = findFirst.mock.calls[0][0].with?.showArrangements.with.show
     expect(Object.keys(showOpts.columns).sort()).toEqual(['graphicUrl', 'id', 'slug', 'thumbnailUrl', 'title'])
     expect(showOpts.with.files.columns).toEqual({ url: true })
@@ -86,27 +86,27 @@ describe('getArrangementDetail', () => {
 
   it('returns show: null when the arrangement has no parent show', async () => {
     findFirst.mockResolvedValue({ ...row, showArrangements: [] })
-    expect((await getArrangementDetail(7))!.show).toBeNull()
+    expect((await getArrangementBySlug('pipeline'))!.show).toBeNull()
   })
 
-  it('caches under the arrangement, arrangements, shows and pieces tags', async () => {
+  it('caches under the arrangements, shows and pieces tags', async () => {
     findFirst.mockResolvedValue(row)
-    await getArrangementDetail(7)
+    await getArrangementBySlug('pipeline')
     const [, key, options] = unstableCache.mock.calls[0]
-    expect(key).toEqual(['arrangement-detail-v1'])
-    expect(options.tags).toEqual(['arrangement:7', 'arrangements', 'shows', 'pieces'])
+    expect(key).toEqual(['arrangement-detail-v2'])
+    expect(options.tags).toEqual(['arrangements', 'shows', 'pieces'])
     expect(options.revalidate).toBe(3600)
   })
 
-  it('returns null for a missing arrangement and for a non-positive id without querying', async () => {
+  it('returns null for a missing arrangement and for an empty slug without querying', async () => {
     findFirst.mockResolvedValue(undefined)
-    expect(await getArrangementDetail(999)).toBeNull()
-    expect(await getArrangementDetail(0)).toBeNull()
+    expect(await getArrangementBySlug('nope')).toBeNull()
+    expect(await getArrangementBySlug('')).toBeNull()
     expect(findFirst).toHaveBeenCalledTimes(1)
   })
 
   it('lets a database failure propagate', async () => {
     findFirst.mockRejectedValue(new Error('timeout'))
-    await expect(getArrangementDetail(7)).rejects.toThrow('timeout')
+    await expect(getArrangementBySlug('pipeline')).rejects.toThrow('timeout')
   })
 })

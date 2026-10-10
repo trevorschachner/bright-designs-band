@@ -15,7 +15,7 @@ import { YouTubeFacade } from '@/components/features/youtube-facade'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
-import { getShowBySlug, getShowArrangements, getPublicShowFiles, getAllShowSlugs, getSlugRedirect } from '@/lib/services/shows'
+import { getShowBySlug, getShowArrangements, getPublicShowFiles, getAllShowSlugs, getSlugRedirect, getRelatedShows, type ShowDifficulty } from '@/lib/services/shows'
 import { getPublicPiecesByArrangementIds } from '@/lib/services/pieces'
 import { SourcePieces } from '@/components/features/source-pieces'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
@@ -23,12 +23,20 @@ import { ResaleCallout } from '@/components/features/resale-callout'
 import { arrangementContactHref } from '@/lib/contact-link'
 import type { Metadata } from 'next'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { showTitle } from '@/lib/seo/titles'
 import { JsonLd } from '@/components/features/seo/JsonLd'
-import { createMusicCompositionSchema, createBreadcrumbSchema, createVideoObjectSchema, showUploadDate } from '@/lib/seo/structured-data'
+import { createMusicCompositionSchema, createBreadcrumbSchema, createVideoObjectSchema, createFAQSchema, showUploadDate } from '@/lib/seo/structured-data'
+import { parseProgramNotes, type ProgramNotes as ParsedNotes } from '@/lib/content/program-notes'
+import { ProgramNotes } from '@/components/features/program-notes'
+import { isoDuration } from '@/lib/seo/duration'
+import { showFaqs } from '@/lib/seo/show-faq'
+import { matchesFilter, publishedCollections } from '@/lib/collections'
+import { ShowCard } from '@/components/features/shows/ShowCard'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { normaliseSlug } from '@/lib/slug'
 import { cache } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
+import { displayTagName } from '@/lib/tags'
 
 export const revalidate = 3600;
 
@@ -37,6 +45,33 @@ export const revalidate = 3600;
  * and React's request cache dedupes them in front of the cached service read.
  */
 const getShow = cache((slug: string) => getShowBySlug(slug))
+
+/** Meta descriptions stop at 155 characters, cut at a word boundary. */
+function trimDescription(text: string, max = 155): string {
+  const flat = text.replace(/\s+/g, ' ').trim()
+  if (flat.length <= max) return flat
+  const cut = flat.slice(0, max)
+  const at = cut.lastIndexOf(' ')
+  return (at > 0 ? cut.slice(0, at) : cut).replace(/[\s,;:.-]+$/, '')
+}
+
+/** Published collections this show belongs to. */
+async function matchingCollections(displayDifficulty: string, tagNames: string[], year: number | null) {
+  const facts = { difficulty: displayDifficulty || null, year, tagNames }
+  return (await publishedCollections()).filter((c) => matchesFilter(facts, c.filter))
+}
+
+const ENSEMBLE_LABEL: Record<string, string> = { small: 'small bands', medium: 'medium-sized bands', large: 'large bands' }
+
+/** Headings with their own section; any other section renders under the about H2. */
+const KNOWN_HEADINGS = new Set(['the music', 'who it suits', 'what you get'])
+
+const pieceLabel = (p: { title: string; composer?: string | null }) => (p.composer ? `${p.title} (${p.composer})` : p.title)
+
+const notesOnly = (notes: ParsedNotes, heading: string): ParsedNotes => ({
+  ...notes,
+  sections: notes.sections.filter((s) => s.heading?.toLowerCase() === heading),
+})
 
 export async function generateStaticParams() {
   // Prerendering is an optimisation: a show missing here renders on first
@@ -78,8 +113,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     ]
     
     return buildMetadata({
-      title: `${showRow.title} | Bright Designs`,
-      description: showRow.description ?? 'Award-winning marching band show from Bright Designs.',
+      title: showTitle({ title: showRow.title, difficulty: showRow.difficulty, year: showRow.year }),
+      description: trimDescription(
+        parseProgramNotes(showRow.programNotes).summary || showRow.description || 'Marching band show from Bright Designs.'
+      ),
       // No ogImage: opengraph-image.tsx renders a 1200x630 PNG card (show art
       // + title + logo), which unfurls more reliably than raw WebP art.
       canonical: `${baseUrl}/shows/${canonicalSlug}`,
@@ -123,6 +160,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   }
 
   const showId = showRow.id as number
+  const notes = parseProgramNotes(showRow.programNotes)
 
   const show = {
     id: showRow.id,
@@ -178,11 +216,53 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   // The source pieces the arrangement cards already loaded, in show order.
   const compositionSchema = createMusicCompositionSchema({
     name: show.title,
-    description: show.description,
+    description: notes.summary || show.description,
     url: showPath,
     year: show.year,
+    duration: isoDuration(show.duration),
+    educationalLevel: displayDifficulty || null,
+    inStock: true,
     pieces: arrangements.flatMap((a) => piecesByArrangement[a.id] ?? []),
   })
+
+  // Questions come from the program notes; a show without notes renders as before.
+  const faqs = !notes.sections.length ? [] : showFaqs(
+    {
+      title: show.title,
+      difficulty: displayDifficulty || null,
+      duration: show.duration,
+      ensembleSize: showRow.ensembleSize ?? null,
+      year: show.year,
+      commissioned: showRow.commissioned ?? null,
+    },
+    notes,
+    arrangements.map((a) => ({
+      title: a.title ?? '',
+      scene: a.scene ?? null,
+      pieces: (piecesByArrangement[a.id] ?? []).map(pieceLabel),
+    }))
+  )
+
+  const tagNames = (showsToTags ?? []).map((r) => r.tag.name)
+  const collectionLinks = await matchingCollections(displayDifficulty, tagNames, show.year ?? null)
+  const related = await getRelatedShows(showId, (displayDifficulty || null) as ShowDifficulty | null, tagNames)
+
+  const aboutSections = notes.sections.filter((s) => !KNOWN_HEADINGS.has(s.heading?.toLowerCase() ?? ''))
+  const aboutNotes: ParsedNotes = {
+    ...notes,
+    sections: [...aboutSections.filter((s) => s.heading === null), ...aboutSections.filter((s) => s.heading !== null)],
+  }
+  const musicNotes = notesOnly(notes, 'the music')
+  const suitsNotes = notesOnly(notes, 'who it suits')
+  const getNotes = notesOnly(notes, 'what you get')
+  const includeChips = (showRow.includes ?? '').split(',').map((c: string) => c.trim()).filter(Boolean)
+  const suitsFacts = [
+    displayDifficulty ? `${displayDifficulty} difficulty` : null,
+    showRow.ensembleSize ? `written for ${ENSEMBLE_LABEL[showRow.ensembleSize] ?? showRow.ensembleSize}` : null,
+    show.duration ? `about ${show.duration} long` : null,
+    showRow.commissioned ? `commissioned by ${showRow.commissioned}${show.year ? ` (${show.year})` : ''}` : null,
+  ].filter(Boolean).join(' · ')
+  const hasNotes = notes.sections.length > 0
 
   // Null without a YouTube URL (or one no video id can be read from).
   const videoObjectSchema = createVideoObjectSchema({
@@ -192,7 +272,12 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     uploadDate: showUploadDate(show.createdAt, show.year),
   })
 
-  const schemas = [breadcrumbSchema, compositionSchema, ...(videoObjectSchema ? [videoObjectSchema] : [])]
+  const schemas = [
+    breadcrumbSchema,
+    compositionSchema,
+    ...(videoObjectSchema ? [videoObjectSchema] : []),
+    ...(faqs.length > 0 ? [createFAQSchema(faqs)] : []),
+  ]
 
   return (
     <div className="min-h-screen bg-background">
@@ -280,7 +365,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
             <div className="flex flex-wrap gap-2 mb-6">
               {showsToTags?.map((relation: any) => (
                 <Badge key={relation.tag.id} variant="outline" className="text-xs">
-                  {relation.tag.name}
+                  {displayTagName(relation.tag.name)}
                 </Badge>
               ))}
             </div>
@@ -291,11 +376,77 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           </div>
         </div>
 
+        {hasNotes && (
+          <>
+            {aboutNotes.sections.length > 0 && (
+              <section aria-labelledby="about-heading" className="mb-10 max-w-3xl">
+                <h2 id="about-heading" className="text-2xl font-heading font-bold text-foreground mb-4">What is {show.title} about?</h2>
+                <ProgramNotes notes={aboutNotes} />
+              </section>
+            )}
+            {(arrangements.length > 0 || musicNotes.sections.length > 0) && (
+              <section aria-labelledby="music-heading" className="mb-10">
+                <h2 id="music-heading" className="text-2xl font-heading font-bold text-foreground mb-4">What music is in {show.title}?</h2>
+                {arrangements.length > 0 && (
+                  <div className="overflow-x-auto mb-4">
+                  <table className="w-full text-sm">
+                    <caption className="sr-only">Parts of {show.title}</caption>
+                    <thead>
+                      <tr className="text-left text-muted-foreground border-b border-border">
+                        <th className="py-2 pr-3 font-medium">Part</th>
+                        <th className="py-2 pr-3 font-medium">Scene</th>
+                        <th className="py-2 pr-3 font-medium">Title</th>
+                        <th className="py-2 pr-3 font-medium">Music</th>
+                        <th className="py-2 font-medium">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {arrangements.map((a, i) => (
+                        <tr key={a.id} className="border-b border-border/50 align-top">
+                          <td className="py-2 pr-3">Part {i + 1}</td>
+                          <td className="py-2 pr-3">{a.scene ?? ''}</td>
+                          <td className="py-2 pr-3">{a.title}</td>
+                          <td className="py-2 pr-3">
+                            {(piecesByArrangement[a.id] ?? []).map(pieceLabel).join('; ')}
+                          </td>
+                          <td className="py-2">{a.durationSeconds ? formatSeconds(a.durationSeconds) : ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  </div>
+                )}
+                <ProgramNotes notes={musicNotes} />
+              </section>
+            )}
+            {(suitsFacts || suitsNotes.sections.length > 0) && (
+              <section aria-labelledby="for-heading" className="mb-10 max-w-3xl">
+                <h2 id="for-heading" className="text-2xl font-heading font-bold text-foreground mb-4">Who is {show.title} for?</h2>
+                {suitsFacts && <p className="text-muted-foreground mb-3">{suitsFacts}.</p>}
+                <ProgramNotes notes={suitsNotes} />
+              </section>
+            )}
+            {(includeChips.length > 0 || getNotes.sections.length > 0) && (
+              <section aria-labelledby="get-heading" className="mb-10 max-w-3xl">
+                <h2 id="get-heading" className="text-2xl font-heading font-bold text-foreground mb-4">What&apos;s included with {show.title}?</h2>
+                {includeChips.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {includeChips.map((chip: string) => (
+                      <Badge key={chip} variant="secondary" className="text-sm">{chip}</Badge>
+                    ))}
+                  </div>
+                )}
+                <ProgramNotes notes={getNotes} />
+              </section>
+            )}
+          </>
+        )}
+
         {/* What's Included & Listen to Full Show - 2 Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* What's Included */}
           <div>
-            <WhatIsIncluded />
+            <WhatIsIncluded title={hasNotes ? 'What every package includes' : undefined} />
           </div>
 
           {/* Master Audio Player - Compact */}
@@ -387,7 +538,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 mb-1.5">
                         <h3 className="text-lg font-heading font-bold text-foreground group-hover:text-primary transition-colors">
-                          <Link href={`/arrangements/${arrangement.id}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
+                          <Link href={`/arrangements/${arrangement.slug}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
                             {arrangement.title}
                           </Link>
                         </h3>
@@ -464,7 +615,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       </Button>
                     )}
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/arrangements/${arrangement.id}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                      <Link href={`/arrangements/${arrangement.slug}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                         View Details
                         <ArrowLeft className="w-4 h-4 ml-2 rotate-180" aria-hidden="true" />
                       </Link>
@@ -481,6 +632,29 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
             );
           })}
         </div>
+
+        {(collectionLinks.length > 0 || related.length > 0) && (
+          <section aria-labelledby="more-heading" className="mt-12">
+            <h2 id="more-heading" className="text-2xl font-heading font-bold text-foreground mb-4">More shows like {show.title}</h2>
+            {collectionLinks.length > 0 && (
+              <p className="text-muted-foreground mb-4">
+                Browse{' '}
+                {collectionLinks.map((c, i) => (
+                  <span key={c.slug}>
+                    {i > 0 && ', '}
+                    <Link className="underline" href={`/collections/${c.slug}`}>{c.h1.toLowerCase()}</Link>
+                  </span>
+                ))}
+                .
+              </p>
+            )}
+            {related.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {related.map((s) => <ShowCard key={s.id} item={s} />)}
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
       <JsonLd data={schemas} />

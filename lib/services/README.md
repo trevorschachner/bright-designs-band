@@ -7,7 +7,7 @@ Writes live in the API routes and in the Server Actions in `lib/actions/`
 | File | What it reads |
 | --- | --- |
 | `shows.ts` | Featured shows, collections, the `/api/shows` page, show detail, a show's arrangements and files, slugs, old-slug redirects (`getSlugRedirect`, tagged `shows`), the show index for `/llms.txt` |
-| `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[id]` page and OG image (`getArrangementDetail`: one relational query) |
+| `arrangements.ts` | The `/api/arrangements` page, `/api/arrangements/[id]`, the `/arrangements/[slug]` page and OG image (`getArrangementBySlug`: one relational query; `getArrangementSlugById` for the numeric-id 308) |
 | `catalog.ts` | `queryShows` / `queryArrangements`: parse + bound the catalog query, then one paged read (below) |
 | `pieces.ts` | Public source-piece credits; admin piece lists |
 | `resources.ts` | Active resources; one resource by id or slug (`/api/resources/[id]`); admin list including drafts |
@@ -156,8 +156,8 @@ straight after saving.
 | Helper | Tags | Paths |
 | --- | --- | --- |
 | `invalidateShow(id, slug, previousSlug?)` | `show:<id>`, `shows` | `/shows/<slug>` (and the old slug), `/`, `/shows`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt`, every `/collections/<slug>` |
-| `invalidateArrangement(id, showSlug?)` | `arrangement:<id>`, `arrangements` | `/arrangements/<id>`, `/shows/<showSlug>`, `/`, `/arrangements`, `/sitemap.xml` |
-| `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[id]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml`, every `/collections/<slug>` |
+| `invalidateArrangement(id, slug, showSlug?, previousSlug?)` | `arrangement:<id>`, `arrangements` | `/arrangements/<slug>` (and the previous slug), `/shows/<showSlug>`, `/`, `/arrangements`, `/sitemap.xml` |
+| `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[slug]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml`, `/collections`, every `/collections/<slug>` |
 | `invalidatePieces()` | `pieces` | same as tags |
 | `invalidateResources()` | `resources` | `/resources`, `/`, `/sitemap.xml` |
 

@@ -15,7 +15,7 @@ export const metadata: Metadata = buildMetadata({
   title: post.title + ' | Bright Designs',
   description: post.description,
   keywords: post.tags as string[],
-  canonical: `https://www.brightdesigns.band${post.href}`,
+  path: post.href,
 })
 
 const articleSchema = createArticleSchema({
@@ -27,9 +27,9 @@ const articleSchema = createArticleSchema({
 })
 
 const breadcrumbSchema = createBreadcrumbSchema([
-  { name: 'Home', url: 'https://www.brightdesigns.band' },
-  { name: 'Blog', url: 'https://www.brightdesigns.band/blog' },
-  { name: post.title, url: `https://www.brightdesigns.band${post.href}` },
+  { name: 'Home', url: '/' },
+  { name: 'Blog', url: '/blog' },
+  { name: post.title, url: post.href },
 ])
 
 export default function HowToChooseADesignerPage() {

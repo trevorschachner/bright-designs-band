@@ -34,7 +34,7 @@ const show = (id: number) => ({
   featured: false,
   displayOrder: 0,
   createdAt: null,
-  arrangements: [{ id: 100 + id, title: 'Opener', scene: 'Opener', durationSeconds: 90, sampleScoreUrl: null }],
+  arrangements: [{ id: 100 + id, slug: 'opener', title: 'Opener', scene: 'Opener', durationSeconds: 90, sampleScoreUrl: null }],
   showsToTags: [{ tag: { id: 1, name: 'Dark' } }],
 })
 

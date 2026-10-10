@@ -36,6 +36,9 @@ const SHOW: EditableShow = {
   year: 2025,
   difficulty: 'Advanced',
   duration: '8:30',
+  programNotes: null,
+  ensembleSize: null,
+  includes: null,
   thumbnailUrl: null,
   videoUrl: null,
   youtubeUrl: null,
@@ -111,6 +114,25 @@ describe('ShowForm', () => {
     expect(input).not.toHaveProperty('slug')
     await waitFor(() => expect(onStamp).toHaveBeenCalledWith('2026-10-07T12:05:00.000Z'))
     expect(screen.queryByTestId('dirty-indicator')).not.toBeInTheDocument()
+  })
+
+  it('saves program notes, ensemble size and includes', async () => {
+    mocks.updateShow.mockResolvedValue({
+      ok: true,
+      data: { id: 7, slug: 'my-show', title: 'My Show', featured: false, updatedAt: '2026-10-07T12:05:00.000Z' },
+    })
+    renderEdit()
+    await userEvent.type(screen.getByLabelText('Program notes'), 'A wolf-pack show.')
+    await userEvent.selectOptions(screen.getByLabelText('Ensemble size'), 'medium')
+    fireEvent.click(screen.getByLabelText('percussion'))
+    fireEvent.click(screen.getByLabelText('winds'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(mocks.updateShow).toHaveBeenCalledTimes(1))
+    expect(mocks.updateShow.mock.calls[0][0]).toMatchObject({
+      programNotes: 'A wolf-pack show.',
+      ensembleSize: 'medium',
+      includes: 'winds, percussion',
+    })
   })
 
   it('shows the stale alert with a Reload button when the action returns stale', async () => {

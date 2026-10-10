@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SHOW_DIFFICULTIES } from './enums'
+import { ENSEMBLE_SIZES, SHOW_DIFFICULTIES } from './enums'
 import type { EditableShow } from '@/lib/services/admin'
 import type { CreateShowInput, UpdateShowActionInput } from './shows'
 
@@ -18,6 +18,7 @@ export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const SLUG_MESSAGE = 'Slug must be lowercase words separated by hyphens'
 
 const DIFFICULTIES = ['', ...SHOW_DIFFICULTIES] as const
+const ENSEMBLE_OPTIONS = ['', ...ENSEMBLE_SIZES] as const
 
 export const showFormSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(300, 'Title is too long'),
@@ -26,6 +27,9 @@ export const showFormSchema = z.object({
   year: z.string().trim().regex(/^(\d{4})?$/, 'Year must be four digits'),
   difficulty: z.enum(DIFFICULTIES),
   duration: z.string(),
+  programNotes: z.string(),
+  ensembleSize: z.enum(ENSEMBLE_OPTIONS),
+  includes: z.string(),
   thumbnailUrl: z.string(),
   videoUrl: z.string(),
   youtubeUrl: z.string(),
@@ -54,6 +58,9 @@ export function showFormDefaults(show?: EditableShow): ShowFormValues {
     year: show?.year != null ? String(show.year) : '',
     difficulty: show ? (show.difficulty ?? '') : 'Intermediate',
     duration: show?.duration ?? '',
+    programNotes: show?.programNotes ?? '',
+    ensembleSize: show?.ensembleSize ?? '',
+    includes: show?.includes ?? '',
     thumbnailUrl: show?.thumbnailUrl ?? '',
     videoUrl: show?.videoUrl ?? '',
     youtubeUrl: show?.youtubeUrl ?? '',
@@ -87,6 +94,9 @@ export function showFormToUpdate(
     year: year(values.year),
     difficulty: values.difficulty === '' ? null : values.difficulty,
     duration: text(values.duration),
+    programNotes: text(values.programNotes),
+    ensembleSize: values.ensembleSize === '' ? null : values.ensembleSize,
+    includes: text(values.includes),
     thumbnailUrl: text(values.thumbnailUrl),
     videoUrl: text(values.videoUrl),
     youtubeUrl: text(values.youtubeUrl),

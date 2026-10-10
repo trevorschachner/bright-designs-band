@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import PageHero from '@/components/layout/page-hero'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
-import { createBreadcrumbSchema } from '@/lib/seo/structured-data'
+import { absoluteUrl, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 import { CASE_STUDIES, getPostBySlug } from '@/lib/blog/posts'
 
 const post = getPostBySlug('case-studies')!
@@ -25,13 +25,13 @@ export const metadata: Metadata = buildMetadata({
     'South Carolina marching band design',
     'Georgia marching band design',
   ],
-  canonical: 'https://www.brightdesigns.band/blog/case-studies',
+  path: '/blog/case-studies',
 })
 
 const breadcrumbSchema = createBreadcrumbSchema([
-  { name: 'Home', url: 'https://www.brightdesigns.band' },
-  { name: 'Blog', url: 'https://www.brightdesigns.band/blog' },
-  { name: 'Success Stories', url: 'https://www.brightdesigns.band/blog/case-studies' },
+  { name: 'Home', url: '/' },
+  { name: 'Blog', url: '/blog' },
+  { name: 'Success Stories', url: '/blog/case-studies' },
 ])
 
 const itemListSchema = {
@@ -39,14 +39,14 @@ const itemListSchema = {
   '@type': 'ItemList',
   name: 'Marching Band Case Studies',
   description: 'Success stories from programs that partnered with Bright Designs',
-  url: 'https://www.brightdesigns.band/blog/case-studies',
+  url: absoluteUrl('/blog/case-studies'),
   numberOfItems: CASE_STUDIES.length,
   itemListElement: CASE_STUDIES.map((study, index) => ({
     '@type': 'ListItem',
     position: index + 1,
     name: study.title,
     description: study.description,
-    url: `https://www.brightdesigns.band${study.href}`,
+    url: absoluteUrl(study.href),
   })),
 }
 

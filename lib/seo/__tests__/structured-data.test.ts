@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import {
   createBreadcrumbSchema,
+  createCollectionPageSchema,
   createFAQSchema,
   createMusicCompositionSchema,
   createOrganizationSchema,
@@ -155,5 +156,33 @@ describe('JsonLd', () => {
     expect(html.match(/<script type="application\/ld\+json">/g)).toHaveLength(2)
     expect(html.match(/<\/script>/g)).toHaveLength(2)
     expect(html).toContain('\\u003c/script>')
+  })
+})
+
+describe('createMusicCompositionSchema (show fields)', () => {
+  it('adds ISO duration, level and a price-less offer', () => {
+    const s = createMusicCompositionSchema({ name: 'Apex', url: '/shows/apex', duration: 'PT7M30S', educationalLevel: 'Intermediate', inStock: true }) as any
+    expect(s.duration).toBe('PT7M30S')
+    expect(s.educationalLevel).toBe('Intermediate')
+    expect(s.offers).toEqual({ '@type': 'Offer', availability: 'https://schema.org/InStock', url: 'https://brightdesigns.band/shows/apex', seller: expect.objectContaining({ '@type': 'Organization' }) })
+    expect(JSON.stringify(s)).not.toMatch(/price/i)
+  })
+  it('omits duration and level when null', () => {
+    const s = createMusicCompositionSchema({ name: 'Apex', url: '/shows/apex', duration: null, educationalLevel: null }) as any
+    expect(s).not.toHaveProperty('duration')
+    expect(s).not.toHaveProperty('educationalLevel')
+    expect(s).not.toHaveProperty('offers')
+  })
+})
+
+describe('createCollectionPageSchema', () => {
+  it('is a CollectionPage whose mainEntity is an ItemList with absolute URLs', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://brightdesigns.band')
+    const s = createCollectionPageSchema({ name: 'Easy Shows', description: 'd', url: '/collections/easy', items: [{ name: 'A', url: '/shows/a' }, { name: 'B', url: '/shows/b' }] }) as any
+    expect(s['@type']).toBe('CollectionPage')
+    expect(s.url).toBe('https://brightdesigns.band/collections/easy')
+    expect(s.mainEntity['@type']).toBe('ItemList')
+    expect(s.mainEntity.itemListElement[1]).toEqual({ '@type': 'ListItem', position: 2, name: 'B', url: 'https://brightdesigns.band/shows/b' })
+    expect(JSON.stringify(s)).not.toMatch(/price/i)
   })
 })

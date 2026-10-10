@@ -23,3 +23,19 @@ export function slugFromTitle(title: string): string {
       .replace(/[\s_]+/g, '-')
   );
 }
+
+const MAX_SLUG_ATTEMPTS = 50
+
+/**
+ * A public slug for a new arrangement: the title's slug, then `-2`, `-3`...
+ * until `exists` says the candidate is free.
+ */
+export async function uniqueArrangementSlug(title: string, exists: (slug: string) => Promise<boolean>): Promise<string> {
+  const raw = slugFromTitle(title)
+  // Empty or all-digit slugs would be read as numeric ids by the route.
+  const base = raw === '' ? 'arrangement' : /^\d+$/.test(raw) ? `arrangement-${raw}` : raw
+  let candidate = base
+  // Past the cap the insert hits the unique index and surfaces as a conflict.
+  for (let n = 2; n <= MAX_SLUG_ATTEMPTS + 1 && (await exists(candidate)); n++) candidate = `${base}-${n}`
+  return candidate
+}

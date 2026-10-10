@@ -39,10 +39,7 @@ const poppins = Poppins({
 // Remove display/serif fonts for cleaner startup feel
 
 // Enhanced SEO metadata using our new system
-export const metadata: Metadata = generateMetadata({
-  ...defaultSEOConfig,
-  canonical: getPublicSiteUrl(),
-})
+export const metadata: Metadata = generateMetadata({ ...defaultSEOConfig })
 
 export default function RootLayout({
   children,

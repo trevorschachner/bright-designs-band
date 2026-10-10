@@ -1,4 +1,12 @@
 import React from 'react';
+import { Metadata } from 'next';
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata';
+
+export const metadata: Metadata = buildMetadata({
+  title: 'Privacy Policy | Bright Designs',
+  description: 'How Bright Designs collects, uses, and protects information gathered through this website.',
+  path: '/privacy',
+});
 
 export default function PrivacyPolicyPage() {
   return (

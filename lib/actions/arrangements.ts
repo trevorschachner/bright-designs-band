@@ -13,6 +13,7 @@ import {
   tags,
 } from '@/lib/database/schema'
 import { invalidateArrangement, invalidateShow } from '@/lib/services/invalidate'
+import { uniqueArrangementSlug } from '@/lib/slug'
 import { trackServerEvent } from '@/lib/observability/events'
 import { toIso } from '@/lib/services/cache'
 import { getArrangementPiecesForAdmin } from '@/lib/services/pieces'
@@ -75,10 +76,20 @@ async function replaceArrangementTags(tx: Tx, arrangementId: number, tagIds: num
   }
 }
 
+async function arrangementSlugTaken(tx: Tx | Database, slug: string, exceptId?: number): Promise<boolean> {
+  const rows = await tx.select({ id: arrangements.id }).from(arrangements).where(eq(arrangements.slug, slug)).limit(2)
+  return rows.some((r) => r.id !== exceptId)
+}
+
+async function slugForArrangement(tx: Tx | Database, id: number): Promise<string | null> {
+  const [row] = await tx.select({ slug: arrangements.slug }).from(arrangements).where(eq(arrangements.id, id)).limit(1)
+  return row?.slug ?? null
+}
+
 /** Locks the arrangement row; NotFoundError when it does not exist. */
 async function lockArrangement(tx: Tx, id: number) {
   const [row] = await tx
-    .select({ id: arrangements.id, updatedAt: arrangements.updatedAt })
+    .select({ id: arrangements.id, slug: arrangements.slug, updatedAt: arrangements.updatedAt })
     .from(arrangements)
     .where(eq(arrangements.id, id))
     .limit(1)
@@ -117,8 +128,9 @@ const runCreateArrangement = guarded(
   createArrangementSchema,
   async (data, { db, email }) => {
     const { showId, tags: tagIds, ...fields } = data
-    const { row, slug } = await db.transaction(async (tx) => {
+    const { row, slug, arrangementSlug } = await db.transaction(async (tx) => {
       const show = await lockShow(tx, showId)
+      const arrangementSlug = await uniqueArrangementSlug(fields.title, (s) => arrangementSlugTaken(tx, s))
       const [last] = await tx
         .select({ orderIndex: showArrangements.orderIndex })
         .from(showArrangements)
@@ -128,17 +140,17 @@ const runCreateArrangement = guarded(
       const orderIndex = (last?.orderIndex ?? 0) + 1
       const [inserted] = await tx
         .insert(arrangements)
-        .values({ ...fields, updatedAt: new Date() })
+        .values({ ...fields, slug: arrangementSlug, updatedAt: new Date() })
         .returning(COLUMNS)
       await tx.insert(showArrangements).values({ showId, arrangementId: inserted.id, orderIndex })
       if (tagIds && tagIds.length > 0) await replaceArrangementTags(tx, inserted.id, tagIds)
-      return { row: inserted, slug: show.slug }
+      return { row: inserted, slug: show.slug, arrangementSlug }
     })
     return {
       data: toResult(row),
       invalidate: async () => {
         try {
-          await invalidateArrangement(row.id, slug)
+          await invalidateArrangement(row.id, arrangementSlug, slug)
         } finally {
           await trackServerEvent('arrangement.saved', { arrangementId: row.id, showId }, email)
         }
@@ -160,9 +172,12 @@ const runUpdateArrangement = guarded(
   updateArrangementSchema,
   async (data, { db, email }) => {
     const { id, updatedAt, tags: tagIds, ...fields } = data
-    const { row, slug, showId } = await db.transaction(async (tx) => {
+    const { row, slug, showId, arrangementSlug, previousSlug } = await db.transaction(async (tx) => {
       const current = await lockArrangement(tx, id)
       assertFresh(current.updatedAt, updatedAt, 'arrangement')
+      if (fields.slug !== undefined && fields.slug !== current.slug && (await arrangementSlugTaken(tx, fields.slug, id))) {
+        throw new InvalidError([{ path: 'slug', message: 'Another part already uses this slug' }])
+      }
       const [updated] = await tx
         .update(arrangements)
         .set({ ...fields, updatedAt: new Date() })
@@ -170,13 +185,19 @@ const runUpdateArrangement = guarded(
         .returning(COLUMNS)
       if (tagIds !== undefined) await replaceArrangementTags(tx, id, tagIds)
       const owner = await firstShowFor(tx, id)
-      return { row: updated, slug: owner?.slug ?? null, showId: owner?.id ?? null }
+      return {
+        row: updated,
+        slug: owner?.slug ?? null,
+        showId: owner?.id ?? null,
+        arrangementSlug: fields.slug ?? current.slug,
+        previousSlug: current.slug,
+      }
     })
     return {
       data: toResult(row),
       invalidate: async () => {
         try {
-          await invalidateArrangement(row.id, slug)
+          await invalidateArrangement(row.id, arrangementSlug, slug, previousSlug)
         } finally {
           await trackServerEvent('arrangement.saved', { arrangementId: row.id, showId }, email)
         }
@@ -208,24 +229,26 @@ const runDeleteArrangement = guarded(
     let clearedShowIds: number[] = []
     if (partFiles.length > 0) {
       const ownerSlug = await showSlugFor(db, id)
+      const ownSlug = await slugForArrangement(db, id)
       ;({ clearedShowIds } = await removeFilesInOrder(db, partFiles, createClient, async (cleared) => {
-        invalidateArrangement(id, ownerSlug)
+        invalidateArrangement(id, ownSlug, ownerSlug)
         await invalidateShowsById(cleared)
       }))
     }
 
-    const { deleted, slug } = await db.transaction(async (tx) => {
+    const { deleted, slug, arrangementSlug } = await db.transaction(async (tx) => {
       // Read first: the cascade removes the link to the show.
       const slug = await showSlugFor(tx, id)
+      const arrangementSlug = await slugForArrangement(tx, id)
       // Show links, tag links and piece links go with it (FK cascades); its files are already gone.
       const [deleted] = await tx.delete(arrangements).where(eq(arrangements.id, id)).returning({ id: arrangements.id })
       if (!deleted) throw new NotFoundError('arrangement')
-      return { deleted, slug }
+      return { deleted, slug, arrangementSlug }
     })
     return {
       data: { id: deleted.id },
       invalidate: async () => {
-        invalidateArrangement(deleted.id, slug)
+        invalidateArrangement(deleted.id, arrangementSlug, slug)
         // A show whose thumbnail/graphic pointed at one of the part's files was cleared.
         await invalidateShowsById(clearedShowIds)
       },
@@ -283,8 +306,8 @@ const runSetArrangementTags = guarded(
   'canEditArrangements',
   setArrangementTagsSchema,
   async ({ arrangementId, tagIds }, { db }) => {
-    const { row, slug } = await db.transaction(async (tx) => {
-      await lockArrangement(tx, arrangementId)
+    const { row, slug, arrangementSlug } = await db.transaction(async (tx) => {
+      const current = await lockArrangement(tx, arrangementId)
       await replaceArrangementTags(tx, arrangementId, tagIds)
       // Last-writer-wins, but bumps updated_at so an open form gets `stale`.
       const [updated] = await tx
@@ -292,9 +315,9 @@ const runSetArrangementTags = guarded(
         .set({ updatedAt: new Date() })
         .where(eq(arrangements.id, arrangementId))
         .returning(COLUMNS)
-      return { row: updated, slug: await showSlugFor(tx, arrangementId) }
+      return { row: updated, slug: await showSlugFor(tx, arrangementId), arrangementSlug: current.slug }
     })
-    return { data: toResult(row), invalidate: () => invalidateArrangement(row.id, slug) }
+    return { data: toResult(row), invalidate: () => invalidateArrangement(row.id, arrangementSlug, slug) }
   },
   'setArrangementTags'
 )
@@ -314,8 +337,8 @@ const runSetArrangementPieces = guarded(
   'canEditArrangements',
   setArrangementPiecesSchema,
   async ({ arrangementId, pieceIds }, { db }) => {
-    const slug = await db.transaction(async (tx) => {
-      await lockArrangement(tx, arrangementId)
+    const { slug, arrangementSlug } = await db.transaction(async (tx) => {
+      const current = await lockArrangement(tx, arrangementId)
       if (pieceIds.length > 0) {
         const known = new Set((await tx.select({ id: pieces.id }).from(pieces).where(inArray(pieces.id, pieceIds))).map((p) => p.id))
         const missing = pieceIds.filter((id) => !known.has(id))
@@ -329,14 +352,14 @@ const runSetArrangementPieces = guarded(
           .insert(arrangementPieces)
           .values(pieceIds.map((pieceId, i) => ({ arrangementId, pieceId, orderIndex: i + 1 })))
       }
-      return showSlugFor(tx, arrangementId)
+      return { slug: await showSlugFor(tx, arrangementId), arrangementSlug: current.slug }
     })
     // The credit list is part of the arrangement: an arrangement change. It
     // does not bump arrangements.updated_at (the pieces editor saves on each
     // change, beside an arrangement form that may be open).
     return {
       data: await getArrangementPiecesForAdmin(arrangementId),
-      invalidate: () => invalidateArrangement(arrangementId, slug),
+      invalidate: () => invalidateArrangement(arrangementId, arrangementSlug, slug),
     }
   },
   'setArrangementPieces'

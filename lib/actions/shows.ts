@@ -132,6 +132,7 @@ const runCreateShow = guarded(
           description: fields.description ?? null,
           price: fields.price ?? null,
           thumbnailUrl: fields.thumbnailUrl ?? null,
+          programNotes: fields.programNotes ?? null,
           videoUrl: fields.videoUrl ?? null,
           displayOrder: fields.displayOrder ?? 0,
         })

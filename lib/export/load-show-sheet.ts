@@ -177,17 +177,12 @@ export async function readShowSheetTables(
   for (const a of data.arrangementRows) if (!linked.has(a.id)) parts.push(toPart(a, null, null))
 
   return {
-    shows: data.showRows.map(s => {
-      // ensemble_size / includes are not columns on `shows` yet (#51). Read
-      // them if a later migration adds them; otherwise they export blank.
-      const extra = s as unknown as { ensembleSize?: string | null; includes?: string[] | null }
-      return showRow({
+    shows: data.showRows.map(s =>
+      showRow({
         ...s,
-        ensembleSize: extra.ensembleSize ?? null,
-        includes: extra.includes ?? null,
         tagNames: s.showsToTags.map(st => st.tag.name).sort((x, y) => x.localeCompare(y)),
       })
-    }),
+    ),
     parts: parts.map(partRow),
     pieces: data.pieceRows.map(pieceRow),
     links: data.links.map(l => ({ show_id: l.showId, arrangement_id: l.arrangementId, order_index: l.orderIndex })),

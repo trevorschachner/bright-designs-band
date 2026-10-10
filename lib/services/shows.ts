@@ -8,7 +8,7 @@
 
 import { db } from '@/lib/database';
 import { shows, showsToTags, showArrangements, files, tags, slugRedirects } from '@/lib/database/schema';
-import { and, desc, eq, exists, ilike, inArray, sql, count, type SQL } from 'drizzle-orm';
+import { and, desc, eq, exists, gte, ilike, inArray, ne, sql, count, type SQL } from 'drizzle-orm';
 import { likePattern } from '@/lib/filters/admin-search';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterCondition, SortCondition } from '@/lib/filters/types';
@@ -16,7 +16,9 @@ import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
 import { shouldSkipSupabase } from '@/lib/env';
 import { publicStorageUrl } from '@/lib/media/public-url';
 import { TAGS } from '@/lib/cache-tags';
+import { collections, matchesFilter } from '@/lib/collections';
 import { cachedRead, toIso, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
+import type { EnsembleSize } from '@/lib/validation/enums';
 import { PG_UNDEFINED_TABLE, postgresCode } from '@/lib/database/errors';
 
 // ---------------------------------------------------------------------------
@@ -39,7 +41,7 @@ export type ShowSummary = {
   featured: boolean;
   createdAt: string | null;
   showsToTags: { tag: TagRef }[];
-  arrangements: { id: number; title: string | null; scene: string | null }[];
+  arrangements: { id: number; slug: string; title: string | null; scene: string | null }[];
 };
 
 /** Storage path or absolute URL to a public URL. Null when it cannot be built. */
@@ -78,6 +80,9 @@ export const SHOW_DETAIL_COLUMNS = {
   year: true,
   difficulty: true,
   duration: true,
+  programNotes: true,
+  ensembleSize: true,
+  includes: true,
   thumbnailUrl: true,
   graphicUrl: true,
   videoUrl: true,
@@ -110,7 +115,7 @@ function summaryRelations() {
     showArrangements: {
       columns: {},
       orderBy: [showArrangements.orderIndex],
-      with: { arrangement: { columns: { id: true, title: true, scene: true } } },
+      with: { arrangement: { columns: { id: true, slug: true, title: true, scene: true } } },
     },
     files: {
       columns: { storagePath: true },
@@ -133,7 +138,7 @@ type SummaryRow = {
   featured: boolean;
   createdAt: Date | string;
   showsToTags: { tag: TagRef | null }[];
-  showArrangements: { arrangement: { id: number; title: string | null; scene: string | null } | null }[];
+  showArrangements: { arrangement: { id: number; slug: string; title: string | null; scene: string | null } | null }[];
   files: { storagePath: string }[];
 };
 
@@ -154,12 +159,33 @@ function toSummary(s: SummaryRow): ShowSummary {
     showsToTags: presentTags(s.showsToTags),
     arrangements: s.showArrangements
       .map((sa) => sa.arrangement)
-      .filter((a): a is { id: number; title: string | null; scene: string | null } => Boolean(a)),
+      .filter((a): a is { id: number; slug: string; title: string | null; scene: string | null } => Boolean(a)),
   };
 }
 
 /** Card and list reads join arrangements and tags, so they carry those tags too. */
 const LIST_TAGS = () => [TAGS.shows, TAGS.arrangements, TAGS.tags];
+
+async function fetchRelatedShows(showId: number, difficulty: ShowDifficulty | null, tagNames: string[]): Promise<ShowSummary[]> {
+  const themes = tagNames.filter((t) => t.startsWith('Theme: '));
+  const rows = await db.query.shows.findMany({
+    columns: SUMMARY_COLUMNS,
+    where: ne(shows.id, showId),
+    orderBy: [desc(shows.createdAt)],
+    limit: 40,
+    with: summaryRelations(),
+  });
+  const summaries = (rows as SummaryRow[]).map(toSummary);
+  const sameTheme = summaries.filter((s) => s.showsToTags.some((r) => themes.includes(r.tag.name)));
+  const sameLevel = summaries.filter((s) => s.difficulty === difficulty && !sameTheme.includes(s));
+  return [...sameTheme, ...sameLevel].slice(0, 3);
+}
+
+/** Up to 3 shows to link from a show page: same theme tag first, then same difficulty. */
+export const getRelatedShows = cachedRead('related-shows-v2', fetchRelatedShows, {
+  tags: LIST_TAGS,
+  atBuildWithoutDb: [] as ShowSummary[],
+});
 
 // ---------------------------------------------------------------------------
 // Home page and collections
@@ -180,24 +206,26 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
  * Whatever is featured, newest first, at most six. An empty list is a real
  * answer (nothing featured), and the home page renders its fallback copy.
  */
-export const getFeaturedShows = cachedRead('featured-shows-v4', fetchFeaturedShows, {
+export const getFeaturedShows = cachedRead('featured-shows-v5', fetchFeaturedShows, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
 
-export type ShowFilter = { difficulty?: ShowDifficulty; tag?: string };
+export type ShowFilter = { difficulty?: ShowDifficulty; tags?: string[]; yearMin?: number };
 
 async function fetchShowsByFilter(filter: ShowFilter): Promise<ShowSummary[]> {
   const conditions: SQL[] = [];
   if (filter.difficulty) conditions.push(eq(shows.difficulty, filter.difficulty));
-  if (filter.tag) {
+  if (filter.yearMin) conditions.push(gte(shows.year, filter.yearMin));
+  // All-of: one exists subquery per tag.
+  for (const tagName of filter.tags ?? []) {
     conditions.push(
       exists(
         db
           .select({ one: sql`1` })
           .from(showsToTags)
           .innerJoin(tags, eq(tags.id, showsToTags.tagId))
-          .where(and(eq(showsToTags.showId, shows.id), eq(tags.name, filter.tag)))
+          .where(and(eq(showsToTags.showId, shows.id), eq(tags.name, tagName)))
       )
     );
   }
@@ -205,17 +233,38 @@ async function fetchShowsByFilter(filter: ShowFilter): Promise<ShowSummary[]> {
   const rows = await db.query.shows.findMany({
     columns: SUMMARY_COLUMNS,
     where: conditions.length > 0 ? and(...conditions) : undefined,
-    orderBy: [desc(shows.createdAt)],
-    limit: 12,
+    orderBy: [sql`${shows.year} desc nulls last`, desc(shows.createdAt)],
+    limit: 60,
     with: summaryRelations(),
   });
   return (rows as SummaryRow[]).map(toSummary);
 }
 
-/** Shows for a collection landing page (difficulty and/or tag name). */
-export const getShowsByFilter = cachedRead('collection-shows-v2', fetchShowsByFilter, {
+/** Shows for a collection landing page (difficulty, all-of tag names, minimum year). */
+export const getShowsByFilter = cachedRead('collection-shows-v4', fetchShowsByFilter, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
+});
+
+async function fetchCollectionCounts(): Promise<Record<string, number>> {
+  const rows = await db.query.shows.findMany({
+    columns: { difficulty: true, year: true },
+    with: { showsToTags: { with: { tag: { columns: { name: true } } } } },
+  });
+  const facts = rows.map((r) => ({
+    difficulty: r.difficulty as string | null,
+    year: r.year,
+    tagNames: r.showsToTags.map((t) => t.tag?.name).filter((n): n is string => Boolean(n)),
+  }));
+  const counts: Record<string, number> = {};
+  for (const c of collections) counts[c.slug] = facts.filter((f) => matchesFilter(f, c.filter)).length;
+  return counts;
+}
+
+/** How many shows each collection holds, by slug. Drives which collection pages are published. */
+export const getCollectionCounts = cachedRead('collection-counts-v1', fetchCollectionCounts, {
+  tags: () => [TAGS.shows, TAGS.tags],
+  atBuildWithoutDb: {} as Record<string, number>,
 });
 
 // ---------------------------------------------------------------------------
@@ -246,6 +295,7 @@ export type ShowListItem = {
   createdAt: string | null;
   arrangements: {
     id: number;
+    slug: string;
     title: string;
     scene: string | null;
     durationSeconds: number | null;
@@ -318,7 +368,7 @@ async function fetchShowsRows(
           orderBy: [showArrangements.orderIndex],
           with: {
             arrangement: {
-              columns: { id: true, title: true, scene: true, durationSeconds: true, sampleScoreUrl: true },
+              columns: { id: true, slug: true, title: true, scene: true, durationSeconds: true, sampleScoreUrl: true },
             },
           },
         },
@@ -367,7 +417,7 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
  * page lives 5 minutes instead of an hour: free text is the one input with a
  * long tail of one-off values.
  */
-export const getShowsPage = cachedRead('shows-page-v2', fetchShowsPage, {
+export const getShowsPage = cachedRead('shows-page-v3', fetchShowsPage, {
   tags: LIST_TAGS,
   atBuildWithoutDb: { data: [] as ShowListItem[], total: 0 },
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
@@ -394,6 +444,9 @@ export type ShowDetailRow = {
   year: number | null;
   difficulty: ShowDifficulty | null;
   duration: string | null;
+  programNotes: string | null;
+  ensembleSize: EnsembleSize | null;
+  includes: string | null;
   thumbnailUrl: string | null;
   graphicUrl: string | null;
   videoUrl: string | null;
@@ -440,7 +493,7 @@ async function fetchShowBySlug(slug: string): Promise<ShowWithTags | null> {
   return findShowWithTags(eq(shows.slug, slug));
 }
 
-export const getShowBySlug = cachedRead('show-by-slug-v3', fetchShowBySlug, {
+export const getShowBySlug = cachedRead('show-by-slug-v4', fetchShowBySlug, {
   tags: () => [TAGS.shows, TAGS.tags],
   atBuildWithoutDb: null as ShowWithTags | null,
 });
@@ -499,6 +552,7 @@ export type ShowArrangementFile = {
 
 export type ShowArrangement = {
   id: number;
+  slug: string;
   title: string;
   scene: string | null;
   composer: string | null;
@@ -522,6 +576,7 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
   const result = await db.execute(sql`
     SELECT
       a.id as arrangement_id,
+      a.slug as arrangement_slug,
       a.title as arrangement_title,
       a.scene,
       a.composer,
@@ -563,6 +618,7 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
     if (!arrangement) {
       arrangement = {
         id: arrId,
+        slug: row.arrangement_slug,
         title: row.arrangement_title,
         scene: row.scene ?? null,
         composer: row.composer ?? null,
@@ -605,7 +661,7 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
   }));
 }
 
-export const getShowArrangements = cachedRead('show-arrangements-v2', fetchShowArrangements, {
+export const getShowArrangements = cachedRead('show-arrangements-v3', fetchShowArrangements, {
   tags: (showId) => [TAGS.shows, TAGS.show(showId), TAGS.arrangements],
   atBuildWithoutDb: [] as ShowArrangement[],
 });
@@ -664,6 +720,7 @@ export type ShowIndexEntry = {
   description: string | null;
   year: number | null;
   difficulty: ShowDifficulty | null;
+  programNotes: string | null;
 };
 
 async function fetchShowIndex(): Promise<ShowIndexEntry[]> {
@@ -674,6 +731,7 @@ async function fetchShowIndex(): Promise<ShowIndexEntry[]> {
       description: shows.description,
       year: shows.year,
       difficulty: shows.difficulty,
+      programNotes: shows.programNotes,
     })
     .from(shows)
     .orderBy(desc(shows.year), shows.title);
@@ -681,7 +739,7 @@ async function fetchShowIndex(): Promise<ShowIndexEntry[]> {
 }
 
 /** Every show's title, year, difficulty and description, for /llms.txt and /llms-full.txt. */
-export const getShowIndex = cachedRead('show-index-v1', fetchShowIndex, {
+export const getShowIndex = cachedRead('show-index-v2', fetchShowIndex, {
   tags: () => [TAGS.shows],
   atBuildWithoutDb: [] as ShowIndexEntry[],
 });
@@ -746,7 +804,7 @@ async function fetchShowForApi(id: string): Promise<ShowApiDetail | null> {
   };
 }
 
-export const getShowForApi = cachedRead('show-api-v2', fetchShowForApi, {
+export const getShowForApi = cachedRead('show-api-v3', fetchShowForApi, {
   tags: (id) => [TAGS.shows, TAGS.arrangements, TAGS.tags, ...(/^\d+$/.test(id) ? [TAGS.show(id)] : [])],
   atBuildWithoutDb: null as ShowApiDetail | null,
 });

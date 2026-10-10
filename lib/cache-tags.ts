@@ -18,10 +18,11 @@ export const TAGS = {
 
 export const PATHS = {
   show: (slug: string) => `/shows/${slug}`,
-  arrangement: (id: number | string) => `/arrangements/${id}`,
+  arrangement: (slug: string) => `/arrangements/${slug}`,
   collection: (slug: string) => `/collections/${slug}`,
   home: '/',
   shows: '/shows',
+  collections: '/collections',
   arrangements: '/arrangements',
   resources: '/resources',
   sitemap: '/sitemap.xml',

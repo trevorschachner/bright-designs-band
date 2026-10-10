@@ -22,8 +22,10 @@ vi.mock('@/lib/services/shows', () => ({
     return data.redirects[slug] ?? null
   }),
   getShowArrangements: vi.fn(async () => []),
+  getRelatedShows: vi.fn(async () => []),
   getPublicShowFiles: vi.fn(async () => []),
   getAllShowSlugs: vi.fn(async () => []),
+  getCollectionCounts: vi.fn(async () => ({})),
 }))
 vi.mock('@/lib/services/pieces', () => ({ getPublicPiecesByArrangementIds: vi.fn(async () => new Map()) }))
 

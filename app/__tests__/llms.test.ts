@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ShowIndexEntry } from '@/lib/services/shows'
 
 const SHOWS: ShowIndexEntry[] = [
-  { slug: 'true-north', title: 'True North', description: 'A journey north. Second sentence.', year: 2025, difficulty: 'Advanced' },
-  { slug: 'paper-cities', title: 'Paper Cities', description: 'Costs $5,000 to stage.', year: 2024, difficulty: 'Intermediate' },
-  { slug: 'quiet', title: 'Quiet', description: null, year: null, difficulty: null },
+  { slug: 'true-north', title: 'True North', description: 'A journey north. Second sentence.', year: 2025, difficulty: 'Advanced', programNotes: 'Deep notes here.' },
+  { slug: 'paper-cities', title: 'Paper Cities', description: 'Costs $5,000 to stage.', year: 2024, difficulty: 'Intermediate', programNotes: null },
+  { slug: 'quiet', title: 'Quiet', description: null, year: null, difficulty: null, programNotes: null },
 ]
 
 vi.mock('@/lib/services/shows', () => ({
   getShowIndex: vi.fn(async () => SHOWS),
+  getCollectionCounts: vi.fn(async () => ({ 'competitive-marching-band-shows': 3, 'easy-marching-band-shows': 2, 'space-marching-band-shows': 5, 'indoor-winds-shows': 1 })),
 }))
 
 import { GET as getLlms } from '../llms.txt/route'
@@ -30,6 +31,9 @@ describe('/llms.txt', () => {
     expect(body).toContain('quoted per program')
     expect(body).toContain('- [True North](https://brightdesigns.band/shows/true-north) — 2025, Advanced, A journey north.')
     expect(body).toContain('/collections/competitive-marching-band-shows')
+    expect(body.match(/\/collections\/[a-z0-9-]+/g)).toHaveLength(3)
+    expect(body).not.toContain('/collections/indoor-winds-shows')
+    expect(body).not.toContain('Deep notes here.')
   })
 })
 
@@ -39,6 +43,7 @@ describe('/llms-full.txt', () => {
     expect(body).not.toContain('$')
     for (const show of SHOWS) expect(body).toContain(show.title)
     expect(body).toContain('Second sentence.')
+    expect(body).toContain('Deep notes here.')
     expect(body).toContain('quoted per program')
     for (const faq of FAQS) expect(body).toContain(faq.question)
   })

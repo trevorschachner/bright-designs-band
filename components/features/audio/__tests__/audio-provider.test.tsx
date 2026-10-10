@@ -83,7 +83,7 @@ function Probe() {
 const api = new Proxy({} as Actions, { get: (_, key) => probe.api![key as keyof Actions] });
 
 const catalogRow = (id: number, title: string, url: string): ArrangementListItem => ({
-  id, title, composer: null, durationSeconds: 120, sampleScoreUrl: null,
+  id, slug: `slug-${id}`, title, composer: null, durationSeconds: 120, sampleScoreUrl: null,
   files: [{ id, fileType: 'audio', url }], showArrangements: [],
 });
 const state = () => JSON.parse(screen.getByTestId('state').textContent!);

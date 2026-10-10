@@ -34,6 +34,8 @@ export const SHOW_COLUMNS = [
   'tags',
   'featured',
   'display_order',
+  // Last, so the sheet's positional IMPORTDATA tabs keep their existing columns.
+  'program_notes',
 ] as const;
 
 export const PART_COLUMNS = [
@@ -80,9 +82,10 @@ export type ShowRecord = {
   drillWriter: string | null;
   featured: boolean;
   displayOrder: number;
-  /** Optional until the columns exist on `shows`; exported blank when absent. */
   ensembleSize?: string | null;
-  includes?: string[] | null;
+  /** Comma-separated subset of SHOW_INCLUDES, as stored. */
+  includes?: string | null;
+  programNotes?: string | null;
   tagNames: string[];
 };
 
@@ -136,10 +139,11 @@ export function showRow(s: ShowRecord): Row<typeof SHOW_COLUMNS> {
     wind_arranger: s.windArranger,
     drill_writer: s.drillWriter,
     ensemble_size: s.ensembleSize ?? null,
-    includes: s.includes ? list(s.includes) : null,
+    includes: s.includes || null,
     tags: list(s.tagNames),
     featured: s.featured,
     display_order: s.displayOrder,
+    program_notes: s.programNotes ? s.programNotes.replace(/(?:\r?\n)+/g, ' ') : null,
   };
 }
 
