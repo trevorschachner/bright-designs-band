@@ -279,3 +279,22 @@ describe('AudioProvider', () => {
     expect(() => render(<Probe />)).toThrow(/must be used within an AudioProvider/);
   });
 });
+
+describe('GlobalAudioPlayerBar cover art', () => {
+  it('loads the cover through the image optimizer at thumbnail size, not the full original', () => {
+    const original = 'https://yibokqolsyxosftcupgz.supabase.co/storage/v1/object/public/Bright%20Designs/files/shows/54/image/big.jpeg';
+    render(
+      <AudioProvider>
+        <AudioPlayerComponent tracks={[{ id: '1', title: 'Misirlou', url: 'https://example.com/a.mp3', imageUrl: original }]} />
+        <GlobalAudioPlayerBar />
+      </AudioProvider>,
+    );
+    const img = screen.getByRole('img', { name: 'Misirlou' }) as HTMLImageElement;
+    const src = img.getAttribute('src') ?? '';
+    expect(src).not.toBe(original);
+    expect(src).toContain('/_next/image');
+    const width = Number(new URL(src, 'https://brightdesigns.band').searchParams.get('w'));
+    expect(width).toBeGreaterThan(0);
+    expect(width).toBeLessThanOrEqual(128);
+  });
+});
