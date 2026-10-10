@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useSyncExternalStore } from "react"
+import Image from "next/image"
 import { useAudioActions, useAudioState, useAudioTime } from "@/components/features/audio/AudioProvider"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -87,10 +88,13 @@ export function GlobalAudioPlayerBar() {
           <div className={`flex items-center gap-3 w-full ${isMobile ? '' : 'flex-1 min-w-0'}`}>
             <div className={`flex-shrink-0 rounded-md overflow-hidden bg-muted flex items-center justify-center ${isMobile ? 'w-10 h-10' : 'w-12 h-12'}`}>
               {trackImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                // Through the image optimizer at thumbnail size: the cover is a
+                // show graphic that can be several MB at full resolution.
+                <Image
                   src={trackImage}
                   alt={trackTitle || 'Track cover'}
+                  width={48}
+                  height={48}
                   className="w-full h-full object-cover"
                 />
               ) : isPlaying ? (
