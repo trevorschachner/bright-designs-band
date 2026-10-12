@@ -25,3 +25,6 @@ A: No. Most were written for bands of 40 to 90 winds. A few, like Off the Rails 
 
 Q: How fast can we get the music?
 A: Pre-written shows ship as soon as licensing clears. Custom work follows our calendar: music by May 1, drill by Labor Day.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

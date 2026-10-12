@@ -21,7 +21,10 @@ Q: Which nature show is right for a young band?
 A: Feathered Flame, written at grade 2 and running 7:13, or Ride the Wave at 5:48.
 
 Q: Do these shows include drill?
-A: Drill is available on request for every show. Where we wrote the original drill, we adapt it to your numbers; otherwise we write new drill, due by Labor Day.
+A: No. Pre-written shows include the music, percussion, sound design files and show graphic. Your drill writer writes drill for your band.
 
 Q: Can we change the ending of a show?
 A: Yes. Swapping or rewriting a closer is a partial custom job and one of the most common things we do.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

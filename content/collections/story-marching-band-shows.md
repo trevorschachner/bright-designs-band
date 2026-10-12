@@ -25,3 +25,6 @@ A: Excalibur, at grade 2, or Off the Rails, also grade 2 and written for a small
 
 Q: Can we change the story?
 A: Within reason. A new title and a new ballad can shift the plot; a full rewrite is a custom show, and we start those in the winter for music by May 1.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

@@ -25,7 +25,7 @@ Q: Has anyone else performed these shows?
 A: Each was written for one band and performed by that band for one season. We tell you a show's full performance history before you buy it.
 
 Q: Will another band in our circuit have the same show?
-A: Ask us. We know where each show has been performed and sold, and we will tell you before you commit.
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.
 
 Q: When should we decide on a show for 2027?
 A: By January if you want music before spring break. Custom shows need a concept meeting by February to hit the May 1 music deadline.

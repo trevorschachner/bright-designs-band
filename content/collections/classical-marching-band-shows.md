@@ -25,3 +25,6 @@ A: The classical pieces do not. Any pop or film piece inside the show does, thro
 
 Q: Can we build a show only from public-domain pieces?
 A: Yes. Tell us the mood you want and we will assemble one from the arrangements in the catalog or write new movements.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

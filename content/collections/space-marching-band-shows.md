@@ -29,3 +29,6 @@ A: Yes. Each ships with the sound design files from the original performance, wh
 
 Q: Can you write a custom space show?
 A: Yes. Space is one of the most requested themes we write, and we start custom concepts in the winter for music by May 1.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

@@ -29,3 +29,6 @@ A: Yes. Judges reward clean, musical performances over difficult ones that fall 
 
 Q: How many winds do I need for one of these shows?
 A: They were written for small and medium bands. We can rebalance any of them for a smaller or larger group; tell us your instrumentation when you ask for a quote.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

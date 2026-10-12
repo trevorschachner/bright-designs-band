@@ -14,7 +14,7 @@ A custom show at this level takes a winter of design meetings and a spring of wr
 
 What is included
 
-Winds, percussion, sound design files, the show graphic and the audio you hear on each page. Drill and choreography are available on request; several of these shows have drill written by our team that can be adapted to your numbers. Licensing goes through Tresona and is paid by the school. Pricing is quoted per program.
+Winds, percussion, sound design files, the show graphic and the audio you hear on each page. Drill is not included with a pre-written show. Licensing goes through Tresona and is paid by the school. Pricing is quoted per program.
 
 ---faq---
 Q: Are these shows BOA-ready?
@@ -23,5 +23,8 @@ A: They were written for bands that compete at BOA regionals and state finals, w
 Q: Can we buy only the winds book?
 A: Yes. Every show and every arrangement can be bought on its own. Most bands at this level take winds, percussion and sound design together because they were written as one piece.
 
-Q: Can you adapt the drill to our band size?
-A: Where drill exists for a show, we can rewrite it for your numbers. Where it does not, we write new drill for the show, due by Labor Day.
+Q: Does a pre-written show include drill?
+A: No. Pre-written shows include the music, percussion, sound design files and show graphic. Your drill writer writes drill for your band.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

@@ -25,3 +25,6 @@ A: Yes. They are spooky rather than graphic, and all were performed by public hi
 
 Q: Can we swap the ballad in a dark show?
 A: Yes. Build-your-own and partial custom cover that. Uninvited and Adagio in G Minor are both available on their own.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.
