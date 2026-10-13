@@ -29,3 +29,6 @@ A: Yes. Build-your-own is one of the three ways to buy. Gold Rush and Off the Ra
 
 Q: Do these shows need props?
 A: No. The original performances used a few set pieces, but the music and drill do not depend on them.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

@@ -25,3 +25,6 @@ A: In Living Color, written at grade 2 to 3 for a small band and running 6:30.
 
 Q: Does the show come with a visual design?
 A: The show graphic and colour direction are included. Flag design, props and choreography are available on request.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

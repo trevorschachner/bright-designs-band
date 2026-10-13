@@ -25,3 +25,6 @@ A: Ride the Wave, written at grade 2 and running 5:48. Fast Lane and Takeover ar
 
 Q: Can we use one pop song in a custom show?
 A: Yes. Every arrangement is available on its own, and partial custom shows often mix one licensed pop ballad with original or public-domain movements.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.

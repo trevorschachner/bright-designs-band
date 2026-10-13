@@ -4,6 +4,8 @@ Shows written for small bands
 
 Excalibur was written for Batesburg-Leesville High School in 2024, an Arthurian show in 6:27 that moves from Mozart to Purcell to John Powell. Pale Blue Dot, for the same school, is a space show built on Zimmer, Holst, Sara Bareilles and Jacob Collier. Immortal, for Rock Canyon, is a vampire show that pairs Danse Macabre with Olivia Rodrigo's Vampire and Mozart's Dies Irae. In Living Color, for Lugoff-Elgin, builds a whole show out of True Colors, Rhapsody in Blue and Beethoven in Havana.
 
+Four intermediate shows were also written with small-ensemble parts: Gold Rush and Off the Rails, two Western shows; Lunch Atop A Skyscraper, set on a steel beam above 1930s New York; and Dot by Dot, built on Kusama's infinite dots.
+
 How a small-band show is written differently
 
 Every section gets melody. Trumpets do not carry the show alone. Low brass and saxes double in the openers so the sound stays full, and the ballads use the whole band on sustained chords instead of a thin soloist over nothing. The percussion books are written for a battery of six to ten and a front ensemble that might be two keyboards and a synth.
@@ -25,3 +27,6 @@ A: Each show includes a front ensemble book, but the sound design files cover th
 
 Q: Can a small band buy a show from another collection?
 A: Yes. We rewrite the balance for your instrumentation as part of the sale. Tell us your numbers and we will say honestly whether a show will work at your size.
+
+Q: Will another band in our circuit perform the same show?
+A: No. When you buy a pre-written show, we keep it exclusive to you in your circuit for that season. Custom shows are always exclusive to your program.
