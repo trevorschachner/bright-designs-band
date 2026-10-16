@@ -24,27 +24,22 @@ beforeEach(() => {
   current = makeShow(NOTES)
 })
 
-describe('show page with program notes', () => {
-  it('renders the question headings, the notes and a FAQPage schema', async () => {
-    const { default: Page } = await import('../[slug]/page')
-    const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ slug: 'apex' }) }))
-    expect(html).toContain('What is Apex about?')
-    expect(html).toContain('What music is in Apex?')
-    expect(html).toContain('Who is Apex for?')
-    expect(html).toContain('Bands of 40 to 90 winds.')
-    expect(html).toContain('The pack forms a wedge.')
-    expect(html).toContain('Duran Duran')
-    expect(html).toContain('"@type":"FAQPage"')
-    expect(html).toContain('"duration":"PT7M30S"')
-    expect(html).toContain('/collections/grade-3-marching-band-shows')
-  })
-  it('renders no question headings or FAQPage when notes are empty', async () => {
-    current = makeShow('')
+describe('show page', () => {
+  it('does not render program notes, question headings or a FAQPage', async () => {
     const { default: Page } = await import('../[slug]/page')
     const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ slug: 'apex' }) }))
     expect(html).not.toContain('What is Apex about?')
+    expect(html).not.toContain('Who is Apex for?')
+    expect(html).not.toContain('The pack forms a wedge.')
     expect(html).not.toContain('"@type":"FAQPage"')
+  })
+  it('keeps the facts: school, composers, duration schema and collection links', async () => {
+    const { default: Page } = await import('../[slug]/page')
+    const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ slug: 'apex' }) }))
+    expect(html).toContain('Written for Ola High School, 2025')
+    expect(html).toContain('Duran Duran')
+    expect(html).toContain('"duration":"PT7M30S"')
+    expect(html).toContain('/collections/grade-3-marching-band-shows')
     expect(html).toContain('What&#x27;s Included')
-    expect(html).not.toContain('What every package includes')
   })
 })

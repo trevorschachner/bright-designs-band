@@ -43,7 +43,7 @@ describe('/llms-full.txt', () => {
     expect(body).not.toContain('$')
     for (const show of SHOWS) expect(body).toContain(show.title)
     expect(body).toContain('Second sentence.')
-    expect(body).toContain('Deep notes here.')
+    expect(body).not.toContain('Deep notes here.')
     expect(body).toContain('quoted per program')
     for (const faq of FAQS) expect(body).toContain(faq.question)
   })
