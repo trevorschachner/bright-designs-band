@@ -253,22 +253,25 @@ export function AudioPlayerComponent({
               <button
                 key={track.id}
                 onClick={() => handleTrackChange(index, true)}
-                className={`w-full text-left flex items-center gap-2 p-2 rounded transition-colors text-xs ${
+                className={`w-full min-h-11 text-left flex items-center gap-3 px-2 py-1.5 rounded transition-colors text-sm ${
                   currentTrack === index
                     ? "bg-primary/10 border border-primary/20"
                     : "hover:bg-muted/50 border border-transparent"
                 }`}
               >
-                <div className="w-6 h-6 flex items-center justify-center flex-shrink-0 rounded-full bg-muted">
+                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 rounded-full bg-muted">
                   {currentTrack === index && isPlaying ? (
-                    <Pause className="w-3 h-3 text-primary" />
+                    <Pause className="w-4 h-4 text-primary" />
                   ) : (
-                    <Play className="w-3 h-3 text-muted-foreground" />
+                    <Play className="w-4 h-4 text-muted-foreground" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0 truncate text-xs font-medium">
+                <div className="flex-1 min-w-0 truncate font-medium">
                   {track.title}
                 </div>
+                {track.duration && (
+                  <span className="text-xs text-muted-foreground flex-shrink-0">{track.duration}</span>
+                )}
               </button>
             ))}
           </div>
@@ -312,11 +315,12 @@ export function AudioPlayerComponent({
               <Button
                 variant="ghost"
                 size="icon"
-                className={compact ? "h-8 w-8" : "h-10 w-10"}
+                className="h-10 w-10"
                 onClick={handlePreviousTrack}
                 disabled={currentTrack === 0}
+                aria-label="Previous track"
               >
-                <SkipBack className={compact ? "w-4 h-4" : "w-5 h-5"} />
+                <SkipBack className="w-5 h-5" />
               </Button>
             )}
             
@@ -324,8 +328,9 @@ export function AudioPlayerComponent({
             <Button
               variant="default"
               size="icon"
-              className={compact ? "h-10 w-10 rounded-full" : "h-12 w-12 rounded-full"}
+              className={compact ? "h-11 w-11 rounded-full" : "h-12 w-12 rounded-full"}
               onClick={togglePlayPause}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
                 <Pause className={compact ? "w-4 h-4 fill-current" : "w-5 h-5 fill-current"} />
@@ -339,22 +344,24 @@ export function AudioPlayerComponent({
               <Button
                 variant="ghost"
                 size="icon"
-                className={compact ? "h-8 w-8" : "h-10 w-10"}
+                className="h-10 w-10"
                 onClick={handleNextTrack}
                 disabled={currentTrack === tracks.length - 1}
+                aria-label="Next track"
               >
-                <SkipForward className={compact ? "w-4 h-4" : "w-5 h-5"} />
+                <SkipForward className="w-5 h-5" />
               </Button>
             )}
           </div>
 
-          {/* Volume Control */}
-          <div className={`flex items-center gap-2 ${compact ? 'flex-1 max-w-[150px]' : 'flex-1 max-w-[200px]'}`}>
+          {/* Volume Control. Hidden on phones and touch screens: iOS ignores it; the hardware buttons do this. */}
+          <div className={`hidden sm:flex items-center gap-2 [@media(pointer:coarse)]:hidden ${compact ? 'flex-1 max-w-[150px]' : 'flex-1 max-w-[200px]'}`}>
             <Button
               variant="ghost"
               size="icon"
               className={compact ? "h-7 w-7 flex-shrink-0" : "h-8 w-8 flex-shrink-0"}
               onClick={toggleMute}
+              aria-label={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
