@@ -326,16 +326,13 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           </div>
         </div>
 
-        {/* What's Included & Listen to Full Show - 2 Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* What's Included */}
-          <div>
-            <WhatIsIncluded />
-          </div>
-
+        {/* One grid, so What's Included renders once. It is last in source order
+            (so last on mobile, after the arrangements); on desktop it is placed
+            back in row 1, left of the player. */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-8 mb-8">
           {/* Master Audio Player - Compact */}
           {arrangements.filter((a: any) => a.audioUrl).length > 0 && (
-            <div id="master-player">
+            <div id="master-player" className="min-w-0 lg:col-start-2 lg:row-start-1">
               <AudioPlayerComponent
                 showTitle={show.title}
                 className="border-primary/20 shadow-sm"
@@ -345,7 +342,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                     const parts = [];
                     if (arrangement.arranger) parts.push(`${arrangement.arranger} (Winds)`);
                     if (arrangement.percussionArranger) parts.push(`${arrangement.percussionArranger} (Percussion)`);
-                    
+                  
                     const description = parts.length > 0 
                       ? `Arranged by ${parts.join(', ')}`
                       : arrangement.description || undefined;
@@ -355,6 +352,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                       title: arrangement.title || `Movement ${index + 1}`,
                       description: description,
                       url: arrangement.audioUrl,
+                      duration: arrangement.durationSeconds ? formatSeconds(arrangement.durationSeconds) : undefined,
                       imageUrl: displayImageUrl || undefined,
                     };
                   })}
@@ -364,157 +362,160 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
               />
             </div>
           )}
-        </div>
 
-        {/* The performance video. Shown whenever a VideoObject is emitted: the
-            same youtubeUrl drives both, and both render nothing without an id. */}
-        {videoObjectSchema && (
-          <section className="mb-8" aria-labelledby="watch-heading">
-            <h2 id="watch-heading" className="text-2xl font-heading font-bold text-foreground mb-4">
-              Watch the Performance
-            </h2>
-            <YouTubeFacade youtubeUrl={showRow.youtubeUrl} title={`${show.title} performance`} className="max-w-3xl" />
-          </section>
-        )}
+          {/* The performance video. Shown whenever a VideoObject is emitted: the
+              same youtubeUrl drives both, and both render nothing without an id. */}
+          {videoObjectSchema && (
+            <section className="min-w-0 lg:col-span-2" aria-labelledby="watch-heading">
+              <h2 id="watch-heading" className="text-2xl font-heading font-bold text-foreground mb-4">
+                Watch the Performance
+              </h2>
+              <YouTubeFacade youtubeUrl={showRow.youtubeUrl} title={`${show.title} performance`} className="max-w-3xl" />
+            </section>
+          )}
 
-        <ResaleCallout kind="show" title={show.title} className="mb-8" />
+          <ResaleCallout kind="show" title={show.title} className="lg:col-span-2" />
 
-        {/* Show Arrangements Section */}
-        <div className="space-y-4" id="listen">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-heading font-bold text-foreground">Show Arrangements</h2>
-            <Badge variant="secondary" className="text-sm font-medium">
-              {arrangements.length} {arrangements.length === 1 ? 'Movement' : 'Movements'}
-            </Badge>
-          </div>
+          {/* Show Arrangements Section */}
+          <div className="min-w-0 space-y-4 lg:col-span-2" id="listen">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-heading font-bold text-foreground">Show Arrangements</h2>
+              <Badge variant="secondary" className="text-sm font-medium">
+                {arrangements.length} {arrangements.length === 1 ? 'Movement' : 'Movements'}
+              </Badge>
+            </div>
           
-          {arrangements.map((arrangement, index) => {
-            const displayGrade = (() => {
-              const value = String(arrangement.grade || '').toLowerCase();
-              if (value === '1_2') return 'Grade 1-2';
-              if (value === '3_4') return 'Grade 3-4';
-              if (value === '5_plus' || value === '5+') return 'Grade 5+';
-              return null;
-            })();
+            {arrangements.map((arrangement, index) => {
+              const displayGrade = (() => {
+                const value = String(arrangement.grade || '').toLowerCase();
+                if (value === '1_2') return 'Grade 1-2';
+                if (value === '3_4') return 'Grade 3-4';
+                if (value === '5_plus' || value === '5+') return 'Grade 5+';
+                return null;
+              })();
 
-            const displayEnsembleSize = (() => {
-              const value = String(arrangement.ensembleSize || '').toLowerCase();
-              if (value === 'small') return 'Small Ensemble';
-              if (value === 'medium') return 'Medium Ensemble';
-              if (value === 'large') return 'Large Ensemble';
-              return null;
-            })();
+              const displayEnsembleSize = (() => {
+                const value = String(arrangement.ensembleSize || '').toLowerCase();
+                if (value === 'small') return 'Small Ensemble';
+                if (value === 'medium') return 'Medium Ensemble';
+                if (value === 'large') return 'Large Ensemble';
+                return null;
+              })();
 
-            return (
-              <Card 
-                key={arrangement.id} 
-                className="frame-card overflow-hidden group hover:shadow-lg transition-all duration-200 border border-border hover:border-primary/20"
-              >
-                <CardContent className="p-4">
-                  {/* Header Row */}
-                  <div className="flex items-start gap-3 mb-3">
-                    {/* Order Number */}
-                    <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-base">
-                      {index + 1}
-                    </div>
+              return (
+                <Card 
+                  key={arrangement.id} 
+                  className="frame-card overflow-hidden group hover:shadow-lg transition-all duration-200 border border-border hover:border-primary/20"
+                >
+                  <CardContent className="p-4">
+                    {/* Header Row */}
+                    <div className="flex items-start gap-3 mb-3">
+                      {/* Order Number */}
+                      <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-base">
+                        {index + 1}
+                      </div>
                     
-                    {/* Title and Scene */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-1.5">
-                        <h3 className="text-lg font-heading font-bold text-foreground group-hover:text-primary transition-colors">
-                          <Link href={`/arrangements/${arrangement.slug}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
-                            {arrangement.title}
-                          </Link>
-                        </h3>
-                        {arrangement.scene && (
-                          <Badge variant="outline" className="text-xs font-medium shrink-0">
-                            {String(arrangement.scene)}
-                          </Badge>
-                        )}
-                      </div>
+                      {/* Title and Scene */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3 mb-1.5">
+                          <h3 className="text-lg font-heading font-bold text-foreground group-hover:text-primary transition-colors">
+                            <Link href={`/arrangements/${arrangement.slug}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
+                              {arrangement.title}
+                            </Link>
+                          </h3>
+                          {arrangement.scene && (
+                            <Badge variant="outline" className="text-xs font-medium shrink-0">
+                              {String(arrangement.scene)}
+                            </Badge>
+                          )}
+                        </div>
                       
-                      {/* Metadata Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-                        {arrangement.composer && (
-                          <div className="flex items-center gap-2">
-                            <Music2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            <span><span className="font-medium">Composer:</span> {arrangement.composer}</span>
-                          </div>
-                        )}
-                        {arrangement.percussionArranger && (
-                          <div className="flex items-center gap-2">
-                            <Music className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            <span><span className="font-medium">Percussion:</span> {arrangement.percussionArranger}</span>
-                          </div>
-                        )}
-                        {displayGrade && (
-                          <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            <span><span className="font-medium">Grade:</span> {displayGrade}</span>
-                          </div>
-                        )}
-                        {arrangement.year && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            <span><span className="font-medium">Year:</span> {arrangement.year}</span>
-                          </div>
-                        )}
-                        {displayEnsembleSize && (
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            <span><span className="font-medium">Ensemble:</span> {displayEnsembleSize}</span>
-                          </div>
-                        )}
-                        {arrangement.durationSeconds && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            <span><span className="font-medium">Duration:</span> {formatSeconds(arrangement.durationSeconds)}</span>
-                          </div>
-                        )}
+                        {/* Metadata Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+                          {arrangement.composer && (
+                            <div className="flex items-center gap-2">
+                              <Music2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                              <span><span className="font-medium">Composer:</span> {arrangement.composer}</span>
+                            </div>
+                          )}
+                          {arrangement.percussionArranger && (
+                            <div className="flex items-center gap-2">
+                              <Music className="w-4 h-4 shrink-0" aria-hidden="true" />
+                              <span><span className="font-medium">Percussion:</span> {arrangement.percussionArranger}</span>
+                            </div>
+                          )}
+                          {displayGrade && (
+                            <div className="flex items-center gap-2">
+                              <Target className="w-4 h-4 shrink-0" aria-hidden="true" />
+                              <span><span className="font-medium">Grade:</span> {displayGrade}</span>
+                            </div>
+                          )}
+                          {arrangement.year && (
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
+                              <span><span className="font-medium">Year:</span> {arrangement.year}</span>
+                            </div>
+                          )}
+                          {displayEnsembleSize && (
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
+                              <span><span className="font-medium">Ensemble:</span> {displayEnsembleSize}</span>
+                            </div>
+                          )}
+                          {arrangement.durationSeconds && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
+                              <span><span className="font-medium">Duration:</span> {formatSeconds(arrangement.durationSeconds)}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Description */}
-                  {arrangement.description && (
-                    <p className="text-muted-foreground leading-relaxed mb-3 ml-12 text-sm">
-                      {arrangement.description}
-                    </p>
-                  )}
+                    {/* Description */}
+                    {arrangement.description && (
+                      <p className="text-muted-foreground leading-relaxed mb-3 ml-12 text-sm">
+                        {arrangement.description}
+                      </p>
+                    )}
 
-                  <SourcePieces
-                    part={arrangement}
-                    pieces={piecesByArrangement[arrangement.id]}
-                    className="mb-3 ml-12"
-                  />
+                    <SourcePieces
+                      part={arrangement}
+                      pieces={piecesByArrangement[arrangement.id]}
+                      className="mb-3 ml-12"
+                    />
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-2 ml-12">
-                    {arrangement.sampleScoreUrl && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={arrangement.sampleScoreUrl} target="_blank" rel="noopener noreferrer" className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                          <FileText className="w-4 h-4 mr-2" aria-hidden="true" />
-                          Sample Score
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-2 ml-12">
+                      {arrangement.sampleScoreUrl && (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={arrangement.sampleScoreUrl} target="_blank" rel="noopener noreferrer" className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                            <FileText className="w-4 h-4 mr-2" aria-hidden="true" />
+                            Sample Score
+                          </Link>
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/arrangements/${arrangement.slug}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                          View Details
+                          <ArrowLeft className="w-4 h-4 ml-2 rotate-180" aria-hidden="true" />
                         </Link>
                       </Button>
-                    )}
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/arrangements/${arrangement.slug}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                        View Details
-                        <ArrowLeft className="w-4 h-4 ml-2 rotate-180" aria-hidden="true" />
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={arrangementContactHref(arrangement.title ?? `${show.title}, part ${index + 1}`)} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                        <MessageSquare className="w-4 h-4 mr-2" aria-hidden="true" />
-                        Ask about this arrangement
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={arrangementContactHref(arrangement.title ?? `${show.title}, part ${index + 1}`)} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                          <MessageSquare className="w-4 h-4 mr-2" aria-hidden="true" />
+                          Ask about this arrangement
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+            <WhatIsIncluded />
+          </div>
         </div>
 
         {(collectionLinks.length > 0 || related.length > 0) && (
