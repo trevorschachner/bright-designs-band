@@ -11,7 +11,7 @@ const m = vi.hoisted(() => ({
   showsAdmin: vi.fn(async () => ({ data: [], total: 0 })),
   queryShows: vi.fn(async () => ({ rows: [], total: 0, page: 1, pageSize: 24, totalPages: 0 })),
   parseShowsQuery: vi.fn(() => ({ page: 1, limit: 24, conditions: [], sort: [] })),
-  resourcesAdmin: vi.fn(async () => []),
+  resourcesAdmin: vi.fn(async () => ({ rows: [], total: 0, page: 1, pageSize: 20, totalPages: 0 })),
   resourcesPublic: vi.fn(async () => []),
 }))
 vi.mock('@/lib/auth/guard', () => ({ guard: m.guard }))
@@ -21,12 +21,12 @@ vi.mock('@/lib/services/catalog', async (importOriginal) => ({
   parseShowsQuery: m.parseShowsQuery,
   queryShows: m.queryShows,
 }))
-vi.mock('@/lib/services/resources', () => ({ getResourcesForAdmin: m.resourcesAdmin, getActiveResources: m.resourcesPublic }))
+vi.mock('@/lib/services/resources', () => ({ getResourcesPageForAdmin: m.resourcesAdmin, getActiveResources: m.resourcesPublic }))
 vi.mock('@/lib/observability/report-error', () => ({ reportError: vi.fn() }))
 
 import { GET as getShows } from '@/app/api/shows/route'
 import { GET as getResources } from '@/app/api/resources/route'
-import { likePattern, readAdminSearch } from '@/lib/filters/admin-search'
+import { likePattern, readAdminPage, readAdminSearch } from '@/lib/filters/admin-search'
 
 const staff = { denied: null, email: 'a@b.c', role: 'editor' }
 const anon = { denied: new Response(null, { status: 401 }) }
@@ -44,6 +44,19 @@ describe('readAdminSearch / likePattern', () => {
   })
   it('escapes like wildcards so the term matches literally', () => {
     expect(likePattern('50%_off\\')).toBe('%50\\%\\_off\\\\%')
+  })
+})
+
+describe('readAdminPage', () => {
+  it('defaults to page 1 of 20', () => {
+    expect(readAdminPage(new URLSearchParams(''))).toEqual({ page: 1, limit: 20 })
+  })
+  it('reads page and limit, capping limit at the table\'s largest page size', () => {
+    expect(readAdminPage(new URLSearchParams('page=2&limit=50'))).toEqual({ page: 2, limit: 50 })
+    expect(readAdminPage(new URLSearchParams('page=3&limit=5000'))).toEqual({ page: 3, limit: 100 })
+  })
+  it('falls back on junk', () => {
+    expect(readAdminPage(new URLSearchParams('page=-1&limit=abc'))).toEqual({ page: 1, limit: 20 })
   })
 })
 
@@ -75,11 +88,23 @@ describe('GET /api/resources', () => {
   it('passes q to the staff read only', async () => {
     m.guard.mockResolvedValue(staff)
     await getResources(new Request('http://localhost/api/resources?all=true&q=guide') as never)
-    expect(m.resourcesAdmin).toHaveBeenCalledWith('guide')
+    expect(m.resourcesAdmin).toHaveBeenCalledWith(expect.objectContaining({ q: 'guide' }))
 
     m.guard.mockResolvedValue(anon)
     await getResources(new Request('http://localhost/api/resources?all=true&q=guide') as never)
     expect(m.resourcesPublic).toHaveBeenCalledWith()
     expect(m.resourcesAdmin).toHaveBeenCalledTimes(1)
+  })
+
+  it('pages the staff read and reports the page served and the total', async () => {
+    m.guard.mockResolvedValue(staff)
+    const rows = Array.from({ length: 20 }, (_, i) => ({ id: i + 21 }))
+    m.resourcesAdmin.mockResolvedValueOnce({ rows, total: 45, page: 2, pageSize: 20, totalPages: 3 } as never)
+    const res = await getResources(new Request('http://localhost/api/resources?all=true&page=2&limit=20') as never)
+    expect(m.resourcesAdmin).toHaveBeenCalledWith({ q: undefined, page: 2, limit: 20 })
+    const body = await res.json()
+    expect(body.data.data.map((r: { id: number }) => r.id)).toEqual(rows.map((r) => r.id))
+    expect(body.data.pagination).toEqual({ page: 2, limit: 20, total: 45, totalPages: 3, hasNext: true, hasPrev: true })
+    expect(res.headers.get('cache-control')).toBe('private, no-store')
   })
 })

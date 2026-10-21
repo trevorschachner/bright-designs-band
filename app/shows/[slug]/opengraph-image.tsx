@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
-import { getShowBySlug } from '@/lib/services/shows'
+import { getShowBySlug, getPublicShowFiles } from '@/lib/services/shows'
+import { showArt } from '@/lib/media/show-art'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import sharp from 'sharp'
@@ -24,7 +25,10 @@ export default async function Image({ params }: { params: { slug: string } }) {
   const show = (await getShowBySlug(slug))?.show ?? null
 
   const title = show?.title || 'Bright Designs Band'
-  const graphicUrl = show?.graphicUrl || show?.thumbnailUrl
+  // The same art as the page: its first image file is the fallback, from the
+  // same cached files read.
+  const showFiles = show ? await getPublicShowFiles(show.id) : []
+  const graphicUrl = showArt({ ...show, imageUrl: showFiles.find((f) => f.fileType === 'image')?.url })
 
   // Use actual show art when available
   if (graphicUrl) {

@@ -125,7 +125,7 @@ vi.mock('@/lib/database', () => ({
     select: (fields?: Record<string, unknown>) => ({
       from: (table: { isActive?: unknown }) => {
         if (fields && 'count' in fields) {
-          const counted = Promise.resolve([{ count: 1 }])
+          const counted = Promise.resolve([{ count: 'isActive' in table ? RESOURCES.length : 1 }])
           return Object.assign(counted, { where: () => counted })
         }
         const isResources = 'isActive' in table
@@ -139,9 +139,11 @@ vi.mock('@/lib/database', () => ({
               limit: async () => (idLookup ? [idLookup] : []),
             }
           },
-          orderBy: async () => {
+          // The staff list pages: orderBy().limit().offset().
+          orderBy: () => {
             requestedActiveOnly = false
-            return run(false)
+            const rows = run(false)
+            return { limit: (n: number) => ({ offset: async (o: number) => rows.slice(o, o + n) }) }
           },
         }
       },
@@ -234,7 +236,8 @@ describe('GET /api/resources', () => {
     currentUser = { email: 'admin@brightdesigns.band' }
     const res = await getResources('?all=true')
     const body = await res.json()
-    expect(body.data.map((r: { id: number }) => r.id)).toEqual([1, 2])
+    expect(body.data.data.map((r: { id: number }) => r.id)).toEqual([1, 2])
+    expect(body.data.pagination).toMatchObject({ page: 1, total: 2 })
     expect(res.headers.get('cache-control')).toBe('private, no-store')
   })
 

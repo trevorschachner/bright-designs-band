@@ -219,23 +219,6 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                 </tr>
               </table>
               ` : ''}
-              ${data.showPlan && data.showPlan.length > 0 ? `
-              <!-- Show Plan -->
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:20px;">
-                <tr>
-                  <td style="border-bottom:2px solid ${colors.electric};padding-bottom:8px;">
-                    <h2 style="margin:0;font-size:16px;color:${colors.midnight};font-weight:600;">Show Plan</h2>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top:12px;">
-                    <div style="background-color:${colors.lightGray};padding:10px 12px;border-radius:4px;color:${colors.charcoal};font-size:14px;">
-                      ${data.showPlan.map((item: string) => `• ${escapeHtmlText(item)}<br>`).join('')}
-                    </div>
-                  </td>
-                </tr>
-              </table>
-              ` : ''}
               <!-- Services -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:20px;">
                 <tr>
@@ -317,10 +300,6 @@ ENSEMBLE DETAILS
 ${data.bandSize ? `Band Size: ${data.bandSize}` : ''}
 ${data.abilityLevel ? `Ability Level: ${formatAbilityLevel(data.abilityLevel)}` : ''}
 ${data.instrumentation ? `${additionalNotesLabel}:\n${data.instrumentation}` : ''}
-` : ''}
-${data.showPlan && data.showPlan.length > 0 ? `
-SHOW PLAN
-${data.showPlan.map((item: string) => `- ${item}`).join('\n')}
 ` : ''}
 SERVICES REQUESTED
 ${data.services.map(service => serviceLabels[service] || service).join(', ')}

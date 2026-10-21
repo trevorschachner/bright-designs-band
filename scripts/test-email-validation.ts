@@ -109,7 +109,6 @@ function runValidation(): void {
     bandSize: '51-100',
     abilityLevel: '3-4',
     instrumentation: 'Strong flute section, needs percussion parts',
-    showPlan: ['Opening', 'Ballad', 'Closer'],
   };
 
   let allPassed = true;

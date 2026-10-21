@@ -20,32 +20,10 @@
  * `--baseline` is for adopting this on a database whose migrations were
  * already applied by hand. It records without executing, so use it once.
  */
-import { config } from 'dotenv'
+import { connect } from './_common'
 import { resolve } from 'path'
 import { readdir, readFile } from 'fs/promises'
-import postgres from 'postgres'
 import { checksum, pendingMigrations, planApply, selectMigrationFiles } from '../lib/database/sql-migrations'
-
-config({ path: resolve(process.cwd(), '.env.local') })
-
-/** Thin query wrapper over one `postgres` connection (max: 1 keeps begin/commit on the same session). */
-type Db = {
-  query: (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number }>
-  end: () => Promise<void>
-}
-
-function connect(url: string): Db {
-  const sql = postgres(url, { max: 1, prepare: false, ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer' })
-  return {
-    query: async (text, params) => {
-      const result = params
-        ? await sql.unsafe(text, params as postgres.ParameterOrJSON<never>[])
-        : await sql.unsafe(text)
-      return { rows: [...result] as Record<string, unknown>[], rowCount: result.count }
-    },
-    end: () => sql.end(),
-  }
-}
 
 const DIR = resolve(process.cwd(), 'drizzle/migrations')
 
@@ -56,9 +34,7 @@ async function main() {
   const only = onlyIndex === -1 ? null : process.argv[onlyIndex + 1] ?? null
   if (onlyIndex !== -1 && (!only || only.startsWith('--'))) throw new Error('--only requires a migration file name')
   if (only && baseline) throw new Error('--only cannot be combined with --baseline')
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL not found in .env.local')
-
-  const db = connect(process.env.DATABASE_URL)
+  const db = connect()
   try {
     await db.query(`create table if not exists public.__sql_migrations (
       name text primary key, checksum text not null, applied_at timestamptz not null default now())`)

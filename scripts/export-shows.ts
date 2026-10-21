@@ -9,13 +9,11 @@
  * in lib/export/show-sheet.ts; reading is in lib/export/load-show-sheet.ts and
  * is read-only by construction.
  */
-import { config } from 'dotenv'
+import { withDb } from './_common'
 import { mkdir, writeFile } from 'fs/promises'
 import { resolve } from 'path'
 import { PART_COLUMNS, PIECE_COLUMNS, SHOW_COLUMNS, toCsv } from '../lib/export/show-sheet'
-import { loadShowSheetTables, storageFromEnv } from '../lib/export/load-show-sheet'
-
-config({ path: resolve(process.cwd(), '.env.local'), quiet: true })
+import { readShowSheetTables, storageFromEnv } from '../lib/export/load-show-sheet'
 
 async function main() {
   const outDir = process.argv[2]
@@ -23,9 +21,8 @@ async function main() {
     console.error('Usage: npm run export:shows -- <output-dir>')
     process.exit(1)
   }
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL not found in .env.local')
-
-  const tables = await loadShowSheetTables(process.env.DATABASE_URL, storageFromEnv())
+  // storageFromEnv(): the same URL rule /api/export/[file] uses, so both exports agree.
+  const tables = await withDb((db) => readShowSheetTables(db.drizzle, storageFromEnv()))
 
   const dir = resolve(process.cwd(), outDir)
   await mkdir(dir, { recursive: true })

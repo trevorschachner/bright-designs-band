@@ -111,7 +111,9 @@ export default function AdminTable<T extends { id: number }>({
         setData((responseData.data || []) as T[]);
         setPagination(prev => ({
           ...prev,
-          // Only update total and totalPages, not page/limit (they're controlled by user actions)
+          // The server clamps a page past the end (say, after deleting the last
+          // row on it) and reports the page it served; follow it.
+          page: responseData.pagination.page || prev.page,
           total: responseData.pagination.total || 0,
           totalPages: responseData.pagination.totalPages || 1,
         }));

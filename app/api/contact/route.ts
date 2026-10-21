@@ -112,7 +112,6 @@ export async function POST(request: NextRequest) {
       // Build a plain email using our templates module
       const subject = `New Show Inquiry from ${name || 'Unknown'}`;
       const services = toServiceCategories(rest.services);
-      const showPlan = rest.showPlan ?? [];
 
       const emailData = {
         firstName: name?.split(' ')?.[0] || name || 'Friend',
@@ -125,7 +124,6 @@ export async function POST(request: NextRequest) {
         abilityLevel: rest.abilityLevel,
         instrumentation: rest.instrumentation,
         services,
-        showPlan: showPlan.length > 0 ? showPlan : undefined,
         message: message || '',
         privacyAgreed: true,
         source: submissionSource,

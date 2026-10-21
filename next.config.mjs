@@ -67,6 +67,7 @@ const nextConfig = {
       { source: '/resources/blog/case-studies/travelers-rest', destination: '/blog/case-studies/travelers-rest', permanent: true },
       { source: '/resources/blog/case-studies/dorman', destination: '/blog/case-studies/dorman', permanent: true },
       { source: '/resources/blog/case-studies/alpharetta', destination: '/blog/case-studies/alpharetta', permanent: true },
+      { source: '/build', destination: '/contact', permanent: true },
     ];
   },
 

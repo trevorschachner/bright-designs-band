@@ -42,12 +42,6 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 									Contact Us
 								</Link>
 							</Button>
-							{/* TODO: Uncomment when Build Your Show is production ready */}
-							{/* <Button asChild variant="outline" size="sm" className="plus-btn-outline">
-								<Link href="/build">
-									Build Show
-								</Link>
-							</Button> */}
 						</div>
 					</div>
 

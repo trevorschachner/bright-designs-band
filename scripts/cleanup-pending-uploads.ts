@@ -13,7 +13,7 @@
  * Not run by agents. Needs DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL and
  * SUPABASE_SERVICE_ROLE_KEY in .env.local.
  */
-import { connect, hasFlag, objectExists, serviceClient } from './_storage-common'
+import { connect, hasFlag, objectExists, serviceClient } from './_common'
 
 async function main() {
   const apply = hasFlag('--apply')

@@ -17,6 +17,7 @@ import Image from 'next/image'
 import { CheckAvailabilityModal } from '@/components/forms/check-availability-modal'
 import { getShowBySlug, getShowArrangements, getPublicShowFiles, getAllShowSlugs, getSlugRedirect, getRelatedShows, type ShowDifficulty } from '@/lib/services/shows'
 import { getPublicPiecesByArrangementIds } from '@/lib/services/pieces'
+import { showArt } from '@/lib/media/show-art'
 import { SourcePieces } from '@/components/features/source-pieces'
 import { WhatIsIncluded } from '@/components/features/what-is-included'
 import { ResaleCallout } from '@/components/features/resale-callout'
@@ -174,7 +175,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   const showImageFile = showFiles.find((f) => f.fileType === 'image' && f.isPublic) ?? null
 
   // Determine display image: graphicUrl > thumbnailUrl > show image file > null
-  const displayImageUrl = show.graphicUrl || show.thumbnailUrl || showImageFile?.url || null
+  const displayImageUrl = showArt({ ...show, imageUrl: showImageFile?.url })
 
   const formatSeconds = (total?: number | null) => {
     if (!total || total < 0) return '—'

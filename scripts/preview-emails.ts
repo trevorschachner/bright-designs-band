@@ -52,7 +52,6 @@ const fullSampleData: ContactFormData = {
   bandSize: '51-100',
   abilityLevel: '3-4',
   instrumentation: 'We have a strong flute section (12 members) but only one tuba player. We also have 3 synth players who need parts. Our percussion section is strong with 8 members.',
-  showPlan: ['Opening - High Energy', 'Ballad - Emotional Moment', 'Closer - Powerful Finish'],
 };
 
 // Minimal data (only required fields)
