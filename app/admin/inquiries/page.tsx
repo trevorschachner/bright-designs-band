@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-import { guard } from '@/lib/auth/guard';
+import { requireAdminPage } from '@/lib/auth/page-guard';
 import { getInquiriesPage, type InquiryRow } from '@/lib/services/admin';
 import { PageLinks, parsePage } from '@/components/features/admin/PageLinks';
 import {
@@ -24,8 +23,7 @@ const PAGE_SIZE = 25;
  * only), so there is no column for it.
  */
 export default async function InquiriesPage({ searchParams }: { searchParams: Promise<{ page?: string | string[] }> }) {
-  const gate = await guard('canAccessAdmin');
-  if (gate.denied) redirect('/');
+  await requireAdminPage('canAccessAdmin');
 
   const page = parsePage((await searchParams).page);
   let result: { data: InquiryRow[]; total: number } | null = null;

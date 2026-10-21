@@ -1,7 +1,5 @@
-import { createClient } from '@/lib/utils/supabase/server';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { requirePermission } from '@/lib/auth/roles';
+import { requireAdminPage } from '@/lib/auth/page-guard';
 import { Suspense } from 'react';
 import ShowsTable from './ShowsTable';
 import { 
@@ -14,16 +12,7 @@ import {
 } from '@/components/ui/breadcrumb';
 
 export default async function ManageShowsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/login');
-  }
-
-  if (!(await requirePermission(user.email, 'canManageShows'))) {
-    redirect('/'); // Or redirect to an unauthorized page
-  }
+  await requireAdminPage('canManageShows');
 
   return (
     <div className="container mx-auto py-20">

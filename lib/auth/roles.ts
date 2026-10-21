@@ -77,11 +77,3 @@ export async function getUserRole(email: string | null | undefined): Promise<Adm
   if (!normalized) return null
   return lookupRole(normalized)
 }
-
-export async function getUserPermissions(email: string | null | undefined): Promise<UserPermissions> {
-  return permissionsFor(await getUserRole(email))
-}
-
-export async function requirePermission(email: string | null | undefined, permission: Permission): Promise<boolean> {
-  return (await getUserPermissions(email))[permission]
-}

@@ -1,5 +1,5 @@
 import { z, ZodObject, type ZodTypeAny } from 'zod'
-import { guard } from '@/lib/auth/guard'
+import { authorize } from '@/lib/auth/guard'
 import type { Permission } from '@/lib/auth/permissions'
 import { db, type Database } from '@/lib/database'
 import { PG_UNIQUE_VIOLATION, postgresCode } from '@/lib/database/errors'
@@ -16,7 +16,7 @@ import { fail, invalid, ok, type ActionIssue, type ActionResult } from './result
  *   })
  *   export async function createTag(input: CreateTagInput) { return run(input) }
  *
- * 1. guard(permission): a Server Action is a public POST endpoint, so the page
+ * 1. authorize(permission): a Server Action is a public POST endpoint, so the page
  *    being admin-only protects nothing. No session or no permission is
  *    `forbidden`; an auth outage is `failed`.
  * 2. schema.safeParse(input): failures are `invalid` with field issues. The
@@ -125,8 +125,9 @@ export function guarded<S extends ZodTypeAny, T>(
   }
 
   return async (input: unknown) => {
-    const gate = await guard(permission)
-    if (gate.denied) return fail(gate.denied.status >= 500 ? 'failed' : 'forbidden')
+    const gate = await authorize(permission)
+    if (gate.status === 'unavailable') return fail('failed')
+    if (gate.status !== 'authorized') return fail('forbidden')
 
     const parsed = schema.safeParse(input)
     if (!parsed.success) return invalid(parsed.error)

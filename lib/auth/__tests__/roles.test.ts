@@ -102,15 +102,3 @@ describe('getUserRole', () => {
     await expect(getUserRole('trevor@brightdesigns.band')).rejects.toThrow('connection refused')
   })
 })
-
-describe('getUserPermissions / requirePermission', () => {
-  it('derive from the looked-up role', async () => {
-    const { getUserPermissions, requirePermission } = await load()
-    rows = [{ role: 'editor' }]
-    expect((await getUserPermissions('e@example.com')).canDeleteFiles).toBe(true)
-    expect(await requirePermission('e@example.com', 'canManageUsers')).toBe(false)
-    rows = []
-    expect((await getUserPermissions('guest@example.com')).canAccessAdmin).toBe(false)
-    expect(await requirePermission(undefined, 'canDeleteFiles')).toBe(false)
-  })
-})

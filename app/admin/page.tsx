@@ -1,11 +1,10 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, Settings, BarChart3, Tags, Music, Shield, Users, FileText, ListMusic } from 'lucide-react';
 import { permissionsFor } from '@/lib/auth/roles';
-import { guard } from '@/lib/auth/guard';
+import { requireAdminPage } from '@/lib/auth/page-guard';
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -18,8 +17,7 @@ import { getPosthogHost, getPosthogKey } from '@/lib/env';
 
 export default async function AdminPage() {
   // Access first: nothing is read for someone who is not (or no longer) an admin.
-  const gate = await guard('canAccessAdmin');
-  if (gate.denied) redirect('/');
+  const gate = await requireAdminPage('canAccessAdmin');
 
   // Fetch actual stats
   let stats;

@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-import { guard } from '@/lib/auth/guard';
+import { requireAdminPage } from '@/lib/auth/page-guard';
 import { ShowEditor } from '@/components/features/admin/show-editor/ShowEditor';
 import {
   Breadcrumb,
@@ -18,8 +17,7 @@ export const dynamic = 'force-dynamic';
  * thumbnail is uploaded to the new show's id, then the full editor opens.
  */
 export default async function NewShowPage() {
-  const gate = await guard('canManageShows');
-  if (gate.denied) redirect('/');
+  await requireAdminPage('canManageShows');
 
   const allTags = await getTagsForAdmin();
   return (

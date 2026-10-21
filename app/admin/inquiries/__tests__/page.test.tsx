@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
     throw new Error(`redirect:${to}`)
   }),
 }))
-vi.mock('@/lib/auth/guard', () => ({ guard: mocks.guard }))
+vi.mock('@/lib/auth/page-guard', () => ({ requireAdminPage: mocks.guard }))
 vi.mock('@/lib/services/admin', () => ({ getInquiriesPage: mocks.getInquiriesPage }))
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
 
@@ -37,7 +37,7 @@ async function renderPage(search: Record<string, string> = {}) {
 }
 
 beforeEach(() => {
-  mocks.guard.mockReset().mockResolvedValue({ denied: null, email: 'a@b.c', role: 'editor' })
+  mocks.guard.mockReset().mockResolvedValue({ email: 'a@b.c', role: 'editor' })
   mocks.getInquiriesPage.mockReset().mockResolvedValue({ data: rows, total: 30 })
 })
 
@@ -102,9 +102,10 @@ describe('/admin/inquiries', () => {
     expect(screen.queryByRole('button', { name: /delete|edit|save/i })).toBeNull()
   })
 
-  it('redirects without admin access', async () => {
-    mocks.guard.mockResolvedValue({ denied: new Response(null, { status: 403 }) })
+  it('checks access before reading (requireAdminPage redirects a denied caller)', async () => {
+    mocks.guard.mockRejectedValue(new Error('redirect:/'))
     await expect(renderPage()).rejects.toThrow('redirect:/')
+    expect(mocks.guard).toHaveBeenCalledWith('canAccessAdmin')
     expect(mocks.getInquiriesPage).not.toHaveBeenCalled()
   })
 })

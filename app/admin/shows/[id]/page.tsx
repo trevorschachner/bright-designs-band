@@ -1,5 +1,5 @@
-import { notFound, redirect } from 'next/navigation';
-import { guard } from '@/lib/auth/guard';
+import { notFound } from 'next/navigation';
+import { requireAdminPage } from '@/lib/auth/page-guard';
 import { ShowEditor } from '@/components/features/admin/show-editor/ShowEditor';
 import { getShowForEdit } from '@/lib/services/admin';
 
@@ -22,8 +22,7 @@ export default async function EditShowPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ thumbnail?: string }>;
 }) {
-  const gate = await guard('canManageShows');
-  if (gate.denied) redirect('/');
+  await requireAdminPage('canManageShows');
 
   const [{ id }, { thumbnail }] = await Promise.all([params, searchParams]);
   const initial = await getShowForEdit(decodeURIComponent(id));
