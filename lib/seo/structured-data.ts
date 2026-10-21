@@ -9,6 +9,7 @@ import { getPublicSiteUrl } from '@/lib/env'
 import { socialProfileUrls } from './social'
 import type { Faq } from '@/lib/content/faqs'
 import type { PublicPiece } from '@/lib/pieces/credits'
+import { youTubeVideoId } from '@/lib/youtube'
 
 type Schema = Record<string, unknown>
 
@@ -268,13 +269,6 @@ export function createMusicCompositionSchema({
   }
 }
 
-/** The 11-character video id from any common YouTube URL form, or null. */
-export function youtubeVideoId(url: string | null | undefined): string | null {
-  if (!url) return null
-  const match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
-  return match?.[1] ?? null
-}
-
 /**
  * VideoObject for a show's YouTube performance. Null when there is no URL or
  * no video id can be read from it: the schema needs a real thumbnail and embed.
@@ -290,7 +284,7 @@ export function createVideoObjectSchema({
   youtubeUrl: string | null | undefined
   uploadDate?: string | null
 }): Schema | null {
-  const videoId = youtubeVideoId(youtubeUrl)
+  const videoId = youTubeVideoId(youtubeUrl)
   if (!videoId) return null
   return {
     '@context': 'https://schema.org',

@@ -84,7 +84,7 @@ function filesDb(overrides: Partial<Record<string, (op: Op) => unknown[]>> = {})
     if (op.kind === 'update' && op.table === 'shows') {
       return [{ id: 7, slug: 'my-show', thumbnailUrl: (op.set?.thumbnailUrl as string | null) ?? null, updatedAt: SAVED }]
     }
-    if (op.kind === 'insert' && op.table === 'files') return [{ id: 6, url: 'https://youtu.be/abc', showId: 7, arrangementId: null }]
+    if (op.kind === 'insert' && op.table === 'files') return [{ id: 6, url: 'https://youtu.be/dQw4w9WgXcQ', showId: 7, arrangementId: null }]
     return []
   }
 }
@@ -238,13 +238,13 @@ describe('attachYouTube', () => {
 
   it('stores a youtube file row under the show and invalidates its owner', async () => {
     const fake = state.fake
-    const result = await attachYouTube({ showId: 7, url: 'https://youtu.be/abc', description: 'Full run' })
-    expect(result).toEqual({ ok: true, data: { id: 6, url: 'https://youtu.be/abc', showId: 7, arrangementId: null } })
+    const result = await attachYouTube({ showId: 7, url: 'https://youtu.be/dQw4w9WgXcQ', description: 'Full run' })
+    expect(result).toEqual({ ok: true, data: { id: 6, url: 'https://youtu.be/dQw4w9WgXcQ', showId: 7, arrangementId: null } })
     const [insert] = opsOn(fake.ops, 'files', 'insert')
     expect(insert.values).toMatchObject({
       fileType: 'youtube',
-      fileName: 'youtube_abc.url',
-      storagePath: 'shows/7/youtube/youtube_abc.url',
+      fileName: 'youtube_dQw4w9WgXcQ.url',
+      storagePath: 'shows/7/youtube/youtube_dQw4w9WgXcQ.url',
       originalName: 'Full run',
       isPublic: true,
     })
@@ -252,7 +252,7 @@ describe('attachYouTube', () => {
   })
 
   it('requires a show or a part', async () => {
-    expect(await attachYouTube({ url: 'https://youtu.be/abc' })).toMatchObject({ ok: false, error: 'invalid' })
+    expect(await attachYouTube({ url: 'https://youtu.be/dQw4w9WgXcQ' })).toMatchObject({ ok: false, error: 'invalid' })
   })
 })
 
@@ -404,5 +404,15 @@ describe('deleteShow removes its files first', () => {
     use(filesDb({ 'select:shows': () => [] }))
     expect(await deleteShow(8)).toEqual({ ok: false, error: 'not_found' })
     expect(state.removed).toEqual([])
+  })
+})
+
+describe('attachYouTube: one parser with the public page', () => {
+  it('accepts shorts and live URLs the page can play; rejects an id that is not 11 characters', async () => {
+    use(filesDb({}))
+    expect(await attachYouTube({ showId: 7, url: 'https://youtu.be/abc' })).toMatchObject({ ok: false, error: 'invalid' })
+    use(filesDb({}))
+    const shorts = await attachYouTube({ showId: 7, url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ' })
+    expect(shorts).toMatchObject({ ok: true })
   })
 })
