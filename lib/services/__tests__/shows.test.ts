@@ -61,6 +61,12 @@ describe('getFeaturedShows', () => {
     expect(result.map((s) => s.id)).toEqual([1])
   })
 
+  it('returns the art columns as stored and the first image file as imageUrl, unmerged', async () => {
+    findMany.mockResolvedValue([showRow(1, { files: [{ url: 'https://cdn.example/f.webp' }] })])
+    const [show] = await getFeaturedShows()
+    expect(show).toMatchObject({ graphicUrl: null, thumbnailUrl: 'https://cdn.example/t.webp', imageUrl: 'https://cdn.example/f.webp' })
+  })
+
   it('returns an empty list when nothing is featured', async () => {
     findMany.mockResolvedValue([])
     expect(await getFeaturedShows()).toEqual([])
@@ -76,7 +82,7 @@ describe('getFeaturedShows', () => {
     expect(opts.columns).not.toHaveProperty('price')
     expect(opts.with?.showsToTags.with.tag.columns).toEqual({ id: true, name: true })
     expect(opts.with?.showArrangements.with.arrangement.columns).toEqual({ id: true, slug: true, title: true, scene: true })
-    expect(opts.with?.files.columns).toEqual({ storagePath: true })
+    expect(opts.with?.files.columns).toEqual({ url: true })
   })
 
   it('caches under the shows, arrangements and tags tags', async () => {

@@ -25,6 +25,7 @@ import { JsonLd } from '@/components/features/seo/JsonLd'
 import { ResaleCallout } from '@/components/features/resale-callout'
 import { createMusicCompositionSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 import { durationLabel, ensembleLabel, gradeLabel } from '@/lib/display';
+import { showArt } from '@/lib/media/show-art';
 
 // Rendered on first request, then cached and revalidated hourly; writes
 // expire it through invalidateArrangement (lib/services/invalidate.ts).
@@ -111,8 +112,9 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   const audio = files.find((f) => f.fileType === 'audio');
   const arrangementImage = files.find((f) => f.fileType === 'image');
 
-  // Arrangement image, then the show's graphic, thumbnail, first image file.
-  const displayImage = arrangementImage?.url || parentShow?.graphicUrl || parentShow?.thumbnailUrl || parentShow?.imageUrl || null;
+  // The arrangement's own image, then its show's art.
+  const showImage = showArt(parentShow);
+  const displayImage = arrangementImage?.url || showImage;
 
   const displayGrade = gradeLabel(arr.grade);
   const displayEnsembleSize = ensembleLabel(arr.ensembleSize);
@@ -178,14 +180,6 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               />
             ) : (
               <div className="relative w-full h-full overflow-hidden bg-muted/30">
-                {parentShow?.graphicUrl && (
-                  <Image
-                    src={parentShow.graphicUrl}
-                    alt={parentShow.title || 'Show artwork'}
-                    fill
-                    className="object-cover opacity-30 blur-sm"
-                  />
-                )}
                 <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/75 to-background/90" />
                 <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-8">
                   {parentShow?.title && (
@@ -317,7 +311,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                 description: arr.description || '', 
                 type: 'Full Track', 
                 url: audio.url,
-                imageUrl: parentShow?.graphicUrl || parentShow?.thumbnailUrl || undefined
+                imageUrl: showImage ?? undefined
               }]}
               title="Arrangement Audio Preview"
               className="bg-card/80 backdrop-blur-sm"

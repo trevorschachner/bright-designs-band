@@ -11,6 +11,7 @@ import { Metadata } from "next"
 import { generateMetadata as buildMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { marchingBandSchemas } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
+import { showArt } from "@/lib/media/show-art"
 import { displayTagName } from "@/lib/tags"
 
 export const metadata: Metadata = buildMetadata({ ...defaultSEOConfig, path: "/" })
@@ -124,7 +125,7 @@ export default async function HomePage() {
                 <div className="plus-divider mb-4 pb-4">
                   <div className="w-full aspect-video plus-border rounded-lg overflow-hidden bg-muted relative">
                     <Image
-                      src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
+                      src={showArt(show) ?? "/placeholder.svg"}
                       alt={show.title}
                       fill
                       className="object-cover"

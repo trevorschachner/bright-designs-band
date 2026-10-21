@@ -9,6 +9,7 @@ import { Play, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { displayTagName } from "@/lib/tags";
 import { difficultyLabel } from '@/lib/display';
+import { showArt } from '@/lib/media/show-art';
 
 // Define a flexible type that covers both Show (full) and ShowSummary (partial)
 export interface ShowCardItem {
@@ -21,6 +22,7 @@ export interface ShowCardItem {
   duration: string | null;
   thumbnailUrl: string | null;
   graphicUrl: string | null;
+  imageUrl?: string | null;
   showsToTags?: { tag: { id: number; name: string } }[];
   arrangements?: { id: number; slug: string; title: string | null; scene?: string | null }[];
   [key: string]: any; // Allow other properties
@@ -62,7 +64,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
       <div className="flex gap-3 p-3 sm:block sm:p-0">
         <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-accent-gradient sm:w-full sm:h-auto sm:aspect-video sm:rounded-none sm:rounded-t-lg">
           <Image
-            src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
+            src={showArt(show) ?? "/placeholder.svg"}
             alt={show.title || 'Show thumbnail'}
             fill
             className="object-cover transition-transform duration-300 sm:group-hover:scale-105"

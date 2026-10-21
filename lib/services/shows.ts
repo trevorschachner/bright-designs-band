@@ -12,9 +12,7 @@ import { and, desc, eq, exists, gte, ilike, inArray, ne, sql, count, type SQL } 
 import { likePattern } from '@/lib/filters/admin-search';
 import { buildTableQuery } from '@/lib/filters/table-query';
 import type { FilterCondition, SortCondition } from '@/lib/filters/types';
-import { STORAGE_BUCKET, withRootPrefix } from '@/lib/storage';
-import { shouldSkipSupabase } from '@/lib/env';
-import { publicStorageUrl } from '@/lib/media/public-url';
+import { toPublicUrl } from '@/lib/media/show-art';
 import { TAGS } from '@/lib/cache-tags';
 import { collections, matchesFilter } from '@/lib/collections';
 import { cachedRead, toIso, REVALIDATE_SECONDS, SEARCH_REVALIDATE_SECONDS } from './cache';
@@ -39,23 +37,21 @@ export type ShowSummary = {
   duration: string | null;
   thumbnailUrl: string | null;
   graphicUrl: string | null;
+  /** The first public image file: the art fallback (lib/media/show-art.ts). */
+  imageUrl: string | null;
   featured: boolean;
   createdAt: string | null;
   showsToTags: { tag: TagRef }[];
   arrangements: { id: number; slug: string; title: string | null; scene: string | null }[];
 };
 
-/** Storage path or absolute URL to a public URL. Null when it cannot be built. */
-export function toPublicUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  if (shouldSkipSupabase()) return null;
-  try {
-    return publicStorageUrl(STORAGE_BUCKET, withRootPrefix(path));
-  } catch {
-    return null;
-  }
-}
+/** The show's first public image file, the art fallback (lib/media/show-art.ts). */
+const firstImage = () => ({
+  columns: { url: true as const },
+  where: and(eq(files.isPublic, true), eq(files.fileType, 'image')),
+  orderBy: [files.displayOrder, files.id],
+  limit: 1,
+});
 
 /** Every card read of shows selects exactly these columns. */
 const SUMMARY_COLUMNS = {
@@ -118,11 +114,7 @@ function summaryRelations() {
       orderBy: [showArrangements.orderIndex],
       with: { arrangement: { columns: { id: true, slug: true, title: true, scene: true } } },
     },
-    files: {
-      columns: { storagePath: true },
-      where: and(eq(files.isPublic, true), eq(files.fileType, 'image')),
-      limit: 1,
-    },
+    files: firstImage(),
   };
 }
 
@@ -140,11 +132,10 @@ type SummaryRow = {
   createdAt: Date | string;
   showsToTags: { tag: TagRef | null }[];
   showArrangements: { arrangement: { id: number; slug: string; title: string | null; scene: string | null } | null }[];
-  files: { storagePath: string }[];
+  files: { url: string }[];
 };
 
 function toSummary(s: SummaryRow): ShowSummary {
-  const fallbackImage = s.files?.[0]?.storagePath ?? null;
   return {
     id: s.id,
     title: s.title,
@@ -153,8 +144,9 @@ function toSummary(s: SummaryRow): ShowSummary {
     year: s.year,
     difficulty: s.difficulty,
     duration: s.duration,
-    thumbnailUrl: toPublicUrl(s.thumbnailUrl || fallbackImage),
-    graphicUrl: toPublicUrl(s.graphicUrl || fallbackImage),
+    thumbnailUrl: toPublicUrl(s.thumbnailUrl),
+    graphicUrl: toPublicUrl(s.graphicUrl),
+    imageUrl: toPublicUrl(s.files?.[0]?.url),
     featured: s.featured,
     createdAt: toIso(s.createdAt),
     showsToTags: presentTags(s.showsToTags),
@@ -183,7 +175,7 @@ async function fetchRelatedShows(showId: number, difficulty: ShowDifficulty | nu
 }
 
 /** Up to 3 shows to link from a show page: same theme tag first, then same difficulty. */
-export const getRelatedShows = cachedRead('related-shows-v2', fetchRelatedShows, {
+export const getRelatedShows = cachedRead('related-shows-v3', fetchRelatedShows, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
@@ -207,7 +199,7 @@ async function fetchFeaturedShows(): Promise<ShowSummary[]> {
  * Whatever is featured, newest first, at most six. An empty list is a real
  * answer (nothing featured), and the home page renders its fallback copy.
  */
-export const getFeaturedShows = cachedRead('featured-shows-v5', fetchFeaturedShows, {
+export const getFeaturedShows = cachedRead('featured-shows-v6', fetchFeaturedShows, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
@@ -242,7 +234,7 @@ async function fetchShowsByFilter(filter: ShowFilter): Promise<ShowSummary[]> {
 }
 
 /** Shows for a collection landing page (difficulty, all-of tag names, minimum year). */
-export const getShowsByFilter = cachedRead('collection-shows-v4', fetchShowsByFilter, {
+export const getShowsByFilter = cachedRead('collection-shows-v5', fetchShowsByFilter, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as ShowSummary[],
 });
@@ -291,6 +283,8 @@ export type ShowListItem = {
   duration: string | null;
   thumbnailUrl: string | null;
   graphicUrl: string | null;
+  /** The first public image file: the art fallback (lib/media/show-art.ts). */
+  imageUrl: string | null;
   featured: boolean;
   displayOrder: number;
   createdAt: string | null;
@@ -357,12 +351,7 @@ async function fetchShowsRows(
         thumbnailUrl: true, featured: true, displayOrder: true, createdAt: true,
       },
       with: {
-        files: {
-          columns: { url: true },
-          where: and(eq(files.isPublic, true), eq(files.fileType, 'image')),
-          orderBy: [files.displayOrder],
-          limit: 1,
-        },
+        files: firstImage(),
         showsToTags: withTags,
         showArrangements: {
           columns: {},
@@ -378,9 +367,6 @@ async function fetchShowsRows(
   ]);
 
   const data = rows.map((r): ShowListItem | AdminShowListItem => {
-    const graphicUrl = toPublicUrl(r.graphicUrl);
-    const thumbnailUrl = toPublicUrl(r.thumbnailUrl);
-    const fallbackUrl = r.files?.[0]?.url ? toPublicUrl(r.files[0].url) : null;
     const item: ShowListItem = {
       id: r.id,
       slug: r.slug,
@@ -389,8 +375,9 @@ async function fetchShowsRows(
       year: r.year,
       difficulty: r.difficulty,
       duration: r.duration,
-      thumbnailUrl: graphicUrl || thumbnailUrl || fallbackUrl,
-      graphicUrl: graphicUrl || null,
+      thumbnailUrl: toPublicUrl(r.thumbnailUrl),
+      graphicUrl: toPublicUrl(r.graphicUrl),
+      imageUrl: toPublicUrl(r.files?.[0]?.url),
       featured: !!r.featured,
       displayOrder: r.displayOrder ?? 0,
       createdAt: toIso(r.createdAt),
@@ -418,7 +405,7 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
  * page lives 5 minutes instead of an hour: free text is the one input with a
  * long tail of one-off values.
  */
-export const getShowsPage = cachedRead('shows-page-v3', fetchShowsPage, {
+export const getShowsPage = cachedRead('shows-page-v4', fetchShowsPage, {
   tags: LIST_TAGS,
   atBuildWithoutDb: { data: [] as ShowListItem[], total: 0 },
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
@@ -695,7 +682,7 @@ async function fetchPublicShowFiles(showId: number): Promise<PublicFile[]> {
     .select(PUBLIC_FILE_COLUMNS)
     .from(files)
     .where(and(eq(files.showId, showId), eq(files.isPublic, true)))
-    .orderBy(files.displayOrder);
+    .orderBy(files.displayOrder, files.id);
 }
 
 /** A show's own public files (its art), in display order. */

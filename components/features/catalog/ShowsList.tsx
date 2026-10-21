@@ -21,6 +21,7 @@ function toCardItem(show: ShowListItem): ShowCardItem {
     duration: show.duration,
     thumbnailUrl: show.thumbnailUrl,
     graphicUrl: show.graphicUrl,
+    imageUrl: show.imageUrl,
     showsToTags: show.showsToTags,
     arrangements: show.arrangements.map(({ id, slug, title, scene }) => ({ id, slug, title, scene })),
   };

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
 import type { ShowCardItem } from "./ShowCard";
 import { difficultyLabel } from '@/lib/display';
+import { showArt } from '@/lib/media/show-art';
 
 interface ShowListViewProps {
   item: ShowCardItem;
@@ -32,7 +33,7 @@ export function ShowListView({ item: show, isLoading, priority = false }: ShowLi
           <div className="relative w-full sm:w-64 flex-shrink-0 bg-accent-gradient overflow-hidden">
             <div className="w-full h-0 pb-[56.25%] sm:pb-0 sm:h-auto sm:aspect-video relative">
               <Image
-                src={show.graphicUrl || show.thumbnailUrl || "/placeholder.svg"}
+                src={showArt(show) ?? "/placeholder.svg"}
                 alt={show.title || 'Show thumbnail'}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
