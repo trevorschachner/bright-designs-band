@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/services/shows', () => ({ getCollectionCounts: vi.fn() }))
 
-import { collections, collectionsForShow, getCollectionBySlug, matchesFilter, MIN_COLLECTION_SHOWS, publishedCollections } from '@/lib/collections'
+import { collections, collectionsForShow, getCollectionBySlug, matchesFilter, MIN_COLLECTION_SHOWS } from '@/lib/collections'
+import { getPublishedCollection, publishedCollections, publishedCollectionsForShow } from '@/lib/services/collections'
 import { getCollectionCounts } from '@/lib/services/shows'
 
 describe('collections config', () => {
@@ -27,6 +28,11 @@ describe('collections config', () => {
   it('publishes only collections with at least MIN_COLLECTION_SHOWS shows', async () => {
     vi.mocked(getCollectionCounts).mockResolvedValue({ 'easy-marching-band-shows': 2, 'space-marching-band-shows': 1 })
     expect((await publishedCollections()).map((c) => c.slug)).toEqual(['easy-marching-band-shows'])
+    expect((await getPublishedCollection('easy-marching-band-shows'))?.slug).toBe('easy-marching-band-shows')
+    expect(await getPublishedCollection('space-marching-band-shows')).toBeNull()
+    expect(await getPublishedCollection('no-such-collection')).toBeNull()
+    const forShow = await publishedCollectionsForShow({ difficulty: 'Beginner', year: 2025, tagNames: ['Theme: Space'] })
+    expect(forShow.map((c) => c.slug)).toEqual(['easy-marching-band-shows'])
   })
   it('matchesFilter handles year and all-of tags', () => {
     const base = { difficulty: null, tagNames: [] as string[] }

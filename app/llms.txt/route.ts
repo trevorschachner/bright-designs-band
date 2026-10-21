@@ -1,5 +1,5 @@
 import { getShowIndex } from '@/lib/services/shows'
-import { publishedCollections } from '@/lib/collections'
+import { publishedCollections } from '@/lib/services/collections'
 import { buildLlmsTxt } from '@/lib/seo/llms'
 
 /** /llms.txt from the cached catalog (tag `shows`), refreshed by show writes. */
