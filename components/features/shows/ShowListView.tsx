@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
 import type { ShowCardItem } from "./ShowCard";
+import { difficultyLabel } from '@/lib/display';
 
 interface ShowListViewProps {
   item: ShowCardItem;
@@ -21,14 +22,7 @@ export function ShowListView({ item: show, isLoading, priority = false }: ShowLi
     return <ShowListViewSkeleton />;
   }
 
-  const displayDifficulty = (() => {
-    const value = String(show.difficulty || '').toLowerCase();
-    if (value === '1_2') return 'Beginner';
-    if (value === '3_4') return 'Intermediate';
-    if (value === '5_plus' || value === '5+') { return 'Advanced'; }
-    if (!value) return 'Not specified';
-    return show.difficulty as unknown as string;
-  })();
+  const displayDifficulty = difficultyLabel(show.difficulty);
 
   return (
     <Link href={`/shows/${show.slug}`} className="block">

@@ -34,6 +34,7 @@ import { normaliseSlug } from '@/lib/slug'
 import { cache } from 'react'
 import { getPublicSiteUrl } from '@/lib/env'
 import { displayTagName } from '@/lib/tags'
+import { durationLabel, ensembleLabel, gradeLabel } from '@/lib/display'
 
 export const revalidate = 3600;
 
@@ -160,13 +161,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
     createdAt: showRow.createdAt,
   }
 
-  const displayDifficulty = (() => {
-    const value = String(show.difficulty || '').toLowerCase()
-    if (value === '1_2') return 'Beginner'
-    if (value === '3_4') return 'Intermediate'
-    if (value === '5_plus' || value === '5+') { return 'Advanced' }
-    return String(show.difficulty || '')
-  })()
+  const displayDifficulty = show.difficulty ?? ''
 
   // Everything below keys off the show id: the arrangements (then their
   // source pieces) and the show's own files load in parallel.
@@ -180,13 +175,6 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
 
   // Determine display image: graphicUrl > thumbnailUrl > show image file > null
   const displayImageUrl = show.graphicUrl || show.thumbnailUrl || showImageFile?.url || null
-
-  const formatSeconds = (total?: number | null) => {
-    if (!total || total < 0) return '—'
-    const m = Math.floor(total / 60)
-    const s = total % 60
-    return `${m}:${String(s).padStart(2, '0')}`
-  }
 
   const showPath = `/shows/${show.slug}`
 
@@ -394,21 +382,8 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
           </div>
           
           {arrangements.map((arrangement, index) => {
-            const displayGrade = (() => {
-              const value = String(arrangement.grade || '').toLowerCase();
-              if (value === '1_2') return 'Grade 1-2';
-              if (value === '3_4') return 'Grade 3-4';
-              if (value === '5_plus' || value === '5+') return 'Grade 5+';
-              return null;
-            })();
-
-            const displayEnsembleSize = (() => {
-              const value = String(arrangement.ensembleSize || '').toLowerCase();
-              if (value === 'small') return 'Small Ensemble';
-              if (value === 'medium') return 'Medium Ensemble';
-              if (value === 'large') return 'Large Ensemble';
-              return null;
-            })();
+            const displayGrade = gradeLabel(arrangement.grade);
+            const displayEnsembleSize = ensembleLabel(arrangement.ensembleSize);
 
             return (
               <Card 
@@ -473,7 +448,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
                         {arrangement.durationSeconds && (
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            <span><span className="font-medium">Duration:</span> {formatSeconds(arrangement.durationSeconds)}</span>
+                            <span><span className="font-medium">Duration:</span> {durationLabel(arrangement.durationSeconds)}</span>
                           </div>
                         )}
                       </div>

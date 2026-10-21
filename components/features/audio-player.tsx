@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, Volume2, VolumeX, Download, SkipBack, SkipForward } from "lucide-react"
 import { Waveform } from "@/components/ui/waveform"
+import { playerTime } from '@/lib/display'
 import {
   useAudioActions,
   useAudioState,
@@ -43,13 +44,6 @@ const toPlayable = (track: AudioTrack, showTitle?: string): PlayableTrack => ({
   imageUrl: track.imageUrl,
 })
 
-const formatTime = (seconds: number) => {
-  if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
-
 function Progress({ currentTime, duration, compact, onSeek }: {
   currentTime: number
   duration: number
@@ -66,8 +60,8 @@ function Progress({ currentTime, duration, compact, onSeek }: {
         className="w-full cursor-pointer"
       />
       <div className="flex justify-between text-xs text-muted-foreground mt-1">
-        <span>{formatTime(currentTime)}</span>
-        <span>{formatTime(duration)}</span>
+        <span>{playerTime(currentTime)}</span>
+        <span>{playerTime(duration)}</span>
       </div>
     </div>
   )
