@@ -5,7 +5,6 @@ import type { Tx } from '@/lib/database'
 import { shows, slugRedirects } from '@/lib/database/schema'
 import { removeOwnerFiles } from '@/lib/services/file-removal'
 import { invalidateShow } from '@/lib/services/invalidate'
-import { trackServerEvent } from '@/lib/observability/events'
 import { toIso } from '@/lib/services/cache'
 import { slugFromTitle } from '@/lib/slug'
 import {
@@ -80,7 +79,7 @@ const MAX_SLUG_ATTEMPTS = 50
 const runCreateShow = guarded(
   'canManageShows',
   createShowSchema,
-  async (data, { db, email }) => {
+  async (data, { db }) => {
     const { tags: tagIds, ...fields } = data
     const base = slugFromTitle(fields.title)
     if (!base) throw new InvalidError([{ path: 'title', message: 'Title needs at least one letter or number' }])
@@ -122,13 +121,8 @@ const runCreateShow = guarded(
 
     return {
       data: toWriteResult(created),
-      invalidate: async () => {
-        try {
-          await invalidateShow(created.id, created.slug)
-        } finally {
-          await trackServerEvent('show.saved', { showId: created.id, slug: created.slug, created: true }, email)
-        }
-      },
+      invalidate: () => invalidateShow(created.id, created.slug),
+      track: { event: 'show.saved', props: { showId: created.id, slug: created.slug, created: true } },
     }
   },
   'createShow'
@@ -143,7 +137,7 @@ export async function createShow(input: CreateShowInput): Promise<ActionResult<S
 const runUpdateShow = guarded(
   'canManageShows',
   updateShowActionSchema,
-  async (data, { db, email }) => {
+  async (data, { db }) => {
     const { id, updatedAt, tags: tagIds, ...fields } = data
 
     const { row, previousSlug } = await db.transaction(async (tx) => {
@@ -172,13 +166,8 @@ const runUpdateShow = guarded(
 
     return {
       data: toWriteResult(row),
-      invalidate: async () => {
-        try {
-          await invalidateShow(row.id, row.slug, previousSlug)
-        } finally {
-          await trackServerEvent('show.saved', { showId: row.id, slug: row.slug, created: false }, email)
-        }
-      },
+      invalidate: () => invalidateShow(row.id, row.slug, previousSlug),
+      track: { event: 'show.saved', props: { showId: row.id, slug: row.slug, created: false } },
     }
   },
   'updateShow'

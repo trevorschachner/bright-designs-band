@@ -11,7 +11,6 @@ import {
 } from '@/lib/database/schema'
 import { invalidateArrangement, invalidateShow } from '@/lib/services/invalidate'
 import { uniqueArrangementSlug } from '@/lib/slug'
-import { trackServerEvent } from '@/lib/observability/events'
 import { toIso } from '@/lib/services/cache'
 import { getArrangementPiecesForAdmin } from '@/lib/services/pieces'
 import { removeOwnerFiles } from '@/lib/services/file-removal'
@@ -105,7 +104,7 @@ async function showSlugFor(tx: Tx | Database, arrangementId: number): Promise<st
 const runCreateArrangement = guarded(
   'canCreateArrangements',
   createArrangementSchema,
-  async (data, { db, email }) => {
+  async (data, { db }) => {
     const { showId, tags: tagIds, ...fields } = data
     const { row, slug, arrangementSlug } = await db.transaction(async (tx) => {
       const show = await lockShow(tx, showId)
@@ -127,13 +126,8 @@ const runCreateArrangement = guarded(
     })
     return {
       data: toResult(row),
-      invalidate: async () => {
-        try {
-          await invalidateArrangement(row.id, arrangementSlug, slug)
-        } finally {
-          await trackServerEvent('arrangement.saved', { arrangementId: row.id, showId }, email)
-        }
-      },
+      invalidate: () => invalidateArrangement(row.id, arrangementSlug, slug),
+      track: { event: 'arrangement.saved', props: { arrangementId: row.id, showId } },
     }
   },
   'createArrangement'
@@ -149,7 +143,7 @@ export async function createArrangement(input: CreateArrangementInput): Promise<
 const runUpdateArrangement = guarded(
   'canEditArrangements',
   updateArrangementSchema,
-  async (data, { db, email }) => {
+  async (data, { db }) => {
     const { id, updatedAt, tags: tagIds, ...fields } = data
     const { row, slug, showId, arrangementSlug, previousSlug } = await db.transaction(async (tx) => {
       const current = await lockArrangement(tx, id)
@@ -174,13 +168,8 @@ const runUpdateArrangement = guarded(
     })
     return {
       data: toResult(row),
-      invalidate: async () => {
-        try {
-          await invalidateArrangement(row.id, arrangementSlug, slug, previousSlug)
-        } finally {
-          await trackServerEvent('arrangement.saved', { arrangementId: row.id, showId }, email)
-        }
-      },
+      invalidate: () => invalidateArrangement(row.id, arrangementSlug, slug, previousSlug),
+      track: { event: 'arrangement.saved', props: { arrangementId: row.id, showId } },
     }
   },
   'updateArrangement'

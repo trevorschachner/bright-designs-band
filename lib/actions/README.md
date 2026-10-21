@@ -43,7 +43,7 @@ export async function updateTag(input: UpdateTagInput) {
 - **Open a transaction only when there is more than one statement**, or a
   read that must hold a lock (`select ... for update`). Single statements and
   reads do not need one.
-- **Return `{ data, invalidate }`; never call the invalidate helper yourself.**
+- **Return `{ data, invalidate, track? }`; never call the invalidate helper or `trackServerEvent` yourself.**
   `guarded` runs `invalidate` after `fn` resolves (after commit), so a
   rolled-back write never purges the cache. It runs outside the error mapping:
   if invalidation throws, it is logged and reported and the result is still

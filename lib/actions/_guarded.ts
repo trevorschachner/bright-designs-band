@@ -3,6 +3,7 @@ import { guard } from '@/lib/auth/guard'
 import type { Permission } from '@/lib/auth/permissions'
 import { db, type Database } from '@/lib/database'
 import { PG_UNIQUE_VIOLATION, postgresCode } from '@/lib/database/errors'
+import { trackServerEvent, type ServerEvents } from '@/lib/observability/events'
 import { reportError } from '@/lib/observability/report-error'
 import { fail, invalid, ok, type ActionIssue, type ActionResult } from './result'
 
@@ -33,12 +34,20 @@ import { fail, invalid, ok, type ActionIssue, type ActionResult } from './result
 export type ActionContext = { email: string; db: Database }
 
 /**
- * What an action's `fn` returns: the data for the caller, and the cache
- * invalidation to run once the write has committed. `guarded` runs
- * `invalidate` after `fn` resolves and outside the error mapping: a failure
- * there is reported but the result is still `ok`, because the write happened.
+ * What an action's `fn` returns: the data for the caller, the cache
+ * invalidation to run once the write has committed, and the server event to
+ * record for it. `guarded` runs `invalidate`, then sends `track`, after `fn`
+ * resolves and outside the error mapping: a failure in either is reported but
+ * the result is still `ok`, because the write happened. A thrown or stale
+ * write never reaches either.
  */
-export type ActionOutcome<T> = { data: T; invalidate?: () => Promise<void> | void }
+export type ActionOutcome<T> = {
+  data: T
+  invalidate?: () => Promise<void> | void
+  track?: TrackedEvent
+}
+
+type TrackedEvent = { [N in keyof ServerEvents]: { event: N; props: ServerEvents[N] } }[keyof ServerEvents]
 
 /** The row the action targets does not exist (or no longer does). */
 export class NotFoundError extends Error {
@@ -137,6 +146,14 @@ export function guarded<S extends ZodTypeAny, T>(
         // a failure the caller would retry.
         console.error(`[${operation}] invalidation failed after commit.`)
         await reportError(error, { operation: `${operation}:invalidate`, degradedTo: 'ok with a stale cache' })
+      }
+    }
+    if (outcome.track) {
+      try {
+        const { event, props } = outcome.track as { event: keyof ServerEvents; props: never }
+        await trackServerEvent(event, props, gate.email)
+      } catch (error) {
+        await reportError(error, { operation: `${operation}:track`, degradedTo: 'ok without the event' })
       }
     }
     return ok(outcome.data)
