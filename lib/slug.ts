@@ -24,7 +24,30 @@ export function slugFromTitle(title: string): string {
   );
 }
 
+/** What every stored slug (show, part, resource) must match; the schemas check it on writes. */
+export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+export const SLUG_MESSAGE = 'Slug must be lowercase words separated by hyphens'
+
+/** Most numbered variants tried before giving up. */
 const MAX_SLUG_ATTEMPTS = 50
+
+/**
+ * `base`, else `base-<firstSuffix>`, `base-<firstSuffix + 1>`... until
+ * `isTaken` says the candidate is free. Past MAX_SLUG_ATTEMPTS the last
+ * candidate is returned unchecked: the insert then hits the unique index and
+ * surfaces as `conflict`.
+ */
+export async function firstFreeSlug(
+  base: string,
+  isTaken: (slug: string) => Promise<boolean>,
+  firstSuffix = 2
+): Promise<string> {
+  let candidate = base
+  for (let n = firstSuffix; n < firstSuffix + MAX_SLUG_ATTEMPTS && (await isTaken(candidate)); n++) {
+    candidate = `${base}-${n}`
+  }
+  return candidate
+}
 
 /**
  * A public slug for a new arrangement: the title's slug, then `-2`, `-3`...
@@ -34,8 +57,5 @@ export async function uniqueArrangementSlug(title: string, exists: (slug: string
   const raw = slugFromTitle(title)
   // Empty or all-digit slugs would be read as numeric ids by the route.
   const base = raw === '' ? 'arrangement' : /^\d+$/.test(raw) ? `arrangement-${raw}` : raw
-  let candidate = base
-  // Past the cap the insert hits the unique index and surfaces as a conflict.
-  for (let n = 2; n <= MAX_SLUG_ATTEMPTS + 1 && (await exists(candidate)); n++) candidate = `${base}-${n}`
-  return candidate
+  return firstFreeSlug(base, exists)
 }

@@ -3,6 +3,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import { shows, showDifficultyEnum } from '@/lib/database/schema';
 import { ENSEMBLE_SIZES, SHOW_INCLUDES } from './enums';
 import { concurrencyStamp, rowId } from './concurrency';
+import { SLUG_MESSAGE, SLUG_PATTERN } from '@/lib/slug'
 
 /**
  * Payload accepted by `createShow`.
@@ -118,7 +119,7 @@ const UPDATABLE = {
 export const updateShowSchema = showInsertSchema
   .pick(UPDATABLE)
   .extend({
-    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase words separated by hyphens'),
+    slug: z.string().regex(SLUG_PATTERN, SLUG_MESSAGE),
     /**
      * The admin editor's difficulty select has an empty "Select difficulty..."
      * option and sends `''` when nothing is chosen. `''` is not a value of the

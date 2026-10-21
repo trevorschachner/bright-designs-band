@@ -6,7 +6,7 @@ import { shows, slugRedirects } from '@/lib/database/schema'
 import { removeOwnerFiles } from '@/lib/services/file-removal'
 import { invalidateShow } from '@/lib/services/invalidate'
 import { toIso } from '@/lib/services/cache'
-import { slugFromTitle } from '@/lib/slug'
+import { firstFreeSlug, slugFromTitle } from '@/lib/slug'
 import {
   createShowSchema,
   setFeaturedSchema,
@@ -73,8 +73,17 @@ async function lockShow(tx: Tx, id: number) {
 
 // ---------------------------------------------------------------------------
 
-/** Most numbered variants a new show's slug is tried with before giving up (conflict). */
-const MAX_SLUG_ATTEMPTS = 50
+/** A slug another show holds, or used to hold (a live redirect). */
+async function showSlugTaken(tx: Tx, slug: string): Promise<boolean> {
+  const [taken] = await tx.select({ id: shows.id }).from(shows).where(eq(shows.slug, slug)).limit(1)
+  if (taken) return true
+  const [redirected] = await tx
+    .select({ showId: slugRedirects.showId })
+    .from(slugRedirects)
+    .where(eq(slugRedirects.oldSlug, slug))
+    .limit(1)
+  return Boolean(redirected)
+}
 
 const runCreateShow = guarded(
   'canManageShows',
@@ -85,17 +94,8 @@ const runCreateShow = guarded(
     if (!base) throw new InvalidError([{ path: 'title', message: 'Title needs at least one letter or number' }])
 
     const created = await db.transaction(async (tx) => {
-      let slug = base
-      for (let n = 1; n <= MAX_SLUG_ATTEMPTS; n++) {
-        // Skip slugs another show holds or used to hold (a live redirect).
-        const [taken] = await tx.select({ id: shows.id }).from(shows).where(eq(shows.slug, slug)).limit(1)
-        const [redirected] = taken
-          ? [undefined]
-          : await tx.select({ showId: slugRedirects.showId }).from(slugRedirects).where(eq(slugRedirects.oldSlug, slug)).limit(1)
-        if (!taken && !redirected) break
-        slug = `${base}-${n}`
-      }
-      // Past MAX_SLUG_ATTEMPTS the insert hits the unique index: conflict.
+      // Shows number from -1 (parts from -2): existing show URLs depend on it.
+      const slug = await firstFreeSlug(base, (candidate) => showSlugTaken(tx, candidate), 1)
       const [row] = await tx
         .insert(shows)
         .values({

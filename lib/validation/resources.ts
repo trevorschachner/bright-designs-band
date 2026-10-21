@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { concurrencyStamp, rowId } from './concurrency'
+import { SLUG_MESSAGE, SLUG_PATTERN } from '@/lib/slug'
 
 /**
  * Resource (downloadable guide) payloads for lib/actions/resources.ts.
@@ -12,7 +13,7 @@ import { concurrencyStamp, rowId } from './concurrency'
 const slug = z
   .string()
   .trim()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase words separated by hyphens')
+  .regex(SLUG_PATTERN, SLUG_MESSAGE)
 
 /** Empty strings from cleared inputs mean "none". */
 const optionalText = z.preprocess(
