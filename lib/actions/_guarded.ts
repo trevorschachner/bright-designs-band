@@ -68,6 +68,18 @@ export class InvalidError extends Error {
   }
 }
 
+/**
+ * The write would break a rule the caller can fix (e.g. removing the last
+ * owner). Its issues are author-written, so they are returned. A unique
+ * violation from Postgres maps to `conflict` without this.
+ */
+export class ConflictError extends Error {
+  constructor(readonly issues?: ActionIssue[]) {
+    super('conflict')
+    this.name = 'ConflictError'
+  }
+}
+
 export { postgresCode }
 
 /** Thrown error → ActionResult. Exported for tests. */
@@ -75,6 +87,7 @@ export async function toActionFailure(error: unknown, operation: string): Promis
   if (error instanceof NotFoundError) return fail('not_found')
   if (error instanceof StaleError) return fail('stale')
   if (error instanceof InvalidError) return fail('invalid', error.issues)
+  if (error instanceof ConflictError) return fail('conflict', error.issues)
   if (postgresCode(error) === PG_UNIQUE_VIOLATION) return fail('conflict')
   await reportError(error, { operation, degradedTo: "ActionResult 'failed'" })
   return fail('failed')

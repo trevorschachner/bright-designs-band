@@ -75,7 +75,7 @@ with `error` one of:
 | `forbidden` | No session, or the role lacks the permission | `guard()` (401/403) |
 | `invalid` | Input failed the schema, or `InvalidError` | zod issues (`path`, schema-authored `message`) |
 | `not_found` | The row does not exist | `throw new NotFoundError()` |
-| `conflict` | A unique constraint (slug, tag name) | Postgres `23505`, on the error or its `cause` |
+| `conflict` | A unique constraint (slug, tag name), or a rule the caller can fix (last owner) | Postgres `23505`, on the error or its `cause`; `throw new ConflictError(issues?)` |
 | `stale` | The row changed since the caller loaded it | `throw new StaleError()` / `assertFresh()` |
 | `failed` | Anything else, including an auth outage (`guard()` 5xx) | logged with `reportError` |
 
