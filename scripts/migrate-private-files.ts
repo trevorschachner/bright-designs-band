@@ -28,9 +28,6 @@
  * Needs DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL and (for --apply / --revert)
  * SUPABASE_SERVICE_ROLE_KEY in .env.local. The private bucket must exist.
  */
-import { readFile, writeFile } from 'fs/promises'
-import { resolve } from 'path'
-import { REFERENCING_COLUMNS } from '../lib/media/optimize-plan'
 import {
   connect,
   downloadRoute,
@@ -38,12 +35,15 @@ import {
   hasFlag,
   isDownloadRoute,
   objectExists,
-  PRIVATE_BUCKET,
+  privateBucket,
   PUBLIC_BUCKET,
   serviceClient,
   withRootPrefix,
   type Db,
-} from './_storage-common'
+} from './_common'
+import { readFile, writeFile } from 'fs/promises'
+import { resolve } from 'path'
+import { REFERENCING_COLUMNS } from '../lib/media/optimize-plan'
 
 type Entry = {
   id: number
@@ -141,6 +141,7 @@ async function main() {
   const revertPath = flagValue('--revert')
   const db = connect()
   try {
+    const PRIVATE_BUCKET = privateBucket()
     if (revertPath) return await revert(db, revertPath, apply)
 
     const rows = await candidates(db)

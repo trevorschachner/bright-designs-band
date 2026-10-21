@@ -17,12 +17,13 @@
  *
  *   npx tsx scripts/find-orphan-files.ts
  */
-import { connect, listAll, PRIVATE_BUCKET, PUBLIC_BUCKET, ROOT_PREFIX, serviceClient, withRootPrefix, bucketForRow } from './_storage-common'
+import { connect, listAll, privateBucket, PUBLIC_BUCKET, ROOT_PREFIX, serviceClient, storageBucketFor, withRootPrefix } from './_common'
 
 async function main() {
   const db = connect()
   try {
     const client = serviceClient()
+    const PRIVATE_BUCKET = privateBucket()
     const { rows } = await db.query(`select id, storage_path, url, file_type from files where file_type <> 'youtube' order by id`)
 
     let pending: { bucket: string; path: string }[] = []
@@ -34,7 +35,7 @@ async function main() {
 
     const key = (bucket: string, path: string) => `${bucket}\u0000${path}`
     const expected = new Map<string, number>()
-    for (const r of rows) expected.set(key(bucketForRow(r.url), withRootPrefix(r.storage_path as string)), r.id as number)
+    for (const r of rows) expected.set(key(storageBucketFor({ url: r.url as string | null }), withRootPrefix(r.storage_path as string)), r.id as number)
     const inFlight = new Set(pending.map((p) => key(p.bucket, p.path)))
 
     const present = new Set<string>()

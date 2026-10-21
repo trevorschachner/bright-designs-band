@@ -8,8 +8,7 @@
  * (verified before reading), which Postgres enforces, so this is safe to point
  * at production.
  */
-import postgres from 'postgres'
-import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { asc, eq, sql } from 'drizzle-orm'
 import * as schema from '../database/schema'
 import {
@@ -58,16 +57,6 @@ export function storageFromEnv(env: NodeJS.ProcessEnv = process.env): StorageCon
     supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
     bucket: env.NEXT_PUBLIC_STORAGE_BUCKET?.trim() || 'Bright Designs',
     rootPrefix: env.NEXT_PUBLIC_STORAGE_ROOT_PREFIX?.trim() || 'files',
-  }
-}
-
-/** Opens its own connection for a script, reads, and closes it. */
-export async function loadShowSheetTables(databaseUrl: string, storage: StorageConfig): Promise<ShowSheetTables> {
-  const client = postgres(databaseUrl, { prepare: false, max: 1 })
-  try {
-    return await readShowSheetTables(drizzle(client, { schema }), storage)
-  } finally {
-    await client.end()
   }
 }
 

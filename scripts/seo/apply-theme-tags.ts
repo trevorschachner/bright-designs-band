@@ -8,12 +8,9 @@
  *
  * Without DATABASE_URL, prints the plan from the JSON only.
  */
-import { config } from 'dotenv'
+import { databaseUrl, withDb, type Sql } from '../_common'
 import { resolve } from 'path'
 import { readFileSync } from 'fs'
-import postgres from 'postgres'
-
-config({ path: resolve(process.cwd(), '.env.local') })
 
 const mapping = JSON.parse(
   readFileSync(resolve(__dirname, 'theme-tags.json'), 'utf8'),
@@ -21,7 +18,7 @@ const mapping = JSON.parse(
 
 async function main() {
   const apply = process.argv.includes('--apply')
-  const url = process.env.DATABASE_URL
+  const url = databaseUrl()
   const entries = Object.entries(mapping.shows)
 
   if (!url) {
@@ -32,8 +29,7 @@ async function main() {
     return
   }
 
-  const sql = postgres(url, { max: 1, prepare: false, ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer' })
-  try {
+  await withDb(async ({ sql }) => {
     const existingTags = await sql<{ id: number; name: string }[]>`select id, name from tags where name in ${sql(mapping.themes)}`
     const tagIds = new Map(existingTags.map((t) => [t.name, t.id]))
     const newTags = mapping.themes.filter((t) => !tagIds.has(t))
@@ -57,7 +53,7 @@ async function main() {
     let linksSkipped = 0
     const lines: string[] = []
 
-    const run = async (db: typeof sql) => {
+    const run = async (db: Sql) => {
       if (apply) {
         for (const name of newTags) {
           await db`insert into tags (name) values (${name}) on conflict (name) do nothing`
@@ -92,16 +88,14 @@ async function main() {
       }
     }
 
-    if (apply) await sql.begin(async (tx) => { await run(tx as unknown as typeof sql) })
+    if (apply) await sql.begin(async (tx) => { await run(tx as unknown as Sql) })
     else await run(sql)
 
     for (const l of lines) console.log(l)
     console.log(`\nShows found: ${found}, missing: ${missing}. Links ${apply ? 'added' : 'to add'}: ${linksAdded}, already present: ${linksSkipped}.`)
     if (apply) console.log('Theme tags applied. If the site is already deployed, collection pages refresh within 1 hour (revalidate = 3600); trigger a Netlify deploy to refresh sooner.')
     else console.log('Dry run: nothing written. Re-run with --apply to write.')
-  } finally {
-    await sql.end()
-  }
+  })
 }
 
 main().catch((e) => { console.error(`\nError: ${e instanceof Error ? e.message : e}`); process.exit(1) })

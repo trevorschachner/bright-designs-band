@@ -16,10 +16,8 @@
  *   npx tsx scripts/optimize-media.ts --audio --apply    # encode + upload + update
  *   npx tsx scripts/optimize-media.ts --revert scripts/.media-migration-<ts>.json
  */
-import { config } from 'dotenv'
+import { connect, PUBLIC_BUCKET, serviceClient, withRootPrefix, type Db } from './_common'
 import { resolve } from 'path'
-import postgres from 'postgres'
-import { createClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
@@ -36,37 +34,11 @@ import {
   type OptimizationTarget,
 } from '../lib/media/optimize-plan'
 
-config({ path: resolve(process.cwd(), '.env.local') })
-
-/** Thin query wrapper over one `postgres` connection (max: 1 keeps begin/commit on the same session). */
-type Db = {
-  query: (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number }>
-  end: () => Promise<void>
-}
-
-function connect(url: string): Db {
-  const sql = postgres(url, { max: 1, prepare: false, ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer' })
-  return {
-    query: async (text, params) => {
-      const result = params
-        ? await sql.unsafe(text, params as postgres.ParameterOrJSON<never>[])
-        : await sql.unsafe(text)
-      return { rows: [...result] as Record<string, unknown>[], rowCount: result.count }
-    },
-    end: () => sql.end(),
-  }
-}
-
 const execFileAsync = promisify(execFile)
 
 const WEBP_QUALITY = 82
 const MAX_IMAGE_WIDTH = 1920
 const MP3_VBR_QUALITY = '2' // ffmpeg -q:a 2 ~= 192k VBR
-
-const STORAGE_BUCKET = process.env.NEXT_PUBLIC_STORAGE_BUCKET?.trim() || 'Bright Designs'
-const STORAGE_ROOT_PREFIX = (process.env.NEXT_PUBLIC_STORAGE_ROOT_PREFIX?.trim() || 'files').replace(/^\/+|\/+$/g, '')
-
-const withRootPrefix = (path: string): string => `${STORAGE_ROOT_PREFIX}/${String(path || '').replace(/^\/+/, '')}`
 
 type ManifestEntry = FilePlan & { newFileSize: number }
 type Manifest = { createdAt: string; entries: ManifestEntry[] }
@@ -217,9 +189,7 @@ async function revert(db: Db, manifestPath: string): Promise<void> {
 async function main() {
   const { apply, revert: revertPath, targets } = parseArgs(process.argv.slice(2))
 
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL not found in .env.local')
-
-  const db = connect(process.env.DATABASE_URL)
+  const db = connect()
 
   try {
     if (revertPath) {
@@ -230,14 +200,8 @@ async function main() {
     // Only a real run needs the encoder; dry runs must always be able to plan.
     if (apply && targets.some((t) => t.kind === 'audio')) await assertFfmpegAvailable()
 
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
-    if (apply && !serviceKey) {
-      throw new Error('SUPABASE_SERVICE_ROLE_KEY is required in .env.local to upload (found in Supabase → Settings → API).')
-    }
-    if (apply && !supabaseUrl) throw new Error('NEXT_PUBLIC_SUPABASE_URL not found in .env.local')
-
-    const storage = apply ? createClient(supabaseUrl!, serviceKey!).storage.from(STORAGE_BUCKET) : null
+    // Only a real run uploads; serviceClient() throws when its keys are missing.
+    const storage = apply ? serviceClient().storage.from(PUBLIC_BUCKET) : null
 
     const plans: FilePlan[] = []
     for (const target of targets) plans.push(...(await fetchCandidates(db, target)))

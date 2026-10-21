@@ -10,11 +10,7 @@
  * - Make Some Noise is Travelers Rest's indoor winds show; Apex was written for New Bern.
  * - Gold Rush, Off the Rails, Lunch Atop A Skyscraper and Dot by Dot are small-band shows.
  */
-import { config } from 'dotenv'
-import { resolve } from 'path'
-import postgres from 'postgres'
-
-config({ path: resolve(process.cwd(), '.env.local'), quiet: true })
+import { withDb, type Sql } from '../_common'
 
 const NOT_INCLUDED = 'Drill is not included; the original drill'
 
@@ -70,11 +66,8 @@ const TAGS: Record<string, string[]> = {
 
 async function main() {
   const apply = process.argv.includes('--apply')
-  const url = process.env.DATABASE_URL
-  if (!url) throw new Error('DATABASE_URL not set (.env.local)')
-  const sql = postgres(url, { max: 1, prepare: false, ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer' })
-  try {
-    const run = async (db: typeof sql) => {
+  await withDb(async ({ sql }) => {
+    const run = async (db: Sql) => {
       const rows = await db<{ id: number; slug: string; program_notes: string | null; commissioned: string | null; includes: string | null }[]>`
         select id, slug, program_notes, commissioned, includes from shows`
       const bySlug = new Map(rows.map((r) => [r.slug, r]))
@@ -124,11 +117,9 @@ async function main() {
       }
       console.log(`\n${apply ? 'Applied' : 'Dry run'}: ${notes} program notes, ${badges} includes lists, ${links} tag links.${apply ? '' : ' Re-run with --apply to write.'}`)
     }
-    if (apply) await sql.begin(async (tx) => { await run(tx as unknown as typeof sql) })
+    if (apply) await sql.begin(async (tx) => { await run(tx as unknown as Sql) })
     else await run(sql)
-  } finally {
-    await sql.end()
-  }
+  })
 }
 
 if (require.main === module) main().catch((e) => { console.error(`\nError: ${e instanceof Error ? e.message : e}`); process.exit(1) })
