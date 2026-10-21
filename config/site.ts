@@ -47,8 +47,6 @@ export const siteConfig: SiteConfig = {
   //   { label: "API Docs", href: "/docs/api" },
   // ],
   ctas: {
-    // TODO: Uncomment when Build Your Show is production ready
-    // primary: { label: "Build Your Show", href: "/build", iconRight: true },
     secondary: { label: "Contact Us", href: "/contact" },
   },
   footer: {

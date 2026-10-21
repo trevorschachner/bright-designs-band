@@ -59,13 +59,6 @@ export default async function HomePage() {
         }
       >
         <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
-          {/* TODO: Uncomment when Build Your Show is production ready */}
-          {/* <Button size="lg" asChild>
-            <Link href="/build">
-              Build Your Show
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </Button> */}
           <Button variant="outline" size="lg" asChild>
             <Link href="/contact">
               Let&apos;s Talk

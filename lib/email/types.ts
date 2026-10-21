@@ -43,7 +43,6 @@ export interface ContactFormData {
   bandSize?: string;
   abilityLevel?: string;
   instrumentation?: string;
-  showPlan?: string[];
   source?: string;
   referralSource?: string;
   referralBandDirector?: string;

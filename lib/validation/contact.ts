@@ -41,11 +41,10 @@ export const contactSubmissionSchema = z.object({
   instrumentation: optionalText(1000),
   referralSource: optionalText(200),
   referralBandDirector: optionalText(200),
-  // These feed the email templates, which type them as ServiceCategory[] and
-  // string[]. Validating the element type here is what lets the handler pass
-  // them through without a cast.
+  // This feeds the email templates, which type it as ServiceCategory[].
+  // Validating the element type here is what lets the handler pass it
+  // through without a cast.
   services: z.array(z.string()).max(50).optional(),
-  showPlan: z.array(z.string()).max(50).optional(),
   // Cloudflare Turnstile response from the widget. Required on every form
   // that posts here; verified server-side before anything is stored or sent.
   // Stripped by the handler before persistence or email.

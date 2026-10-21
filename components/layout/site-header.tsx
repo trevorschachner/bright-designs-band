@@ -8,7 +8,6 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import type { NavigationItem, CallToAction } from "@/config/site"
-import { useShowPlan } from "@/lib/hooks/use-show-plan"
  
 type SiteHeaderProps = {
 	brand: { name: string }
@@ -20,7 +19,6 @@ type SiteHeaderProps = {
 export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderProps) {
 	const pathname = usePathname()
 	const [mobileOpen, setMobileOpen] = useState(false)
-  const { itemCount } = useShowPlan()
 
 	const isActive = (href: string) => pathname === href
 
@@ -57,7 +55,6 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 						<Button variant="default" size="sm" asChild>
 							<Link href={ctas.primary.href}>
 								{ctas.primary.label}
-                {itemCount > 0 && <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-destructive text-destructive-foreground rounded-full">{itemCount}</span>}
 								{ctas.primary.iconRight && (<ArrowRight className="ml-2 h-4 w-4" />)}
 							</Link>
 						</Button>
@@ -91,7 +88,6 @@ export function SiteHeader({ brand, navigation, resources, ctas }: SiteHeaderPro
 									<Button className="btn-wireframe-primary w-full h-12 text-xs uppercase tracking-wide" asChild>
 										<Link href={ctas.primary.href} onClick={() => setMobileOpen(false)}>
 											{ctas.primary.label}
-                      {itemCount > 0 && <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-destructive text-destructive-foreground wireframe-border">{itemCount}</span>}
 											{ctas.primary.iconRight && (<ArrowRight className="ml-2 h-4 w-4" />)}
 										</Link>
 									</Button>
