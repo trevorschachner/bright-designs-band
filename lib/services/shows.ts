@@ -25,7 +25,8 @@ import { PG_UNDEFINED_TABLE, postgresCode } from '@/lib/database/errors';
 // Shared shapes and helpers
 // ---------------------------------------------------------------------------
 
-export type ShowDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+import type { ShowDifficulty } from '@/lib/validation/enums';
+export type { ShowDifficulty };
 type TagRef = { id: number; name: string };
 
 export type ShowSummary = {

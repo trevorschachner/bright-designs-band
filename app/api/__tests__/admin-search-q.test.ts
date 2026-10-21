@@ -9,14 +9,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const m = vi.hoisted(() => ({
   guard: vi.fn(),
   showsAdmin: vi.fn(async () => ({ data: [], total: 0 })),
-  queryShows: vi.fn(async () => ({ rows: [], total: 0 })),
+  queryShows: vi.fn(async () => ({ rows: [], total: 0, page: 1, pageSize: 24, totalPages: 0 })),
   parseShowsQuery: vi.fn(() => ({ page: 1, limit: 24, conditions: [], sort: [] })),
   resourcesAdmin: vi.fn(async () => []),
   resourcesPublic: vi.fn(async () => []),
 }))
 vi.mock('@/lib/auth/guard', () => ({ guard: m.guard }))
 vi.mock('@/lib/services/shows', () => ({ getShowsPageForAdmin: m.showsAdmin }))
-vi.mock('@/lib/services/catalog', () => ({ parseShowsQuery: m.parseShowsQuery, queryShows: m.queryShows }))
+vi.mock('@/lib/services/catalog', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/services/catalog')>()),
+  parseShowsQuery: m.parseShowsQuery,
+  queryShows: m.queryShows,
+}))
 vi.mock('@/lib/services/resources', () => ({ getResourcesForAdmin: m.resourcesAdmin, getActiveResources: m.resourcesPublic }))
 vi.mock('@/lib/observability/report-error', () => ({ reportError: vi.fn() }))
 

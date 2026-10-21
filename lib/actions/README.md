@@ -43,22 +43,20 @@ export async function updateTag(input: UpdateTagInput) {
 - **Open a transaction only when there is more than one statement**, or a
   read that must hold a lock (`select ... for update`). Single statements and
   reads do not need one.
-- **Return `{ data, invalidate }`; never call the invalidate helper yourself.**
+- **Return `{ data, invalidate, track? }`; never call the invalidate helper or `trackServerEvent` yourself.**
   `guarded` runs `invalidate` after `fn` resolves (after commit), so a
   rolled-back write never purges the cache. It runs outside the error mapping:
   if invalidation throws, it is logged and reported and the result is still
   `ok(data)`, because the write committed. Exactly one helper from
   `lib/services/invalidate.ts` per action.
-  **The one exception: a partial failure in a multi-file delete.**
-  `deleteShow` and `deleteArrangement` remove files one at a time
-  (`removeFilesInOrder` in `lib/services/file-removal.ts`), each file
-  committed on its own. If a later file fails after earlier ones were
-  removed, those removals are already committed but `guarded` will never run
-  `invalidate` (the action throws). So the action passes an
-  `onPartialFailure` callback that invalidates the already-removed rows
-  (the owner, plus any show whose art was cleared) before rethrowing. Failing
-  on the first file invalidates nothing. Invalidation errors there are logged,
-  never allowed to mask the original error.
+  **Deleting a show or part with files:** call
+  `removeOwnerFiles(db, { showId } | { arrangementId })` from
+  `lib/services/file-removal.ts` first. It removes the files one at a time
+  (each committed on its own) and, on a partial failure, invalidates what it
+  already removed before rethrowing, since `guarded` never runs `invalidate`
+  on a throw. On success it returns `invalidateRemoved`: call it from your
+  `invalidate`, beside the owner's own helper, for the other pages the
+  removal touched (cleared show art, the other owner of a shared file).
 - **Return JSON-safe data.** The result is serialised to the browser.
 - **Unknown related ids are `invalid`, not `failed`.** Check them inside the
   transaction before writing and throw `InvalidError` (e.g. show tags:
@@ -75,7 +73,7 @@ with `error` one of:
 | `forbidden` | No session, or the role lacks the permission | `guard()` (401/403) |
 | `invalid` | Input failed the schema, or `InvalidError` | zod issues (`path`, schema-authored `message`) |
 | `not_found` | The row does not exist | `throw new NotFoundError()` |
-| `conflict` | A unique constraint (slug, tag name) | Postgres `23505`, on the error or its `cause` |
+| `conflict` | A unique constraint (slug, tag name), or a rule the caller can fix (last owner) | Postgres `23505`, on the error or its `cause`; `throw new ConflictError(issues?)` |
 | `stale` | The row changed since the caller loaded it | `throw new StaleError()` / `assertFresh()` |
 | `failed` | Anything else, including an auth outage (`guard()` 5xx) | logged with `reportError` |
 

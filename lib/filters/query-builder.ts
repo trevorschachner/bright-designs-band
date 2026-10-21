@@ -7,6 +7,7 @@ import {
 } from './types';
 import { sql, SQL, and, or, eq, ne, gt, gte, lt, lte, like, ilike, isNull, isNotNull, inArray, notInArray, asc, desc } from 'drizzle-orm';
 import { PgColumn, PgTable } from 'drizzle-orm/pg-core';
+import { escapeLike, likePattern } from './admin-search';
 
 /**
  * Builds Drizzle ORM queries from filter conditions
@@ -40,11 +41,11 @@ export class QueryBuilder {
       case 'equals':
         return eq(column, normalizedValue);
       case 'contains':
-        return ilike(column, `%${normalizedValue}%`);
+        return ilike(column, likePattern(String(normalizedValue)));
       case 'startsWith':
-        return ilike(column, `${normalizedValue}%`);
+        return ilike(column, `${escapeLike(String(normalizedValue))}%`);
       case 'endsWith':
-        return ilike(column, `%${normalizedValue}`);
+        return ilike(column, `%${escapeLike(String(normalizedValue))}`);
       case 'gt':
         return gt(column, normalizedValue);
       case 'gte':
@@ -134,7 +135,7 @@ export class QueryBuilder {
       const column = table[fieldName as keyof typeof table] as PgColumn;
       if (!column) return null;
       
-      return ilike(column, `%${searchTerm}%`);
+      return ilike(column, likePattern(searchTerm));
     }).filter(Boolean) as SQL[];
 
     return searchConditions.length > 0 

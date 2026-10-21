@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { getCollectionBySlug, publishedCollections, MIN_COLLECTION_SHOWS } from "@/lib/collections";
-import { getShowsByFilter, getCollectionCounts } from "@/lib/services/shows";
+import { getCollectionBySlug } from "@/lib/collections";
+import { getPublishedCollection, publishedCollections } from "@/lib/services/collections";
+import { getShowsByFilter } from "@/lib/services/shows";
 import { getCollectionContent } from "@/lib/content/collections";
 import { parseProgramNotes, type ProgramNotes as ParsedNotes } from "@/lib/content/program-notes";
 import { ProgramNotes } from "@/components/features/program-notes";
@@ -49,14 +50,8 @@ function restOfIntro(notes: ParsedNotes): ParsedNotes {
 
 export default async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const collection = getCollectionBySlug(slug);
-
+  const collection = await getPublishedCollection(slug);
   if (!collection) {
-    notFound();
-  }
-
-  const counts = await getCollectionCounts();
-  if ((counts[slug] ?? 0) < MIN_COLLECTION_SHOWS) {
     notFound();
   }
 

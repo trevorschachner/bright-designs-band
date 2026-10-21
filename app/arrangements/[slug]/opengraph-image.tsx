@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { getArrangementBySlug } from '@/lib/services/arrangements'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { gradeLabel } from '@/lib/display'
 
 export const runtime = 'nodejs'
 
@@ -28,7 +29,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   // Fallback values
   const title = arr?.title || 'Custom Arrangement'
   const composer = arr?.composer || 'Bright Designs'
-  const grade = arr?.grade ? arr.grade.replace('_', ' ').replace('plus', '+') : ''
+  const grade = gradeLabel(arr?.grade) ?? ''
   const ensemble = arr?.ensembleSize || ''
 
   // Load logo
@@ -148,7 +149,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                 textTransform: 'capitalize',
               }}
             >
-              Grade {grade}
+              {grade}
             </div>
           )}
           {ensemble && (

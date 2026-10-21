@@ -71,27 +71,6 @@ export interface FilteredResponse<T> {
   appliedFilters: FilterState;
 }
 
-// Schema-based field configurations
-export interface SchemaField {
-  key: string;
-  type: string;
-  nullable?: boolean;
-  enumValues?: string[];
-  references?: {
-    table: string;
-    field: string;
-  };
-}
-
-export interface TableSchema {
-  name: string;
-  fields: Record<string, SchemaField>;
-  relations: Record<string, {
-    type: 'one' | 'many';
-    table: string;
-    fields: string[];
-  }>;
-}
 
 // Preset filter configurations for common use cases
 export interface FilterPreset {

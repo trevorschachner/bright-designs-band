@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { createPiece, deletePiece, updatePiece, type PieceRow } from '@/lib/actions/pieces';
-import type { ActionResult } from '@/lib/actions/result';
+import { actionMessage, type ActionResult } from '@/lib/actions/result';
 
 /**
  * Source pieces (#51): the works a show part is built from, with composer and
@@ -57,12 +57,10 @@ const toForm = (p: Piece): PieceForm => ({
   licensingStatus: p.licensingStatus ?? '',
 });
 
-function messageFor(result: Extract<ActionResult<unknown>, { ok: false }>): string {
-  if (result.issues?.length) return result.issues.map((issue) => issue.message).join('; ');
-  if (result.error === 'not_found') return 'That piece was already deleted.';
-  if (result.error === 'forbidden') return 'You do not have permission to edit pieces.';
-  return 'Something went wrong. Try again.';
-}
+const MESSAGES = {
+  not_found: 'That piece was already deleted.',
+  forbidden: 'You do not have permission to edit pieces.',
+};
 
 function PieceFields({
   idPrefix,
@@ -146,7 +144,7 @@ export function PiecesManager({ pieces, loadError }: { pieces: Piece[]; loadErro
     setError(null);
     try {
       const result = await action();
-      if (!result.ok) setError(messageFor(result));
+      if (!result.ok) setError(actionMessage(result, MESSAGES));
       router.refresh();
       return result.ok;
     } catch {

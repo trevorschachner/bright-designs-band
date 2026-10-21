@@ -1,11 +1,10 @@
-import { shows } from '@/lib/database/schema';
 import { QueryBuilder, FilterUrlManager } from '@/lib/filters/query-builder';
 import { UnknownFilterFieldError } from '@/lib/filters/table-query';
 import { guard } from '@/lib/auth/guard';
 import { SuccessResponse, PrivateResponse, ErrorResponse, BadRequestResponse } from '@/lib/utils/api-helpers';
 import { reportError } from '@/lib/observability/report-error';
 import { getShowsPageForAdmin, type ShowsPageParams } from '@/lib/services/shows';
-import { parseShowsQuery, queryShows } from '@/lib/services/catalog';
+import { parseShowsQuery, queryShows, toListResponse } from '@/lib/services/catalog';
 import { readAdminSearch } from '@/lib/filters/admin-search';
 
 export const dynamic = 'force-dynamic';
@@ -29,8 +28,7 @@ export async function GET(request: Request) {
       const gate = await guard('canManageShows');
       if (gate.denied) {
         const filters = parseShowsQuery(searchParams);
-        const { rows, total } = await queryShows(filters);
-        return PrivateResponse(QueryBuilder.buildFilteredResponse(rows, total, filters));
+        return PrivateResponse(toListResponse(await queryShows(filters), filters));
       }
       // Staff keep the unparsed filters and the admin table's page sizes (up
       // to 100), so a bad field can still reach buildTableQuery: answer 400.
@@ -62,8 +60,7 @@ export async function GET(request: Request) {
   // reach the query; a failure here is a server fault.
   try {
     const filters = parseShowsQuery(searchParams);
-    const { rows, total } = await queryShows(filters);
-    return SuccessResponse(QueryBuilder.buildFilteredResponse(rows, total, filters));
+    return SuccessResponse(toListResponse(await queryShows(filters), filters));
   } catch (error) {
     await reportError(error, { operation: 'GET /api/shows' });
     return ErrorResponse('Failed to load shows', 500);

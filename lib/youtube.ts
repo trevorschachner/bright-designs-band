@@ -1,34 +1,21 @@
 /**
- * YouTube URL helpers. Pure, no React: shared by client components and
- * Server Actions (lib/actions/files.ts), which cannot import from a
- * 'use client' module.
+ * YouTube URL helpers, the one parser for the whole site. Pure, no React:
+ * shared by client components (the player and the facade), the SEO
+ * VideoObject, and Server Actions (lib/actions/files.ts), which cannot import
+ * from a 'use client' module. A URL the admin accepts is exactly a URL the
+ * public page can play and describe.
  */
 
-const VALID_URL_PATTERNS = [
-  /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)/,
-  /^https?:\/\/(www\.)?youtube\.com\/watch\?.*v=/,
-  /^https?:\/\/(www\.)?youtube\.com\/v\//,
-  /^https?:\/\/(www\.)?youtube\.com\/embed\//,
-  /^https?:\/\/youtu\.be\//,
-]
+const VIDEO_ID =
+  /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
 
-export function isValidYouTubeUrl(url: string): boolean {
-  return VALID_URL_PATTERNS.some((regex) => regex.test(url))
+/** The 11-character video id from any common YouTube URL form, or null. */
+export function youTubeVideoId(url: string | null | undefined): string | null {
+  if (!url) return null
+  return url.match(VIDEO_ID)?.[1] ?? null
 }
 
-const VIDEO_ID_PATTERNS = [
-  /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-  /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
-  /youtube\.com\/v\/([^&\n?#]+)/,
-  /youtube\.com\/embed\/([^&\n?#]+)/,
-  /youtu\.be\/([^&\n?#]+)/,
-]
-
-/** The video id in a YouTube URL, or null. */
-export function youTubeVideoId(url: string): string | null {
-  for (const regex of VIDEO_ID_PATTERNS) {
-    const match = url.match(regex)
-    if (match?.[1]) return match[1]
-  }
-  return null
+/** An http(s) URL with a readable YouTube video id. */
+export function isValidYouTubeUrl(url: string): boolean {
+  return /^https?:\/\//.test(url) && youTubeVideoId(url) !== null
 }

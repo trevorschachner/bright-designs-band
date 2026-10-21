@@ -19,7 +19,7 @@ Defined in `lib/database/schema.ts`.
 - `lib/actions/`: Server Actions, the only way the admin writes (`guarded()`: permission, strict schema, invalidate after commit). See `lib/actions/README.md`.
 - `lib/services/`: cached read layer for public pages, plus uncached admin reads (`lib/services/admin.ts`) and cache invalidation (`invalidate.ts`). `lib/database/`: Drizzle schema and raw queries.
 - `lib/validation/`: zod schemas for the actions.
-- `lib/auth/guard.ts`: the single authorization gate every action and staff route calls (`guard('canManageShows')`).
+- `lib/auth/guard.ts`: the single authorization decision, `authorize(permission)`. Adapters: `guard()` for route handlers (401/403/500), `requireAdminPage()` (`lib/auth/page-guard.ts`) for the admin layout and pages, `guarded()` for Server Actions.
 - `lib/env.ts` (public helpers) and `lib/env.server.ts` (zod-validated server env via `getEnv()`).
 - `lib/security-headers.mjs`: security headers including a report-only CSP.
 - `proxy.ts`: Next 16 proxy (auth-code redirect, legacy `/shows/:id` redirect).

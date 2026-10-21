@@ -13,9 +13,9 @@ const email = z.preprocess(
 )
 const role = z.enum(ADMIN_ROLES, { errorMap: () => ({ message: 'Role must be owner or editor' }) })
 
-export const addAdminUserSchema = z.object({ email, role })
-export const setAdminUserRoleSchema = z.object({ email, role })
-export const removeAdminUserSchema = z.object({ email })
+export const addAdminUserSchema = z.object({ email, role }).strict()
+export const setAdminUserRoleSchema = z.object({ email, role }).strict()
+export const removeAdminUserSchema = z.object({ email }).strict()
 
 export type AddAdminUserInput = z.infer<typeof addAdminUserSchema>
 export type SetAdminUserRoleInput = z.infer<typeof setAdminUserRoleSchema>

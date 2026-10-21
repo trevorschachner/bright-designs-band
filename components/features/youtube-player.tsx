@@ -2,23 +2,15 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { isValidYouTubeUrl } from '@/lib/youtube';
+import { youTubeVideoId } from '@/lib/youtube';
 
 interface YouTubePlayerProps {
   youtubeUrl?: string | null;
   className?: string;
 }
 
-// Helper function to extract YouTube video ID from various URL formats
-const getYouTubeId = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-};
-
 export function YouTubePlayer({ youtubeUrl, className }: YouTubePlayerProps) {
-  const videoId = getYouTubeId(youtubeUrl);
+  const videoId = youTubeVideoId(youtubeUrl);
 
   if (!videoId) {
     return (
@@ -89,59 +81,3 @@ export function YouTubeFacadeIsland({ videoId, title, className, children }: You
     </div>
   );
 }
-
-// Utility function to validate YouTube URLs (lives in lib/youtube for server use)
-export { isValidYouTubeUrl };
-
-// Component for YouTube URL input with validation
-interface YouTubeUrlInputProps {
-  value: string
-  onChange: (url: string) => void
-  placeholder?: string
-  className?: string
-}
-
-export function YouTubeUrlInput({ 
-  value, 
-  onChange, 
-  placeholder = "Enter YouTube URL (e.g., https://youtu.be/dQw4w9WgXcQ)",
-  className = ""
-}: YouTubeUrlInputProps) {
-  const [isValid, setIsValid] = React.useState(true)
-
-  const handleChange = (newValue: string) => {
-    onChange(newValue)
-    
-    if (newValue.trim() === '') {
-      setIsValid(true)
-      return
-    }
-    
-    setIsValid(isValidYouTubeUrl(newValue))
-  }
-
-  return (
-    <div className={`space-y-2 ${className}`}>
-      <input
-        type="url"
-        value={value}
-        onChange={(e) => handleChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-bright-primary ${
-          !isValid ? 'border-red-500' : 'border-border'
-        }`}
-      />
-      {!isValid && (
-        <p className="text-sm text-red-600">
-          Please enter a valid YouTube URL
-        </p>
-      )}
-      {value && isValid && (
-        <div className="mt-2">
-          <p className="text-sm text-muted-foreground mb-2">Preview:</p>
-          <YouTubePlayer youtubeUrl={value} />
-        </div>
-      )}
-    </div>
-  )
-} 

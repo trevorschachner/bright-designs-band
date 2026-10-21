@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { youtubeVideoId } from '@/lib/seo/structured-data'
+import { youTubeVideoId } from '@/lib/youtube'
 import { YouTubeFacadeIsland } from './youtube-player'
 
 interface YouTubeFacadeProps {
@@ -17,7 +17,7 @@ interface YouTubeFacadeProps {
  * createVideoObjectSchema uses, so the schema and the player agree.
  */
 export function YouTubeFacade({ youtubeUrl, title, className }: YouTubeFacadeProps) {
-  const videoId = youtubeVideoId(youtubeUrl)
+  const videoId = youTubeVideoId(youtubeUrl)
   if (!videoId) return null
 
   return (

@@ -31,3 +31,25 @@ export function invalid(error: ZodError): { ok: false; error: 'invalid'; issues:
     issues: error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })),
   }
 }
+
+const DEFAULT_TEXT: Record<ActionError, string> = {
+  forbidden: 'You do not have permission to make this change. Try signing in again.',
+  invalid: 'Check the highlighted fields.',
+  not_found: 'This was deleted by someone else. Reload the page.',
+  conflict: 'That value is already used.',
+  stale: 'Someone else changed this. Reload to see their changes.',
+  failed: 'Something went wrong. Try again.',
+}
+
+/**
+ * A failed action in words for the person using the admin. Author-written
+ * issues win (all of them, joined); otherwise the screen's own wording for
+ * the error, else the default. Client-safe.
+ */
+export function actionMessage(
+  result: { ok: false; error: ActionError; issues?: ActionIssue[] },
+  overrides: Partial<Record<ActionError, string>> = {}
+): string {
+  if (result.issues?.length) return result.issues.map((issue) => issue.message).join('; ')
+  return overrides[result.error] ?? DEFAULT_TEXT[result.error]
+}

@@ -15,14 +15,6 @@ type FileType = typeof fileTypeEnum.enumValues[number];
  */
 export async function GET(request: NextRequest) {
   try {
-    let createClient: any;
-    try {
-      ({ createClient } = await import('@/lib/utils/supabase/server'));
-    } catch (e) {
-      console.error('Supabase client import failed.', e);
-      return ErrorResponse('Auth provider not configured');
-    }
-    const supabase = await createClient();
     // Optional gate: a denial here means "public rows only", not an error.
     const gate = await guard('canUploadFiles');
     const isStaff = gate.denied === null;

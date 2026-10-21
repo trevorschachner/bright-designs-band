@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { publishedCollections, type CollectionGroup } from "@/lib/collections";
+import type { CollectionGroup } from "@/lib/collections";
+import { publishedCollections } from "@/lib/services/collections";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import PageHero from "@/components/layout/page-hero";

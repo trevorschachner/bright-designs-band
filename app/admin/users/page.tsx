@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { guard } from '@/lib/auth/guard'
+import { requireAdminPage } from '@/lib/auth/page-guard'
 import { listAdminUsers } from '@/lib/actions/admin-users'
 import { AdminUsersTable } from '@/components/features/admin/AdminUsersTable'
 import {
@@ -15,8 +14,7 @@ export const dynamic = 'force-dynamic'
 
 /** Owners only. The layout already requires admin access; this narrows it. */
 export default async function AdminUsersPage() {
-  const gate = await guard('canManageUsers')
-  if (gate.denied) redirect('/admin')
+  const gate = await requireAdminPage('canManageUsers', '/admin')
 
   const result = await listAdminUsers()
 

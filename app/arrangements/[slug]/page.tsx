@@ -24,6 +24,7 @@ import { arrangementTitle } from '@/lib/seo/titles'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { ResaleCallout } from '@/components/features/resale-callout'
 import { createMusicCompositionSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
+import { durationLabel, ensembleLabel, gradeLabel } from '@/lib/display';
 
 // Rendered on first request, then cached and revalidated hourly; writes
 // expire it through invalidateArrangement (lib/services/invalidate.ts).
@@ -113,28 +114,8 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
   // Arrangement image, then the show's graphic, thumbnail, first image file.
   const displayImage = arrangementImage?.url || parentShow?.graphicUrl || parentShow?.thumbnailUrl || parentShow?.imageUrl || null;
 
-  const formatSeconds = (total?: number | null) => {
-    if (!total || total < 0) return '—'
-    const m = Math.floor(total / 60)
-    const s = total % 60
-    return `${m}:${String(s).padStart(2, '0')}`
-  }
-
-  const displayGrade = (() => {
-    const value = String(arr.grade || '').toLowerCase();
-    if (value === '1_2') return 'Grade 1-2';
-    if (value === '3_4') return 'Grade 3-4';
-    if (value === '5_plus' || value === '5+') return 'Grade 5+';
-    return null;
-  })();
-
-  const displayEnsembleSize = (() => {
-    const value = String(arr.ensembleSize || '').toLowerCase();
-    if (value === 'small') return 'Small Ensemble';
-    if (value === 'medium') return 'Medium Ensemble';
-    if (value === 'large') return 'Large Ensemble';
-    return null;
-  })();
+  const displayGrade = gradeLabel(arr.grade);
+  const displayEnsembleSize = ensembleLabel(arr.ensembleSize);
 
   return (
     <div className="min-h-screen bg-background">
@@ -277,7 +258,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               {arr.durationSeconds && (
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 text-muted-foreground mr-2" />
-                  <span className="text-sm"><span className="font-medium">Duration:</span> {formatSeconds(arr.durationSeconds)}</span>
+                  <span className="text-sm"><span className="font-medium">Duration:</span> {durationLabel(arr.durationSeconds)}</span>
                 </div>
               )}
               {displayEnsembleSize && (
@@ -332,7 +313,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
               tracks={[{ 
                 id: String(arr.id),
                 title: arr.title || 'Full Arrangement', 
-                duration: arr.durationSeconds ? formatSeconds(arr.durationSeconds) : '', 
+                duration: arr.durationSeconds ? durationLabel(arr.durationSeconds) : '', 
                 description: arr.description || '', 
                 type: 'Full Track', 
                 url: audio.url,

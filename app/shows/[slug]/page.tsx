@@ -27,7 +27,7 @@ import { showTitle } from '@/lib/seo/titles'
 import { JsonLd } from '@/components/features/seo/JsonLd'
 import { createMusicCompositionSchema, createBreadcrumbSchema, createVideoObjectSchema, showUploadDate } from '@/lib/seo/structured-data'
 import { isoDuration } from '@/lib/seo/duration'
-import { matchesFilter, publishedCollections } from '@/lib/collections'
+import { publishedCollectionsForShow } from '@/lib/services/collections'
 import { ShowCard } from '@/components/features/shows/ShowCard'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { normaliseSlug } from '@/lib/slug'
@@ -52,11 +52,6 @@ function trimDescription(text: string, max = 155): string {
   return (at > 0 ? cut.slice(0, at) : cut).replace(/[\s,;:.-]+$/, '')
 }
 
-/** Published collections this show belongs to. */
-async function matchingCollections(displayDifficulty: string, tagNames: string[], year: number | null) {
-  const facts = { difficulty: displayDifficulty || null, year, tagNames }
-  return (await publishedCollections()).filter((c) => matchesFilter(facts, c.filter))
-}
 
 
 export async function generateStaticParams() {
@@ -211,7 +206,7 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
   })
 
   const tagNames = (showsToTags ?? []).map((r) => r.tag.name)
-  const collectionLinks = await matchingCollections(displayDifficulty, tagNames, show.year ?? null)
+  const collectionLinks = await publishedCollectionsForShow({ difficulty: displayDifficulty || null, year: show.year ?? null, tagNames })
   const related = await getRelatedShows(showId, (displayDifficulty || null) as ShowDifficulty | null, tagNames)
 
   // Null without a YouTube URL (or one no video id can be read from).

@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Play, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { displayTagName } from "@/lib/tags";
+import { difficultyLabel } from '@/lib/display';
 
 // Define a flexible type that covers both Show (full) and ShowSummary (partial)
 export interface ShowCardItem {
@@ -44,14 +45,7 @@ export function ShowCard({ item: show, isLoading, priority = false }: ShowCardPr
   }
   const href = `/shows/${show.slug}`;
 
-  const displayDifficulty = (() => {
-    const value = String(show.difficulty || '').toLowerCase();
-    if (value === '1_2') return 'Beginner';
-    if (value === '3_4') return 'Intermediate';
-    if (value === '5_plus' || value === '5+'){ return 'Advanced'; }
-    if (!value) return 'Not specified';
-    return show.difficulty as unknown as string;
-  })();
+  const displayDifficulty = difficultyLabel(show.difficulty);
 
   // One card, one image. Below `sm` it lays out as the compact row (80 px
   // thumbnail beside the title); from `sm` up as the full card. It used to be

@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { guard } from '@/lib/auth/guard';
+import { requireAdminPage } from '@/lib/auth/page-guard';
 import { getArrangementsPageForAdmin, type AdminArrangementRow } from '@/lib/services/admin';
 import { PageLinks, parsePage } from '@/components/features/admin/PageLinks';
 import { Button } from '@/components/ui/button';
@@ -30,8 +29,7 @@ export default async function AdminArrangementsPage({
 }: {
   searchParams: Promise<{ page?: string | string[]; q?: string | string[] }>;
 }) {
-  const gate = await guard('canEditArrangements');
-  if (gate.denied) redirect('/admin');
+  await requireAdminPage('canEditArrangements', '/admin');
 
   const params = await searchParams;
   const page = parsePage(params.page);

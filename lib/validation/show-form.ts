@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { ENSEMBLE_SIZES, SHOW_DIFFICULTIES } from './enums'
 import type { EditableShow } from '@/lib/services/admin'
 import type { CreateShowInput, UpdateShowActionInput } from './shows'
+import { SLUG_MESSAGE, SLUG_PATTERN } from '@/lib/slug'
 
 /**
  * The admin show form (components/features/admin/show-editor/ShowForm.tsx).
@@ -14,8 +15,6 @@ import type { CreateShowInput, UpdateShowActionInput } from './shows'
  * names.
  */
 
-export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-export const SLUG_MESSAGE = 'Slug must be lowercase words separated by hyphens'
 
 const DIFFICULTIES = ['', ...SHOW_DIFFICULTIES] as const
 const ENSEMBLE_OPTIONS = ['', ...ENSEMBLE_SIZES] as const

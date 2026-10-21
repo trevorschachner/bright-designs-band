@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getSitemapEntries } from '@/lib/services/sitemap'
-import { publishedCollections } from '@/lib/collections'
+import { publishedCollections } from '@/lib/services/collections'
 import { BLOG_POSTS, CASE_STUDIES } from '@/lib/blog/posts'
 import { getPublicSiteUrl } from '@/lib/env'
 

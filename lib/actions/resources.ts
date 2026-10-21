@@ -1,7 +1,7 @@
 'use server'
 
 import { eq } from 'drizzle-orm'
-import type { Database } from '@/lib/database'
+import type { Tx } from '@/lib/database'
 import { files, resources } from '@/lib/database/schema'
 import { invalidateResources } from '@/lib/services/invalidate'
 import { toIso } from '@/lib/services/cache'
@@ -23,8 +23,6 @@ import type { ActionResult } from './result'
  * (resources_slug_unique): a taken slug, sent or derived from the title, is
  * `conflict`; nothing is silently renamed. See ./README.md.
  */
-
-type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 
 export type ResourceWriteResult = {
   id: number

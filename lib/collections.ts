@@ -1,4 +1,4 @@
-import { getCollectionCounts, type ShowDifficulty } from '@/lib/services/shows'
+import type { ShowDifficulty } from '@/lib/validation/enums'
 
 export type CollectionGroup = 'level' | 'size' | 'theme' | 'season'
 
@@ -14,7 +14,7 @@ export interface CollectionConfig {
   relatedArticles: { title: string; href: string }[]
 }
 
-/** A collection page is published only when at least this many shows match. */
+/** A collection page is published only when at least this many shows match (lib/services/collections.ts). */
 export const MIN_COLLECTION_SHOWS = 2
 
 const DESIGNER_ARTICLE = { title: 'How to Choose a Marching Band Show Designer', href: '/blog/how-to-choose-a-designer' }
@@ -180,7 +180,7 @@ export function getCollectionBySlug(slug: string): CollectionConfig | undefined 
   return collections.find((c) => c.slug === slug)
 }
 
-type ShowFacts = { difficulty: string | null; year: number | null; tagNames: string[] }
+export type ShowFacts = { difficulty: string | null; year: number | null; tagNames: string[] }
 
 export function matchesFilter(show: ShowFacts, filter: CollectionConfig['filter']): boolean {
   if (filter.difficulty && show.difficulty !== filter.difficulty) return false
@@ -191,10 +191,4 @@ export function matchesFilter(show: ShowFacts, filter: CollectionConfig['filter'
 
 export function collectionsForShow(show: ShowFacts): CollectionConfig[] {
   return collections.filter((c) => matchesFilter(show, c.filter))
-}
-
-/** Collections with enough shows to be a real landing page. The only publish rule. */
-export async function publishedCollections(): Promise<CollectionConfig[]> {
-  const counts = await getCollectionCounts()
-  return collections.filter((c) => (counts[c.slug] ?? 0) >= MIN_COLLECTION_SHOWS)
 }

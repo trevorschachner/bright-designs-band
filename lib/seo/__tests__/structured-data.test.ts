@@ -9,10 +9,10 @@ import {
   createOrganizationSchema,
   createVideoObjectSchema,
   showUploadDate,
-  youtubeVideoId,
 } from '../structured-data'
 import { FAQS, FAQ_SECTIONS } from '@/lib/content/faqs'
 import { JsonLd, serializeJsonLd } from '@/components/features/seo/JsonLd'
+import { youTubeVideoId } from '@/lib/youtube'
 
 /** Every key anywhere in a JSON value. */
 function allKeys(value: unknown): string[] {
@@ -98,9 +98,9 @@ describe('createVideoObjectSchema', () => {
   })
 
   it('reads ids from short, embed and shorts URLs', () => {
-    expect(youtubeVideoId('https://youtu.be/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
-    expect(youtubeVideoId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
-    expect(youtubeVideoId('https://youtube.com/shorts/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
+    expect(youTubeVideoId('https://youtu.be/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
+    expect(youTubeVideoId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
+    expect(youTubeVideoId('https://youtube.com/shorts/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
   })
 
   it('prefers createdAt for the upload date', () => {

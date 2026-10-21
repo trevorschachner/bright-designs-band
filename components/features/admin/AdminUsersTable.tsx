@@ -20,21 +20,15 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { addAdminUser, removeAdminUser, setAdminUserRole } from '@/lib/actions/admin-users'
-import type { ActionResult } from '@/lib/actions/result'
+import { actionMessage, type ActionResult } from '@/lib/actions/result'
 import type { AdminUserRow } from '@/lib/services/admin-users'
 import type { AdminRole } from '@/lib/auth/permissions'
 
-const ERROR_TEXT: Record<string, string> = {
+const MESSAGES = {
   forbidden: 'You no longer have permission to manage users.',
-  invalid: 'Check the highlighted fields.',
   not_found: 'That user was already removed. The list has been refreshed.',
   conflict: 'That change is not allowed.',
   stale: 'The list changed. It has been refreshed.',
-  failed: 'Something went wrong. Try again.',
-}
-
-function messageFor(result: Extract<ActionResult<unknown>, { ok: false }>): string {
-  return result.issues?.[0]?.message ?? ERROR_TEXT[result.error] ?? ERROR_TEXT.failed
 }
 
 export function AdminUsersTable({
@@ -60,7 +54,7 @@ export function AdminUsersTable({
         setUsers(result.data)
         onSuccess?.()
       } else {
-        setError(messageFor(result))
+        setError(actionMessage(result, MESSAGES))
       }
       // Re-render server parts too: demoting yourself removes the Users link.
       router.refresh()

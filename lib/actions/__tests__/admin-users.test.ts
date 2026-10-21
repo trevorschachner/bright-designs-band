@@ -12,6 +12,9 @@ let currentEmail: string | null = 'owner@example.com'
 let roles: Record<string, 'owner' | 'editor'> = {}
 let table: AdminUserRow[] = []
 const writes: { op: string; args: unknown[] }[] = []
+const reportError = vi.hoisted(() => vi.fn(async () => {}))
+
+vi.mock('@/lib/observability/report-error', () => ({ reportError }))
 
 vi.mock('@/lib/utils/supabase/server', () => ({
   createClient: async () => ({
@@ -174,12 +177,13 @@ describe('success paths', () => {
     expect(result).toEqual({ ok: true, data: [row('owner@example.com', 'owner')] })
   })
 
-  it('returns failed, never the error message, when the database throws', async () => {
+  it('returns failed, never the error message, and reports the real error', async () => {
     const services = await import('@/lib/services/admin-users')
-    vi.mocked(services.mutateAdminUsers).mockRejectedValueOnce(new Error('duplicate key value violates "admin_users_pkey"'))
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const boom = new Error('connection reset reading "admin_users"')
+    vi.mocked(services.mutateAdminUsers).mockRejectedValueOnce(boom)
+    reportError.mockClear()
     const a = await actions()
     expect(await a.removeAdminUser({ email: 'editor@example.com' })).toEqual({ ok: false, error: 'failed' })
-    error.mockRestore()
+    expect(reportError).toHaveBeenCalledWith(boom, expect.objectContaining({ operation: 'removeAdminUser' }))
   })
 })

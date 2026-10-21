@@ -84,7 +84,7 @@ function filesDb(overrides: Partial<Record<string, (op: Op) => unknown[]>> = {})
     if (op.kind === 'update' && op.table === 'shows') {
       return [{ id: 7, slug: 'my-show', thumbnailUrl: (op.set?.thumbnailUrl as string | null) ?? null, updatedAt: SAVED }]
     }
-    if (op.kind === 'insert' && op.table === 'files') return [{ id: 6, url: 'https://youtu.be/abc', showId: 7, arrangementId: null }]
+    if (op.kind === 'insert' && op.table === 'files') return [{ id: 6, url: 'https://youtu.be/dQw4w9WgXcQ', showId: 7, arrangementId: null }]
     return []
   }
 }
@@ -238,13 +238,13 @@ describe('attachYouTube', () => {
 
   it('stores a youtube file row under the show and invalidates its owner', async () => {
     const fake = state.fake
-    const result = await attachYouTube({ showId: 7, url: 'https://youtu.be/abc', description: 'Full run' })
-    expect(result).toEqual({ ok: true, data: { id: 6, url: 'https://youtu.be/abc', showId: 7, arrangementId: null } })
+    const result = await attachYouTube({ showId: 7, url: 'https://youtu.be/dQw4w9WgXcQ', description: 'Full run' })
+    expect(result).toEqual({ ok: true, data: { id: 6, url: 'https://youtu.be/dQw4w9WgXcQ', showId: 7, arrangementId: null } })
     const [insert] = opsOn(fake.ops, 'files', 'insert')
     expect(insert.values).toMatchObject({
       fileType: 'youtube',
-      fileName: 'youtube_abc.url',
-      storagePath: 'shows/7/youtube/youtube_abc.url',
+      fileName: 'youtube_dQw4w9WgXcQ.url',
+      storagePath: 'shows/7/youtube/youtube_dQw4w9WgXcQ.url',
       originalName: 'Full run',
       isPublic: true,
     })
@@ -252,7 +252,7 @@ describe('attachYouTube', () => {
   })
 
   it('requires a show or a part', async () => {
-    expect(await attachYouTube({ url: 'https://youtu.be/abc' })).toMatchObject({ ok: false, error: 'invalid' })
+    expect(await attachYouTube({ url: 'https://youtu.be/dQw4w9WgXcQ' })).toMatchObject({ ok: false, error: 'invalid' })
   })
 })
 
@@ -321,7 +321,9 @@ describe('deleteArrangement removes its files first', () => {
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(3)
     const lastFileDelete = fake.events.lastIndexOf('delete:files')
     expect(lastFileDelete).toBeLessThan(fake.events.indexOf('delete:arrangements'))
-    expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
+    // Invalidation only after commit: the part, then file 21's other owner (show 7).
+    expect(fake.events.slice(fake.events.lastIndexOf('commit') + 1)).toEqual(['invalidate', 'invalidate'])
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ showId: 7 })
   })
 
   it('a Storage failure aborts: failed, part kept, files after it kept, removed ones invalidated', async () => {
@@ -331,8 +333,10 @@ describe('deleteArrangement removes its files first', () => {
     // The first file's object and row are gone (committed on its own), the rest stay.
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
     expect(opsOn(fake.ops, 'arrangements', 'delete')).toHaveLength(0)
-    // The row already deleted is a public change: invalidated despite `failed`.
-    expect(invalidateArrangement).toHaveBeenCalledWith(3, null, 'my-show')
+    // The row already deleted is a public change: invalidated despite `failed`,
+    // the part and the show the removed file also belonged to.
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ arrangementId: 3 })
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ showId: 7 })
   })
 
   it('a failure on the first file changed nothing, so nothing is invalidated', async () => {
@@ -341,6 +345,7 @@ describe('deleteArrangement removes its files first', () => {
     expect(await deleteArrangement({ id: 3 })).toEqual({ ok: false, error: 'failed' })
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
     expect(invalidateArrangement).not.toHaveBeenCalled()
+    expect(invalidateFileOwner).not.toHaveBeenCalled()
   })
 
   it('clears a show thumbnail/graphic that pointed at one of its files, and invalidates that show', async () => {
@@ -380,12 +385,34 @@ describe('deleteShow removes its files first', () => {
     expect(await deleteShow(7)).toEqual({ ok: false, error: 'failed' })
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
     expect(opsOn(fake.ops, 'shows', 'delete')).toHaveLength(0)
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ showId: 7 })
+  })
+
+  it('a removed file that also belonged to a part invalidates that part', async () => {
+    use(filesDb({
+      'select:files': () => [{ ...SHOW_FILES[0], arrangementId: 4 }],
+      'select:shows': () => [{ id: 7, slug: 'my-show', thumbnailUrl: null, graphicUrl: null }],
+      'delete:shows': () => [{ id: 7, slug: 'my-show' }],
+    }))
+    expect(await deleteShow(7)).toEqual({ ok: true, data: { id: 7 } })
     expect(invalidateShow).toHaveBeenCalledWith(7, 'my-show')
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ arrangementId: 4 })
+    expect(invalidateFileOwner).not.toHaveBeenCalledWith({ showId: 7 })
   })
 
   it('not_found for an unknown show, before any Storage call', async () => {
     use(filesDb({ 'select:shows': () => [] }))
     expect(await deleteShow(8)).toEqual({ ok: false, error: 'not_found' })
     expect(state.removed).toEqual([])
+  })
+})
+
+describe('attachYouTube: one parser with the public page', () => {
+  it('accepts shorts and live URLs the page can play; rejects an id that is not 11 characters', async () => {
+    use(filesDb({}))
+    expect(await attachYouTube({ showId: 7, url: 'https://youtu.be/abc' })).toMatchObject({ ok: false, error: 'invalid' })
+    use(filesDb({}))
+    const shorts = await attachYouTube({ showId: 7, url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ' })
+    expect(shorts).toMatchObject({ ok: true })
   })
 })

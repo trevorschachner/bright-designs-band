@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, GRADE_BANDS, type ArrangementScene, type EnsembleSize, type GradeBand } from './enums'
 import { parseDuration } from '@/lib/utils'
 import { concurrencyStamp, rowId } from './concurrency'
+import { SLUG_MESSAGE, SLUG_PATTERN } from '@/lib/slug'
 
 /**
  * Arrangement (show part) payloads for lib/actions/arrangements.ts.
@@ -48,7 +49,7 @@ const fields = {
 /** Same pattern as show slugs: lowercase words separated by single hyphens. */
 export const arrangementSlugSchema = z
   .string()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase words separated by hyphens')
+  .regex(SLUG_PATTERN, SLUG_MESSAGE)
   .max(200, 'Slug is too long')
   .refine((v) => !/^\d+$/.test(v), 'Slug cannot be all digits')
 

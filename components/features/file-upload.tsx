@@ -17,7 +17,6 @@ import {
   File, 
   Image as ImageIcon, 
   Music, 
-  Video, 
   FileText,
   CheckCircle,
   AlertCircle,
@@ -42,7 +41,7 @@ export function FileUpload({
   arrangementId, 
   onUploadSuccess, 
   onUploadError,
-  allowedTypes = ['image', 'audio', 'youtube', 'pdf', 'score', 'other'],
+  allowedTypes = ['image', 'audio', 'pdf', 'score', 'other'],
   maxFiles = 10,
   title,
   description,
@@ -71,7 +70,6 @@ export function FileUpload({
       case 'image': return <ImageIcon className="w-4 h-4" />
       case 'audio': return <Music className="w-4 h-4" />
       case 'video': 
-      case 'youtube': return <Video className="w-4 h-4" />
       case 'pdf': return <FileText className="w-4 h-4" />
       case 'score': return <FileText className="w-4 h-4" />
       default: return <File className="w-4 h-4" />
@@ -140,8 +138,8 @@ export function FileUpload({
               </TableCell>
               <TableCell className="font-medium">
                 <div className="flex flex-col">
-                  <span className="truncate max-w-[200px] text-sm" title={file.file?.name || file.youtubeUrl}>
-                    {file.file?.name || file.youtubeUrl || 'YouTube Video'}
+                  <span className="truncate max-w-[200px] text-sm" title={file.file?.name}>
+                    {file.file?.name}
                   </span>
                   {file.status === 'error' && (
                     <span className="text-xs text-red-500">{file.error}</span>
@@ -279,7 +277,7 @@ export function FileUpload({
             Drop files here or click to browse
           </p>
           <p className="text-sm text-muted-foreground mb-4">
-            Supports: Images, Audio, Video, PDF, and other documents
+            Supports: images, audio, PDFs, scores and other documents
           </p>
           <Button
             variant="outline"
@@ -317,7 +315,7 @@ export function FileUpload({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-2">
                       <p className="text-sm font-medium truncate">
-                        {uploadingFile.file?.name || uploadingFile.youtubeUrl || 'YouTube Video'}
+                        {uploadingFile.file?.name}
                       </p>
                       <Badge variant="outline" className="text-xs">
                         {uploadingFile.fileType}
@@ -385,7 +383,7 @@ export function FileUpload({
                       </Alert>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {uploadingFile.file ? (uploadingFile.file.size / 1024 / 1024).toFixed(2) + ' MB' : 'YouTube Link'}
+                      {uploadingFile.file ? (uploadingFile.file.size / 1024 / 1024).toFixed(2) + ' MB' : ''}
                     </p>
                   </div>
                   <div className="flex-shrink-0">

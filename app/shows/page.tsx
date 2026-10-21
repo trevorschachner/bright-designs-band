@@ -5,7 +5,6 @@ import { ActiveFilterChips } from '@/components/features/catalog/ActiveFilterChi
 import { CatalogSkeleton } from '@/components/features/catalog/CatalogSkeleton';
 import { ShowsList, ShowsResultCount } from '@/components/features/catalog/ShowsList';
 import { SHOWS_FILTER_FIELDS } from '@/lib/filters/filter-definitions';
-import { SHOWS_PRESETS } from '@/lib/filters/presets';
 import { parseShowsQuery, SHOWS_DEFAULT_LIMIT } from '@/lib/services/catalog';
 
 // Dynamic (it reads searchParams); the data itself is tag-cached in lib/services/catalog.ts.
@@ -22,7 +21,6 @@ export default async function ShowsPage({ searchParams }: { searchParams: Search
   const filters = parseShowsQuery(await searchParams);
   const sidebarProps = {
     filterFields: SHOWS_FILTER_FIELDS,
-    presets: SHOWS_PRESETS,
     defaultLimit: SHOWS_DEFAULT_LIMIT,
     resultCount: (
       <Suspense fallback="Loading...">

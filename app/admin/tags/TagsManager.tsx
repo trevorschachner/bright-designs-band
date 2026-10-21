@@ -37,18 +37,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { createTag, deleteTag, updateTag } from '@/lib/actions/tags';
-import type { ActionResult } from '@/lib/actions/result';
+import { actionMessage, type ActionResult } from '@/lib/actions/result';
 import type { AdminTagRow } from '@/lib/services/tags';
 
-const ERRORS: Record<string, string> = {
+const MESSAGES = {
   conflict: 'A tag with that name already exists.',
   stale: 'Someone else changed this tag. The list has been refreshed; try again.',
   not_found: 'That tag was already deleted.',
   forbidden: 'You do not have permission to manage tags.',
 };
 
-const messageFor = (result: Extract<ActionResult<unknown>, { ok: false }>) =>
-  result.issues?.[0]?.message ?? ERRORS[result.error] ?? 'Something went wrong. Try again.';
 
 /** The tags admin: create, rename (with the loaded `updatedAt`) and delete via Server Actions. */
 export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
@@ -71,7 +69,7 @@ export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
     setError(null);
     try {
       const result = await action();
-      if (!result.ok) setError(messageFor(result));
+      if (!result.ok) setError(actionMessage(result, MESSAGES));
       if (result.ok || result.error === 'stale' || result.error === 'not_found') router.refresh();
       return result.ok;
     } catch {

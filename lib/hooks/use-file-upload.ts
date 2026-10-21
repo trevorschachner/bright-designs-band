@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { attachYouTube } from '@/lib/actions/files';
-import { uploadFileDirect } from '@/lib/uploads/direct-upload';
+import { uploadFileDirect, type UploadFileType } from '@/lib/uploads/direct-upload';
 
-export type FileType = 'image' | 'audio' | 'youtube' | 'pdf' | 'score' | 'other';
+/** What the multi-file uploader stores. YouTube links are attached through YouTubeUpload, not here. */
+export type FileType = Exclude<UploadFileType, 'youtube'>;
 
 export interface UploadingFile {
   file?: File;
@@ -14,14 +14,13 @@ export interface UploadingFile {
   status: 'pending' | 'uploading' | 'success' | 'error';
   error?: string;
   id: string;
-  youtubeUrl?: string;
 }
 
 interface UseFileUploadOptions {
   showId?: number;
   arrangementId?: number;
   maxFiles?: number;
-  /** The recorded file (an upload) or the attached link (YouTube): both carry `id` and `url`. */
+  /** The recorded file. */
   onUploadSuccess?: (file: { id: number; url: string }) => void;
   onUploadError?: (error: string) => void;
 }
@@ -78,40 +77,21 @@ export function useFileUpload({
     updateFile(uploadingFile.id, { status: 'uploading', progress: 5 });
 
     try {
-      if (uploadingFile.fileType === 'youtube') {
-        if (!uploadingFile.youtubeUrl) {
-          throw new Error('YouTube URL is required');
-        }
-        const result = await attachYouTube({
-          url: uploadingFile.youtubeUrl,
-          isPublic: uploadingFile.isPublic,
-          description: uploadingFile.description || null,
-          displayOrder: uploadingFile.displayOrder,
-          showId,
-          arrangementId,
-        });
-        if (!result.ok) {
-          throw new Error(result.issues?.[0]?.message ?? 'Could not add the YouTube link');
-        }
-        updateFile(uploadingFile.id, { status: 'success', progress: 100 });
-        onUploadSuccess?.(result.data);
-      } else {
-        if (!uploadingFile.file) {
-          throw new Error('File is required');
-        }
-        const recorded = await uploadFileDirect({
-          file: uploadingFile.file,
-          fileType: uploadingFile.fileType,
-          showId,
-          arrangementId,
-          isPublic: uploadingFile.isPublic,
-          description: uploadingFile.description,
-          displayOrder: uploadingFile.displayOrder,
-          onProgress: (progress) => updateFile(uploadingFile.id, { progress }),
-        });
-        updateFile(uploadingFile.id, { status: 'success', progress: 100 });
-        onUploadSuccess?.(recorded);
+      if (!uploadingFile.file) {
+        throw new Error('File is required');
       }
+      const recorded = await uploadFileDirect({
+        file: uploadingFile.file,
+        fileType: uploadingFile.fileType,
+        showId,
+        arrangementId,
+        isPublic: uploadingFile.isPublic,
+        description: uploadingFile.description,
+        displayOrder: uploadingFile.displayOrder,
+        onProgress: (progress) => updateFile(uploadingFile.id, { progress }),
+      });
+      updateFile(uploadingFile.id, { status: 'success', progress: 100 });
+      onUploadSuccess?.(recorded);
     } catch (error) {
       console.error('Upload flow error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';

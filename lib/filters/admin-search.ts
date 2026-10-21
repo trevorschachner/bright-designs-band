@@ -13,7 +13,12 @@ export function readAdminSearch(searchParams: URLSearchParams): string | undefin
   return q || undefined;
 }
 
-/** `%term%` with `%`, `_` and `\` escaped, so the term matches literally in `ilike`. */
+/** `term` with `%`, `_` and `\` escaped, so it matches literally inside a LIKE pattern. */
+export function escapeLike(term: string): string {
+  return term.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
+/** `%term%` with the term escaped, so it matches literally in `ilike`. */
 export function likePattern(term: string): string {
-  return `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  return `%${escapeLike(term)}%`;
 }

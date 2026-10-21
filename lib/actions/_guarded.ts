@@ -1,8 +1,9 @@
 import { z, ZodObject, type ZodTypeAny } from 'zod'
-import { guard } from '@/lib/auth/guard'
+import { authorize } from '@/lib/auth/guard'
 import type { Permission } from '@/lib/auth/permissions'
 import { db, type Database } from '@/lib/database'
 import { PG_UNIQUE_VIOLATION, postgresCode } from '@/lib/database/errors'
+import { trackServerEvent, type ServerEvents } from '@/lib/observability/events'
 import { reportError } from '@/lib/observability/report-error'
 import { fail, invalid, ok, type ActionIssue, type ActionResult } from './result'
 
@@ -15,7 +16,7 @@ import { fail, invalid, ok, type ActionIssue, type ActionResult } from './result
  *   })
  *   export async function createTag(input: CreateTagInput) { return run(input) }
  *
- * 1. guard(permission): a Server Action is a public POST endpoint, so the page
+ * 1. authorize(permission): a Server Action is a public POST endpoint, so the page
  *    being admin-only protects nothing. No session or no permission is
  *    `forbidden`; an auth outage is `failed`.
  * 2. schema.safeParse(input): failures are `invalid` with field issues. The
@@ -33,12 +34,20 @@ import { fail, invalid, ok, type ActionIssue, type ActionResult } from './result
 export type ActionContext = { email: string; db: Database }
 
 /**
- * What an action's `fn` returns: the data for the caller, and the cache
- * invalidation to run once the write has committed. `guarded` runs
- * `invalidate` after `fn` resolves and outside the error mapping: a failure
- * there is reported but the result is still `ok`, because the write happened.
+ * What an action's `fn` returns: the data for the caller, the cache
+ * invalidation to run once the write has committed, and the server event to
+ * record for it. `guarded` runs `invalidate`, then sends `track`, after `fn`
+ * resolves and outside the error mapping: a failure in either is reported but
+ * the result is still `ok`, because the write happened. A thrown or stale
+ * write never reaches either.
  */
-export type ActionOutcome<T> = { data: T; invalidate?: () => Promise<void> | void }
+export type ActionOutcome<T> = {
+  data: T
+  invalidate?: () => Promise<void> | void
+  track?: TrackedEvent
+}
+
+type TrackedEvent = { [N in keyof ServerEvents]: { event: N; props: ServerEvents[N] } }[keyof ServerEvents]
 
 /** The row the action targets does not exist (or no longer does). */
 export class NotFoundError extends Error {
@@ -68,6 +77,18 @@ export class InvalidError extends Error {
   }
 }
 
+/**
+ * The write would break a rule the caller can fix (e.g. removing the last
+ * owner). Its issues are author-written, so they are returned. A unique
+ * violation from Postgres maps to `conflict` without this.
+ */
+export class ConflictError extends Error {
+  constructor(readonly issues?: ActionIssue[]) {
+    super('conflict')
+    this.name = 'ConflictError'
+  }
+}
+
 export { postgresCode }
 
 /** Thrown error → ActionResult. Exported for tests. */
@@ -75,6 +96,7 @@ export async function toActionFailure(error: unknown, operation: string): Promis
   if (error instanceof NotFoundError) return fail('not_found')
   if (error instanceof StaleError) return fail('stale')
   if (error instanceof InvalidError) return fail('invalid', error.issues)
+  if (error instanceof ConflictError) return fail('conflict', error.issues)
   if (postgresCode(error) === PG_UNIQUE_VIOLATION) return fail('conflict')
   await reportError(error, { operation, degradedTo: "ActionResult 'failed'" })
   return fail('failed')
@@ -103,8 +125,9 @@ export function guarded<S extends ZodTypeAny, T>(
   }
 
   return async (input: unknown) => {
-    const gate = await guard(permission)
-    if (gate.denied) return fail(gate.denied.status >= 500 ? 'failed' : 'forbidden')
+    const gate = await authorize(permission)
+    if (gate.status === 'unavailable') return fail('failed')
+    if (gate.status !== 'authorized') return fail('forbidden')
 
     const parsed = schema.safeParse(input)
     if (!parsed.success) return invalid(parsed.error)
@@ -124,6 +147,14 @@ export function guarded<S extends ZodTypeAny, T>(
         // a failure the caller would retry.
         console.error(`[${operation}] invalidation failed after commit.`)
         await reportError(error, { operation: `${operation}:invalidate`, degradedTo: 'ok with a stale cache' })
+      }
+    }
+    if (outcome.track) {
+      try {
+        const { event, props } = outcome.track as { event: keyof ServerEvents; props: never }
+        await trackServerEvent(event, props, gate.email)
+      } catch (error) {
+        await reportError(error, { operation: `${operation}:track`, degradedTo: 'ok without the event' })
       }
     }
     return ok(outcome.data)

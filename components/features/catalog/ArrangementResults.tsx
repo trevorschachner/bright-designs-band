@@ -14,13 +14,7 @@ import { Music, FileText, ExternalLink, MessageSquare } from "lucide-react";
 import { arrangementContactHref } from "@/lib/contact-link";
 import type { ArrangementListItem } from "@/lib/services/arrangements";
 import { CatalogPlayButton } from "./CatalogPlayButton";
-
-const formatSeconds = (total?: number | null) => {
-  if (!total || total < 0) return '—';
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-};
+import { durationLabel } from "@/lib/display";
 
 const toTrack = (arrangement: ArrangementListItem, src: string) => ({
   src,
@@ -87,7 +81,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                   </TableCell>
                   <TableCell>
                     <span className="font-mono text-muted-foreground">
-                      {formatSeconds(duration)}
+                      {durationLabel(duration)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -171,7 +165,7 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                     <span className="italic">Independent</span>
                   )}
                   {composer && <><span>·</span><span className="truncate">{composer}</span></>}
-                  {duration && <><span>·</span><span className="font-mono shrink-0">{formatSeconds(duration)}</span></>}
+                  {duration && <><span>·</span><span className="font-mono shrink-0">{durationLabel(duration)}</span></>}
                 </div>
               </div>
 

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 // on their next request even if a page is ever moved out of the layout.
 const ADMIN = join(__dirname, '..')
 
-// Accepted exceptions: a client component cannot call guard(); its writes go
+// Accepted exceptions: a client component cannot call requireAdminPage(); its writes go
 // through guarded Server Actions and the layout still gates the route.
 const EXCEPTIONS = new Set(['resources/new/page.tsx'])
 
@@ -27,10 +27,14 @@ describe('admin page-level guards', () => {
     expect(all).toContain('shows/[id]/page.tsx')
   })
 
-  it.each(all.filter(p => !EXCEPTIONS.has(p)))('%s imports guard or requirePermission', p => {
+  it.each(all.filter(p => !EXCEPTIONS.has(p)))('%s calls requireAdminPage', p => {
     const src = readFileSync(join(ADMIN, p), 'utf8')
-    expect(src).toMatch(/import \{[^}]*\b(guard|requirePermission)\b[^}]*\} from '@\/lib\/auth\/(guard|roles)'/)
-    expect(src).toMatch(/await (guard|requirePermission)\(/)
+    expect(src).toMatch(/import \{[^}]*\brequireAdminPage\b[^}]*\} from '@\/lib\/auth\/page-guard'/)
+    expect(src).toMatch(/await requireAdminPage\(/)
+  })
+
+  it('the layout gates the whole area with requireAdminPage', () => {
+    expect(readFileSync(join(ADMIN, 'layout.tsx'), 'utf8')).toMatch(/await requireAdminPage\('canAccessAdmin'\)/)
   })
 
   it('every exception is a client component', () => {
@@ -41,7 +45,7 @@ describe('admin page-level guards', () => {
 
   it('the dashboard checks access before reading stats', () => {
     const src = readFileSync(join(ADMIN, 'page.tsx'), 'utf8')
-    expect(src.indexOf("guard('canAccessAdmin')")).toBeGreaterThan(-1)
-    expect(src.indexOf("guard('canAccessAdmin')")).toBeLessThan(src.indexOf('getDashboardStats()'))
+    expect(src.indexOf("requireAdminPage('canAccessAdmin')")).toBeGreaterThan(-1)
+    expect(src.indexOf("requireAdminPage('canAccessAdmin')")).toBeLessThan(src.indexOf('getDashboardStats()'))
   })
 })
