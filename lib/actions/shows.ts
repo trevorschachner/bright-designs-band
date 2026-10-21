@@ -1,8 +1,8 @@
 'use server'
 
-import { eq, inArray } from 'drizzle-orm'
-import type { Database } from '@/lib/database'
-import { shows, showsToTags, slugRedirects, tags } from '@/lib/database/schema'
+import { eq } from 'drizzle-orm'
+import type { Tx } from '@/lib/database'
+import { shows, slugRedirects } from '@/lib/database/schema'
 import { removeOwnerFiles } from '@/lib/services/file-removal'
 import { invalidateShow } from '@/lib/services/invalidate'
 import { trackServerEvent } from '@/lib/observability/events'
@@ -18,6 +18,7 @@ import {
   type UpdateShowActionInput,
 } from '@/lib/validation/shows'
 import { assertFresh, guarded, InvalidError, NotFoundError } from './_guarded'
+import { replaceTagLinks } from './_links'
 import type { ActionResult } from './result'
 
 /**
@@ -30,8 +31,6 @@ import type { ActionResult } from './result'
  * the new URL, and any redirect row whose old slug is the new one is deleted
  * (a live slug never also redirects).
  */
-
-type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 
 export type ShowWriteResult = {
   id: number
@@ -59,28 +58,6 @@ function toWriteResult(row: WriteRow): ShowWriteResult {
 /** A slug a show now owns must not also redirect (to it or another show). */
 async function releaseRedirect(tx: Tx, slug: string) {
   await tx.delete(slugRedirects).where(eq(slugRedirects.oldSlug, slug))
-}
-
-/**
- * Replaces a show's tag links. Every id must name an existing tag: an unknown
- * one is `invalid` (path `tags`), checked before anything is written, rather
- * than a foreign-key failure surfacing as `failed`.
- */
-async function replaceShowTags(tx: Tx, showId: number, tagIds: number[]) {
-  const unique = [...new Set(tagIds)]
-  if (unique.length > 0) {
-    const found = new Set(
-      (await tx.select({ id: tags.id }).from(tags).where(inArray(tags.id, unique))).map((row) => row.id)
-    )
-    const unknown = unique.filter((id) => !found.has(id))
-    if (unknown.length > 0) {
-      throw new InvalidError(unknown.map((id) => ({ path: 'tags', message: `Unknown tag id ${id}` })))
-    }
-  }
-  await tx.delete(showsToTags).where(eq(showsToTags.showId, showId))
-  if (unique.length > 0) {
-    await tx.insert(showsToTags).values(unique.map((tagId) => ({ showId, tagId })))
-  }
 }
 
 /** Locks the show row; throws NotFoundError when it does not exist. */
@@ -139,7 +116,7 @@ const runCreateShow = guarded(
       // Belt and braces: the probe skipped redirected slugs, but a redirect
       // written concurrently must not shadow the new show.
       await releaseRedirect(tx, row.slug)
-      if (tagIds && tagIds.length > 0) await replaceShowTags(tx, row.id, tagIds)
+      if (tagIds && tagIds.length > 0) await replaceTagLinks(tx, { showId: row.id }, tagIds)
       return row
     })
 
@@ -188,7 +165,7 @@ const runUpdateShow = guarded(
           .onConflictDoUpdate({ target: slugRedirects.oldSlug, set: { showId: id, createdAt: new Date() } })
       }
 
-      if (tagIds !== undefined) await replaceShowTags(tx, id, tagIds)
+      if (tagIds !== undefined) await replaceTagLinks(tx, { showId: id }, tagIds)
 
       return { row: updated, previousSlug: current.slug }
     })
@@ -262,7 +239,7 @@ const runSetShowTags = guarded(
   async ({ showId, tagIds }, { db }) => {
     const row = await db.transaction(async (tx) => {
       await lockShow(tx, showId)
-      await replaceShowTags(tx, showId, tagIds)
+      await replaceTagLinks(tx, { showId }, tagIds)
       const [updated] = await tx
         .update(shows)
         .set({ updatedAt: new Date() })

@@ -1,16 +1,13 @@
 'use server'
 
-import { and, asc, desc, eq, inArray } from 'drizzle-orm'
-import type { Database } from '@/lib/database'
+import { and, asc, desc, eq } from 'drizzle-orm'
+import type { Database, Tx } from '@/lib/database'
 import {
   arrangementPieces,
   arrangements,
-  arrangementsToTags,
   files,
-  pieces,
   showArrangements,
   shows,
-  tags,
 } from '@/lib/database/schema'
 import { invalidateArrangement, invalidateShow } from '@/lib/services/invalidate'
 import { uniqueArrangementSlug } from '@/lib/slug'
@@ -29,6 +26,7 @@ import {
   type UpdateArrangementInput,
 } from '@/lib/validation/arrangements'
 import { assertFresh, guarded, InvalidError, NotFoundError } from './_guarded'
+import { assertKnownIds, replaceTagLinks } from './_links'
 import type { ActionResult } from './result'
 
 /**
@@ -41,8 +39,6 @@ import type { ActionResult } from './result'
  * `arrangements.display_order` is legacy (never read for ordering) and is not
  * written here.
  */
-
-type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 
 export type ArrangementWriteResult = {
   id: number
@@ -58,22 +54,6 @@ const toResult = (row: { id: number; title: string; updatedAt: Date | string }):
   title: row.title,
   updatedAt: toIso(row.updatedAt) ?? '',
 })
-
-/** Every id must name an existing tag (`invalid`, path `tags`), checked before writing. */
-async function replaceArrangementTags(tx: Tx, arrangementId: number, tagIds: number[]) {
-  const unique = [...new Set(tagIds)]
-  if (unique.length > 0) {
-    const found = new Set((await tx.select({ id: tags.id }).from(tags).where(inArray(tags.id, unique))).map((r) => r.id))
-    const unknown = unique.filter((id) => !found.has(id))
-    if (unknown.length > 0) {
-      throw new InvalidError(unknown.map((id) => ({ path: 'tags', message: `Unknown tag id ${id}` })))
-    }
-  }
-  await tx.delete(arrangementsToTags).where(eq(arrangementsToTags.arrangementId, arrangementId))
-  if (unique.length > 0) {
-    await tx.insert(arrangementsToTags).values(unique.map((tagId) => ({ arrangementId, tagId })))
-  }
-}
 
 async function arrangementSlugTaken(tx: Tx | Database, slug: string, exceptId?: number): Promise<boolean> {
   const rows = await tx.select({ id: arrangements.id }).from(arrangements).where(eq(arrangements.slug, slug)).limit(2)
@@ -142,7 +122,7 @@ const runCreateArrangement = guarded(
         .values({ ...fields, slug: arrangementSlug, updatedAt: new Date() })
         .returning(COLUMNS)
       await tx.insert(showArrangements).values({ showId, arrangementId: inserted.id, orderIndex })
-      if (tagIds && tagIds.length > 0) await replaceArrangementTags(tx, inserted.id, tagIds)
+      if (tagIds && tagIds.length > 0) await replaceTagLinks(tx, { arrangementId: inserted.id }, tagIds)
       return { row: inserted, slug: show.slug, arrangementSlug }
     })
     return {
@@ -182,7 +162,7 @@ const runUpdateArrangement = guarded(
         .set({ ...fields, updatedAt: new Date() })
         .where(eq(arrangements.id, id))
         .returning(COLUMNS)
-      if (tagIds !== undefined) await replaceArrangementTags(tx, id, tagIds)
+      if (tagIds !== undefined) await replaceTagLinks(tx, { arrangementId: id }, tagIds)
       const owner = await firstShowFor(tx, id)
       return {
         row: updated,
@@ -296,7 +276,7 @@ const runSetArrangementTags = guarded(
   async ({ arrangementId, tagIds }, { db }) => {
     const { row, slug, arrangementSlug } = await db.transaction(async (tx) => {
       const current = await lockArrangement(tx, arrangementId)
-      await replaceArrangementTags(tx, arrangementId, tagIds)
+      await replaceTagLinks(tx, { arrangementId }, tagIds)
       // Last-writer-wins, but bumps updated_at so an open form gets `stale`.
       const [updated] = await tx
         .update(arrangements)
@@ -327,13 +307,7 @@ const runSetArrangementPieces = guarded(
   async ({ arrangementId, pieceIds }, { db }) => {
     const { slug, arrangementSlug } = await db.transaction(async (tx) => {
       const current = await lockArrangement(tx, arrangementId)
-      if (pieceIds.length > 0) {
-        const known = new Set((await tx.select({ id: pieces.id }).from(pieces).where(inArray(pieces.id, pieceIds))).map((p) => p.id))
-        const missing = pieceIds.filter((id) => !known.has(id))
-        if (missing.length > 0) {
-          throw new InvalidError(missing.map((id) => ({ path: 'pieceIds', message: `Unknown piece id ${id}` })))
-        }
-      }
+      await assertKnownIds(tx, 'pieces', pieceIds, 'pieceIds')
       await tx.delete(arrangementPieces).where(eq(arrangementPieces.arrangementId, arrangementId))
       if (pieceIds.length > 0) {
         await tx

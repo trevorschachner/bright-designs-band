@@ -5,6 +5,9 @@ import { getEnv } from '@/lib/env.server';
 
 export type Database = PostgresJsDatabase<typeof schema>;
 
+/** The handle `db.transaction(async (tx) => ...)` passes to its callback. */
+export type Tx = Parameters<Parameters<Database['transaction']>[0]>[0];
+
 /**
  * The database is created lazily, on the first property access of `db`.
  *

@@ -52,9 +52,10 @@ vi.mock('@/lib/observability/report-error', () => ({ reportError: vi.fn(async ()
  * Every action module in lib/actions, read from the directory so a new file
  * cannot go untested. Not actions: the guard helper and the result type.
  */
-const NOT_ACTIONS = new Set(['_guarded.ts', 'result.ts'])
+// `_`-prefixed files are server-only helpers for the actions, not actions.
+const NOT_ACTIONS = new Set(['result.ts'])
 const ACTION_FILES = readdirSync(join(process.cwd(), 'lib/actions'))
-  .filter((file) => file.endsWith('.ts') && !file.endsWith('.d.ts') && !NOT_ACTIONS.has(file))
+  .filter((file) => file.endsWith('.ts') && !file.endsWith('.d.ts') && !file.startsWith('_') && !NOT_ACTIONS.has(file))
   .sort()
 
 type Action = (...args: unknown[]) => Promise<unknown>
