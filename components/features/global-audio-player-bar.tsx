@@ -6,7 +6,6 @@ import { useAudioActions, useAudioState, useAudioTime } from "@/components/featu
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X } from "lucide-react"
-import { playerTime } from '@/lib/display'
 
 const MOBILE_QUERY = '(max-width: 640px)'
 
@@ -67,6 +66,13 @@ export function GlobalAudioPlayerBar() {
 
   const canSeek = track !== null
 
+  const formatTime = (seconds: number) => {
+    if (!isFinite(seconds) || isNaN(seconds)) return '0:00'
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
   const handleDismiss = () => {
     audio.pause()
     setDismissedAt(playId)
@@ -101,7 +107,7 @@ export function GlobalAudioPlayerBar() {
               <div className="font-medium text-sm truncate text-foreground">{trackTitle}</div>
               {isMobile && (
                 <div className="text-[11px] text-muted-foreground">
-                  {playerTime(currentTime)} / {playerTime(duration)}
+                  {formatTime(currentTime)} / {formatTime(duration)}
                 </div>
               )}
             </div>
@@ -179,7 +185,7 @@ export function GlobalAudioPlayerBar() {
             <div className={`${isMobile ? 'w-full flex items-center gap-2 mt-2' : 'w-full flex items-center gap-2'}`}>
               {!isMobile && (
                 <span className="text-xs text-muted-foreground w-10 text-right">
-                  {playerTime(currentTime)}
+                  {formatTime(currentTime)}
                 </span>
               )}
               <Slider
@@ -191,7 +197,7 @@ export function GlobalAudioPlayerBar() {
               />
               {!isMobile && (
                 <span className="text-xs text-muted-foreground w-10">
-                  {playerTime(duration)}
+                  {formatTime(duration)}
                 </span>
               )}
             </div>
