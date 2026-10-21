@@ -5,10 +5,12 @@
 
 import { db } from '@/lib/database';
 import { resources } from '@/lib/database/schema';
-import { desc, eq, ilike, type SQL } from 'drizzle-orm';
+import { count, desc, eq, ilike, type SQL } from 'drizzle-orm';
 import { likePattern } from '@/lib/filters/admin-search';
+import { totalPagesFor } from '@/lib/filters/catalog-params';
 import { TAGS } from '@/lib/cache-tags';
 import { cachedRead, toIso } from './cache';
+import type { CatalogPage } from './catalog';
 
 export type ResourceRow = {
   id: number;
@@ -61,11 +63,34 @@ export const getActiveResources = cachedRead('active-resources-v2', fetchActiveR
   atBuildWithoutDb: [] as ResourceRow[],
 });
 
-/** Every resource including drafts, newest first, optionally filtered by title (`q`). Admin only, uncached. */
-export async function getResourcesForAdmin(q?: string): Promise<ResourceRow[]> {
+/**
+ * One page of every resource including drafts, newest first, optionally
+ * filtered by title (`q`). Admin only, uncached. A page past the end (a stale
+ * page after deletes) serves the last page; `page` in the result is the one
+ * served, as in the catalog's pages.
+ */
+export async function getResourcesPageForAdmin({
+  q,
+  page,
+  limit,
+}: {
+  q?: string;
+  page: number;
+  limit: number;
+}): Promise<CatalogPage<ResourceRow>> {
+  const where = q ? ilike(resources.title, likePattern(q)) : undefined;
+  const countQuery = db.select({ count: count() }).from(resources);
+  const [row] = await (where ? countQuery.where(where) : countQuery);
+  const total = Number(row?.count ?? 0);
+  const totalPages = totalPagesFor(total, limit);
+  const served = Math.max(1, Math.min(page, totalPages));
   const base = db.select(RESOURCE_COLUMNS).from(resources);
-  const rows = await (q ? base.where(ilike(resources.title, likePattern(q))) : base).orderBy(desc(resources.createdAt));
-  return serialise(rows);
+  // `id` breaks createdAt ties so no row repeats or vanishes between pages.
+  const rows = await (where ? base.where(where) : base)
+    .orderBy(desc(resources.createdAt), desc(resources.id))
+    .limit(limit)
+    .offset((served - 1) * limit);
+  return { rows: serialise(rows), total, page: served, pageSize: limit, totalPages };
 }
 
 /** A route id is a numeric primary key or a slug. */
