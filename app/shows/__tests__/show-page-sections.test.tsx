@@ -42,4 +42,11 @@ describe('show page', () => {
     expect(html).toContain('/collections/grade-3-marching-band-shows')
     expect(html).toContain('What&#x27;s Included')
   })
+  it('renders What\'s Included once, after the arrangements (last on mobile)', async () => {
+    const { default: Page } = await import('../[slug]/page')
+    const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ slug: 'apex' }) }))
+    const included = html.indexOf('What&#x27;s Included')
+    expect(html.lastIndexOf('What&#x27;s Included')).toBe(included)
+    expect(included).toBeGreaterThan(html.indexOf('Show Arrangements'))
+  })
 })

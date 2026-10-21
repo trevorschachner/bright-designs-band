@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { getImageProps } from 'next/image'
 
 export interface AudioTrack {
   src: string
@@ -24,6 +25,9 @@ export interface AudioActions {
   release: (src: string) => void
   pause: () => void
   toggle: () => void
+  /** Play the previous / next track in the loaded track's queue (no-op at either end). */
+  previous: () => void
+  next: () => void
   seek: (time: number) => void
   setVolume: (volume: number) => void
   setMuted: (muted: boolean) => void
@@ -33,6 +37,8 @@ export interface AudioActions {
 export interface AudioState {
   /** The loaded track (playing or paused); null until something is played or cued. */
   track: AudioTrack | null
+  /** The list `track` belongs to (just `[track]` when none was given). */
+  queue: AudioTrack[]
   playing: boolean
   volume: number
   muted: boolean
@@ -54,6 +60,32 @@ const TimeContext = createContext<TimeStore | null>(null)
 
 const TIME_EVENTS = ['timeupdate', 'durationchange', 'loadedmetadata', 'seeked', 'emptied', 'ended'] as const
 
+const hasMediaSession = () => typeof navigator !== 'undefined' && 'mediaSession' in navigator
+
+/** Lock-screen / Control Center artwork, through the image optimizer: covers can be several MB. */
+function artworkFor(imageUrl: string | undefined): MediaImage[] {
+  if (!imageUrl?.trim()) return []
+  try {
+    const { props } = getImageProps({ src: imageUrl, alt: '', width: 256, height: 256 })
+    return [{ src: props.src, sizes: '256x256' }]
+  } catch {
+    return []
+  }
+}
+
+/** Title, show and artwork for the OS media controls (lock screen, Control Center, headsets). */
+function setMediaMetadata(track: AudioTrack | null) {
+  if (!hasMediaSession() || typeof MediaMetadata === 'undefined') return
+  navigator.mediaSession.metadata = track
+    ? new MediaMetadata({
+        title: track.title,
+        artist: track.showTitle ?? 'Bright Designs',
+        album: 'Bright Designs',
+        artwork: artworkFor(track.imageUrl),
+      })
+    : null
+}
+
 /**
  * Owns the site's single <audio> element. It lives in the root layout, so
  * playback survives client-side navigation; every player on a page is a
@@ -69,6 +101,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const trackRef = useRef<AudioTrack | null>(null)
   const startedRef = useRef(false)
   const [track, setTrack] = useState<AudioTrack | null>(null)
+  const [queue, setQueue] = useState<AudioTrack[]>([])
   const [playing, setPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
@@ -103,6 +136,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     queueRef.current = queue ?? [next]
     trackRef.current = next
     setTrack(next)
+    setQueue(queueRef.current)
+    setMediaMetadata(next)
     if (audio.getAttribute('src') !== next.src) {
       audio.src = next.src
       timeStore.emit()
@@ -133,6 +168,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     queueRef.current = []
     audio.removeAttribute('src')
     setTrack(null)
+    setQueue([])
+    setMediaMetadata(null)
     timeStore.emit()
   }, [timeStore])
 
@@ -144,6 +181,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     if (audio.paused) play()
     else audio.pause()
   }, [play])
+
+  const step = useCallback((delta: number) => {
+    const queue = queueRef.current
+    const index = queue.findIndex((t) => t.src === trackRef.current?.src)
+    const target = index >= 0 ? queue[index + delta] : undefined
+    if (target) play(target, queue)
+  }, [play])
+  const previous = useCallback(() => step(-1), [step])
+  const next = useCallback(() => step(1), [step])
 
   const seek = useCallback((time: number) => {
     const audio = audioRef.current
@@ -182,17 +228,42 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   }, [play, timeStore])
 
+  // OS media controls. Handlers go through the same actions as the on-page buttons.
+  useEffect(() => {
+    if (!hasMediaSession()) return
+    const session = navigator.mediaSession
+    const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
+      ['play', () => play()],
+      ['pause', () => pause()],
+      ['previoustrack', () => previous()],
+      ['nexttrack', () => next()],
+      ['seekto', (details) => { if (details.seekTime !== undefined) seek(details.seekTime) }],
+    ]
+    for (const [action, handler] of handlers) {
+      try { session.setActionHandler(action, handler) } catch { /* action not supported here */ }
+    }
+    return () => {
+      for (const [action] of handlers) {
+        try { session.setActionHandler(action, null) } catch { /* ignore */ }
+      }
+    }
+  }, [play, pause, previous, next, seek])
+
+  useEffect(() => {
+    if (hasMediaSession()) navigator.mediaSession.playbackState = track ? (playing ? 'playing' : 'paused') : 'none'
+  }, [track, playing])
+
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = muted ? 0 : volume
   }, [volume, muted])
 
   const actions = useMemo<AudioActions>(
-    () => ({ play, cue, release, pause, toggle, seek, setVolume, setMuted }),
-    [play, cue, release, pause, toggle, seek],
+    () => ({ play, cue, release, pause, toggle, previous, next, seek, setVolume, setMuted }),
+    [play, cue, release, pause, toggle, previous, next, seek],
   )
   const state = useMemo<AudioState>(
-    () => ({ track, playing, volume, muted, playId, started: playId > 0 }),
-    [track, playing, volume, muted, playId],
+    () => ({ track, queue, playing, volume, muted, playId, started: playId > 0 }),
+    [track, queue, playing, volume, muted, playId],
   )
 
   return (

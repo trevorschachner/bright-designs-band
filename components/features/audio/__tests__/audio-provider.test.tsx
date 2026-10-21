@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -274,6 +274,40 @@ describe('AudioProvider', () => {
     expect(audioEl().hasAttribute('src')).toBe(false);
   });
 
+  it('moves through the queue with next and previous, and stops at either end', () => {
+    render(<AudioProvider><Probe /></AudioProvider>);
+    act(() => api.play(intro, [intro, ballad]));
+    act(() => api.previous());
+    expect(state().src).toBe(intro.src);
+    act(() => api.next());
+    expect(state()).toMatchObject({ src: ballad.src, playing: true });
+    act(() => api.next());
+    expect(state().src).toBe(ballad.src);
+    act(() => api.previous());
+    expect(state().src).toBe(intro.src);
+  });
+
+  it('feeds the lock screen: metadata on load and media-key handlers through the queue', () => {
+    const handlers = new Map<string, ((details: { seekTime?: number }) => void) | null>();
+    const session = {
+      metadata: null as unknown,
+      playbackState: 'none',
+      setActionHandler: (action: string, handler: ((details: { seekTime?: number }) => void) | null) => handlers.set(action, handler),
+    };
+    vi.stubGlobal('navigator', { ...navigator, mediaSession: session });
+    vi.stubGlobal('MediaMetadata', class { constructor(init: object) { Object.assign(this, init); } });
+    render(<AudioProvider><Probe /></AudioProvider>);
+    act(() => api.play({ ...intro, imageUrl: 'https://example.com/cover.jpg' }, [intro, ballad]));
+    expect(session.metadata).toMatchObject({ title: 'Intro', artist: 'True North' });
+    expect(session.playbackState).toBe('playing');
+    act(() => handlers.get('nexttrack')!({}));
+    expect(state().src).toBe(ballad.src);
+    act(() => handlers.get('seekto')!({ seekTime: 30 }));
+    expect(audioEl().currentTime).toBe(30);
+    act(() => handlers.get('pause')!({}));
+    expect(session.playbackState).toBe('paused');
+  });
+
   it('throws a clear error outside the provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Probe />)).toThrow(/must be used within an AudioProvider/);
@@ -296,5 +330,40 @@ describe('GlobalAudioPlayerBar cover art', () => {
     const width = Number(new URL(src, 'https://brightdesigns.band').searchParams.get('w'));
     expect(width).toBeGreaterThan(0);
     expect(width).toBeLessThanOrEqual(128);
+  });
+});
+
+describe('GlobalAudioPlayerBar on phones', () => {
+  const tracks = [
+    { id: '1', title: 'Intro', url: intro.src },
+    { id: '2', title: 'Ballad', url: ballad.src },
+  ];
+  it('stays hidden on phones while a track is only cued, and shows once playback starts', () => {
+    render(
+      <AudioProvider>
+        <AudioPlayerComponent tracks={tracks} showTitle="True North" />
+        <GlobalAudioPlayerBar />
+      </AudioProvider>,
+    );
+    expect(screen.getByTestId('audio-bar').className).toMatch(/(^|\s)hidden sm:block/);
+    fireEvent.click(screen.getByRole('button', { name: 'Play audio' }));
+    expect(screen.getByTestId('audio-bar').className).not.toMatch(/(^|\s)hidden(\s|$)/);
+  });
+
+  it('has previous/next track buttons and no 10-second skip', () => {
+    render(
+      <AudioProvider>
+        <Probe />
+        <AudioPlayerComponent tracks={tracks} showTitle="True North" />
+        <GlobalAudioPlayerBar />
+      </AudioProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Play audio' }));
+    expect(screen.queryByRole('button', { name: /10 seconds/ })).toBeNull();
+    const bar = screen.getByTestId('audio-bar');
+    fireEvent.click(within(bar).getByRole('button', { name: 'Next track' }));
+    expect(state().src).toBe(ballad.src);
+    fireEvent.click(within(bar).getByRole('button', { name: 'Previous track' }));
+    expect(state().src).toBe(intro.src);
   });
 });
