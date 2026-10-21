@@ -26,6 +26,7 @@ import {
   type CatalogFilters,
   type QueryInput,
 } from '@/lib/filters/catalog-params';
+import type { FilteredResponse } from '@/lib/filters/types';
 import { getShowsPage, type ShowListItem, type ShowsPageParams } from './shows';
 import { getArrangementsPage, type ArrangementListItem } from './arrangements';
 
@@ -40,6 +41,26 @@ export interface CatalogPage<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+/**
+ * The list APIs' body for a catalog page. `pagination.page` is the page
+ * actually served (a page past the end is clamped to the last), not the one
+ * requested; `appliedFilters` carries the same page.
+ */
+export function toListResponse<T>(page: CatalogPage<T>, filters: CatalogFilters): FilteredResponse<T> {
+  return {
+    data: page.rows,
+    pagination: {
+      page: page.page,
+      limit: page.pageSize,
+      total: page.total,
+      totalPages: page.totalPages,
+      hasNext: page.page < page.totalPages,
+      hasPrev: page.page > 1,
+    },
+    appliedFilters: { ...filters, page: page.page },
+  };
 }
 
 export function parseShowsQuery(input: QueryInput): CatalogFilters {

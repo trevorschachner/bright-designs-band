@@ -4,8 +4,7 @@ import { files } from '@/lib/database/schema'
 import { eq } from 'drizzle-orm'
 import { fileStorage } from '@/lib/storage'
 import { guard } from '@/lib/auth/guard'
-
-const noStore = { 'Cache-Control': 'private, no-store' }
+import { PRIVATE_HEADERS } from '@/lib/utils/api-helpers'
 
 export async function GET(
   request: NextRequest,
@@ -27,12 +26,12 @@ export async function GET(
     // anonymous caller cannot tell a private file from a missing one.
     const gate = f && !f.isPublic ? await guard('canUploadFiles') : null
     if (!f || (gate && gate.denied)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404, headers: noStore })
+      return NextResponse.json({ error: 'File not found' }, { status: 404, headers: PRIVATE_HEADERS })
     }
 
     const computedUrl = fileStorage.getFileUrl(f)
 
-    return NextResponse.json({ success: true, file: { ...f, url: computedUrl } }, { headers: noStore })
+    return NextResponse.json({ success: true, file: { ...f, url: computedUrl } }, { headers: PRIVATE_HEADERS })
 
   } catch (error) {
     console.error('File fetch error:', error)

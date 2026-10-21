@@ -1,4 +1,3 @@
-import { tags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/auth/guard';
 import { PRIVATE_HEADERS, PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';

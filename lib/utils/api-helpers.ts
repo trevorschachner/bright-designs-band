@@ -74,18 +74,6 @@ export function ErrorResponse(
   return NextResponse.json({ success: false, error, details }, { status });
 }
 
-export function UnauthorizedResponse(): NextResponse<ApiResponse<null>> {
-  return ErrorResponse('Unauthorized', 401);
-}
-
-export function ForbiddenResponse(): NextResponse<ApiResponse<null>> {
-  return ErrorResponse('Forbidden', 403);
-}
-
-export function NotFoundResponse(resource: string = 'Resource'): NextResponse<ApiResponse<null>> {
-  return ErrorResponse(`${resource} not found`, 404);
-}
-
 export function BadRequestResponse(details?: unknown): NextResponse<ApiResponse<null>> {
   return ErrorResponse('Bad request', 400, details);
 }

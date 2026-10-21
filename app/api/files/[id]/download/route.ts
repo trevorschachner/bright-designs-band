@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { guard } from '@/lib/auth/guard'
+import { PRIVATE_HEADERS } from '@/lib/utils/api-helpers'
 import { db } from '@/lib/database'
 import { files } from '@/lib/database/schema'
 import { storageBucketFor, withRootPrefix } from '@/lib/storage'
-
-const noStore = { 'Cache-Control': 'private, no-store' }
 
 /** Seconds a download link stays valid. */
 const SIGNED_URL_TTL = 60
@@ -23,7 +22,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const { id } = await params
   const fileId = Number(id)
   if (!Number.isInteger(fileId) || fileId <= 0) {
-    return NextResponse.json({ error: 'Invalid file ID' }, { status: 400, headers: noStore })
+    return NextResponse.json({ error: 'Invalid file ID' }, { status: 400, headers: PRIVATE_HEADERS })
   }
 
   try {
@@ -33,7 +32,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .where(eq(files.id, fileId))
       .limit(1)
     if (!file || file.fileType === 'youtube') {
-      return NextResponse.json({ error: 'File not found' }, { status: 404, headers: noStore })
+      return NextResponse.json({ error: 'File not found' }, { status: 404, headers: PRIVATE_HEADERS })
     }
 
     const { createClient } = await import('@/lib/utils/supabase/server')
@@ -42,12 +41,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .from(storageBucketFor(file))
       .createSignedUrl(withRootPrefix(file.storagePath), SIGNED_URL_TTL)
     if (error || !data?.signedUrl) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404, headers: noStore })
+      return NextResponse.json({ error: 'File not found' }, { status: 404, headers: PRIVATE_HEADERS })
     }
 
-    return NextResponse.redirect(data.signedUrl, { status: 302, headers: noStore })
+    return NextResponse.redirect(data.signedUrl, { status: 302, headers: PRIVATE_HEADERS })
   } catch (error) {
     console.error('File download error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: noStore })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: PRIVATE_HEADERS })
   }
 }

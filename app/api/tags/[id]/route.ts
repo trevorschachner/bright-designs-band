@@ -1,13 +1,6 @@
-import { tags } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
 import { getTag } from '@/lib/services/tags';
 import { reportError } from '@/lib/observability/report-error';
-
-/** Generic body only: the underlying message never reaches the client. */
-async function failed(error: unknown, operation: string) {
-  await reportError(error, { operation });
-  return NextResponse.json({ error: 'Failed to save tag' }, { status: 500 });
-}
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

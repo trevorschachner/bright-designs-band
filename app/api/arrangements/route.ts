@@ -1,8 +1,6 @@
-import { arrangements } from '@/lib/database/schema';
 import { NextResponse } from 'next/server';
-import { QueryBuilder } from '@/lib/filters/query-builder';
 import { PUBLIC_CACHE_HEADERS } from '@/lib/utils/api-helpers';
-import { parseArrangementsQuery, queryArrangements } from '@/lib/services/catalog';
+import { parseArrangementsQuery, queryArrangements, toListResponse } from '@/lib/services/catalog';
 
 /**
  * A page of the arrangements catalog via `queryArrangements`, the same read
@@ -15,8 +13,7 @@ export async function GET(request: Request) {
   const filters = parseArrangementsQuery(searchParams);
 
   try {
-    const { rows, total } = await queryArrangements(filters);
-    const response = QueryBuilder.buildFilteredResponse(rows, total, filters);
+    const response = toListResponse(await queryArrangements(filters), filters);
     return NextResponse.json(response, { headers: PUBLIC_CACHE_HEADERS });
   } catch (error) {
     // parseArrangementsQuery drops unknown fields, so this is a server fault.

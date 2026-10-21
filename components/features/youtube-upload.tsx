@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Video, AlertCircle, CheckCircle, Plus } from 'lucide-react'
-import { YouTubePlayer, isValidYouTubeUrl } from './youtube-player'
+import { YouTubePlayer } from './youtube-player'
+import { isValidYouTubeUrl } from '@/lib/youtube'
 import { attachYouTube, type AttachedFile } from '@/lib/actions/files'
 
 interface YouTubeUploadProps {

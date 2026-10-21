@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { guard } from '@/lib/auth/guard';
-import { resources } from '@/lib/database/schema';
 import { SuccessResponse, PrivateResponse, ErrorResponse } from '@/lib/utils/api-helpers';
 import { getActiveResources, getResourcesForAdmin } from '@/lib/services/resources';
 import { readAdminSearch } from '@/lib/filters/admin-search';
