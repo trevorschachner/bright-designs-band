@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { setArrangementPieces } from '@/lib/actions/arrangements';
 import { createPiece } from '@/lib/actions/pieces';
-import type { ActionResult } from '@/lib/actions/result';
+import { actionMessage, type ActionResult } from '@/lib/actions/result';
 import { canCreatePiece, moveItem, suggestPieces, type PieceSummary } from '@/lib/pieces/editor';
 
 /**
@@ -19,12 +19,11 @@ import { canCreatePiece, moveItem, suggestPieces, type PieceSummary } from '@/li
 
 type LinkedPiece = PieceSummary & { orderIndex: number };
 
-function failure(result: Extract<ActionResult<unknown>, { ok: false }>): string {
-  if (result.issues?.length) return result.issues.map((issue) => issue.message).join('; ');
-  if (result.error === 'forbidden') return 'You do not have permission to edit pieces.';
-  if (result.error === 'not_found') return 'This part was deleted. Reload the page.';
-  return 'Could not save the pieces. Try again.';
-}
+const MESSAGES = {
+  forbidden: 'You do not have permission to edit pieces.',
+  not_found: 'This part was deleted. Reload the page.',
+  failed: 'Could not save the pieces. Try again.',
+};
 
 export function ArrangementPiecesEditor({
   arrangementId,
@@ -53,7 +52,7 @@ export function ArrangementPiecesEditor({
         setLinked(result.data);
       } else {
         setLinked(previous);
-        setError(failure(result));
+        setError(actionMessage(result, MESSAGES));
       }
     } catch {
       setLinked(previous);
@@ -77,7 +76,7 @@ export function ArrangementPiecesEditor({
     try {
       const result = await createPiece({ title, composer: newComposer });
       if (!result.ok) {
-        setError(failure(result));
+        setError(actionMessage(result, MESSAGES));
         setSaving(false);
         return;
       }

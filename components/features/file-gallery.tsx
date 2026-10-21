@@ -23,6 +23,7 @@ import {
 import { AudioPlayerComponent } from './audio-player'
 import { YouTubePlayer } from './youtube-player'
 import { deleteFile, type DeletedFile } from '@/lib/actions/files'
+import { actionMessage } from '@/lib/actions/result'
 
 export interface GalleryFile {
   id: number
@@ -122,11 +123,11 @@ export function FileGallery({
     const result = await deleteFile({ id: fileId })
     if (!result.ok) {
       setError(
-        result.error === 'not_found'
-          ? 'That file was already deleted.'
-          : result.error === 'forbidden'
-            ? 'You do not have permission to delete files.'
-            : 'The file could not be deleted from storage. Try again.'
+        actionMessage(result, {
+          not_found: 'That file was already deleted.',
+          forbidden: 'You do not have permission to delete files.',
+          failed: 'The file could not be deleted from storage. Try again.',
+        })
       )
       return
     }
