@@ -17,8 +17,7 @@ import { uniqueArrangementSlug } from '@/lib/slug'
 import { trackServerEvent } from '@/lib/observability/events'
 import { toIso } from '@/lib/services/cache'
 import { getArrangementPiecesForAdmin } from '@/lib/services/pieces'
-import { invalidateShowsById, REMOVABLE_FILE_COLUMNS, removeFilesInOrder } from '@/lib/services/file-removal'
-import { createClient } from '@/lib/utils/supabase/server'
+import { removeOwnerFiles } from '@/lib/services/file-removal'
 import {
   arrangementIdSchema,
   createArrangementSchema,
@@ -221,20 +220,10 @@ const runDeleteArrangement = guarded(
   'canDeleteArrangements',
   arrangementIdSchema,
   async ({ id }, { db }) => {
-    // The part's files first, each through the confirmed path deleteFile
-    // uses (lib/services/file-removal.ts), each committed on its own. A
-    // failure aborts before the part is touched: `failed`, part and remaining
-    // files kept, and what was already removed is invalidated.
-    const partFiles = await db.select(REMOVABLE_FILE_COLUMNS).from(files).where(eq(files.arrangementId, id))
-    let clearedShowIds: number[] = []
-    if (partFiles.length > 0) {
-      const ownerSlug = await showSlugFor(db, id)
-      const ownSlug = await slugForArrangement(db, id)
-      ;({ clearedShowIds } = await removeFilesInOrder(db, partFiles, createClient, async (cleared) => {
-        invalidateArrangement(id, ownSlug, ownerSlug)
-        await invalidateShowsById(cleared)
-      }))
-    }
+    // The part's files first (lib/services/file-removal.ts). A failure aborts
+    // before the part is touched: `failed`, part and remaining files kept, and
+    // what was already removed is invalidated.
+    const { invalidateRemoved } = await removeOwnerFiles(db, { arrangementId: id })
 
     const { deleted, slug, arrangementSlug } = await db.transaction(async (tx) => {
       // Read first: the cascade removes the link to the show.
@@ -249,8 +238,7 @@ const runDeleteArrangement = guarded(
       data: { id: deleted.id },
       invalidate: async () => {
         invalidateArrangement(deleted.id, arrangementSlug, slug)
-        // A show whose thumbnail/graphic pointed at one of the part's files was cleared.
-        await invalidateShowsById(clearedShowIds)
+        await invalidateRemoved()
       },
     }
   },

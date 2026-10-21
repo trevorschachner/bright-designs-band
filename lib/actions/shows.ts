@@ -2,9 +2,8 @@
 
 import { eq, inArray } from 'drizzle-orm'
 import type { Database } from '@/lib/database'
-import { files, shows, showsToTags, slugRedirects, tags } from '@/lib/database/schema'
-import { REMOVABLE_FILE_COLUMNS, removeFilesInOrder } from '@/lib/services/file-removal'
-import { createClient } from '@/lib/utils/supabase/server'
+import { shows, showsToTags, slugRedirects, tags } from '@/lib/database/schema'
+import { removeOwnerFiles } from '@/lib/services/file-removal'
 import { invalidateShow } from '@/lib/services/invalidate'
 import { trackServerEvent } from '@/lib/observability/events'
 import { toIso } from '@/lib/services/cache'
@@ -226,16 +225,20 @@ const runDeleteShow = guarded(
     const [show] = await db.select({ id: shows.id, slug: shows.slug }).from(shows).where(eq(shows.id, id)).limit(1)
     if (!show) throw new NotFoundError('show')
 
-    // The show's files first (objects, then rows; lib/services/file-removal.ts),
-    // each committed on its own. A failure aborts with the show kept and what
-    // was already removed invalidated.
-    const showFiles = await db.select(REMOVABLE_FILE_COLUMNS).from(files).where(eq(files.showId, id))
-    await removeFilesInOrder(db, showFiles, createClient, () => invalidateShow(show.id, show.slug))
+    // The show's files first (lib/services/file-removal.ts). A failure aborts
+    // with the show kept and what was already removed invalidated.
+    const { invalidateRemoved } = await removeOwnerFiles(db, { showId: show.id })
 
     // Tag links, part links and slug redirects go with it (FK cascades).
     const [deleted] = await db.delete(shows).where(eq(shows.id, id)).returning({ id: shows.id, slug: shows.slug })
     if (!deleted) throw new NotFoundError('show')
-    return { data: { id: deleted.id }, invalidate: () => invalidateShow(deleted.id, deleted.slug) }
+    return {
+      data: { id: deleted.id },
+      invalidate: async () => {
+        invalidateShow(deleted.id, deleted.slug)
+        await invalidateRemoved()
+      },
+    }
   },
   'deleteShow'
 )

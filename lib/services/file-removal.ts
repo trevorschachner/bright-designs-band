@@ -5,6 +5,7 @@ import { files, shows } from '@/lib/database/schema'
 import { toIso } from '@/lib/services/cache'
 import { fileStorage } from '@/lib/storage'
 import { invalidateFileOwner } from '@/lib/services/files'
+import { createClient } from '@/lib/utils/supabase/server'
 
 /**
  * The one confirmed path for deleting `files` rows, shared by deleteFile,
@@ -73,55 +74,72 @@ export async function removeFile(db: Database, file: RemovableFile, supabase: Su
 }
 
 /** Thrown when one of an owner's files could not be removed; `removed` were. */
-export class FileRemovalError extends Error {
+class FileRemovalError extends Error {
   constructor(readonly fileId: number, readonly detail: string, readonly removed: number) {
     super(`Storage refused to remove file ${fileId}: ${detail}`)
     this.name = 'FileRemovalError'
   }
 }
 
+export type FileOwner = { showId: number } | { arrangementId: number }
+
 /**
- * Removes every file in `list`, one at a time, each committed on its own, so
- * a retry after a failure resumes with the files left. (Rolling back rows
- * whose objects were already removed would leave rows a later delete could
- * never confirm.) Stops at the first failure.
+ * Removes every file a show or part owns, before the owner itself is deleted.
+ * One file at a time, each committed on its own, so a retry after a failure
+ * resumes with the files left. (Rolling back rows whose objects were already
+ * removed would leave rows a later delete could never confirm.) Stops at the
+ * first failure and throws FileRemovalError.
  *
- * `clearedShowIds`: shows whose thumbnail/graphic pointed at a removed file
- * and was cleared (their cache must be invalidated too).
+ * Invalidation is handled here, because the caller cannot do it right: on a
+ * partial failure the action throws, so guarded() never runs its invalidate,
+ * yet the rows already removed are a public change. So before rethrowing,
+ * this invalidates the owner and everything else the removed files touched.
+ * Failing on the first file changed nothing and invalidates nothing.
  *
- * `onPartialFailure` runs before the error is rethrown when at least one file
- * was removed, so the caller can invalidate what already changed: the action
- * result will be `failed` and guarded() will not run its invalidate.
+ * On success, the caller invalidates the owner it deleted (it knows the
+ * slugs) and calls `invalidateRemoved` from its own `invalidate`: the other
+ * pages the removal touched (a show whose thumbnail/graphic pointed at a
+ * removed file and was cleared; the other owner of a file that had both).
  */
-export async function removeFilesInOrder(
+export async function removeOwnerFiles(
   db: Database,
-  list: RemovableFile[],
-  createSupabase: () => Promise<SupabaseClient>,
-  onPartialFailure: (clearedShowIds: number[]) => Promise<void> | void
-): Promise<{ removed: number; clearedShowIds: number[] }> {
-  const clearedShowIds: number[] = []
-  if (list.length === 0) return { removed: 0, clearedShowIds }
-  const supabase = await createSupabase()
+  owner: FileOwner
+): Promise<{ removed: number; invalidateRemoved: () => Promise<void> }> {
+  const list = await db
+    .select(REMOVABLE_FILE_COLUMNS)
+    .from(files)
+    .where('showId' in owner ? eq(files.showId, owner.showId) : eq(files.arrangementId, owner.arrangementId))
+
+  const ownShowId = 'showId' in owner ? owner.showId : null
+  const ownArrangementId = 'arrangementId' in owner ? owner.arrangementId : null
+  const touchedShows = new Set<number>()
+  const touchedArrangements = new Set<number>()
+  const invalidateRemoved = async () => {
+    for (const showId of touchedShows) await invalidateFileOwner({ showId })
+    for (const arrangementId of touchedArrangements) await invalidateFileOwner({ arrangementId })
+  }
+
+  if (list.length === 0) return { removed: 0, invalidateRemoved }
+  const supabase = await createClient()
   let removed = 0
   for (const file of list) {
     const result = await removeFile(db, file, supabase)
     if (!result.ok) {
       if (removed > 0) {
         try {
-          await onPartialFailure(clearedShowIds)
+          await invalidateFileOwner(owner)
+          await invalidateRemoved()
         } catch (error) {
+          // Never mask the removal failure with an invalidation one.
           console.error('Invalidation after a partial file removal failed:', error)
         }
       }
       throw new FileRemovalError(file.id, result.error, removed)
     }
     removed++
-    if (result.clearedShow && !clearedShowIds.includes(result.clearedShow.id)) clearedShowIds.push(result.clearedShow.id)
+    if (result.clearedShow && result.clearedShow.id !== ownShowId) touchedShows.add(result.clearedShow.id)
+    if (file.showId && file.showId !== ownShowId) touchedShows.add(file.showId)
+    if (file.arrangementId && file.arrangementId !== ownArrangementId) touchedArrangements.add(file.arrangementId)
   }
-  return { removed, clearedShowIds }
-}
-
-/** Invalidates each show (slug looked up; a failed lookup still expires its tags). */
-export async function invalidateShowsById(showIds: number[]): Promise<void> {
-  for (const showId of showIds) await invalidateFileOwner({ showId })
+  return { removed, invalidateRemoved }
 }

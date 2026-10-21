@@ -49,16 +49,14 @@ export async function updateTag(input: UpdateTagInput) {
   if invalidation throws, it is logged and reported and the result is still
   `ok(data)`, because the write committed. Exactly one helper from
   `lib/services/invalidate.ts` per action.
-  **The one exception: a partial failure in a multi-file delete.**
-  `deleteShow` and `deleteArrangement` remove files one at a time
-  (`removeFilesInOrder` in `lib/services/file-removal.ts`), each file
-  committed on its own. If a later file fails after earlier ones were
-  removed, those removals are already committed but `guarded` will never run
-  `invalidate` (the action throws). So the action passes an
-  `onPartialFailure` callback that invalidates the already-removed rows
-  (the owner, plus any show whose art was cleared) before rethrowing. Failing
-  on the first file invalidates nothing. Invalidation errors there are logged,
-  never allowed to mask the original error.
+  **Deleting a show or part with files:** call
+  `removeOwnerFiles(db, { showId } | { arrangementId })` from
+  `lib/services/file-removal.ts` first. It removes the files one at a time
+  (each committed on its own) and, on a partial failure, invalidates what it
+  already removed before rethrowing, since `guarded` never runs `invalidate`
+  on a throw. On success it returns `invalidateRemoved`: call it from your
+  `invalidate`, beside the owner's own helper, for the other pages the
+  removal touched (cleared show art, the other owner of a shared file).
 - **Return JSON-safe data.** The result is serialised to the browser.
 - **Unknown related ids are `invalid`, not `failed`.** Check them inside the
   transaction before writing and throw `InvalidError` (e.g. show tags:

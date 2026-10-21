@@ -321,7 +321,9 @@ describe('deleteArrangement removes its files first', () => {
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(3)
     const lastFileDelete = fake.events.lastIndexOf('delete:files')
     expect(lastFileDelete).toBeLessThan(fake.events.indexOf('delete:arrangements'))
-    expect(fake.events.slice(-2)).toEqual(['commit', 'invalidate'])
+    // Invalidation only after commit: the part, then file 21's other owner (show 7).
+    expect(fake.events.slice(fake.events.lastIndexOf('commit') + 1)).toEqual(['invalidate', 'invalidate'])
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ showId: 7 })
   })
 
   it('a Storage failure aborts: failed, part kept, files after it kept, removed ones invalidated', async () => {
@@ -331,8 +333,10 @@ describe('deleteArrangement removes its files first', () => {
     // The first file's object and row are gone (committed on its own), the rest stay.
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
     expect(opsOn(fake.ops, 'arrangements', 'delete')).toHaveLength(0)
-    // The row already deleted is a public change: invalidated despite `failed`.
-    expect(invalidateArrangement).toHaveBeenCalledWith(3, null, 'my-show')
+    // The row already deleted is a public change: invalidated despite `failed`,
+    // the part and the show the removed file also belonged to.
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ arrangementId: 3 })
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ showId: 7 })
   })
 
   it('a failure on the first file changed nothing, so nothing is invalidated', async () => {
@@ -341,6 +345,7 @@ describe('deleteArrangement removes its files first', () => {
     expect(await deleteArrangement({ id: 3 })).toEqual({ ok: false, error: 'failed' })
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(0)
     expect(invalidateArrangement).not.toHaveBeenCalled()
+    expect(invalidateFileOwner).not.toHaveBeenCalled()
   })
 
   it('clears a show thumbnail/graphic that pointed at one of its files, and invalidates that show', async () => {
@@ -380,7 +385,19 @@ describe('deleteShow removes its files first', () => {
     expect(await deleteShow(7)).toEqual({ ok: false, error: 'failed' })
     expect(opsOn(fake.ops, 'files', 'delete')).toHaveLength(1)
     expect(opsOn(fake.ops, 'shows', 'delete')).toHaveLength(0)
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ showId: 7 })
+  })
+
+  it('a removed file that also belonged to a part invalidates that part', async () => {
+    use(filesDb({
+      'select:files': () => [{ ...SHOW_FILES[0], arrangementId: 4 }],
+      'select:shows': () => [{ id: 7, slug: 'my-show', thumbnailUrl: null, graphicUrl: null }],
+      'delete:shows': () => [{ id: 7, slug: 'my-show' }],
+    }))
+    expect(await deleteShow(7)).toEqual({ ok: true, data: { id: 7 } })
     expect(invalidateShow).toHaveBeenCalledWith(7, 'my-show')
+    expect(invalidateFileOwner).toHaveBeenCalledWith({ arrangementId: 4 })
+    expect(invalidateFileOwner).not.toHaveBeenCalledWith({ showId: 7 })
   })
 
   it('not_found for an unknown show, before any Storage call', async () => {
