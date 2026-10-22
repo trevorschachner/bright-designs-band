@@ -82,6 +82,12 @@ const serverSchema = z.object({
 
   TURNSTILE_SECRET_KEY: optionalString,
 
+  // Contact-form → Attio sync (lib/integrations/attio.ts). Without a key the
+  // sync is skipped and the form works as before. New deals need an owner:
+  // a workspace member's email.
+  ATTIO_API_KEY: optionalString,
+  ATTIO_DEAL_OWNER_EMAIL: optionalString,
+
   // Storage bucket for isPublic = false files (default "private"). Server-only:
   // the browser never needs it (private files are served by
   // /api/files/<id>/download, uploads are signed by lib/actions/uploads.ts).

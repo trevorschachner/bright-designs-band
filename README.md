@@ -12,6 +12,7 @@ The website and admin dashboard for Bright Designs, a marching band show design 
 - PostHog for analytics and error reporting
 - Email through Resend by default (plain `fetch`), with Gmail or generic SMTP (nodemailer) as fallbacks
 - Cloudflare Turnstile on the contact form
+- Attio: every contact-form submission becomes a person (and, for inquiries, a Lead deal with a note) as it arrives (`lib/integrations/attio.ts`, needs `ATTIO_API_KEY`)
 
 ## Getting started
 
@@ -85,7 +86,7 @@ Never run migrations against the production database from an agent or a dev mach
 
 Permissions per role are in `lib/auth/permissions.ts`; `guard(permission)` in `lib/auth/guard.ts` is the one check.
 
-Pages (nav order): Dashboard (counts, recently edited, needs attention: shows with no poster or a description under 40 characters, parts with no public audio or no pieces), Shows (show editor with its parts, files and pieces), Arrangements (searchable list linking to each part's show), Pieces, Tags, Resources, Inquiries (read-only `contact_submissions`, newest first, with copy-email and an Attio search link), Users (owners only). The Shows and Resources tables search by title on the server (`?q=`).
+Pages (nav order): Dashboard (counts, recently edited, needs attention: shows with no poster or a description under 40 characters, parts with no public audio or no pieces), Shows (show editor with its parts, files and pieces), Arrangements (searchable list linking to each part's show), Pieces, Tags, Resources, Inquiries (read-only `contact_submissions`, newest first: school, the page the form was sent from and the page before it, and a link to the Attio record it synced to, or the sync error), Users (owners only). The Shows and Resources tables search by title on the server (`?q=`).
 
 **Writes are Server Actions** in `lib/actions/*`, never API routes. Each one runs through `guarded()` (permission, strict zod schema, error mapping into `{ ok, data } | { ok: false, error }`) and returns `{ data, invalidate }`, so the cache is purged only after the write commits. Rules and the action list: `lib/actions/README.md`. Admin reads are uncached and live in `lib/services/admin.ts`.
 

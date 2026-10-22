@@ -46,6 +46,9 @@ export interface ContactFormData {
   source?: string;
   referralSource?: string;
   referralBandDirector?: string;
+  /** Path the form was sent from, and the page before it. */
+  pageUrl?: string;
+  referrerUrl?: string;
 }
 
 export interface EmailNotificationData {

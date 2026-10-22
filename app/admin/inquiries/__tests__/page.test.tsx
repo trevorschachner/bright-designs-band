@@ -28,8 +28,13 @@ const rows: InquiryRow[] = [
     service: 'existing-show, drill',
     source: 'contact',
     message: LONG,
+    school: 'Rock Canyon HS',
+    pageUrl: '/contact',
+    referrerUrl: '/shows/hive-mind',
+    attioRecordUrl: null,
+    attioError: 'Attio POST /notes → 500',
   },
-  { id: 1, createdAt: '2026-10-01T12:00:00.000Z', name: 'Sam', email: 'sam@x.edu', service: 'General Contact', source: 'show-page', message: 'Short note.' },
+  { id: 1, createdAt: '2026-10-01T12:00:00.000Z', name: 'Sam', email: 'sam@x.edu', service: 'General Contact', source: 'show-page', message: 'Short note.', school: null, pageUrl: '/shows/starlight', referrerUrl: 'https://www.google.com/', attioRecordUrl: 'https://app.attio.com/bright-designs/deal/d1/overview', attioError: null },
 ]
 
 async function renderPage(search: Record<string, string> = {}) {
@@ -83,10 +88,27 @@ describe('/admin/inquiries', () => {
     expect(within(short).queryByRole('button', { name: 'Show all' })).toBeNull()
   })
 
-  it('links each row to an Attio search for the email and offers a copy button', async () => {
+  it('shows the school and the page each form was sent from, with the page before it', async () => {
+    await renderPage()
+    const [first, second] = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')
+    expect(within(first).getByText('Rock Canyon HS')).toBeInTheDocument()
+    expect(within(first).getByRole('link', { name: '/contact' })).toHaveAttribute('href', '/contact')
+    expect(within(first).getByRole('link', { name: '/shows/hive-mind' })).toHaveAttribute('href', '/shows/hive-mind')
+    expect(within(second).getByRole('link', { name: 'https://www.google.com/' })).toHaveAttribute('href', 'https://www.google.com/')
+  })
+
+  it('links a synced row straight to its Attio record', async () => {
+    await renderPage()
+    const row = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[1]
+    expect(within(row).getByRole('link', { name: 'Open in Attio' })).toHaveAttribute('href', 'https://app.attio.com/bright-designs/deal/d1/overview')
+    expect(within(row).queryByText('Attio sync failed')).toBeNull()
+  })
+
+  it('flags a failed sync, falls back to an Attio search for the email and offers a copy button', async () => {
     await renderPage()
     const row = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[0]
-    expect(within(row).getByRole('link', { name: 'Open in Attio' })).toHaveAttribute(
+    expect(within(row).getByText('Attio sync failed')).toHaveAttribute('title', 'Attio POST /notes → 500')
+    expect(within(row).getByRole('link', { name: 'Search Attio' })).toHaveAttribute(
       'href',
       'https://app.attio.com/bright-designs/search?q=dana%2Bband%40school.org',
     )
