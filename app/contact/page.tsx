@@ -8,6 +8,7 @@ import { toast } from '@/lib/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Mail } from 'lucide-react'
 import { CONTACT_INTEREST_PARAM, readContactInterest } from '@/lib/contact-link'
+import { postContact } from '@/lib/page-trail'
 
 interface ContactPayload {
   type: 'inquiry' | 'contact';
@@ -41,13 +42,7 @@ function ContactPageContent({ interest }: { interest: string }) {
   const handleSubmit = async (data: ContactPayload) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...data, type: 'inquiry', source: 'contact' }),
-      });
+      const response = await postContact({ ...data, type: 'inquiry', source: 'contact' });
 
       if (!response.ok) {
         throw new Error('Something went wrong');

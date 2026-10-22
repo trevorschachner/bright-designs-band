@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { InquiryForm } from "@/components/forms/inquiry-form"
 import { toast } from "@/lib/hooks/use-toast"
 import { Calendar, ArrowRight, Sparkles, CheckCircle } from "lucide-react"
+import { postContact } from "@/lib/page-trail"
 
 interface CheckAvailabilityModalProps {
   showTitle: string
@@ -53,13 +54,7 @@ export function CheckAvailabilityModal({ showTitle, triggerButton }: CheckAvaila
   const handleSubmit = async (data: InquiryPayload) => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...data, type: 'inquiry', source: 'check-availability' }),
-      })
+      const response = await postContact({ ...data, type: 'inquiry', source: 'check-availability' })
 
       if (!response.ok) {
         throw new Error('Something went wrong')
