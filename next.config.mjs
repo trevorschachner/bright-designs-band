@@ -73,6 +73,17 @@ const nextConfig = {
 
   async rewrites() {
     return [
+      // Public Storage objects (show audio) served from our own domain, so
+      // school content filters that block supabase.co don't stop playback.
+      // Pairs with mediaProxyUrl() in lib/media/public-url.ts.
+      ...(supabaseHostname
+        ? [
+            {
+              source: '/media/:path*',
+              destination: `https://${supabaseHostname}/storage/v1/object/public/:path*`,
+            },
+          ]
+        : []),
       {
         source: '/ingest/static/:path*',
         destination: 'https://us-assets.i.posthog.com/static/:path*',

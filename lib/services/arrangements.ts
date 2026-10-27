@@ -5,6 +5,7 @@
  */
 
 import { db } from '@/lib/database';
+import { mediaProxyUrl } from '@/lib/media/public-url';
 import { arrangementPieces, arrangements, arrangementsToTags, files, showArrangements, shows } from '@/lib/database/schema';
 import { and, asc, eq, exists, inArray, sql, count } from 'drizzle-orm';
 import { buildTableQuery } from '@/lib/filters/table-query';
@@ -124,7 +125,8 @@ async function fetchArrangementsPage(
 
   const data: ArrangementListItem[] = rows.map((row) => ({
     ...row,
-    files: row.files ?? [],
+    // Audio plays from our own domain; see mediaProxyUrl.
+    files: (row.files ?? []).map((f) => ({ ...f, url: mediaProxyUrl(f.url) })),
     showArrangements: row.showArrangements ?? [],
   }));
 

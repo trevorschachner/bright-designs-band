@@ -7,6 +7,7 @@
  */
 
 import { db } from '@/lib/database';
+import { mediaProxyUrl } from '@/lib/media/public-url';
 import { shows, showsToTags, showArrangements, files, tags, slugRedirects } from '@/lib/database/schema';
 import { and, desc, eq, exists, gte, ilike, inArray, ne, sql, count, type SQL } from 'drizzle-orm';
 import { likePattern } from '@/lib/filters/admin-search';
@@ -645,7 +646,10 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
 
   return Array.from(byId.values()).map((arr) => ({
     ...arr,
-    audioUrl: arr.files.find((f) => f.fileType === 'audio')?.url ?? null,
+    audioUrl: (() => {
+      const url = arr.files.find((f) => f.fileType === 'audio')?.url
+      return url ? mediaProxyUrl(url) : null
+    })(),
   }));
 }
 
