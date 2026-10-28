@@ -175,6 +175,17 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                         </td>
                       </tr>
                       ` : ''}
+                      ${data.pageUrl || data.referrerUrl ? `
+                      <tr>
+                        <td colspan="2" style="padding-bottom:12px;">
+                          <p style="margin:0 0 4px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Sent from</p>
+                          <div style="background-color:${colors.lightGray};padding:10px 12px;border-radius:4px;color:${colors.charcoal};font-size:14px;word-break:break-all;">
+                            ${escapeHtmlText(data.pageUrl || '(unknown page)')}
+                            ${data.referrerUrl ? `<br><span style="font-size:12px;color:${colors.slate};margin-top:4px;display:block;">Came from: ${escapeHtmlText(data.referrerUrl)}</span>` : ''}
+                          </div>
+                        </td>
+                      </tr>
+                      ` : ''}
                     </table>
                   </td>
                 </tr>
@@ -292,6 +303,8 @@ Name: ${data.firstName} ${data.lastName}
 Email: ${data.email}
 ${data.phone ? `Phone: ${data.phone}` : ''}
 ${data.school ? `School/Organization: ${data.school}` : ''}
+${data.pageUrl ? `Sent from: ${data.pageUrl}` : ''}
+${data.referrerUrl ? `Came from: ${data.referrerUrl}` : ''}
 ${data.referralSource ? `How did you hear about us?: ${data.referralSource === 'band-director' ? 'Another Band Director' : data.referralSource === 'word-of-mouth' ? 'Word of Mouth' : data.referralSource === 'google' ? 'Google' : data.referralSource === 'instagram' ? 'Instagram' : data.referralSource === 'facebook' ? 'Facebook' : data.referralSource === 'youtube' ? 'YouTube' : data.referralSource === 'tiktok' ? 'TikTok' : data.referralSource === 'conference' ? 'Conference/Workshop' : data.referralSource === 'other' ? 'Other' : data.referralSource}${data.referralBandDirector ? ` (Referred by: ${data.referralBandDirector})` : ''}` : ''}
 
 ${data.showInterest ? `${getInquiryLabelUpper(data)}\n${data.showInterest}\n` : ''}

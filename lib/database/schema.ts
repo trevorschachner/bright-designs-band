@@ -285,6 +285,15 @@ export const contactSubmissions = pgTable('contact_submissions', {
   adminNotes: text('admin_notes'),
   interestedShowId: integer('interested_show_id').references(() => shows.id, { onDelete: 'set null' }),
   interestedArrangementId: integer('interested_arrangement_id').references(() => arrangements.id, { onDelete: 'set null' }),
+  school: text('school'),
+  // Where the form was sent from, and the page before that (lib/page-trail.ts).
+  pageUrl: text('page_url'),
+  referrerUrl: text('referrer_url'),
+  // Result of the Attio sync (lib/integrations/attio.ts): the record the note
+  // went on, or why it failed. Both null means it never ran (no API key).
+  attioRecordUrl: text('attio_record_url'),
+  attioError: text('attio_error'),
+  attioSyncedAt: timestamp('attio_synced_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

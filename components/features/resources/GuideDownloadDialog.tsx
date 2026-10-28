@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Download, Loader2, CheckCircle } from 'lucide-react';
+import { postContact } from '@/lib/page-trail';
 import { Turnstile, type TurnstileHandle } from '@/components/forms/turnstile';
 
 interface GuideDownloadDialogProps {
@@ -38,16 +39,12 @@ export function GuideDownloadDialog({ resourceId, resourceTitle }: GuideDownload
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          type: 'resource_download',
-          resourceId,
-          resourceTitle,
-          turnstileToken: turnstileToken ?? '',
-        }),
+      const response = await postContact({
+        ...formData,
+        type: 'resource_download',
+        resourceId,
+        resourceTitle,
+        turnstileToken: turnstileToken ?? '',
       });
 
       if (!response.ok) throw new Error('Failed to submit');
