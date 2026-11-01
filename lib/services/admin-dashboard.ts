@@ -224,6 +224,13 @@ export type InquiryRow = {
   service: string;
   source: string;
   message: string;
+  school: string | null;
+  /** Path the form was sent from, and the page before it (in-site path or external URL). */
+  pageUrl: string | null;
+  referrerUrl: string | null;
+  /** The Attio record the submission's note went on, or why the sync failed. */
+  attioRecordUrl: string | null;
+  attioError: string | null;
 };
 
 /** Newest first. */
@@ -240,6 +247,11 @@ export async function getInquiriesPage({ page, limit }: { page: number; limit: n
         service: contactSubmissions.service,
         source: contactSubmissions.source,
         message: contactSubmissions.message,
+        school: contactSubmissions.school,
+        pageUrl: contactSubmissions.pageUrl,
+        referrerUrl: contactSubmissions.referrerUrl,
+        attioRecordUrl: contactSubmissions.attioRecordUrl,
+        attioError: contactSubmissions.attioError,
       })
       .from(contactSubmissions)
       .orderBy(desc(contactSubmissions.createdAt), desc(contactSubmissions.id))
@@ -254,6 +266,11 @@ export async function getInquiriesPage({ page, limit }: { page: number; limit: n
     service: r.service,
     source: r.source,
     message: r.message,
+    school: r.school,
+    pageUrl: r.pageUrl,
+    referrerUrl: r.referrerUrl,
+    attioRecordUrl: r.attioRecordUrl,
+    attioError: r.attioError,
   }));
   return { data, total: Number(total?.count ?? 0) };
 }

@@ -9,6 +9,10 @@ import { consume, getClientIp } from '@/lib/rate-limit';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { getEnv } from '@/lib/env.server';
 import { trackServerEvent } from '@/lib/observability/events';
+import { reportError } from '@/lib/observability/report-error';
+import { syncSubmissionToAttio, type AttioSubmission } from '@/lib/integrations/attio';
+import { getPublicSiteUrl } from '@/lib/env';
+import { eq } from 'drizzle-orm';
 
 const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 
@@ -25,6 +29,38 @@ const getAdminRecipients = (): string[] => {
 };
 
 type SendEmailPayload = Parameters<typeof sendEmail>[0];
+
+const DEFAULT_DEAL_OWNER = 'trevor@brightdesigns.band';
+
+/**
+ * Syncs to Attio and records the outcome on the stored row, so admin can show
+ * the Attio link or the failure. Never rejects: a CRM outage must not fail
+ * the form.
+ */
+async function syncToAttio(submissionId: number | undefined, submission: AttioSubmission): Promise<void> {
+  try {
+    const env = getEnv();
+    const result = await syncSubmissionToAttio(submission, {
+      apiKey: env.ATTIO_API_KEY,
+      ownerEmail: env.ATTIO_DEAL_OWNER_EMAIL ?? DEFAULT_DEAL_OWNER,
+    });
+    if (result.status === 'skipped') return;
+    if (result.status === 'failed') {
+      await reportError(new Error(result.error), { operation: 'syncSubmissionToAttio', submissionId });
+    }
+    if (submissionId === undefined) return;
+    await db
+      .update(contactSubmissions)
+      .set(
+        result.status === 'synced'
+          ? { attioRecordUrl: result.recordUrl, attioError: null, attioSyncedAt: new Date() }
+          : { attioError: result.error.slice(0, 1000), attioSyncedAt: new Date() }
+      )
+      .where(eq(contactSubmissions.id, submissionId));
+  } catch (error) {
+    await reportError(error, { operation: 'syncToAttio', submissionId });
+  }
+}
 
 async function sendEmailOrThrow(
   payload: SendEmailPayload,
@@ -86,8 +122,9 @@ export async function POST(request: NextRequest) {
 
     // Save to database
     let stored = false;
+    let submissionId: number | undefined;
     try {
-      await db.insert(contactSubmissions).values({
+      const [row] = await db.insert(contactSubmissions).values({
         firstName: name?.split(' ')?.[0] || name || 'Friend',
         lastName: name?.split(' ')?.slice(1).join(' ') || '',
         email,
@@ -99,7 +136,11 @@ export async function POST(request: NextRequest) {
         status: 'new',
         ipAddress: ip,
         userAgent: request.headers.get('user-agent') || 'unknown',
-      });
+        school: rest.school || null,
+        pageUrl: rest.pageUrl ?? null,
+        referrerUrl: rest.referrerUrl ?? null,
+      }).returning({ id: contactSubmissions.id });
+      submissionId = row?.id;
       stored = true;
     } catch (dbError) {
       console.error('Failed to save contact submission to database:', dbError);
@@ -108,116 +149,150 @@ export async function POST(request: NextRequest) {
     // Only the form type and source: never the submitter's email or name.
     if (stored) await trackServerEvent('contact.received', { type: type ?? null, source: submissionSource });
 
-    if (type === 'inquiry') {
-      // Build a plain email using our templates module
-      const subject = `New Show Inquiry from ${name || 'Unknown'}`;
-      const services = toServiceCategories(rest.services);
+    // Started now so it runs alongside the emails; awaited before responding
+    // so the serverless function is not frozen mid-sync.
+    const attio = syncToAttio(submissionId, {
+      kind: type === 'resource_download' ? 'resource_download' : 'inquiry',
+      email,
+      firstName: name?.split(' ')?.[0] || name || '',
+      lastName: name?.split(' ')?.slice(1).join(' ') || '',
+      phone: rest.phone,
+      school: rest.school,
+      role: rest.role,
+      showInterest: rest.showInterest,
+      bandSize: rest.bandSize,
+      abilityLevel: rest.abilityLevel,
+      instrumentation: rest.instrumentation,
+      services: rest.services,
+      message,
+      referralSource: rest.referralSource,
+      referralBandDirector: rest.referralBandDirector,
+      pageUrl: rest.pageUrl,
+      referrerUrl: rest.referrerUrl,
+      submissionId,
+      siteUrl: getPublicSiteUrl(),
+    });
 
-      const emailData = {
-        firstName: name?.split(' ')?.[0] || name || 'Friend',
-        lastName: name?.split(' ')?.slice(1).join(' ') || '',
-        email,
-        phone: rest.phone,
-        school: rest.school,
-        showInterest: rest.showInterest,
-        bandSize: rest.bandSize,
-        abilityLevel: rest.abilityLevel,
-        instrumentation: rest.instrumentation,
-        services,
-        message: message || '',
-        privacyAgreed: true,
-        source: submissionSource,
-        referralSource: rest.referralSource,
-        referralBandDirector: rest.referralBandDirector,
-      };
+    try {
+      if (type === 'inquiry') {
+        // Build a plain email using our templates module
+        const subject = `New Show Inquiry from ${name || 'Unknown'}`;
+        const services = toServiceCategories(rest.services);
 
-      const { html, text } = generateContactEmailTemplate(emailData);
+        const emailData = {
+          firstName: name?.split(' ')?.[0] || name || 'Friend',
+          lastName: name?.split(' ')?.slice(1).join(' ') || '',
+          email,
+          phone: rest.phone,
+          school: rest.school,
+          showInterest: rest.showInterest,
+          bandSize: rest.bandSize,
+          abilityLevel: rest.abilityLevel,
+          instrumentation: rest.instrumentation,
+          services,
+          message: message || '',
+          privacyAgreed: true,
+          source: submissionSource,
+          referralSource: rest.referralSource,
+          referralBandDirector: rest.referralBandDirector,
+          pageUrl: rest.pageUrl,
+          referrerUrl: rest.referrerUrl,
+        };
 
-      await sendEmailOrThrow({
-        to: getAdminRecipients(),
-        subject,
-        html,
-        text,
-        replyTo: email,
-      }, 'admin inquiry notification');
+        const { html, text } = generateContactEmailTemplate(emailData);
 
-      const confirmation = generateCustomerConfirmationTemplate(emailData, 'inquiry');
+        await sendEmailOrThrow({
+          to: getAdminRecipients(),
+          subject,
+          html,
+          text,
+          replyTo: email,
+        }, 'admin inquiry notification');
 
-      await sendEmailOrThrow({
-        to: email,
-        subject: 'We received your inquiry — Bright Designs Band',
-        html: confirmation.html,
-        text: confirmation.text,
-      }, 'customer inquiry confirmation');
+        const confirmation = generateCustomerConfirmationTemplate(emailData, 'inquiry');
 
-    } else if (type === 'resource_download') {
-      const subject = `Guide request: Visual Technique Guide - ${name || 'Unknown'}`;
-      const resourceServices: ServiceCategory[] = ['visual-technique-guide'];
+        await sendEmailOrThrow({
+          to: email,
+          subject: 'We received your inquiry — Bright Designs Band',
+          html: confirmation.html,
+          text: confirmation.text,
+        }, 'customer inquiry confirmation');
+
+      } else if (type === 'resource_download') {
+        const subject = `Guide request: Visual Technique Guide - ${name || 'Unknown'}`;
+        const resourceServices: ServiceCategory[] = ['visual-technique-guide'];
       
-      const emailData = {
-        firstName: name?.split(' ')?.[0] || name || 'Friend',
-        lastName: name?.split(' ')?.slice(1).join(' ') || '',
-        email,
-        school: rest.school,
-        role: rest.role, // Capture role if provided
-        services: resourceServices,
-        message: 'Requested the Visual Technique Guide — please send it to them.',
-        privacyAgreed: true,
-        source: submissionSource,
-      };
+        const emailData = {
+          firstName: name?.split(' ')?.[0] || name || 'Friend',
+          lastName: name?.split(' ')?.slice(1).join(' ') || '',
+          email,
+          school: rest.school,
+          role: rest.role, // Capture role if provided
+          services: resourceServices,
+          message: 'Requested the Visual Technique Guide — please send it to them.',
+          privacyAgreed: true,
+          source: submissionSource,
+          pageUrl: rest.pageUrl,
+          referrerUrl: rest.referrerUrl,
+        };
 
-      const { html, text } = generateContactEmailTemplate(emailData);
+        const { html, text } = generateContactEmailTemplate(emailData);
 
-      // Notification to admin
-      await sendEmailOrThrow({
-        to: getAdminRecipients(),
-        subject,
-        html,
-        text,
-        replyTo: email,
-      }, 'admin guide request notification');
+        // Notification to admin
+        await sendEmailOrThrow({
+          to: getAdminRecipients(),
+          subject,
+          html,
+          text,
+          replyTo: email,
+        }, 'admin guide request notification');
 
-      // We could send a specific confirmation/download link email to the user here if we wanted
-      // For now, we'll stick to just the notification to admin as requested ("get an internal notification")
+        // We could send a specific confirmation/download link email to the user here if we wanted
+        // For now, we'll stick to just the notification to admin as requested ("get an internal notification")
 
-    } else {
-      // General contact: use same templates
-      const subject = `New Contact from ${name || 'Unknown'}`;
-      const services = toServiceCategories(rest.services);
+      } else {
+        // General contact: use same templates
+        const subject = `New Contact from ${name || 'Unknown'}`;
+        const services = toServiceCategories(rest.services);
 
-      const emailData = {
-        firstName: name?.split(' ')?.[0] || name || 'Friend',
-        lastName: name?.split(' ')?.slice(1).join(' ') || '',
-        email,
-        phone: rest.phone,
-        school: rest.school,
-        showInterest: rest.showInterest,
-        services,
-        message: message || '',
-        privacyAgreed: true,
-        source: submissionSource,
-        referralSource: rest.referralSource,
-        referralBandDirector: rest.referralBandDirector,
-      };
+        const emailData = {
+          firstName: name?.split(' ')?.[0] || name || 'Friend',
+          lastName: name?.split(' ')?.slice(1).join(' ') || '',
+          email,
+          phone: rest.phone,
+          school: rest.school,
+          showInterest: rest.showInterest,
+          services,
+          message: message || '',
+          privacyAgreed: true,
+          source: submissionSource,
+          referralSource: rest.referralSource,
+          referralBandDirector: rest.referralBandDirector,
+          pageUrl: rest.pageUrl,
+          referrerUrl: rest.referrerUrl,
+        };
 
-      const { html, text } = generateContactEmailTemplate(emailData);
+        const { html, text } = generateContactEmailTemplate(emailData);
 
-      await sendEmailOrThrow({
-        to: getAdminRecipients(),
-        subject,
-        html,
-        text,
-        replyTo: email,
-      }, 'admin general contact notification');
+        await sendEmailOrThrow({
+          to: getAdminRecipients(),
+          subject,
+          html,
+          text,
+          replyTo: email,
+        }, 'admin general contact notification');
 
-      const confirmation = generateCustomerConfirmationTemplate(emailData, 'contact');
+        const confirmation = generateCustomerConfirmationTemplate(emailData, 'contact');
 
-      await sendEmailOrThrow({
-        to: email,
-        subject: 'We received your message — Bright Designs Band',
-        html: confirmation.html,
-        text: confirmation.text,
-      }, 'customer general confirmation');
+        await sendEmailOrThrow({
+          to: email,
+          subject: 'We received your message — Bright Designs Band',
+          html: confirmation.html,
+          text: confirmation.text,
+        }, 'customer general confirmation');
+      }
+    } finally {
+      await attio;
     }
 
     return NextResponse.json({ success: true });

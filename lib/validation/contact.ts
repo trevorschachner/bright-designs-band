@@ -19,6 +19,27 @@ const noControlChars = (value: string) => !/[\r\n]/.test(value)
 
 const optionalText = (max: number) => z.string().trim().max(max).optional()
 
+/**
+ * Where a submission came from, as something safe to store and show in admin:
+ * an in-site path stays a path (`/shows/hive-mind?x=1`); an external page
+ * keeps only its origin and path (no query, which can carry tokens); anything
+ * else (`javascript:`, protocol-relative, garbage) is dropped.
+ */
+export function traceUrl(value: string | undefined): string | undefined {
+  const v = value?.trim()
+  if (!v || /[\r\n]/.test(v)) return undefined
+  if (v.startsWith('/') && !v.startsWith('//')) return v.slice(0, 1000)
+  try {
+    const url = new URL(v)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined
+    return `${url.origin}${url.pathname}`.slice(0, 1000)
+  } catch {
+    return undefined
+  }
+}
+
+const optionalTraceUrl = z.string().max(2048).optional().transform(traceUrl)
+
 export const contactSubmissionSchema = z.object({
   // name and message are optional in practice: the resource-download flow
   // posts without them and the handler substitutes defaults.
@@ -45,6 +66,9 @@ export const contactSubmissionSchema = z.object({
   // Validating the element type here is what lets the handler pass it
   // through without a cast.
   services: z.array(z.string()).max(50).optional(),
+  // The page the form was sent from and the one before it (lib/page-trail.ts).
+  pageUrl: optionalTraceUrl,
+  referrerUrl: optionalTraceUrl,
   // Cloudflare Turnstile response from the widget. Required on every form
   // that posts here; verified server-side before anything is stored or sent.
   // Stripped by the handler before persistence or email.
