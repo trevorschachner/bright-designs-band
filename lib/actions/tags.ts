@@ -7,6 +7,7 @@ import { toIso } from '@/lib/services/cache'
 import { createTagSchema, tagIdSchema, updateTagSchema } from '@/lib/validation/tags'
 import { assertFresh, guarded, NotFoundError } from './_guarded'
 import type { ActionResult } from './result'
+import type { TagKind } from '@/lib/validation/enums'
 
 /**
  * Tag writes. guard('canManageTags') → strict schema → write →
@@ -14,34 +15,35 @@ import type { ActionResult } from './result'
  * duplicate is `conflict`. See ./README.md.
  */
 
-export type TagWriteResult = { id: number; name: string; updatedAt: string }
+export type TagWriteResult = { id: number; name: string; kind: TagKind; updatedAt: string }
 
-const COLUMNS = { id: tags.id, name: tags.name, updatedAt: tags.updatedAt }
+const COLUMNS = { id: tags.id, name: tags.name, kind: tags.kind, updatedAt: tags.updatedAt }
 
-const toResult = (row: { id: number; name: string; updatedAt: Date | string }): TagWriteResult => ({
+const toResult = (row: { id: number; name: string; kind: TagKind; updatedAt: Date | string }): TagWriteResult => ({
   id: row.id,
   name: row.name,
+  kind: row.kind,
   updatedAt: toIso(row.updatedAt) ?? '',
 })
 
 const runCreateTag = guarded(
   'canManageTags',
   createTagSchema,
-  async ({ name }, { db }) => {
-    const [row] = await db.insert(tags).values({ name }).returning(COLUMNS)
+  async ({ name, kind }, { db }) => {
+    const [row] = await db.insert(tags).values({ name, ...(kind ? { kind } : {}) }).returning(COLUMNS)
     return { data: toResult(row), invalidate: () => invalidateTags() }
   },
   'createTag'
 )
 
-export async function createTag(input: { name: string }): Promise<ActionResult<TagWriteResult>> {
+export async function createTag(input: { name: string; kind?: TagKind }): Promise<ActionResult<TagWriteResult>> {
   return runCreateTag(input)
 }
 
 const runUpdateTag = guarded(
   'canManageTags',
   updateTagSchema,
-  async ({ id, name, updatedAt }, { db }) => {
+  async ({ id, name, kind, updatedAt }, { db }) => {
     const row = await db.transaction(async (tx) => {
       const [current] = await tx
         .select({ updatedAt: tags.updatedAt })
@@ -53,7 +55,7 @@ const runUpdateTag = guarded(
       assertFresh(current.updatedAt, updatedAt, 'tag')
       const [updated] = await tx
         .update(tags)
-        .set({ name, updatedAt: new Date() })
+        .set({ name, ...(kind ? { kind } : {}), updatedAt: new Date() })
         .where(eq(tags.id, id))
         .returning(COLUMNS)
       return updated
@@ -63,8 +65,8 @@ const runUpdateTag = guarded(
   'updateTag'
 )
 
-/** Renames a tag. `updatedAt` is the value the caller loaded; a changed tag is `stale`. */
-export async function updateTag(input: { id: number; name: string; updatedAt: string }): Promise<ActionResult<TagWriteResult>> {
+/** Renames a tag (and sets its kind when given). `updatedAt` is the value the caller loaded; a changed tag is `stale`. */
+export async function updateTag(input: { id: number; name: string; kind?: TagKind; updatedAt: string }): Promise<ActionResult<TagWriteResult>> {
   return runUpdateTag(input)
 }
 

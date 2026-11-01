@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { createArrangement, updateArrangement } from '@/lib/actions/arrangements';
+import { createArrangement, updateArrangement, type ArrangementWriteResult } from '@/lib/actions/arrangements';
 import type { EditableArrangement } from '@/lib/services/admin';
 import { formatDuration } from '@/lib/utils';
 import {
@@ -40,18 +40,20 @@ function defaults(arrangement: EditableArrangement | undefined, percussionArrang
     youtubeUrl: arrangement?.youtubeUrl ?? '',
     sampleScoreUrl: arrangement?.sampleScoreUrl ?? '',
     commissioned: arrangement?.commissioned ?? '',
+    featured: arrangement?.featured ?? false,
     tags: arrangement?.tagIds ?? [],
   };
 }
 
 type Props = {
-  showId: number;
-  /** Edit this part; absent = add a new one to the end of the show. */
+  /** The show a new part is added to (at the end); absent = a standalone part. */
+  showId?: number;
+  /** Edit this part; absent = add a new one. */
   arrangement?: EditableArrangement;
   /** New parts start with the show's percussion credit, as before. */
   showPercussionArranger?: string | null;
   allTags: TagOption[];
-  onSaved: () => void;
+  onSaved: (saved: ArrangementWriteResult) => void;
   onCancel: () => void;
 };
 
@@ -73,8 +75,8 @@ export function ArrangementForm({ showId, arrangement, showPercussionArranger, a
     try {
       const result = arrangement
         ? await updateArrangement({ id: arrangement.id, updatedAt: arrangement.updatedAt, ...fields })
-        : await createArrangement({ showId, ...fields });
-      if (result.ok) return onSaved();
+        : await createArrangement(showId === undefined ? fields : { showId, ...fields });
+      if (result.ok) return onSaved(result.data);
       if (result.error === 'stale') return setStale(true);
       const unplaced = result.error === 'invalid' ? applyIssues(result.issues, FIELDS, setError, ARRANGEMENT_ISSUE_FIELD) : [];
       setMessage(unplaced[0] ?? ERROR_TEXT[result.error]);
@@ -96,8 +98,8 @@ export function ArrangementForm({ showId, arrangement, showPercussionArranger, a
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
             <span>This part was changed by someone else. Reload to see their changes.</span>
-            {/* eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full reload on purpose: drop every form's state and re-read the editor */}
-            <Button type="button" size="sm" variant="outline" onClick={() => window.location.assign(`${window.location.origin}/admin/shows/${showId}`)}>
+            {/* A full reload on purpose: drop every form's state and re-read the page. */}
+            <Button type="button" size="sm" variant="outline" onClick={() => window.location.reload()}>
               Reload
             </Button>
           </AlertDescription>
@@ -147,6 +149,11 @@ export function ArrangementForm({ showId, arrangement, showPercussionArranger, a
         <Field id={id('description')} label="Description" error={errors.description?.message} className="md:col-span-2">
           <Textarea id={id('description')} rows={3} {...register('description')} />
         </Field>
+        <div className="md:col-span-2 flex items-center gap-2 text-sm">
+          <input id={id('featured')} type="checkbox" className="h-4 w-4" {...register('featured')} />
+          <label htmlFor={id('featured')} className="font-medium">Featured</label>
+          <span className="text-muted-foreground">For the catalog&apos;s Featured sort.</span>
+        </div>
         <div className="md:col-span-2 space-y-2">
           <span className="text-sm font-medium">Tags</span>
           <TagPicker

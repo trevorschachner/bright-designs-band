@@ -39,6 +39,21 @@ import { Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { createTag, deleteTag, updateTag } from '@/lib/actions/tags';
 import { actionMessage, type ActionResult } from '@/lib/actions/result';
 import type { AdminTagRow } from '@/lib/services/tags';
+import { TAG_KINDS, type TagKind } from '@/lib/validation/enums';
+
+const KIND_LABELS: Record<TagKind, string> = { theme: 'Theme', mood: 'Mood', genre: 'Genre', style: 'Style', other: 'Other' };
+const SELECT = 'w-full h-10 px-3 border rounded-md bg-background text-sm';
+
+/** The facet a tag belongs to; the catalog groups filters by it. */
+function KindSelect({ id, value, onChange, disabled }: { id: string; value: TagKind; onChange: (kind: TagKind) => void; disabled: boolean }) {
+  return (
+    <select id={id} className={SELECT} value={value} onChange={(e) => onChange(e.target.value as TagKind)} disabled={disabled}>
+      {TAG_KINDS.map((kind) => (
+        <option key={kind} value={kind}>{KIND_LABELS[kind]}</option>
+      ))}
+    </select>
+  );
+}
 
 const MESSAGES = {
   conflict: 'A tag with that name already exists.',
@@ -52,12 +67,14 @@ const MESSAGES = {
 export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
   const router = useRouter();
   const [newTagName, setNewTagName] = useState('');
+  const [newTagKind, setNewTagKind] = useState<TagKind>('other');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Edit state
   const [editingTag, setEditingTag] = useState<AdminTagRow | null>(null);
   const [editName, setEditName] = useState('');
+  const [editKind, setEditKind] = useState<TagKind>('other');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Delete state
@@ -83,12 +100,13 @@ export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTagName.trim()) return;
-    if (await run(() => createTag({ name: newTagName }))) setNewTagName('');
+    if (await run(() => createTag({ name: newTagName, kind: newTagKind }))) setNewTagName('');
   };
 
   const handleEditClick = (tag: AdminTagRow) => {
     setEditingTag(tag);
     setEditName(tag.name);
+    setEditKind(tag.kind);
     setIsEditDialogOpen(true);
   };
 
@@ -96,7 +114,7 @@ export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
     e.preventDefault();
     if (!editingTag || !editName.trim()) return;
     const tag = editingTag;
-    const ok = await run(() => updateTag({ id: tag.id, name: editName, updatedAt: tag.updatedAt ?? '' }));
+    const ok = await run(() => updateTag({ id: tag.id, name: editName, kind: editKind, updatedAt: tag.updatedAt ?? '' }));
     if (ok) {
       setIsEditDialogOpen(false);
       setEditingTag(null);
@@ -154,6 +172,10 @@ export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
                     disabled={submitting}
                   />
                 </div>
+                <div>
+                  <Label htmlFor="kind">Kind</Label>
+                  <KindSelect id="kind" value={newTagKind} onChange={setNewTagKind} disabled={submitting} />
+                </div>
                 <Button type="submit" className="w-full" disabled={submitting || !newTagName.trim()}>
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
                   Add Tag
@@ -170,13 +192,14 @@ export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Kind</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tags.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                       No tags found. Create one to get started.
                     </TableCell>
                   </TableRow>
@@ -184,6 +207,7 @@ export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
                   tags.map((tag) => (
                     <TableRow key={tag.id}>
                       <TableCell className="font-medium">{tag.name}</TableCell>
+                      <TableCell>{KIND_LABELS[tag.kind]}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 
@@ -253,6 +277,10 @@ export function TagsManager({ tags }: { tags: AdminTagRow[] }) {
                 onChange={(e) => setEditName(e.target.value)} 
                 disabled={submitting}
               />
+            </div>
+            <div>
+              <Label htmlFor="edit-kind">Kind</Label>
+              <KindSelect id="edit-kind" value={editKind} onChange={setEditKind} disabled={submitting} />
             </div>
             <DialogFooter>
               <DialogClose asChild>

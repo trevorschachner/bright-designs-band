@@ -8,6 +8,9 @@
  * it: the detail page(s), the home page, the list page and the sitemap (and,
  * for shows, /llms.txt and /llms-full.txt).
  *
+ * Show, part, tag and piece writes also rebuild the search index
+ * (`scheduleSearchRefresh`), which every one of them can change.
+ *
  * Tags are expired immediately (`{ expire: 0 }`) rather than with the `'max'`
  * stale-while-revalidate profile: the admin UI re-reads right after saving and
  * must see its own write, not the previous value served once more.
@@ -16,6 +19,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { PATHS, TAGS } from '@/lib/cache-tags';
 import { collections } from '@/lib/collections';
+import { scheduleSearchRefresh } from './search-refresh';
 
 const EXPIRE_NOW = { expire: 0 };
 
@@ -48,6 +52,7 @@ function expireAllPagesOf(...patterns: string[]) {
  */
 export function invalidateShow(id: number, slug: string | null | undefined, previousSlug?: string | null) {
   expireTags(TAGS.show(id), TAGS.shows);
+  scheduleSearchRefresh();
   expirePaths(
     slug ? PATHS.show(slug) : null,
     previousSlug && previousSlug !== slug ? PATHS.show(previousSlug) : null,
@@ -74,6 +79,7 @@ export function invalidateArrangement(
   previousSlug?: string | null
 ) {
   expireTags(TAGS.arrangement(id), TAGS.arrangements);
+  scheduleSearchRefresh();
   expirePaths(
     slug ? PATHS.arrangement(slug) : null,
     previousSlug && previousSlug !== slug ? PATHS.arrangement(previousSlug) : null,
@@ -87,6 +93,7 @@ export function invalidateArrangement(
 /** A tag was created, renamed or deleted. Tags show on every show and part page. */
 export function invalidateTags() {
   expireTags(TAGS.tags);
+  scheduleSearchRefresh();
   expireAllPagesOf(SHOW_PAGES, ARRANGEMENT_PAGES);
   // A tag collection (e.g. "Small Band") filters on the tag's name.
   expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap, PATHS.collections, ...collectionPaths());
@@ -95,6 +102,7 @@ export function invalidateTags() {
 /** A source piece was created, edited or deleted. Credits show on every part. */
 export function invalidatePieces() {
   expireTags(TAGS.pieces);
+  scheduleSearchRefresh();
   expireAllPagesOf(SHOW_PAGES, ARRANGEMENT_PAGES);
   expirePaths(PATHS.home, PATHS.shows, PATHS.arrangements, PATHS.sitemap);
 }
