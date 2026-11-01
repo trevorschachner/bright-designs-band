@@ -1,0 +1,56 @@
+name: Release to production
+
+# Netlify builds production from the `production` branch, not `main`, and
+# charges 15 credits per production deploy. Merging to `main` only gets a free
+# branch deploy; running this workflow fast-forwards `production` to `main`, so
+# every PR merged since the last release ships in one deploy.
+on:
+  workflow_dispatch:
+
+# Two releases at once would race to push the same branch.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  checks: read
+
+jobs:
+  release:
+    name: Fast-forward production to main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      # Never ship a commit whose CI failed or is still running.
+      - name: Require green CI on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          conclusion=$(gh api "repos/${{ github.repository }}/commits/$sha/check-runs" \
+            --jq '[.check_runs[] | select(.name == "Lint, typecheck, test and build")][0].conclusion')
+          if [ "$conclusion" != "success" ]; then
+            echo "::error::CI on main ($sha) is '${conclusion:-missing}', not success. Wait for it or fix main, then rerun."
+            exit 1
+          fi
+
+      - name: Push main to production
+        run: |
+          git fetch origin production
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/production)" ]; then
+            echo "production is already at main; nothing to release." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "## Released to production"
+            echo
+            git log --format='- %s (%h)' origin/production..HEAD
+          } >> "$GITHUB_STEP_SUMMARY"
+          # A plain push only fast-forwards. If production has commits main
+          # lacks, this fails rather than discarding them.
+          git push origin HEAD:production
