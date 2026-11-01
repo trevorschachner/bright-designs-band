@@ -55,6 +55,7 @@ export type EditableArrangement = {
   youtubeUrl: string | null;
   commissioned: string | null;
   sampleScoreUrl: string | null;
+  featured: boolean;
   orderIndex: number;
   updatedAt: string;
   tagIds: number[];
@@ -96,6 +97,84 @@ export type ShowForEdit = {
   allPieces: PieceSummary[];
 };
 
+type ArrangementWithLinks = typeof arrangements.$inferSelect & {
+  arrangementsToTags: { tagId: number }[];
+  arrangementPieces: { orderIndex: number; piece: typeof pieces.$inferSelect }[];
+};
+
+/** A part row with its tag ids and ordered pieces, as the part form edits it. */
+function toEditableArrangement(a: ArrangementWithLinks, orderIndex: number): EditableArrangement {
+  return {
+    id: a.id,
+    title: a.title,
+    composer: a.composer,
+    arranger: a.arranger,
+    percussionArranger: a.percussionArranger,
+    description: a.description,
+    grade: a.grade,
+    scene: a.scene,
+    ensembleSize: a.ensembleSize,
+    year: a.year,
+    durationSeconds: a.durationSeconds,
+    youtubeUrl: a.youtubeUrl,
+    commissioned: a.commissioned,
+    sampleScoreUrl: a.sampleScoreUrl,
+    featured: a.featured,
+    orderIndex,
+    updatedAt: toIso(a.updatedAt) ?? '',
+    tagIds: a.arrangementsToTags.map((t) => t.tagId),
+    pieces: a.arrangementPieces.map(({ orderIndex: pieceOrder, piece }) => ({
+      id: piece.id,
+      title: piece.title,
+      composer: piece.composer,
+      copyrightAmountUsd: piece.copyrightAmountUsd,
+      licensingStatus: piece.licensingStatus,
+      orderIndex: pieceOrder,
+    })),
+  };
+}
+
+/** The relations toEditableArrangement reads: tag ids and pieces in order. */
+const partLinks = () => ({
+  arrangementsToTags: { columns: { tagId: true as const } },
+  arrangementPieces: {
+    columns: { orderIndex: true as const },
+    orderBy: [asc(arrangementPieces.orderIndex)],
+    with: { piece: true as const },
+  },
+});
+
+const piecePicker = () =>
+  db.select({ id: pieces.id, title: pieces.title, composer: pieces.composer }).from(pieces).orderBy(asc(pieces.title), asc(pieces.id));
+
+export type ArrangementForEdit = {
+  arrangement: EditableArrangement;
+  /** The show that uses the part, if any: such parts are edited in the show editor. */
+  showSlug: string | null;
+  allTags: AdminTagRow[];
+  allPieces: PieceSummary[];
+};
+
+/** One part with the tag and piece pickers, for the standalone part page. Null when no part has that id. */
+export async function getArrangementForEdit(id: number): Promise<ArrangementForEdit | null> {
+  const row = await db.query.arrangements.findFirst({
+    where: eq(arrangements.id, id),
+    with: { ...partLinks(), showArrangements: { columns: {}, limit: 1, with: { show: { columns: { slug: true } } } } },
+  });
+  if (!row) return null;
+  return {
+    arrangement: toEditableArrangement(row, 0),
+    showSlug: row.showArrangements[0]?.show?.slug ?? null,
+    ...(await getPartPickers()),
+  };
+}
+
+/** The tag and piece pickers alone, for the new-part page. */
+export async function getPartPickers(): Promise<Pick<ArrangementForEdit, 'allTags' | 'allPieces'>> {
+  const [allTags, allPieces] = await Promise.all([getTagsForAdmin(), piecePicker()]);
+  return { allTags, allPieces };
+}
+
 /**
  * The show editor's data, uncached: the show (by id or exact slug, as the
  * admin list links), its parts in order with tags and pieces, every file on
@@ -111,16 +190,7 @@ export async function getShowForEdit(idOrSlug: string): Promise<ShowForEdit | nu
         columns: { orderIndex: true },
         orderBy: [asc(showArrangements.orderIndex)],
         with: {
-          arrangement: {
-            with: {
-              arrangementsToTags: { columns: { tagId: true } },
-              arrangementPieces: {
-                columns: { orderIndex: true },
-                orderBy: [asc(arrangementPieces.orderIndex)],
-                with: { piece: true },
-              },
-            },
-          },
+          arrangement: { with: partLinks() },
         },
       },
     },
@@ -129,33 +199,7 @@ export async function getShowForEdit(idOrSlug: string): Promise<ShowForEdit | nu
 
   const arrangementsList: EditableArrangement[] = row.showArrangements
     .filter((link) => Boolean(link.arrangement))
-    .map(({ orderIndex, arrangement: a }) => ({
-      id: a.id,
-      title: a.title,
-      composer: a.composer,
-      arranger: a.arranger,
-      percussionArranger: a.percussionArranger,
-      description: a.description,
-      grade: a.grade,
-      scene: a.scene,
-      ensembleSize: a.ensembleSize,
-      year: a.year,
-      durationSeconds: a.durationSeconds,
-      youtubeUrl: a.youtubeUrl,
-      commissioned: a.commissioned,
-      sampleScoreUrl: a.sampleScoreUrl,
-      orderIndex,
-      updatedAt: toIso(a.updatedAt) ?? '',
-      tagIds: a.arrangementsToTags.map((t) => t.tagId),
-      pieces: a.arrangementPieces.map(({ orderIndex: pieceOrder, piece }) => ({
-        id: piece.id,
-        title: piece.title,
-        composer: piece.composer,
-        copyrightAmountUsd: piece.copyrightAmountUsd,
-        licensingStatus: piece.licensingStatus,
-        orderIndex: pieceOrder,
-      })),
-    }));
+    .map(({ orderIndex, arrangement }) => toEditableArrangement(arrangement, orderIndex));
 
   const arrangementIds = arrangementsList.map((a) => a.id);
   const [fileRows, allTags, pieceRows] = await Promise.all([
@@ -164,7 +208,7 @@ export async function getShowForEdit(idOrSlug: string): Promise<ShowForEdit | nu
       .from(files)
       .where(arrangementIds.length > 0 ? or(eq(files.showId, row.id), inArray(files.arrangementId, arrangementIds)) : eq(files.showId, row.id)),
     getTagsForAdmin(),
-    db.select({ id: pieces.id, title: pieces.title, composer: pieces.composer }).from(pieces).orderBy(asc(pieces.title), asc(pieces.id)),
+    piecePicker(),
   ]);
 
   return {

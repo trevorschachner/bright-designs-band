@@ -21,11 +21,9 @@ import { toIso } from './cache';
 // Links into the editors
 // ---------------------------------------------------------------------------
 
-/** Arrangements are edited inside their show's editor; an orphan goes to the arrangements list. */
-export function arrangementEditorHref(showSlug: string | null | undefined, title: string): string {
-  return showSlug
-    ? `/admin/shows/${encodeURIComponent(showSlug)}`
-    : `/admin/arrangements?q=${encodeURIComponent(title)}`;
+/** Arrangements are edited inside their show's editor; a standalone part has its own page. */
+export function arrangementEditorHref(showSlug: string | null | undefined, id: number): string {
+  return showSlug ? `/admin/shows/${encodeURIComponent(showSlug)}` : `/admin/arrangements/${id}`;
 }
 
 export const showEditorHref = (slug: string) => `/admin/shows/${encodeURIComponent(slug)}`;
@@ -98,7 +96,7 @@ export async function getRecentEdits(limit = 10): Promise<RecentEdit[]> {
     id: a.id,
     title: a.title,
     updatedAt: toIso(a.updatedAt) ?? '',
-    href: arrangementEditorHref(a.showSlug, a.title),
+    href: arrangementEditorHref(a.showSlug, a.id),
   }));
   return mergeRecentEdits(showEdits, arrangementEdits, limit);
 }
@@ -154,7 +152,7 @@ async function showsWhere(where: SQL): Promise<AttentionItem[]> {
 
 async function arrangementsWhere(where: SQL): Promise<AttentionItem[]> {
   const rows = await selectArrangementsWithShow().where(where).orderBy(asc(arrangements.title), asc(arrangements.id));
-  return firstPerId(rows).map((a) => ({ id: a.id, title: a.title, href: arrangementEditorHref(a.showSlug, a.title) }));
+  return firstPerId(rows).map((a) => ({ id: a.id, title: a.title, href: arrangementEditorHref(a.showSlug, a.id) }));
 }
 
 /**
@@ -206,7 +204,7 @@ export async function getArrangementsPageForAdmin({ q, page, limit }: { q?: stri
       composer: a.composer,
       updatedAt: toIso(a.updatedAt) ?? '',
       showTitle: show?.title ?? null,
-      href: arrangementEditorHref(show?.slug, a.title),
+      href: arrangementEditorHref(show?.slug, a.id),
     };
   });
   return { data, total: Number(total?.count ?? 0) };

@@ -68,6 +68,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.3.16",
     "@lhci/cli": "^0.15.1",
     "@netlify/plugin-nextjs": "5.16.2",
     "@tailwindcss/container-queries": "^0.1.1",

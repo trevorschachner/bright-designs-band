@@ -21,8 +21,8 @@ const MAX_QUERY = 80;
 
 /**
  * Every arrangement (show part), searchable by title with `?q=`. Parts are
- * edited inside their show's editor, so each row links there; a part no show
- * uses has no editor and is listed without a link.
+ * edited inside their show's editor, so each row links there; a standalone
+ * part (no show) links to its own page.
  */
 export default async function AdminArrangementsPage({
   searchParams,
@@ -52,9 +52,14 @@ export default async function AdminArrangementsPage({
           <BreadcrumbItem><BreadcrumbPage>Arrangements</BreadcrumbPage></BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <h1 className="text-4xl font-bold mb-2">Arrangements</h1>
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
+        <h1 className="text-4xl font-bold">Arrangements</h1>
+        <Button asChild>
+          <Link href="/admin/arrangements/new">New standalone part</Link>
+        </Button>
+      </div>
       <p className="text-muted-foreground mb-6 max-w-2xl">
-        Every show part. Open a part&apos;s show to edit it, its files and its pieces.
+        Every part. A part in a show is edited in that show&apos;s editor; a standalone part has its own page.
       </p>
       <form role="search" action="/admin/arrangements" className="mb-4 flex max-w-md gap-2">
         <Input type="search" name="q" defaultValue={q ?? ''} placeholder="Search by title" aria-label="Search arrangements" maxLength={MAX_QUERY} />
@@ -78,7 +83,7 @@ export default async function AdminArrangementsPage({
               {result.data.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>
-                    {row.showTitle ? <Link href={row.href} className="hover:underline">{row.title}</Link> : row.title}
+                    <Link href={row.href} className="hover:underline">{row.title}</Link>
                   </TableCell>
                   <TableCell>{row.composer ?? '—'}</TableCell>
                   <TableCell>{row.showTitle ?? <span className="text-muted-foreground">Not in a show</span>}</TableCell>

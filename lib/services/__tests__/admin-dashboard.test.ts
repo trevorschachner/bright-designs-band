@@ -119,7 +119,7 @@ describe('getNeedsAttention', () => {
     expect(audio.count).toBe(2)
     expect(audio.items).toEqual([
       { id: 5, title: 'Part 1', href: '/admin/shows/apex' },
-      { id: 6, title: 'Orphan', href: '/admin/arrangements?q=Orphan' },
+      { id: 6, title: 'Orphan', href: '/admin/arrangements/6' },
     ])
   })
 })

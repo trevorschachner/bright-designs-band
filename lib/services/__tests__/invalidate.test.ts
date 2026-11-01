@@ -14,6 +14,8 @@ const { revalidateTag, revalidatePath } = vi.hoisted(() => ({
   revalidatePath: vi.fn(),
 }))
 vi.mock('next/cache', () => ({ revalidateTag, revalidatePath }))
+const { scheduleSearchRefresh } = vi.hoisted(() => ({ scheduleSearchRefresh: vi.fn() }))
+vi.mock('@/lib/services/search-refresh', () => ({ scheduleSearchRefresh }))
 
 // Prerendered collection landing pages, named because one built without a
 // database holds no tagged read to expire.
@@ -25,6 +27,22 @@ const paths = () => revalidatePath.mock.calls.map(([path, type]) => (type ? `${p
 beforeEach(() => {
   revalidateTag.mockClear()
   revalidatePath.mockClear()
+  scheduleSearchRefresh.mockClear()
+})
+
+describe('the search index', () => {
+  it('is rebuilt after a show, part, tag or piece write', () => {
+    for (const write of [() => invalidateShow(1, 'a'), () => invalidateArrangement(2, 'p'), invalidateTags, invalidatePieces]) {
+      scheduleSearchRefresh.mockClear()
+      write()
+      expect(scheduleSearchRefresh).toHaveBeenCalledTimes(1)
+    }
+  })
+
+  it('is left alone by a resource write, which search does not cover', () => {
+    invalidateResources()
+    expect(scheduleSearchRefresh).not.toHaveBeenCalled()
+  })
 })
 
 describe('every tag is expired immediately', () => {

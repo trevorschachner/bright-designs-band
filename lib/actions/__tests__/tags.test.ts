@@ -40,8 +40,11 @@ function tagDb(overrides: Partial<Record<string, (op: Op) => unknown[]>> = {}): 
     const custom = overrides[`${op.kind}:${op.table}`]
     if (custom) return custom(op)
     if (op.kind === 'select') return [{ updatedAt: new Date(LOADED) }]
-    if (op.kind === 'insert') return [{ id: 5, name: (op.values as { name: string }).name, updatedAt: SAVED }]
-    if (op.kind === 'update') return [{ id: 5, name: op.set?.name, updatedAt: SAVED }]
+    if (op.kind === 'insert') {
+      const values = op.values as { name: string; kind?: string }
+      return [{ id: 5, name: values.name, kind: values.kind ?? 'other', updatedAt: SAVED }]
+    }
+    if (op.kind === 'update') return [{ id: 5, name: op.set?.name, kind: op.set?.kind ?? 'other', updatedAt: SAVED }]
     if (op.kind === 'delete') return [{ id: 5 }]
     return []
   }
@@ -65,7 +68,7 @@ describe('tag actions', () => {
   })
 
   it('createTag trims, inserts, invalidates; a duplicate name is conflict', async () => {
-    expect(await createTag({ name: '  Dark ' })).toEqual({ ok: true, data: { id: 5, name: 'Dark', updatedAt: SAVED.toISOString() } })
+    expect(await createTag({ name: '  Dark ' })).toEqual({ ok: true, data: { id: 5, name: 'Dark', kind: 'other', updatedAt: SAVED.toISOString() } })
     expect(invalidateTags).toHaveBeenCalledTimes(1)
     use(tagDb({ 'insert:tags': () => { throw uniqueViolation() } }))
     expect(await createTag({ name: 'Dark' })).toEqual({ ok: false, error: 'conflict' })
@@ -89,6 +92,16 @@ describe('tag actions', () => {
     use(tagDb({ 'update:tags': () => { throw uniqueViolation() } }))
     expect(await updateTag({ id: 5, name: 'Dark', updatedAt: LOADED })).toEqual({ ok: false, error: 'conflict' })
     expect(invalidateTags).not.toHaveBeenCalled()
+  })
+
+  it('a tag has a kind (theme, mood, genre, style, other); left out it stays as it was', async () => {
+    expect(await createTag({ name: 'Heroic', kind: 'mood' })).toMatchObject({ ok: true, data: { kind: 'mood' } })
+    expect(opsOn(state.fake.ops, 'tags', 'insert')[0].values).toEqual({ name: 'Heroic', kind: 'mood' })
+    await updateTag({ id: 5, name: 'Heroic', kind: 'genre', updatedAt: LOADED })
+    expect(opsOn(state.fake.ops, 'tags', 'update')[0].set).toEqual({ name: 'Heroic', kind: 'genre', updatedAt: expect.any(Date) })
+    await updateTag({ id: 5, name: 'Heroic', updatedAt: LOADED })
+    expect(opsOn(state.fake.ops, 'tags', 'update')[1].set).not.toHaveProperty('kind')
+    expect(await createTag({ name: 'Red', kind: 'color' } as never)).toMatchObject({ ok: false, error: 'invalid', issues: [{ path: 'kind' }] })
   })
 
   it('deleteTag deletes and invalidates; not_found when nothing matched', async () => {
