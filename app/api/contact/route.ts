@@ -13,6 +13,7 @@ import { reportError } from '@/lib/observability/report-error';
 import { syncSubmissionToAttio, type AttioSubmission } from '@/lib/integrations/attio';
 import { getPublicSiteUrl } from '@/lib/env';
 import { eq } from 'drizzle-orm';
+import { FREE_SHOW_TITLE, FREE_SHOW_TYPE, freeShowMessage, freeShowOpen } from '@/lib/free-show';
 
 const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 
@@ -91,6 +92,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (validated.data.type === FREE_SHOW_TYPE && !freeShowOpen()) {
+      return NextResponse.json({ error: 'Entries are closed' }, { status: 400 });
+    }
+
     // Order matters: the rate limit runs before Turnstile so a flood of bad
     // tokens cannot make us call Cloudflare without bound, and both run
     // before anything is stored or emailed.
@@ -112,7 +117,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Verification failed' }, { status: 400 });
     }
 
-    const { name, email, message, type } = rest;
+    const { name, email, type } = rest;
+    // Free-show sign-ups carry their answers as separate fields; folding them
+    // into the message is what stores, emails and syncs them.
+    const isFreeShow = type === FREE_SHOW_TYPE;
+    const message = isFreeShow ? freeShowMessage(rest) : rest.message;
+    const showInterest = isFreeShow ? FREE_SHOW_TITLE : rest.showInterest;
     const formSource = typeof rest.source === 'string' ? rest.source : undefined;
     const submissionSource =
       formSource ||
@@ -129,7 +139,7 @@ export async function POST(request: NextRequest) {
         lastName: name?.split(' ')?.slice(1).join(' ') || '',
         email,
         phone: rest.phone || null,
-        service: type === 'resource_download' ? 'Visual Technique Guide Download' : ((rest.services?.length ? rest.services.join(', ') : (type || 'General Contact'))),
+        service: type === 'resource_download' ? 'Visual Technique Guide Download' : isFreeShow ? FREE_SHOW_TITLE : ((rest.services?.length ? rest.services.join(', ') : (type || 'General Contact'))),
         message: message || (type === 'resource_download' ? 'Resource Download Request' : ''),
         privacyAgreed: true, // Assuming consent is given by submitting
         source: submissionSource,
@@ -159,7 +169,7 @@ export async function POST(request: NextRequest) {
       phone: rest.phone,
       school: rest.school,
       role: rest.role,
-      showInterest: rest.showInterest,
+      showInterest,
       bandSize: rest.bandSize,
       abilityLevel: rest.abilityLevel,
       instrumentation: rest.instrumentation,
@@ -249,6 +259,43 @@ export async function POST(request: NextRequest) {
 
         // We could send a specific confirmation/download link email to the user here if we wanted
         // For now, we'll stick to just the notification to admin as requested ("get an internal notification")
+
+      } else if (isFreeShow) {
+        const subject = `${FREE_SHOW_TITLE} entry from ${name || 'Unknown'}`;
+
+        const emailData = {
+          firstName: name?.split(' ')?.[0] || name || 'Friend',
+          lastName: name?.split(' ')?.slice(1).join(' ') || '',
+          email,
+          school: rest.school,
+          showInterest,
+          bandSize: rest.bandSize,
+          services: [],
+          message: message || '',
+          privacyAgreed: true,
+          source: submissionSource,
+          pageUrl: rest.pageUrl,
+          referrerUrl: rest.referrerUrl,
+        };
+
+        const { html, text } = generateContactEmailTemplate(emailData);
+
+        await sendEmailOrThrow({
+          to: getAdminRecipients(),
+          subject,
+          html,
+          text,
+          replyTo: email,
+        }, 'admin free show entry notification');
+
+        const confirmation = generateCustomerConfirmationTemplate(emailData, 'free_show_signup');
+
+        await sendEmailOrThrow({
+          to: email,
+          subject: `You're entered: ${FREE_SHOW_TITLE} — Bright Designs Band`,
+          html: confirmation.html,
+          text: confirmation.text,
+        }, 'customer free show confirmation');
 
       } else {
         // General contact: use same templates

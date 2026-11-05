@@ -1,4 +1,5 @@
 import { ContactFormData } from './types';
+import { FREE_SHOW_DEADLINE_LABEL } from '@/lib/free-show';
 
 const LOGO_URL = 'https://brightdesigns.band/logos/brightdesignslogo-main.png';
 
@@ -336,13 +337,34 @@ Please respond within 24 hours.
 }
 
 /** Which kind of submission a confirmation acknowledges. */
-export type ConfirmationKind = 'inquiry' | 'contact' | 'resource_download';
+export type ConfirmationKind = 'inquiry' | 'contact' | 'resource_download' | 'free_show_signup';
 
 // Fixed phrases: the confirmation never names the topic the submitter typed.
 const CONFIRMATION_SUBJECTS: Record<ConfirmationKind, string> = {
   inquiry: 'your show inquiry',
   contact: 'your message',
   resource_download: 'your guide request',
+  free_show_signup: 'your 2027 Indoor Winds Free Show entry',
+};
+
+// A drawing entry gets no reply, so its confirmation says so instead of
+// promising one within 24 hours.
+const CONFIRMATION_INTROS: Partial<Record<ConfirmationKind, string>> = {
+  free_show_signup: "you're in the drawing. We'll email you if your group is drawn.",
+};
+
+const DEFAULT_EXPECTATIONS = [
+  'Our team will review your request and respond within <strong>24 hours</strong> during business days',
+  "We'll reach out to discuss your project and how we can best support your band",
+  'You can reply directly to this email if you have any questions',
+];
+
+const CONFIRMATION_EXPECTATIONS: Partial<Record<ConfirmationKind, string[]>> = {
+  free_show_signup: [
+    `Entries close ${FREE_SHOW_DEADLINE_LABEL}. After that, we draw one winds group at random`,
+    "If your group is drawn, we'll email you at this address",
+    'You can reply directly to this email if you have any questions',
+  ],
 };
 
 /**
@@ -399,6 +421,8 @@ export function generateCustomerConfirmationTemplate(
     .join(', ');
   const firstName = confirmationFirstName(data.firstName);
   const subject = CONFIRMATION_SUBJECTS[kind];
+  const intro = `We've received ${subject}${CONFIRMATION_INTROS[kind] ? ` and ${CONFIRMATION_INTROS[kind]}` : ' and will reply within 24 hours.'}`;
+  const expectations = CONFIRMATION_EXPECTATIONS[kind] ?? DEFAULT_EXPECTATIONS;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -425,7 +449,7 @@ export function generateCustomerConfirmationTemplate(
           <tr>
             <td style="padding:30px 20px;">
               <!-- Intro Message -->
-              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">We've received ${subject} and will reply within 24 hours.</p>
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">${intro}</p>
               ${selectedServices ? `
               <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${colors.charcoal};">Services you selected: ${escapeHtmlText(selectedServices)}</p>
               ` : ''}
@@ -436,9 +460,7 @@ export function generateCustomerConfirmationTemplate(
                   <td style="padding:20px;">
                     <p style="margin:0 0 12px;font-size:15px;font-weight:600;color:${colors.midnight};">What to Expect Next</p>
                     <ul style="margin:0;padding-left:20px;color:${colors.charcoal};">
-                      <li style="margin-bottom:8px;font-size:14px;color:${colors.charcoal};">Our team will review your request and respond within <strong>24 hours</strong> during business days</li>
-                      <li style="margin-bottom:8px;font-size:14px;color:${colors.charcoal};">We'll reach out to discuss your project and how we can best support your band</li>
-                      <li style="font-size:14px;color:${colors.charcoal};">You can reply directly to this email if you have any questions</li>
+                      ${expectations.map((item, i) => `<li style="${i < expectations.length - 1 ? 'margin-bottom:8px;' : ''}font-size:14px;color:${colors.charcoal};">${item}</li>`).join('\n                      ')}
                     </ul>
                   </td>
                 </tr>
@@ -484,7 +506,7 @@ export function generateCustomerConfirmationTemplate(
 
 Hi ${firstName},
 
-We've received ${subject} and will reply within 24 hours.
+${intro}
 ${selectedServices ? `\nServices you selected: ${selectedServices}\n` : ''}
 In the meantime, feel free to browse our website at https://brightdesigns.band
 

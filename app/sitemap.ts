@@ -21,6 +21,7 @@ const STATIC_PAGES: { path: string; changeFrequency: 'weekly' | 'monthly' | 'yea
   { path: '/process', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/faqs', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/contact', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/indoor-winds-2027', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/resources', changeFrequency: 'weekly', priority: 0.6 },
   { path: '/blog', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
