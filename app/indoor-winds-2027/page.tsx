@@ -38,6 +38,15 @@ const steps = [
   { title: "We send the show", body: "The winning group gets the drill and wind music for 2027, and we cover the copyright costs." },
 ]
 
+const rules = [
+  "Free to enter. No purchase necessary.",
+  "Open to any indoor winds group, scholastic or independent. One entry per group.",
+  `Entries close at 11:59 p.m. Eastern on ${FREE_SHOW_DEADLINE_LABEL}, 2026.`,
+  "We draw one winner at random in December and email the director who entered.",
+  "If the winner doesn't reply within 14 days, we draw again.",
+  "The prize is drill and wind music for one 2027 indoor winds show, plus the copyright costs for that music. It has no cash value and can't be transferred.",
+]
+
 const hoverLift = "transition-transform duration-[calc(var(--count)/4)] ease-linear hover:-translate-y-1"
 
 export default function IndoorWinds2027Page() {
@@ -191,12 +200,8 @@ export default function IndoorWinds2027Page() {
             <h2 className="plus-h2 text-brand-midnight">How it works</h2>
           </div>
           <div className="relative">
-            {/* OpenMarch-style next pathway in a lane above the sets, with one marcher on it */}
+            {/* An OpenMarch-style marcher walking a lane above the steps */}
             <div className="pointer-events-none absolute -top-6 left-[16.67%] right-[16.67%] hidden md:block" aria-hidden="true">
-              <div className="h-0.5 bg-[#00AF0D]" />
-              {[25, 75].map(at => (
-                <span key={at} className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#00AF0D] bg-white" style={{ left: `${at}%` }} />
-              ))}
               <span className="step-marcher absolute top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 font-['courier_new',monospace] text-[11px] font-bold text-black">YOU</span>
                 <span className="block h-3 w-3 rounded-full bg-[#FF0000]" />
@@ -260,6 +265,23 @@ export default function IndoorWinds2027Page() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Rules */}
+      <section className="pb-20 sm:pb-28">
+        <div className="plus-container">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="font-heading text-2xl font-bold text-brand-midnight">Rules</h2>
+            <ul className="mt-6 space-y-3 text-muted-foreground">
+              {rules.map(rule => (
+                <li key={rule} className="flex gap-3">
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-brand-midnight" />
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>

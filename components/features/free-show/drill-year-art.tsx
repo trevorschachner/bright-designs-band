@@ -4,9 +4,9 @@
 // back, linearly over counts, as OpenMarch playback does. Timing lives in globals.css (.drill-*); under
 // prefers-reduced-motion the chart holds on set 2.
 
-const STEP = 16
-const COLS = 28
-const ROWS = 16
+export const STEP = 16
+export const COLS = 28
+export const ROWS = 16
 const CHECKPOINT = 4
 const PAD = 24
 
@@ -16,7 +16,7 @@ const DIGITS: Record<string, string[]> = {
 }
 
 // Set 2: the year, two steps between dots, starting at step (3, 2).
-const target = ["2", "7"]
+export const YEAR_DOTS = ["2", "7"]
   .flatMap((digit, d) =>
     DIGITS[digit].flatMap((line, row) =>
       [...line].flatMap((cell, col) =>
@@ -34,13 +34,13 @@ const block = Array.from({ length: 25 }, (_, i) => ({ col: 10 + Math.floor(i / 5
 // want.
 const dist = (a: { col: number; row: number }, b: { col: number; row: number }) =>
   (a.col - b.col) ** 2 + (a.row - b.row) ** 2
-const start = target.map((_, i) => i)
+const start = YEAR_DOTS.map((_, i) => i)
 for (let improved = true; improved; ) {
   improved = false
   for (let i = 0; i < start.length; i++) {
     for (let j = i + 1; j < start.length; j++) {
-      const now = dist(block[start[i]], target[i]) + dist(block[start[j]], target[j])
-      const swapped = dist(block[start[j]], target[i]) + dist(block[start[i]], target[j])
+      const now = dist(block[start[i]], YEAR_DOTS[i]) + dist(block[start[j]], YEAR_DOTS[j])
+      const swapped = dist(block[start[j]], YEAR_DOTS[i]) + dist(block[start[i]], YEAR_DOTS[j])
       if (swapped < now) {
         ;[start[i], start[j]] = [start[j], start[i]]
         improved = true
@@ -52,7 +52,7 @@ for (let improved = true; improved; ) {
 const x = (col: number) => PAD + col * STEP
 const y = (row: number) => PAD + row * STEP
 
-const marchers = target.map((to, i) => {
+const marchers = YEAR_DOTS.map((to, i) => {
   const from = block[start[i]]
   return {
     label: `W${i + 1}`,
