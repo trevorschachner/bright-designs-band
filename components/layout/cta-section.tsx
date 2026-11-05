@@ -1,8 +1,18 @@
+"use client"
+
 import { ArrowRight } from "lucide-react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { FREE_SHOW_PATH } from "@/lib/free-show"
+
+// Pages that close with their own call to action.
+const HIDDEN_ON = new Set([FREE_SHOW_PATH])
 
 export function CTASection() {
+  const pathname = usePathname()
+  if (HIDDEN_ON.has(pathname)) return null
+
   return (
     <section className="py-20 px-4 bg-brand-midnight relative overflow-hidden rounded-3xl my-4 mx-2 md:mx-4">
       {/* Background decoration */}

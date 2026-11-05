@@ -62,6 +62,12 @@ export const contactSubmissionSchema = z.object({
   instrumentation: optionalText(1000),
   referralSource: optionalText(200),
   referralBandDirector: optionalText(200),
+  // 2027 Indoor Winds Free Show sign-up (lib/free-show.ts).
+  location: optionalText(200),
+  programBenefit: optionalText(5000),
+  recentChallenges: optionalText(5000),
+  usedDesignGroup: z.enum(['yes', 'no']).optional(),
+  previousDesignGroup: optionalText(200),
   // This feeds the email templates, which type it as ServiceCategory[].
   // Validating the element type here is what lets the handler pass it
   // through without a cast.
