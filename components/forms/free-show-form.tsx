@@ -24,13 +24,13 @@ import { postContact } from "@/lib/page-trail"
 import { FREE_SHOW_SOURCE, FREE_SHOW_TYPE } from "@/lib/free-show"
 
 const freeShowFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
+  name: z.string().min(2, "Please enter your name."),
   email: z.string().email("Please enter a valid email address."),
   role: z.string().optional(),
-  school: z.string().min(2, "Ensemble or school name is required."),
-  location: z.string().min(2, "Please tell us where you're located."),
-  bandSize: z.enum(["Under 20", "20-35", "36-50", "50+"], {
-    required_error: "Please select your ensemble size.",
+  school: z.string().min(2, "Please enter your group or school name."),
+  location: z.string().min(2, "Please enter your city and state."),
+  bandSize: z.enum(["Under 20", "20-35", "36-50", "51+"], {
+    required_error: "Please select your group size.",
   }),
   programBenefit: z.string().min(10, "Please add a sentence or two."),
   recentChallenges: z.string().min(10, "Please add a sentence or two."),
@@ -43,7 +43,7 @@ const freeShowFormSchema = z.object({
 
 type FreeShowFormValues = z.infer<typeof freeShowFormSchema>
 
-const ensembleSizes = ["Under 20", "20-35", "36-50", "50+"] as const
+const groupSizes = ["Under 20", "20-35", "36-50", "51+"] as const
 
 // Radio options drawn as pills; the checked one fills with brand yellow.
 const pillClass =
@@ -136,7 +136,7 @@ export function FreeShowForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Name</FormLabel>
+                  <FormLabel>Your name</FormLabel>
                   <FormControl>
                     <Input placeholder="Jane Doe" className="h-12" {...field} />
                   </FormControl>
@@ -163,7 +163,7 @@ export function FreeShowForm() {
             name="role"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Your Role (optional)</FormLabel>
+                <FormLabel>Your role (optional)</FormLabel>
                 <FormControl>
                   <Input placeholder="Director, assistant director, caption head..." className="h-12" {...field} />
                 </FormControl>
@@ -173,14 +173,14 @@ export function FreeShowForm() {
           />
         </FormSection>
 
-        <FormSection step="02" title="Your ensemble">
+        <FormSection step="02" title="Your group">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="school"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ensemble or School</FormLabel>
+                  <FormLabel>Group or school</FormLabel>
                   <FormControl>
                     <Input placeholder="Anytown High School Winds" className="h-12" {...field} />
                   </FormControl>
@@ -207,14 +207,14 @@ export function FreeShowForm() {
             name="bandSize"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Approximate Ensemble Size</FormLabel>
+                <FormLabel>Approximate group size</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                     className="grid grid-cols-2 gap-3 sm:grid-cols-4"
                   >
-                    {ensembleSizes.map(size => (
+                    {groupSizes.map(size => (
                       <FormItem key={size} className={pillClass}>
                         <FormControl>
                           <RadioGroupItem value={size} />
@@ -236,7 +236,7 @@ export function FreeShowForm() {
             name="programBenefit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>How would this benefit your program?</FormLabel>
+                <FormLabel>How would this help your group?</FormLabel>
                 <FormControl>
                   <Textarea className="min-h-28 resize-none" {...field} />
                 </FormControl>
@@ -249,7 +249,7 @@ export function FreeShowForm() {
             name="recentChallenges"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>What challenges has your program faced over the past 12 months?</FormLabel>
+                <FormLabel>What challenges has your group faced in the past 12 months?</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Budget, staffing, numbers, facilities, scheduling..."
@@ -330,7 +330,7 @@ export function FreeShowForm() {
               </span>
             ) : (
               <span className="inline-flex items-center">
-                Enter the drawing <ArrowRight className="ml-2 h-5 w-5" />
+                Enter the giveaway <ArrowRight className="ml-2 h-5 w-5" />
               </span>
             )}
           </Button>

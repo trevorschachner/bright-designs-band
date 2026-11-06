@@ -8,6 +8,9 @@
 export const FREE_SHOW_TYPE = 'free_show_signup'
 export const FREE_SHOW_SOURCE = 'indoor-winds-2027'
 export const FREE_SHOW_TITLE = '2027 Indoor Winds Free Show'
+// What entrants see. FREE_SHOW_TITLE stays as the internal label in the
+// database, Attio and staff email so earlier entries still group with new ones.
+export const FREE_SHOW_PUBLIC_NAME = '2027 Indoor Winds Giveaway'
 export const FREE_SHOW_PATH = '/indoor-winds-2027'
 
 // Entries close at the end of November 30, 2026, Eastern time. The route
@@ -37,8 +40,8 @@ export function freeShowMessage(answers: FreeShowAnswers): string {
 
   const sections: Array<[string, string | undefined]> = [
     ['Location', answers.location],
-    ['How would this benefit your program?', answers.programBenefit],
-    ['Challenges over the past 12 months', answers.recentChallenges],
+    ['How would this help your group?', answers.programBenefit],
+    ['Challenges in the past 12 months', answers.recentChallenges],
     ['Used a design group before?', designGroup],
     ['Anything else', answers.message],
   ]

@@ -344,13 +344,17 @@ const CONFIRMATION_SUBJECTS: Record<ConfirmationKind, string> = {
   inquiry: 'your show inquiry',
   contact: 'your message',
   resource_download: 'your guide request',
-  free_show_signup: 'your 2027 Indoor Winds Free Show entry',
+  free_show_signup: 'your 2027 Indoor Winds Giveaway entry',
 };
 
-// A drawing entry gets no reply, so its confirmation says so instead of
+// A giveaway entry gets no reply, so its confirmation says so instead of
 // promising one within 24 hours.
 const CONFIRMATION_INTROS: Partial<Record<ConfirmationKind, string>> = {
-  free_show_signup: "you're in the drawing. We'll email you if your group is drawn.",
+  free_show_signup: "We've received your 2027 Indoor Winds Giveaway entry. You're entered.",
+};
+
+const CONFIRMATION_TITLES: Partial<Record<ConfirmationKind, string>> = {
+  free_show_signup: 'Thanks for entering the Bright Designs giveaway',
 };
 
 const DEFAULT_EXPECTATIONS = [
@@ -361,7 +365,7 @@ const DEFAULT_EXPECTATIONS = [
 
 const CONFIRMATION_EXPECTATIONS: Partial<Record<ConfirmationKind, string[]>> = {
   free_show_signup: [
-    `Entries close ${FREE_SHOW_DEADLINE_LABEL}. After that, we draw one winds group at random`,
+    `Entries close ${FREE_SHOW_DEADLINE_LABEL}. After that, we draw one group at random`,
     "If your group is drawn, we'll email you at this address",
     'You can reply directly to this email if you have any questions',
   ],
@@ -421,8 +425,9 @@ export function generateCustomerConfirmationTemplate(
     .join(', ');
   const firstName = confirmationFirstName(data.firstName);
   const subject = CONFIRMATION_SUBJECTS[kind];
-  const intro = `We've received ${subject}${CONFIRMATION_INTROS[kind] ? ` and ${CONFIRMATION_INTROS[kind]}` : ' and will reply within 24 hours.'}`;
+  const intro = CONFIRMATION_INTROS[kind] ?? `We've received ${subject} and will reply within 24 hours.`;
   const expectations = CONFIRMATION_EXPECTATIONS[kind] ?? DEFAULT_EXPECTATIONS;
+  const title = CONFIRMATION_TITLES[kind] ?? 'Thank you for contacting Bright Designs Band';
 
   const html = `<!DOCTYPE html>
 <html>
@@ -431,7 +436,7 @@ export function generateCustomerConfirmationTemplate(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <title>Thank you for contacting Bright Designs Band</title>
+  <title>${title}</title>
 </head>
 <body style="margin:0;padding:0;background-color:${colors.lightGray};font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${colors.lightGray};">
@@ -502,7 +507,7 @@ export function generateCustomerConfirmationTemplate(
 </body>
 </html>`;
 
-  const text = `Thank you for contacting Bright Designs Band!
+  const text = `${title}!
 
 Hi ${firstName},
 

@@ -13,7 +13,7 @@ import { reportError } from '@/lib/observability/report-error';
 import { syncSubmissionToAttio, type AttioSubmission } from '@/lib/integrations/attio';
 import { getPublicSiteUrl } from '@/lib/env';
 import { eq } from 'drizzle-orm';
-import { FREE_SHOW_TITLE, FREE_SHOW_TYPE, freeShowMessage, freeShowOpen } from '@/lib/free-show';
+import { FREE_SHOW_PUBLIC_NAME, FREE_SHOW_TITLE, FREE_SHOW_TYPE, freeShowMessage, freeShowOpen } from '@/lib/free-show';
 
 const RATE_LIMIT = { limit: 5, windowMinutes: 10 };
 
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
 
         await sendEmailOrThrow({
           to: email,
-          subject: `You're entered: ${FREE_SHOW_TITLE} — Bright Designs Band`,
+          subject: `You're entered: ${FREE_SHOW_PUBLIC_NAME} | Bright Designs Band`,
           html: confirmation.html,
           text: confirmation.text,
         }, 'customer free show confirmation');
