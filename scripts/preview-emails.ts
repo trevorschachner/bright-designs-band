@@ -6,16 +6,15 @@
  * This allows you to visually inspect the emails before deployment.
  */
 
-import { writeFileSync, mkdirSync, copyFileSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, cpSync, existsSync } from 'fs';
 import { join } from 'path';
-import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '../lib/email/templates';
+import { EMAIL_ASSET_BASE, generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '../lib/email/templates';
 import type { ContactFormData } from '../lib/email/types';
 import { getPublicSiteUrl } from '../lib/env';
 
 // Set environment variable if not set or invalid
 // Ensure downstream code sees a valid site URL
 const siteUrl = getPublicSiteUrl('https://brightdesigns.band');
-const EMAIL_LOGO_URL = 'https://brightdesigns.band/logos/brightdesignslogo-main.png';
 process.env.NEXT_PUBLIC_SITE_URL = siteUrl;
 
 // Create previews directory
@@ -26,16 +25,11 @@ try {
   // Directory might already exist
 }
 
-// Copy logo to previews directory for local viewing
-const logoSource = join(process.cwd(), 'public', 'logos', 'brightdesignslogo-main.png');
-const logoDest = join(previewsDir, 'brightdesignslogo-main.png');
-if (existsSync(logoSource)) {
-  try {
-    copyFileSync(logoSource, logoDest);
-    console.log('  ✅ Copied logo to previews directory');
-  } catch (error) {
-    console.warn('  ⚠️  Could not copy logo file:', error);
-  }
+// Copy the email images (logo, owner photos) so previews work before deploy
+const assetSource = join(process.cwd(), 'public', 'email');
+if (existsSync(assetSource)) {
+  cpSync(assetSource, join(previewsDir, 'email'), { recursive: true });
+  console.log('  ✅ Copied email images to previews directory');
 }
 
 // Sample data with all fields filled
@@ -83,12 +77,8 @@ const inquirySampleData: ContactFormData = {
 function generatePreviewFiles() {
   console.log('📧 Generating Email Template Previews...\n');
 
-  // Replace logo URLs in HTML with relative path for local previews
-  const replaceLogoUrl = (html: string): string => {
-    const absoluteUrl = EMAIL_LOGO_URL;
-    // Replace absolute URL with relative path for local previews
-    return html.replace(new RegExp(absoluteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), 'brightdesignslogo-main.png');
-  };
+  // Point email images at the local copies for previews
+  const replaceLogoUrl = (html: string): string => html.split(`${EMAIL_ASSET_BASE}/`).join('email/');
 
   // Generate admin notification emails
   console.log('Creating admin notification emails...');
@@ -131,7 +121,11 @@ function generatePreviewFiles() {
   );
   console.log('  ✅ customer-confirmation-minimal.html');
 
-  const customerInquiry = generateCustomerConfirmationTemplate(inquirySampleData);
+  const customerGiveaway = generateCustomerConfirmationTemplate({ ...inquirySampleData, services: [] }, 'free_show_signup');
+  writeFileSync(join(previewsDir, 'customer-confirmation-giveaway.html'), replaceLogoUrl(customerGiveaway.html));
+  console.log('  ✅ customer-confirmation-giveaway.html');
+
+  const customerInquiry = generateCustomerConfirmationTemplate(inquirySampleData, 'inquiry');
   writeFileSync(
     join(previewsDir, 'customer-confirmation-inquiry.html'),
     replaceLogoUrl(customerInquiry.html)
@@ -286,6 +280,11 @@ function generatePreviewFiles() {
                     <a href="customer-confirmation-minimal.html" target="_blank">View Preview →</a>
                 </div>
                 <div class="email-card">
+                    <h3>Giveaway Entry</h3>
+                    <p>Confirmation for a 2027 Indoor Winds Giveaway entry.</p>
+                    <a href="customer-confirmation-giveaway.html" target="_blank">View Preview →</a>
+                </div>
+                <div class="email-card">
                     <h3>Show Inquiry</h3>
                     <p>Confirmation for show inquiry with ensemble details.</p>
                     <a href="customer-confirmation-inquiry.html" target="_blank">View Preview →</a>
@@ -295,7 +294,7 @@ function generatePreviewFiles() {
 
         <div class="note">
             <strong>💡 How to Use</strong>
-            <p>These preview files are generated HTML that you can open in any browser. The logo images load from ${EMAIL_LOGO_URL}.</p>
+            <p>These preview files are generated HTML that you can open in any browser. Images load from the local email/ folder here, and from ${EMAIL_ASSET_BASE} in sent mail.</p>
             <p style="margin-top: 8px;"><strong>Tip:</strong> To test how emails look in different email clients, you can copy the HTML and paste it into email testing tools like Litmus or Email on Acid.</p>
         </div>
     </div>

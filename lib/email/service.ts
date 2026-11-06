@@ -2,6 +2,17 @@ import { EmailNotificationData } from './types';
 import { getEnv } from '@/lib/env.server';
 
 const DEFAULT_FROM = 'hello@transactional.brightdesigns.band';
+export const SENDER_NAME = 'Bright Designs';
+
+/**
+ * The From header with our display name, so inboxes show "Bright Designs"
+ * rather than the local part of the address ("hello"). An EMAIL_FROM that
+ * already carries a name ("Name <addr>") is used as is.
+ */
+export function formatFrom(address: string | undefined): string {
+  const value = (address ?? '').trim() || DEFAULT_FROM;
+  return value.includes('<') ? value : `${SENDER_NAME} <${value}>`;
+}
 
 /**
  * Email service using Resend (recommended) or Nodemailer as fallback
@@ -33,7 +44,7 @@ async function sendWithResend(data: EmailNotificationData): Promise<EmailService
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: EMAIL_FROM ?? DEFAULT_FROM,
+        from: formatFrom(EMAIL_FROM),
         to: Array.isArray(data.to) ? data.to : [data.to],
         subject: data.subject,
         html: data.html,
@@ -81,7 +92,7 @@ async function sendWithNodemailer(data: EmailNotificationData): Promise<EmailSer
     });
 
     const result = await transporter.sendMail({
-      from: env.EMAIL_FROM ?? DEFAULT_FROM,
+      from: formatFrom(env.EMAIL_FROM),
       to: Array.isArray(data.to) ? data.to.join(', ') : data.to,
       subject: data.subject,
       html: data.html,
@@ -116,7 +127,7 @@ async function sendWithGmail(data: EmailNotificationData): Promise<EmailServiceR
     });
 
     const result = await transporter.sendMail({
-      from: `"Bright Designs Band" <${GMAIL_USER}>`,
+      from: `"${SENDER_NAME}" <${GMAIL_USER}>`,
       to: Array.isArray(data.to) ? data.to.join(', ') : data.to,
       subject: data.subject,
       html: data.html,

@@ -223,7 +223,8 @@ export async function POST(request: NextRequest) {
 
         await sendEmailOrThrow({
           to: email,
-          subject: 'We received your inquiry — Bright Designs Band',
+          subject: 'We got your show inquiry!',
+          replyTo: ADMIN_EMAIL_ADDRESS,
           html: confirmation.html,
           text: confirmation.text,
         }, 'customer inquiry confirmation');
@@ -292,7 +293,8 @@ export async function POST(request: NextRequest) {
 
         await sendEmailOrThrow({
           to: email,
-          subject: `You're entered: ${FREE_SHOW_PUBLIC_NAME} | Bright Designs Band`,
+          subject: `You're entered in the ${FREE_SHOW_PUBLIC_NAME}!`,
+          replyTo: ADMIN_EMAIL_ADDRESS,
           html: confirmation.html,
           text: confirmation.text,
         }, 'customer free show confirmation');
@@ -333,7 +335,8 @@ export async function POST(request: NextRequest) {
 
         await sendEmailOrThrow({
           to: email,
-          subject: 'We received your message — Bright Designs Band',
+          subject: 'We got your message!',
+          replyTo: ADMIN_EMAIL_ADDRESS,
           html: confirmation.html,
           text: confirmation.text,
         }, 'customer general confirmation');
