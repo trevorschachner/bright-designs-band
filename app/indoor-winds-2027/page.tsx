@@ -77,9 +77,8 @@ export default function IndoorWinds2027Page() {
               2027 winds show.
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-gray-200 sm:text-xl">
-              We&apos;re designing a custom 2027 show for one indoor winds group. Our team writes the wind
-              music and drill for your members, you give feedback along the way, and we cover the copyright
-              costs. Entering is free. Enter by {FREE_SHOW_DEADLINE_LABEL} and we&apos;ll draw the winner at random.
+              We&apos;ll design a custom 2027 show for one indoor winds group, free. Enter by{" "}
+              {FREE_SHOW_DEADLINE_LABEL}.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Button size="lg" className="h-14 bg-brand-electric px-8 text-base font-semibold text-brand-midnight hover:bg-brand-electric/90" asChild>
