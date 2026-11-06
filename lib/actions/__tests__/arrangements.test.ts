@@ -129,6 +129,16 @@ describe('createArrangement', () => {
     use(partsDb({ 'select:shows': () => [] }))
     expect(await createArrangement({ showId: 7, title: 'X' })).toEqual({ ok: false, error: 'not_found' })
   })
+
+  it('creates a standalone part when no show is given: no show link, nothing locked, no show page to refresh', async () => {
+    const fake = state.fake
+    const result = await createArrangement({ title: 'Libertango', featured: true })
+    expect(result).toMatchObject({ ok: true, data: { id: 14 } })
+    expect(opsOn(fake.ops, 'arrangements', 'insert')[0].values).toMatchObject({ title: 'Libertango', slug: 'libertango', featured: true })
+    expect(opsOn(fake.ops, 'shows')).toHaveLength(0)
+    expect(opsOn(fake.ops, 'show_arrangements', 'insert')).toHaveLength(0)
+    expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(14, 'libertango', null)
+  })
 })
 
 describe('updateArrangement', () => {
@@ -149,6 +159,13 @@ describe('updateArrangement', () => {
     expect(update.set?.updatedAt).toBeInstanceOf(Date)
     expect(opsOn(fake.ops, 'arrangements_to_tags')).toHaveLength(0)
     expect(invalidate.invalidateArrangement).toHaveBeenCalledWith(11, 'pipeline', 'my-show', 'pipeline')
+  })
+
+  it('sets and clears featured', async () => {
+    const fake = state.fake
+    await updateArrangement({ id: 11, updatedAt: LOADED, featured: true })
+    expect(opsOn(fake.ops, 'arrangements', 'update')[0].set).toMatchObject({ featured: true })
+    expect(await updateArrangement({ id: 11, updatedAt: LOADED, featured: 'yes' } as never)).toMatchObject({ ok: false, error: 'invalid' })
   })
 
   it('an explicit slug change is saved and passes the previous slug to invalidation', async () => {

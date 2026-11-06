@@ -41,9 +41,12 @@ vi.mock('@/lib/email/service', () => ({
 vi.mock('@/lib/database', () => ({
   db: {
     insert: () => ({
-      values: async (row: Record<string, unknown>) => {
-        inserted.push(row)
-      },
+      values: (row: Record<string, unknown>) => ({
+        returning: async () => {
+          inserted.push(row)
+          return [{ id: inserted.length }]
+        },
+      }),
     }),
   },
 }))
@@ -144,6 +147,22 @@ describe('POST /api/contact', () => {
     for (const email of sent) {
       expect(`${email.html}${email.text}`).not.toContain('tok-123')
     }
+  })
+
+  it('stores and emails the page the form was sent from, dropping unsafe URLs', async () => {
+    await post({ ...validBody, pageUrl: '/contact?interest=Show%3A%20Hive', referrerUrl: 'https://www.google.com/search?q=band' })
+    expect(inserted[0]).toMatchObject({
+      school: 'Rock Canyon HS',
+      pageUrl: '/contact?interest=Show%3A%20Hive',
+      referrerUrl: 'https://www.google.com/search',
+    })
+    const staff = sent.find((e) => e.to !== 'jane@example.com')!
+    expect(staff.text).toContain('Sent from: /contact?interest=Show%3A%20Hive')
+    expect(staff.text).toContain('Came from: https://www.google.com/search')
+
+    inserted.length = 0
+    await post({ ...validBody, pageUrl: 'javascript:alert(1)', referrerUrl: '//evil.example/x' })
+    expect(inserted[0]).toMatchObject({ pageUrl: null, referrerUrl: null })
   })
 
   it('keeps the message in the staff notification but not in the confirmation', async () => {

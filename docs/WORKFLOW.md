@@ -1,121 +1,36 @@
 # Development Workflow
 
-## Branch Strategy
+## Branches
 
-We use a **dev → main** workflow to batch changes before production deployments.
+- **`main`** - Integration branch. Every PR targets `main`. Merging gets a free Netlify branch deploy, not a production deploy.
+- **`production`** - Netlify's production branch (brightdesigns.band). Only the Release workflow moves it, and only forward to `main`.
 
-### Branches
+## Why
 
-- **`main`** - Production branch (connects to production site with deployment limits)
-- **`dev`** - Development branch (daily work happens here)
-- **`release/*`** - Release branches (created when batching changes for production)
+Netlify bills 15 credits per production deploy. Deploy previews and branch deploys are free. When `main` was the production branch, every merged PR cost a production deploy, and busy days merged four to six. Now merged PRs pile up on `main` and ship together.
 
-## Daily Workflow
+## Day to day
 
-### 1. Work on Dev Branch
+1. Branch from `main`, open a PR into `main`.
+2. Check the Netlify deploy preview on the PR (free).
+3. Merge when CI is green. Nothing reaches the live site yet.
 
-```bash
-# Make sure you're on dev branch
-git checkout dev
-git pull origin dev
+## Releasing
 
-# Make your changes, commit frequently
-git add .
-git commit -m "Description of changes"
+Actions → **Release to production** → **Run workflow** (or `gh workflow run release.yml`).
 
-# Push to dev regularly
-git push origin dev
-```
+The workflow:
 
-### 2. When Ready for Production Release
+1. Refuses to run unless CI ("Lint, typecheck, test and build") passed on the `main` commit.
+2. Fast-forwards `production` to `main`. Netlify then builds one production deploy.
+3. Lists the commits it shipped in the run summary.
 
-#### Option A: Manual Release (Recommended)
+Release whenever a batch is worth shipping, about once or twice a week. Release right away for security fixes and anything a customer is waiting on.
 
-1. **Create a release branch from dev:**
-   ```bash
-   git checkout dev
-   git pull origin dev
-   git checkout -b release/v1.0.0  # Use semantic versioning
-   ```
+## Hotfixes
 
-2. **Create a Pull Request:**
-   - Push the release branch: `git push origin release/v1.0.0`
-   - Go to GitHub and create a PR from `release/v1.0.0` → `main`
-   - Add a description of all changes in this release
-   - Review the changes
+Merge the fix into `main` like any PR, then run the release. `production` never takes commits that are not on `main`, so the push fails rather than overwrite anything if someone pushes to `production` directly.
 
-3. **Merge to Main:**
-   - Once approved, merge the PR to `main`
-   - This will trigger production deployment (if configured)
-   - Tag the release: `git tag v1.0.0 && git push origin v1.0.0`
+## Rolling back
 
-4. **Update Dev Branch:**
-   ```bash
-   git checkout dev
-   git merge main  # Sync dev with main
-   git push origin dev
-   ```
-
-#### Option B: Using GitHub Actions
-
-1. Go to Actions → "Release to Production"
-2. Click "Run workflow"
-3. Enter version number (e.g., `v1.0.0`)
-4. Add release description
-5. Review the created PR and merge when ready
-
-## Best Practices
-
-### Commit Messages
-
-Use clear, descriptive commit messages:
-- ✅ `Add audio player to arrangement detail page`
-- ✅ `Fix image aspect ratio on show listing page`
-- ❌ `fix stuff`
-- ❌ `updates`
-
-### Batching Changes
-
-Group related changes together in releases:
-- ✅ All image fixes in one release
-- ✅ All audio player improvements in one release
-- ❌ One commit = one release (wastes deployment quota)
-
-### Before Creating a Release
-
-1. ✅ All changes tested locally
-2. ✅ No console errors
-3. ✅ Code reviewed (if working with team)
-4. ✅ Commit messages are clear
-5. ✅ Changes are logically grouped
-
-## Quick Reference
-
-```bash
-# Start working
-git checkout dev
-git pull origin dev
-
-# Make changes and commit
-git add .
-git commit -m "Your message"
-git push origin dev
-
-# Create release (when ready)
-git checkout dev
-git checkout -b release/v1.0.0
-git push origin release/v1.0.0
-# Then create PR on GitHub: release/v1.0.0 → main
-
-# After release is merged
-git checkout dev
-git merge main
-git push origin dev
-```
-
-## Current Status
-
-- **Active Branch:** `dev` (for daily development)
-- **Production Branch:** `main` (deploys to production)
-- **Current Release:** None (create one when ready to deploy)
-
+Netlify → Deploys → pick the previous production deploy → **Publish deploy**. Rollbacks cost no credits. Then revert the bad change on `main` before the next release.

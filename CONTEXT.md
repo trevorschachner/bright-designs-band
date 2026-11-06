@@ -9,7 +9,9 @@ brightdesigns.band is a catalog of marching band shows that Bright Designs resel
 Defined in `lib/database/schema.ts`.
 
 - `shows` -> `show_arrangements` -> `arrangements` (the "parts") -> `arrangement_pieces` -> `pieces` (source music).
-- `tags`, joined through `shows_to_tags` and `arrangements_to_tags`.
+- `tags`, joined through `shows_to_tags` and `arrangements_to_tags`. Each tag has a `kind` (theme, mood, genre, style, other), the facet it filters under.
+- A part with no `show_arrangements` row is a standalone part, edited at `/admin/arrangements/<id>`.
+- `arrangement_search` and `show_search`: materialized views behind catalog search (`lib/services/search.ts`), rebuilt after every catalog write.
 - `files` (audio, images, documents) and `resources` (downloadable and educational items).
 - `contact_submissions` (inquiries) and `contact_rate_limits` (Postgres-backed limiter for `/api/contact`).
 

@@ -24,6 +24,7 @@ const PART: EditableArrangement = {
   youtubeUrl: null,
   commissioned: null,
   sampleScoreUrl: null,
+  featured: false,
   orderIndex: 1,
   updatedAt: LOADED,
   tagIds: [],
@@ -66,6 +67,20 @@ describe('ArrangementForm', () => {
         tags: [2],
       })
     )
+  })
+
+  it('standalone: adds a part with no show, featured when ticked, and hands back the saved part', async () => {
+    const onSaved = vi.fn()
+    const saved = { id: 14, title: 'Libertango', updatedAt: LOADED }
+    mocks.createArrangement.mockResolvedValue({ ok: true, data: saved })
+    render(<ArrangementForm allTags={TAGS} onSaved={onSaved} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/Title/), 'Libertango')
+    fireEvent.click(screen.getByLabelText('Featured'))
+    fireEvent.click(screen.getByRole('button', { name: 'Add Arrangement' }))
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(saved))
+    const input = mocks.createArrangement.mock.calls[0][0]
+    expect(input).toMatchObject({ title: 'Libertango', featured: true })
+    expect(input).not.toHaveProperty('showId')
   })
 
   it('rejects a duration that is not mm:ss', async () => {

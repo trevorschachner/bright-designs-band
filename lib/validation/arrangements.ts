@@ -42,6 +42,7 @@ const fields = {
   youtubeUrl: optionalText(500),
   commissioned: optionalText(300),
   sampleScoreUrl: optionalText(1000),
+  featured: z.boolean(),
   /** Tag ids. When present they replace the part's tags; when absent tags are untouched. */
   tags: z.array(rowId).max(200),
 }
@@ -55,9 +56,9 @@ export const arrangementSlugSchema = z
 
 const optionalFields = z.object(fields).partial().omit({ title: true })
 
-/** `createArrangement`: a new part, appended to the end of the show's list. */
+/** `createArrangement`: a new part, appended to the end of the show's list, or standalone without `showId`. */
 export const createArrangementSchema = optionalFields
-  .extend({ showId: rowId, title: fields.title })
+  .extend({ showId: rowId.optional(), title: fields.title })
   .strict()
 export type CreateArrangementInput = z.input<typeof createArrangementSchema>
 
@@ -120,6 +121,7 @@ export const arrangementFormSchema = z.object({
   youtubeUrl: z.string(),
   sampleScoreUrl: z.string(),
   commissioned: z.string(),
+  featured: z.boolean(),
   tags: z.array(z.number()),
 })
 export type ArrangementFormValues = z.infer<typeof arrangementFormSchema>
@@ -144,6 +146,7 @@ export function arrangementFormToInput(values: ArrangementFormValues) {
     youtubeUrl: blankToNull(values.youtubeUrl),
     sampleScoreUrl: blankToNull(values.sampleScoreUrl),
     commissioned: blankToNull(values.commissioned),
+    featured: values.featured,
     tags: values.tags,
   }
 }

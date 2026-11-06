@@ -37,6 +37,7 @@ describe('static routes', () => {
     ['../../../app/process/page', '/process'],
     ['../../../app/faqs/page', '/faqs'],
     ['../../../app/contact/layout', '/contact'],
+    ['../../../app/indoor-winds-2027/page', '/indoor-winds-2027'],
     ['../../../app/resources/page', '/resources'],
     ['../../../app/blog/page', '/blog'],
     ['../../../app/blog/how-to-choose-a-designer/page', '/blog/how-to-choose-a-designer'],

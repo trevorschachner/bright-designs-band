@@ -241,6 +241,70 @@
   }
 }
 
+/*
+ * Free-show page motion. Everything moves on one tempo, in counts, and
+ * linearly between holds, the way OpenMarch plays drill back. A loop is
+ * 32 counts at 120 bpm.
+ */
+.free-show {
+  --count: 500ms;
+}
+
+/* DrillYearArt: hold set 1 (4 counts), move to set 2 (8), hold (12), move back (8). */
+@keyframes drill-move {
+  0%, 12.5% { transform: translate(var(--dx, 0), var(--dy, 0)); }
+  37.5%, 75% { transform: translate(0, 0); }
+  100% { transform: translate(var(--dx, 0), var(--dy, 0)); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drill-marcher {
+    animation: drill-move calc(var(--count) * 32) linear infinite;
+  }
+}
+
+/* How-it-works marcher: hold on each step for 4 counts, 8 counts between. */
+@keyframes step-march {
+  0%, 12.5% { left: 0%; opacity: 1; }
+  37.5%, 50% { left: 50%; }
+  75%, 93.75% { left: 100%; opacity: 1; }
+  96.875% { left: 100%; opacity: 0; }
+  100% { left: 0%; opacity: 0; }
+}
+.step-marcher {
+  left: 0%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .step-marcher {
+    animation: step-march calc(var(--count) * 32) linear infinite;
+  }
+}
+
+/* Hand-drawn underline: draws in over 2 counts after a 2-count pickup. */
+@keyframes underline-draw {
+  /* Hidden at the start: the round cap would otherwise show as a dot. */
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  1% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .underline-draw {
+    stroke-dasharray: 1;
+    animation: underline-draw calc(var(--count) * 2) linear calc(var(--count) * 2) both;
+  }
+}
+
+/* Scrolling ticker strip, one loop per 64 counts. The track holds its
+   content twice; -50% loops it. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .marquee-track {
+    animation: marquee calc(var(--count) * 64) linear infinite;
+  }
+}
+
 /* Waveform bars (audio players). */
 @keyframes waveform-bounce {
   0%, 100% { height: 4px; }
