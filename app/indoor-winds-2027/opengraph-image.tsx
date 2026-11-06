@@ -35,7 +35,7 @@ export default async function Image() {
             <div style={{ display: 'flex' }}>2027 winds show.</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', marginTop: 24, fontSize: 25, lineHeight: 1.4, color: '#D1D5DB' }}>
-            <div>Custom music and drill, designed with you.</div>
+            <div>Custom music and drill for your group.</div>
             <div>{`Copyright covered. Enter free by ${FREE_SHOW_DEADLINE_LABEL}.`}</div>
           </div>
         </div>

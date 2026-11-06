@@ -11,7 +11,7 @@ import { FREE_SHOW_DEADLINE_LABEL, FREE_SHOW_PATH, freeShowOpen } from "@/lib/fr
 
 export const metadata: Metadata = buildMetadata({
   title: "2027 Indoor Winds Free Show Giveaway - Custom Drill & Wind Music | Bright Designs",
-  description: "Enter your indoor winds group to win a custom 2027 show from Bright Designs, with wind music and drill designed alongside your staff and copyright costs covered. Free to enter. One winner, drawn at random.",
+  description: "Enter your indoor winds group to win a custom 2027 show from Bright Designs, with custom wind music and drill and copyright costs covered. Free to enter. One winner, drawn at random.",
   keywords: [
     "free indoor winds show",
     "indoor winds show giveaway",
@@ -30,12 +30,12 @@ export const revalidate = 3600
 // the designed header graphic is ready; until then the hero shows DrillYearArt.
 const HERO_GRAPHIC: string | null = null
 
-const ticker = ["Free to enter", "Custom wind music + drill", "Designed with your staff", "Copyright covered", "One winner", `Enter by ${FREE_SHOW_DEADLINE_LABEL}`]
+const ticker = ["Free to enter", "Custom wind music + drill", "Built for your group", "Copyright covered", "One winner", `Enter by ${FREE_SHOW_DEADLINE_LABEL}`]
 
 const steps = [
   { title: "Enter", body: "Fill out the form below. It takes about five minutes." },
   { title: "We draw a winner", body: `After entries close on ${FREE_SHOW_DEADLINE_LABEL}, we pick one group at random.` },
-  { title: "We design it with you", body: "We meet with the winning group's staff, share concepts and drafts as we write, and shape the show around your feedback. We cover the copyright costs." },
+  { title: "We design your show", body: "We start with a call with your director, then share concepts and drafts as we go and revise them with your feedback. We cover the copyright costs." },
 ]
 
 const rules = [
@@ -44,7 +44,7 @@ const rules = [
   `Entries close at 11:59 p.m. Eastern on ${FREE_SHOW_DEADLINE_LABEL}, 2026.`,
   "We draw one winner at random in December and email the director who entered.",
   "If the winner doesn't reply within 14 days, we draw again.",
-  "The prize is one custom 2027 indoor winds show: wind music and drill designed with the winning group's staff, plus the copyright costs for that music. It has no cash value and can't be transferred.",
+  "The prize is one custom 2027 indoor winds show: custom wind music and drill designed by Bright Designs for the winning group, plus the copyright costs for that music. It has no cash value and can't be transferred.",
 ]
 
 const hoverLift = "transition-transform duration-[calc(var(--count)/4)] ease-linear hover:-translate-y-1"
@@ -77,9 +77,9 @@ export default function IndoorWinds2027Page() {
               2027 winds show.
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-gray-200 sm:text-xl">
-              We&apos;re designing a custom 2027 show for one indoor winds group. We&apos;ll write the wind
-              music and drill with your staff, built for your members, and cover the copyright costs. Entering
-              is free. Enter by {FREE_SHOW_DEADLINE_LABEL} and we&apos;ll draw the winner at random.
+              We&apos;re designing a custom 2027 show for one indoor winds group. Our team writes the wind
+              music and drill for your members, you give feedback along the way, and we cover the copyright
+              costs. Entering is free. Enter by {FREE_SHOW_DEADLINE_LABEL} and we&apos;ll draw the winner at random.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Button size="lg" className="h-14 bg-brand-electric px-8 text-base font-semibold text-brand-midnight hover:bg-brand-electric/90" asChild>
@@ -143,11 +143,11 @@ export default function IndoorWinds2027Page() {
         <div className="plus-container">
           <div className="mb-14 max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-fanfare text-brand-sky">The prize</p>
-            <h2 className="plus-h2 text-brand-midnight">A custom 2027 show, designed with you</h2>
+            <h2 className="plus-h2 text-brand-midnight">A custom 2027 show, designed for your group</h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              We start with a consultation with your staff about your members, your goals and the show you want
-              to put on the floor. From there we bring you concepts, then drafts of the music and drill, and
-              revise them with your feedback until the show is ready to teach.
+              Our team designs the show, and you&apos;re part of the process from start to finish. We begin
+              with a consultation about your members, your goals and the show you have in mind. Then we bring you
+              concepts and drafts of the music and drill, and revise them with your feedback.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -163,7 +163,7 @@ export default function IndoorWinds2027Page() {
                 <Footprints className="h-7 w-7 text-brand-midnight" />
               </div>
               <h3 className="mb-3 font-heading text-2xl font-bold text-brand-midnight">Drill</h3>
-              <p className="text-muted-foreground">Written for your members and your floor, start to finish.</p>
+              <p className="text-muted-foreground">Custom drill for the whole show, written for your group&apos;s size and experience.</p>
             </div>
             <div className={`rounded-3xl border border-border bg-card p-8 shadow sm:p-10 ${hoverLift}`}>
               <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-sky/15">
