@@ -10,8 +10,8 @@ import { DrillYearArt } from "@/components/features/free-show/drill-year-art"
 import { FREE_SHOW_DEADLINE_LABEL, FREE_SHOW_PATH, freeShowOpen } from "@/lib/free-show"
 
 export const metadata: Metadata = buildMetadata({
-  title: "2027 Indoor Winds Free Show Giveaway - Free Drill & Wind Music | Bright Designs",
-  description: "Enter your indoor winds group to win the drill and wind music for a 2027 show from Bright Designs. Free to enter. One winner, drawn at random.",
+  title: "2027 Indoor Winds Show Giveaway: Custom Wind Music and Drill | Bright Designs",
+  description: "Enter your indoor winds group to win a custom show from Bright Designs: wind music and drill, with copyright costs covered. Free to enter. One winner, drawn at random.",
   keywords: [
     "free indoor winds show",
     "indoor winds show giveaway",
@@ -30,12 +30,20 @@ export const revalidate = 3600
 // the designed header graphic is ready; until then the hero shows DrillYearArt.
 const HERO_GRAPHIC: string | null = null
 
-const ticker = ["Free to enter", "Drill + wind music", "Copyright covered", "One winner", `Enter by ${FREE_SHOW_DEADLINE_LABEL}`]
+const ticker = ["Wind music written for your group", "Drill charted for your members", "Copyright paid by us"]
 
 const steps = [
-  { title: "Enter", body: "Fill out the form below. It takes about five minutes." },
+  { title: "Enter", body: "Any indoor winds group can enter, free. Fill out the form below." },
   { title: "We draw a winner", body: `After entries close on ${FREE_SHOW_DEADLINE_LABEL}, we pick one group at random.` },
-  { title: "We send the show", body: "The winning group gets the drill and wind music for 2027, and we cover the copyright costs." },
+  { title: "We design your show", body: "We start with a call about your group and goals, then share concepts and drafts and revise them with your feedback." },
+]
+
+const rules = [
+  "Free to enter.",
+  "Open to any indoor winds group, scholastic or independent.",
+  `Entries close at 11:59 p.m. Eastern on ${FREE_SHOW_DEADLINE_LABEL}, 2026.`,
+  "We draw one winner at random after entries close and email the person who entered.",
+  "The prize is one custom 2027 indoor winds show: wind music and drill designed by Bright Designs for the winning group, plus the copyright costs for that music.",
 ]
 
 const hoverLift = "transition-transform duration-[calc(var(--count)/4)] ease-linear hover:-translate-y-1"
@@ -65,17 +73,16 @@ export default function IndoorWinds2027Page() {
                   <path className="underline-draw" pathLength={1} d="M2 9 C 50 2, 150 2, 198 8" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
                 </svg>
               </span>{" "}
-              2027 winds show.
+              indoor winds show.
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-gray-200 sm:text-xl">
-              We&apos;re giving one indoor winds group the drill and wind music for their 2027 season,
-              and we&apos;ll cover the copyright costs. Entering is free. Enter by {FREE_SHOW_DEADLINE_LABEL} and
-              we&apos;ll draw the winner at random.
+              We&apos;ll design a custom show for one group, free. Enter by{" "}
+              {FREE_SHOW_DEADLINE_LABEL}.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Button size="lg" className="h-14 bg-brand-electric px-8 text-base font-semibold text-brand-midnight hover:bg-brand-electric/90" asChild>
                 <a href="#enter">
-                  Enter the drawing
+                  Enter the giveaway
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </a>
               </Button>
@@ -84,7 +91,7 @@ export default function IndoorWinds2027Page() {
               </Button>
             </div>
             <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-gray-300">
-              {["Wind music", "Drill", "Copyright covered", `Enter by ${FREE_SHOW_DEADLINE_LABEL}`].map(item => (
+              {["Custom wind music", "Custom drill", "Copyright costs covered"].map(item => (
                 <li key={item} className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-brand-sky" />
                   {item}
@@ -96,7 +103,7 @@ export default function IndoorWinds2027Page() {
             {HERO_GRAPHIC ? (
               <Image
                 src={HERO_GRAPHIC}
-                alt="2027 Indoor Winds Free Show"
+                alt="2027 Indoor Winds Giveaway"
                 width={1200}
                 height={900}
                 priority
@@ -134,22 +141,25 @@ export default function IndoorWinds2027Page() {
         <div className="plus-container">
           <div className="mb-14 max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-fanfare text-brand-sky">The prize</p>
-            <h2 className="plus-h2 text-brand-midnight">Drill, wind music and copyright for your 2027 show</h2>
+            <h2 className="plus-h2 text-brand-midnight">Your next show, written by our team</h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              We write the wind music and drill for your group and pay the copyright. You give feedback along the way.
+            </p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-3">
             <div className={`rounded-3xl border border-border bg-card p-8 shadow sm:p-10 ${hoverLift}`}>
               <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-sky/15">
                 <Music className="h-7 w-7 text-brand-midnight" />
               </div>
               <h3 className="mb-3 font-heading text-2xl font-bold text-brand-midnight">Wind music</h3>
-              <p className="text-muted-foreground">Every wind part for the show.</p>
+              <p className="text-muted-foreground">Custom wind music, arranged for your instrumentation and your players&apos; strengths.</p>
             </div>
             <div className={`rounded-3xl border border-border bg-card p-8 shadow sm:p-10 ${hoverLift}`}>
               <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-electric/25">
                 <Footprints className="h-7 w-7 text-brand-midnight" />
               </div>
               <h3 className="mb-3 font-heading text-2xl font-bold text-brand-midnight">Drill</h3>
-              <p className="text-muted-foreground">Drill for the full show.</p>
+              <p className="text-muted-foreground">Custom drill for the whole show, written for your group&apos;s size and experience.</p>
             </div>
             <div className={`rounded-3xl border border-border bg-card p-8 shadow sm:p-10 ${hoverLift}`}>
               <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-sky/15">
@@ -158,28 +168,6 @@ export default function IndoorWinds2027Page() {
               <h3 className="mb-3 font-heading text-2xl font-bold text-brand-midnight">Copyright</h3>
               <p className="text-muted-foreground">We cover the copyright costs for the music.</p>
             </div>
-            <div className={`relative overflow-hidden rounded-3xl bg-brand-midnight p-8 text-white sm:p-10 ${hoverLift}`}>
-              <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-brand-electric/30 blur-3xl" />
-              <p className="relative text-sm font-semibold uppercase tracking-fanfare text-brand-sky">To enter</p>
-              <p className="relative mt-2 font-heading text-8xl font-bold leading-none text-brand-electric">$0</p>
-              <p className="relative mt-6 text-gray-300">
-                Any indoor winds group can enter, scholastic or independent.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Track record */}
-      <section className="pb-20 sm:pb-28">
-        <div className="plus-container">
-          <div className={`flex flex-col items-start gap-4 rounded-3xl border-2 border-brand-electric bg-brand-electric/10 p-8 sm:flex-row sm:items-center sm:gap-6 sm:p-10 ${hoverLift}`}>
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-midnight">
-              <Trophy className="h-7 w-7 text-brand-electric" />
-            </div>
-            <p className="font-heading text-xl font-semibold text-brand-midnight sm:text-2xl">
-              Our indoor winds shows have won WGI regional and circuit championships.
-            </p>
           </div>
         </div>
       </section>
@@ -191,12 +179,8 @@ export default function IndoorWinds2027Page() {
             <h2 className="plus-h2 text-brand-midnight">How it works</h2>
           </div>
           <div className="relative">
-            {/* OpenMarch-style next pathway in a lane above the sets, with one marcher on it */}
+            {/* An OpenMarch-style marcher walking a lane above the steps */}
             <div className="pointer-events-none absolute -top-6 left-[16.67%] right-[16.67%] hidden md:block" aria-hidden="true">
-              <div className="h-0.5 bg-[#00AF0D]" />
-              {[25, 75].map(at => (
-                <span key={at} className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#00AF0D] bg-white" style={{ left: `${at}%` }} />
-              ))}
               <span className="step-marcher absolute top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 font-['courier_new',monospace] text-[11px] font-bold text-black">YOU</span>
                 <span className="block h-3 w-3 rounded-full bg-[#FF0000]" />
@@ -217,6 +201,20 @@ export default function IndoorWinds2027Page() {
         </div>
       </section>
 
+      {/* Track record */}
+      <section className="pt-20 sm:pt-28">
+        <div className="plus-container">
+          <div className={`flex flex-col items-start gap-4 rounded-3xl border-2 border-brand-electric bg-brand-electric/10 p-8 sm:flex-row sm:items-center sm:gap-6 sm:p-10 ${hoverLift}`}>
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-midnight">
+              <Trophy className="h-7 w-7 text-brand-electric" />
+            </div>
+            <p className="font-heading text-xl font-semibold text-brand-midnight sm:text-2xl">
+              Our indoor winds shows have won WGI regional and circuit championships.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Enter */}
       <section id="enter" className="scroll-mt-24 py-20 sm:py-28">
         <div className="plus-container">
@@ -224,22 +222,23 @@ export default function IndoorWinds2027Page() {
             <div className="lg:col-span-2">
               <div className="relative overflow-hidden rounded-3xl bg-brand-midnight p-8 text-white sm:p-10 lg:sticky lg:top-28">
                 <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-brand-sky/30 blur-3xl" />
-                <p className="relative text-sm font-semibold uppercase tracking-fanfare text-brand-electric">Enter</p>
-                <h2 className="relative mt-3 font-heading text-4xl font-bold leading-tight">Enter the drawing</h2>
+                <p className="relative text-sm font-semibold uppercase tracking-fanfare text-brand-electric">Free to enter</p>
+                <h2 className="relative mt-3 font-heading text-4xl font-bold leading-tight">Enter the giveaway</h2>
                 <p className="relative mt-4 text-gray-300">
-                  Entries close {FREE_SHOW_DEADLINE_LABEL}. The winner is picked at random, so your answers
-                  don&apos;t change your odds. We do read
-                  every one.
+                  The winner is drawn at random. Your answers don&apos;t affect your odds, but we read every one.
                 </p>
                 <ul className="relative mt-8 space-y-3 text-sm text-gray-200">
-                  {["Your name and email", "Your ensemble, location and size", "What the past 12 months looked like", "Whether you've used a design group"].map(item => (
+                  {["Your name and email", "Your group's name, location and size", "How this would help your group", "Challenges from the past 12 months", "Whether you've worked with a design group"].map(item => (
                     <li key={item} className="flex items-start gap-3">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-electric" />
                       {item}
                     </li>
                   ))}
                 </ul>
-                <a href="mailto:hello@brightdesigns.band" className="relative mt-10 inline-flex items-center gap-2 text-sm font-medium text-brand-sky hover:underline">
+                <a href="#rules" className="relative mt-8 block text-sm font-medium text-brand-sky hover:underline">
+                  Read the rules
+                </a>
+                <a href="mailto:hello@brightdesigns.band" className="relative mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-sky hover:underline">
                   <Mail className="h-4 w-4" />
                   Questions? hello@brightdesigns.band
                 </a>
@@ -253,13 +252,29 @@ export default function IndoorWinds2027Page() {
                   <div className="py-10 text-center">
                     <h3 className="font-heading text-3xl font-bold text-brand-midnight">Entries are closed</h3>
                     <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-                      Entries closed on {FREE_SHOW_DEADLINE_LABEL}. If you entered, we&apos;ll email you if your
-                      group is drawn.
+                      Entries closed on {FREE_SHOW_DEADLINE_LABEL}. We&apos;ll email the winner directly.
                     </p>
                   </div>
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Rules */}
+      <section id="rules" className="scroll-mt-24 pb-20 sm:pb-28">
+        <div className="plus-container">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="font-heading text-2xl font-bold text-brand-midnight">Rules</h2>
+            <ul className="mt-6 space-y-3 text-muted-foreground">
+              {rules.map(rule => (
+                <li key={rule} className="flex gap-3">
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-brand-midnight" />
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
@@ -272,7 +287,7 @@ export default function IndoorWinds2027Page() {
               <p className="mb-3 text-sm font-semibold uppercase tracking-fanfare text-brand-sky">Fall 2027</p>
               <h2 className="plus-h2 text-brand-midnight">Not doing indoor winds?</h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                We&apos;re booking fall 2027 marching shows now. Get in touch and we&apos;ll talk through
+                We&apos;re booking marching shows now. Get in touch and we&apos;ll talk through
                 music, drill and timeline for your band.
               </p>
             </div>
