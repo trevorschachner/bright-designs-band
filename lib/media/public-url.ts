@@ -19,3 +19,16 @@ export function publicStorageUrl(bucket: string, path: string, baseUrl?: string 
     .join('/')
   return `${base}/storage/v1/object/public/${encodeURIComponent(bucket)}/${encodedPath}`
 }
+
+/**
+ * Same-origin path for a public Storage URL, served through the `/media`
+ * rewrite in next.config.mjs. School content filters often block supabase.co
+ * while allowing our own domain, which broke audio playback for directors.
+ * Any other URL (or a missing/masked env) passes through unchanged.
+ */
+export function mediaProxyUrl(url: string): string {
+  const base = getSupabaseConfig().url
+  if (!base) return url
+  const prefix = `${base.replace(/\/+$/, '')}/storage/v1/object/public/`
+  return url.startsWith(prefix) ? `/media/${url.slice(prefix.length)}` : url
+}

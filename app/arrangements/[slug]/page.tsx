@@ -26,6 +26,7 @@ import { ResaleCallout } from '@/components/features/resale-callout'
 import { createMusicCompositionSchema, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 import { durationLabel, ensembleLabel, gradeLabel } from '@/lib/display';
 import { showArt } from '@/lib/media/show-art';
+import { mediaProxyUrl } from '@/lib/media/public-url';
 
 // Rendered on first request, then cached and revalidated hourly; writes
 // expire it through invalidateArrangement (lib/services/invalidate.ts).
@@ -310,7 +311,7 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                 duration: arr.durationSeconds ? durationLabel(arr.durationSeconds) : '', 
                 description: arr.description || '', 
                 type: 'Full Track', 
-                url: audio.url,
+                url: mediaProxyUrl(audio.url),
                 imageUrl: showImage ?? undefined
               }]}
               title="Arrangement Audio Preview"
