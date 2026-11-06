@@ -30,7 +30,7 @@ export const revalidate = 3600
 // the designed header graphic is ready; until then the hero shows DrillYearArt.
 const HERO_GRAPHIC: string | null = null
 
-const ticker = ["Free to enter", "One winner", "Indoor winds, scholastic or independent"]
+const ticker = ["Wind music written for your group", "Drill charted for your members", "Copyright paid by us"]
 
 const steps = [
   { title: "Enter", body: "Any indoor winds group can enter, free. Fill out the form below." },
@@ -141,9 +141,9 @@ export default function IndoorWinds2027Page() {
         <div className="plus-container">
           <div className="mb-14 max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-fanfare text-brand-sky">The prize</p>
-            <h2 className="plus-h2 text-brand-midnight">A custom show, designed for your group</h2>
+            <h2 className="plus-h2 text-brand-midnight">Your next show, written by our team</h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Our team writes the wind music and drill. You give feedback along the way.
+              We write the wind music and drill for your group and pay the copyright. You give feedback along the way.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
