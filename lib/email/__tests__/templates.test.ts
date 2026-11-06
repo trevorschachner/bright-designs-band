@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { generateContactEmailTemplate, generateCustomerConfirmationTemplate } from '../templates';
 import type { ContactFormData } from '../types';
 
-const LOGO_URL = 'https://brightdesigns.band/logos/brightdesignslogo-main.png';
+const LOGO_URL = 'https://brightdesigns.band/email/logo.png';
 
 describe('Email Templates', () => {
   // Mock environment variable

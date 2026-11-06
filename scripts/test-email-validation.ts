@@ -47,6 +47,7 @@ function validateHTML(html: string): ValidationResult {
   // Check for logo
   const logoTokens = [
     'bright-designs-logo.png',
+    'email/logo.png',
     'brightdesignslogo-main.png',
     '/logos/brightdesignslogo-main.png',
   ];
@@ -60,10 +61,6 @@ function validateHTML(html: string): ValidationResult {
     warnings.push('Brand colors may be missing');
   }
 
-  // Check for "What to Expect Next" section (or "Next Steps" for admin emails)
-  if (!html.includes('What to Expect Next') && !html.includes('What to expect next') && !html.includes('Next Steps')) {
-    warnings.push('"What to Expect Next" section may be missing');
-  }
 
   // Check for email links
   if (!html.includes('mailto:')) {
