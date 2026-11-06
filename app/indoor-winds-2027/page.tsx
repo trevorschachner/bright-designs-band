@@ -11,7 +11,7 @@ import { FREE_SHOW_DEADLINE_LABEL, FREE_SHOW_PATH, freeShowOpen } from "@/lib/fr
 
 export const metadata: Metadata = buildMetadata({
   title: "2027 Indoor Winds Free Show Giveaway - Custom Drill & Wind Music | Bright Designs",
-  description: "Enter your indoor winds group to win a custom 2027 show from Bright Designs, with custom wind music and drill and copyright costs covered. Free to enter. One winner, drawn at random.",
+  description: "Enter your indoor winds group to win a custom show from Bright Designs, with custom wind music and drill and copyright costs covered. Free to enter. One winner, drawn at random.",
   keywords: [
     "free indoor winds show",
     "indoor winds show giveaway",
@@ -74,10 +74,10 @@ export default function IndoorWinds2027Page() {
                   <path className="underline-draw" pathLength={1} d="M2 9 C 50 2, 150 2, 198 8" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
                 </svg>
               </span>{" "}
-              2027 winds show.
+              indoor winds show.
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-gray-200 sm:text-xl">
-              We&apos;ll design a custom 2027 show for one indoor winds group, free. Enter by{" "}
+              We&apos;ll design a custom show for one group, free. Enter by{" "}
               {FREE_SHOW_DEADLINE_LABEL}.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -142,7 +142,7 @@ export default function IndoorWinds2027Page() {
         <div className="plus-container">
           <div className="mb-14 max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-fanfare text-brand-sky">The prize</p>
-            <h2 className="plus-h2 text-brand-midnight">A custom 2027 show, designed for your group</h2>
+            <h2 className="plus-h2 text-brand-midnight">A custom show, designed for your group</h2>
             <p className="mt-4 text-lg text-muted-foreground">
               Our team designs the show, and you&apos;re part of the process from start to finish. We begin
               with a consultation about your members, your goals and the show you have in mind. Then we bring you

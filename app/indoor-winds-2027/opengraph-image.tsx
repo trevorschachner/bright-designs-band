@@ -5,7 +5,7 @@ import { COLS, ROWS, YEAR_DOTS } from '@/components/features/free-show/drill-yea
 import { FREE_SHOW_DEADLINE_LABEL } from '@/lib/free-show'
 
 export const runtime = 'nodejs'
-export const alt = 'Win a free 2027 indoor winds show from Bright Designs'
+export const alt = 'Win a free indoor winds show from Bright Designs'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -32,7 +32,7 @@ export default async function Image() {
             <div style={{ display: 'flex' }}>
               Win a<span style={{ color: '#FFD230', marginLeft: 16 }}>free</span>
             </div>
-            <div style={{ display: 'flex' }}>2027 winds show.</div>
+            <div style={{ display: 'flex' }}>indoor winds show.</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', marginTop: 24, fontSize: 25, lineHeight: 1.4, color: '#D1D5DB' }}>
             <div>Custom music and drill for your group.</div>
