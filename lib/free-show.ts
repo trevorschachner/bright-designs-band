@@ -1,6 +1,6 @@
 /**
- * The 2027 Indoor Winds Free Show: any winds group that signs up gets the
- * drill and wind music free. Sign-ups post to /api/contact with this type;
+ * The 2027 Indoor Winds Free Show: one winds group, drawn at random, gets a
+ * custom 2027 show (wind music and drill) free. Sign-ups post to /api/contact with this type;
  * the route folds the program questions into the stored message so admin,
  * the staff email and Attio all show them without schema changes.
  */
