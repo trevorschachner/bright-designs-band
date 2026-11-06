@@ -1,4 +1,5 @@
 import { ContactFormData } from './types';
+import { FREE_SHOW_DEADLINE_LABEL } from '@/lib/free-show';
 
 const LOGO_URL = 'https://brightdesigns.band/logos/brightdesignslogo-main.png';
 
@@ -175,6 +176,17 @@ export function generateContactEmailTemplate(data: ContactFormData): { html: str
                         </td>
                       </tr>
                       ` : ''}
+                      ${data.pageUrl || data.referrerUrl ? `
+                      <tr>
+                        <td colspan="2" style="padding-bottom:12px;">
+                          <p style="margin:0 0 4px;font-size:11px;color:${colors.slate};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Sent from</p>
+                          <div style="background-color:${colors.lightGray};padding:10px 12px;border-radius:4px;color:${colors.charcoal};font-size:14px;word-break:break-all;">
+                            ${escapeHtmlText(data.pageUrl || '(unknown page)')}
+                            ${data.referrerUrl ? `<br><span style="font-size:12px;color:${colors.slate};margin-top:4px;display:block;">Came from: ${escapeHtmlText(data.referrerUrl)}</span>` : ''}
+                          </div>
+                        </td>
+                      </tr>
+                      ` : ''}
                     </table>
                   </td>
                 </tr>
@@ -292,6 +304,8 @@ Name: ${data.firstName} ${data.lastName}
 Email: ${data.email}
 ${data.phone ? `Phone: ${data.phone}` : ''}
 ${data.school ? `School/Organization: ${data.school}` : ''}
+${data.pageUrl ? `Sent from: ${data.pageUrl}` : ''}
+${data.referrerUrl ? `Came from: ${data.referrerUrl}` : ''}
 ${data.referralSource ? `How did you hear about us?: ${data.referralSource === 'band-director' ? 'Another Band Director' : data.referralSource === 'word-of-mouth' ? 'Word of Mouth' : data.referralSource === 'google' ? 'Google' : data.referralSource === 'instagram' ? 'Instagram' : data.referralSource === 'facebook' ? 'Facebook' : data.referralSource === 'youtube' ? 'YouTube' : data.referralSource === 'tiktok' ? 'TikTok' : data.referralSource === 'conference' ? 'Conference/Workshop' : data.referralSource === 'other' ? 'Other' : data.referralSource}${data.referralBandDirector ? ` (Referred by: ${data.referralBandDirector})` : ''}` : ''}
 
 ${data.showInterest ? `${getInquiryLabelUpper(data)}\n${data.showInterest}\n` : ''}
@@ -323,13 +337,38 @@ Please respond within 24 hours.
 }
 
 /** Which kind of submission a confirmation acknowledges. */
-export type ConfirmationKind = 'inquiry' | 'contact' | 'resource_download';
+export type ConfirmationKind = 'inquiry' | 'contact' | 'resource_download' | 'free_show_signup';
 
 // Fixed phrases: the confirmation never names the topic the submitter typed.
 const CONFIRMATION_SUBJECTS: Record<ConfirmationKind, string> = {
   inquiry: 'your show inquiry',
   contact: 'your message',
   resource_download: 'your guide request',
+  free_show_signup: 'your 2027 Indoor Winds Giveaway entry',
+};
+
+// A giveaway entry gets no reply, so its confirmation says so instead of
+// promising one within 24 hours.
+const CONFIRMATION_INTROS: Partial<Record<ConfirmationKind, string>> = {
+  free_show_signup: "We've received your 2027 Indoor Winds Giveaway entry. You're entered.",
+};
+
+const CONFIRMATION_TITLES: Partial<Record<ConfirmationKind, string>> = {
+  free_show_signup: 'Thanks for entering the Bright Designs giveaway',
+};
+
+const DEFAULT_EXPECTATIONS = [
+  'Our team will review your request and respond within <strong>24 hours</strong> during business days',
+  "We'll reach out to discuss your project and how we can best support your band",
+  'You can reply directly to this email if you have any questions',
+];
+
+const CONFIRMATION_EXPECTATIONS: Partial<Record<ConfirmationKind, string[]>> = {
+  free_show_signup: [
+    `Entries close ${FREE_SHOW_DEADLINE_LABEL}. After that, we draw one group at random`,
+    "If your group is drawn, we'll email you at this address",
+    'You can reply directly to this email if you have any questions',
+  ],
 };
 
 /**
@@ -386,6 +425,9 @@ export function generateCustomerConfirmationTemplate(
     .join(', ');
   const firstName = confirmationFirstName(data.firstName);
   const subject = CONFIRMATION_SUBJECTS[kind];
+  const intro = CONFIRMATION_INTROS[kind] ?? `We've received ${subject} and will reply within 24 hours.`;
+  const expectations = CONFIRMATION_EXPECTATIONS[kind] ?? DEFAULT_EXPECTATIONS;
+  const title = CONFIRMATION_TITLES[kind] ?? 'Thank you for contacting Bright Designs Band';
 
   const html = `<!DOCTYPE html>
 <html>
@@ -394,7 +436,7 @@ export function generateCustomerConfirmationTemplate(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <title>Thank you for contacting Bright Designs Band</title>
+  <title>${title}</title>
 </head>
 <body style="margin:0;padding:0;background-color:${colors.lightGray};font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${colors.lightGray};">
@@ -412,7 +454,7 @@ export function generateCustomerConfirmationTemplate(
           <tr>
             <td style="padding:30px 20px;">
               <!-- Intro Message -->
-              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">We've received ${subject} and will reply within 24 hours.</p>
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:${colors.charcoal};">${intro}</p>
               ${selectedServices ? `
               <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${colors.charcoal};">Services you selected: ${escapeHtmlText(selectedServices)}</p>
               ` : ''}
@@ -423,9 +465,7 @@ export function generateCustomerConfirmationTemplate(
                   <td style="padding:20px;">
                     <p style="margin:0 0 12px;font-size:15px;font-weight:600;color:${colors.midnight};">What to Expect Next</p>
                     <ul style="margin:0;padding-left:20px;color:${colors.charcoal};">
-                      <li style="margin-bottom:8px;font-size:14px;color:${colors.charcoal};">Our team will review your request and respond within <strong>24 hours</strong> during business days</li>
-                      <li style="margin-bottom:8px;font-size:14px;color:${colors.charcoal};">We'll reach out to discuss your project and how we can best support your band</li>
-                      <li style="font-size:14px;color:${colors.charcoal};">You can reply directly to this email if you have any questions</li>
+                      ${expectations.map((item, i) => `<li style="${i < expectations.length - 1 ? 'margin-bottom:8px;' : ''}font-size:14px;color:${colors.charcoal};">${item}</li>`).join('\n                      ')}
                     </ul>
                   </td>
                 </tr>
@@ -467,11 +507,11 @@ export function generateCustomerConfirmationTemplate(
 </body>
 </html>`;
 
-  const text = `Thank you for contacting Bright Designs Band!
+  const text = `${title}!
 
 Hi ${firstName},
 
-We've received ${subject} and will reply within 24 hours.
+${intro}
 ${selectedServices ? `\nServices you selected: ${selectedServices}\n` : ''}
 In the meantime, feel free to browse our website at https://brightdesigns.band
 

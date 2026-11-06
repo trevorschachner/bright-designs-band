@@ -19,8 +19,8 @@ const PAGE_SIZE = 25;
  * Contact-form submissions, newest first. Read-only: client records live in
  * Attio, so there is no status or notes editing here. The layout requires
  * admin access; the explicit guard keeps this page safe if it ever moves.
- * School/organisation is not stored by /api/contact (it goes in the email
- * only), so there is no column for it.
+ * Each row shows the page the form was sent from (lib/page-trail.ts) and the
+ * Attio record the submission synced to (lib/integrations/attio.ts).
  */
 export default async function InquiriesPage({ searchParams }: { searchParams: Promise<{ page?: string | string[] }> }) {
   await requireAdminPage('canAccessAdmin');
@@ -45,7 +45,7 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
       </Breadcrumb>
       <h1 className="text-4xl font-bold mb-2">Inquiries</h1>
       <p className="text-muted-foreground mb-8 max-w-2xl">
-        Every contact-form submission, newest first. Follow up in Attio; nothing here can be edited.
+        Every contact-form submission, newest first, with the page it was sent from. Each one goes to Attio as it arrives; follow up there. Nothing here can be edited.
       </p>
       {result === null ? (
         <p className="text-destructive">Could not load the inquiries. Reload to try again.</p>

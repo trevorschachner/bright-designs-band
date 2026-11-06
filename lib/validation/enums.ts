@@ -9,10 +9,14 @@ export const ENSEMBLE_SIZES = ['small', 'medium', 'large'] as const
 export const FILE_TYPES = ['image', 'audio', 'youtube', 'pdf', 'score', 'other'] as const
 export const ARRANGEMENT_SCENES = ['Opener', 'Ballad', 'Closer'] as const
 
+/** Tag facets (tags.kind). "Theme: " tags are themes. */
+export const TAG_KINDS = ['theme', 'mood', 'genre', 'style', 'other'] as const
+
 export type GradeBand = (typeof GRADE_BANDS)[number]
 export type ShowDifficulty = (typeof SHOW_DIFFICULTIES)[number]
 export type EnsembleSize = (typeof ENSEMBLE_SIZES)[number]
 export type ArrangementScene = (typeof ARRANGEMENT_SCENES)[number]
+export type TagKind = (typeof TAG_KINDS)[number]
 
 export const SHOW_INCLUDES = ['winds', 'percussion', 'sound design', 'drill', 'choreography', 'props', 'graphic'] as const
 export type ShowInclude = (typeof SHOW_INCLUDES)[number]

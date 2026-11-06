@@ -54,7 +54,7 @@
     "embla-carousel-react": "^8.3.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.445.0",
-    "next": "^16.4.0",
+    "next": "^16.4.3",
     "next-themes": "^0.4.6",
     "nodemailer": "^7.0.11",
     "postgres": "^3.4.7",
@@ -68,6 +68,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.3.16",
     "@lhci/cli": "^0.15.1",
     "@netlify/plugin-nextjs": "5.16.2",
     "@tailwindcss/container-queries": "^0.1.1",
@@ -87,7 +88,7 @@
     "dotenv": "^17.2.1",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.32.0",
-    "eslint-config-next": "^16.4.0",
+    "eslint-config-next": "^16.4.3",
     "jsdom": "^26.1.0",
     "postcss": "^8.4.47",
     "sharp": "^0.34.5",

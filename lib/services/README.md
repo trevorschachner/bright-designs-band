@@ -13,11 +13,12 @@ Writes live in the API routes and in the Server Actions in `lib/actions/`
 | `resources.ts` | Active resources; one resource by id or slug (`/api/resources/[id]`); admin list including drafts |
 | `tags.ts` | All tags; one tag (`/api/tags/[id]`) |
 | `sitemap.ts` | Show slugs and arrangement ids for `/sitemap.xml` (`app/sitemap.ts`) |
-| `admin.ts` | Dashboard counts |
+| `admin.ts` | Dashboard counts, the show editor (`getShowForEdit`) and the standalone part page (`getArrangementForEdit`, `getPartPickers`) |
 | `admin-users.ts` | The admin allowlist (`admin_users`) for `/admin/users`, uncached; `mutateAdminUsers()` locks the rows for the owner-protection rules |
 | `files.ts` | No reads: `invalidateFileOwner()` routes a file write to its show or arrangement |
 | `cache.ts` | `cachedRead()`, the build fallback, `toIso()` |
 | `invalidate.ts` | One invalidation helper per entity |
+| `search.ts`, `search-refresh.ts` | Catalog search (`searchCatalog`) and the rebuild of its views |
 
 ## Caching primitive: `unstable_cache`
 
@@ -160,6 +161,24 @@ straight after saving.
 | `invalidateTags()` | `tags` | every `/shows/[slug]` and `/arrangements/[slug]` page, `/`, `/shows`, `/arrangements`, `/sitemap.xml`, `/collections`, every `/collections/<slug>` |
 | `invalidatePieces()` | `pieces` | same as tags |
 | `invalidateResources()` | `resources` | `/resources`, `/`, `/sitemap.xml` |
+
+The show, arrangement, tag and piece helpers also call `scheduleSearchRefresh()`
+(`search-refresh.ts`), which rebuilds the search views after the response
+(`after()`). Resources are not searched.
+
+## Search
+
+`search.ts` `searchCatalog(q)` returns shows, parts, source pieces (each with
+the parts that use it) and collections. It reads two materialized views,
+`arrangement_search` and `show_search`
+(`drizzle/migrations/2026-11-01_search_foundation.sql`): every query word must
+match as a word prefix, accents and case folded, ranked title and pieces first,
+then shows and people, then tags and description. A part's search text includes
+its show's tags. When nothing matches, the closest spellings (trigram
+`word_similarity`) come back marked `fuzzy`. Collections match on their heading
+and keywords in JS. Tests run the real migrations on pglite
+(`__tests__/search-db.ts`). After editing the database by hand, run
+`npx tsx scripts/refresh-search.ts`.
 
 Which write calls which:
 

@@ -1,6 +1,6 @@
 import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check, uuid, bigint } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
-import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, FILE_TYPES, GRADE_BANDS, SHOW_DIFFICULTIES } from '../validation/enums';
+import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, FILE_TYPES, GRADE_BANDS, SHOW_DIFFICULTIES, TAG_KINDS, type TagKind } from '../validation/enums';
 
 // Enums
 // Values live in lib/validation/enums.ts so client forms can use them without drizzle.
@@ -61,6 +61,9 @@ export const arrangements = pgTable('arrangements', {
   youtubeUrl: text('youtube_url'),
   commissioned: text('commissioned'),
   sampleScoreUrl: text('sample_score_url'),
+  // Set in the part form; the catalog's Featured sort reads it (#83).
+  // drizzle/migrations/2026-11-01_search_foundation.sql.
+  featured: boolean('featured').default(false).notNull(),
   // Marked "legacy" but universally required: every consumer treats title as
   // the display name and interpolates it unguarded. Zero nulls exist, so the
   // constraint matches how the column is actually used.
@@ -101,10 +104,15 @@ export const files = pgTable('files', {
 export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
+  // One of TAG_KINDS (lib/validation/enums.ts), checked by tags_kind_check
+  // (drizzle/migrations/2026-11-01_search_foundation.sql).
+  kind: text('kind').$type<TagKind>().default('other').notNull(),
   // Added in drizzle/0003 (existing rows get now()). lib/actions/tags.ts sets
   // it on every update and compares it for optimistic concurrency.
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => ({
+  kindCheck: check('tags_kind_check', sql`${table.kind} in (${sql.raw(TAG_KINDS.map((k) => `'${k}'`).join(', '))})`),
+}));
 
 export const showsToTags = pgTable('shows_to_tags', {
   showId: integer('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
@@ -285,6 +293,15 @@ export const contactSubmissions = pgTable('contact_submissions', {
   adminNotes: text('admin_notes'),
   interestedShowId: integer('interested_show_id').references(() => shows.id, { onDelete: 'set null' }),
   interestedArrangementId: integer('interested_arrangement_id').references(() => arrangements.id, { onDelete: 'set null' }),
+  school: text('school'),
+  // Where the form was sent from, and the page before that (lib/page-trail.ts).
+  pageUrl: text('page_url'),
+  referrerUrl: text('referrer_url'),
+  // Result of the Attio sync (lib/integrations/attio.ts): the record the note
+  // went on, or why it failed. Both null means it never ran (no API key).
+  attioRecordUrl: text('attio_record_url'),
+  attioError: text('attio_error'),
+  attioSyncedAt: timestamp('attio_synced_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

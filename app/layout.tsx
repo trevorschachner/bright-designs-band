@@ -12,6 +12,7 @@ import { generateMetadata, defaultSEOConfig } from "@/lib/seo/metadata"
 import { JsonLd } from "@/components/features/seo/JsonLd"
 import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-data"
 import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
+import { PageTrailRecorder } from "@/components/layout/page-trail-recorder"
 import { AudioProvider } from "@/components/features/audio/AudioProvider"
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
@@ -67,6 +68,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <GlobalBackground />
           <GlobalSpotlight />
+          <PageTrailRecorder />
           <AudioProvider>
             <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
             <Suspense fallback={<PageLoadingSkeleton />}>

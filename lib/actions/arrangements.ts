@@ -106,34 +106,36 @@ const runCreateArrangement = guarded(
   createArrangementSchema,
   async (data, { db }) => {
     const { showId, tags: tagIds, ...fields } = data
-    const { row, slug, arrangementSlug } = await db.transaction(async (tx) => {
-      const show = await lockShow(tx, showId)
+    const { row, showSlug, arrangementSlug } = await db.transaction(async (tx) => {
+      const show = showId === undefined ? null : await lockShow(tx, showId)
       const arrangementSlug = await uniqueArrangementSlug(fields.title, (s) => arrangementSlugTaken(tx, s))
-      const [last] = await tx
-        .select({ orderIndex: showArrangements.orderIndex })
-        .from(showArrangements)
-        .where(eq(showArrangements.showId, showId))
-        .orderBy(desc(showArrangements.orderIndex))
-        .limit(1)
-      const orderIndex = (last?.orderIndex ?? 0) + 1
       const [inserted] = await tx
         .insert(arrangements)
         .values({ ...fields, slug: arrangementSlug, updatedAt: new Date() })
         .returning(COLUMNS)
-      await tx.insert(showArrangements).values({ showId, arrangementId: inserted.id, orderIndex })
+      if (show) {
+        const [last] = await tx
+          .select({ orderIndex: showArrangements.orderIndex })
+          .from(showArrangements)
+          .where(eq(showArrangements.showId, show.id))
+          .orderBy(desc(showArrangements.orderIndex))
+          .limit(1)
+        const orderIndex = (last?.orderIndex ?? 0) + 1
+        await tx.insert(showArrangements).values({ showId: show.id, arrangementId: inserted.id, orderIndex })
+      }
       if (tagIds && tagIds.length > 0) await replaceTagLinks(tx, { arrangementId: inserted.id }, tagIds)
-      return { row: inserted, slug: show.slug, arrangementSlug }
+      return { row: inserted, showSlug: show?.slug ?? null, arrangementSlug }
     })
     return {
       data: toResult(row),
-      invalidate: () => invalidateArrangement(row.id, arrangementSlug, slug),
-      track: { event: 'arrangement.saved', props: { arrangementId: row.id, showId } },
+      invalidate: () => invalidateArrangement(row.id, arrangementSlug, showSlug),
+      track: { event: 'arrangement.saved', props: { arrangementId: row.id, showId: showId ?? null } },
     }
   },
   'createArrangement'
 )
 
-/** Adds a part to the end of a show's list. */
+/** Adds a part to the end of a show's list, or a standalone part (no show) when `showId` is left out. */
 export async function createArrangement(input: CreateArrangementInput): Promise<ActionResult<ArrangementWriteResult>> {
   return runCreateArrangement(input)
 }

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { concurrencyStamp, rowId } from './concurrency'
+import { TAG_KINDS } from './enums'
 
 /**
  * Tag write payload.
@@ -11,6 +12,8 @@ import { concurrencyStamp, rowId } from './concurrency'
  */
 export const tagInputSchema = z.object({
   name: z.string().trim().min(1, 'Tag name is required').max(100, 'Tag name is too long'),
+  /** The facet the tag belongs to. Left out: `other` on create, unchanged on update. */
+  kind: z.enum(TAG_KINDS).optional(),
 })
 
 export type TagInput = z.infer<typeof tagInputSchema>
