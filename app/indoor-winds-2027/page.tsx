@@ -201,6 +201,23 @@ export default function IndoorWinds2027Page() {
         </div>
       </section>
 
+      {/* Rules */}
+      <section id="rules" className="scroll-mt-24 pt-20 sm:pt-28">
+        <div className="plus-container">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="font-heading text-2xl font-bold text-brand-midnight">Rules</h2>
+            <ul className="mt-6 space-y-3 text-muted-foreground">
+              {rules.map(rule => (
+                <li key={rule} className="flex gap-3">
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-brand-midnight" />
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
       {/* Track record */}
       <section className="pt-20 sm:pt-28">
         <div className="plus-container">
@@ -247,7 +264,12 @@ export default function IndoorWinds2027Page() {
             <div className="lg:col-span-3">
               <div className="rounded-3xl border border-border bg-card p-6 shadow-xl sm:p-10">
                 {open ? (
-                  <FreeShowForm />
+                  <>
+                    <h3 className="mb-8 font-heading text-2xl font-bold text-brand-midnight sm:text-3xl">
+                      Complete this form to enter
+                    </h3>
+                    <FreeShowForm />
+                  </>
                 ) : (
                   <div className="py-10 text-center">
                     <h3 className="font-heading text-3xl font-bold text-brand-midnight">Entries are closed</h3>
@@ -258,23 +280,6 @@ export default function IndoorWinds2027Page() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Rules */}
-      <section id="rules" className="scroll-mt-24 pb-20 sm:pb-28">
-        <div className="plus-container">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="font-heading text-2xl font-bold text-brand-midnight">Rules</h2>
-            <ul className="mt-6 space-y-3 text-muted-foreground">
-              {rules.map(rule => (
-                <li key={rule} className="flex gap-3">
-                  <Check className="mt-1 h-4 w-4 shrink-0 text-brand-midnight" />
-                  <span>{rule}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </section>
