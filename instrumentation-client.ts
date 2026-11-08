@@ -5,6 +5,12 @@ import { getPosthogKey } from "@/lib/env"
 // or on the first interaction, whichever comes first. Pageviews come from
 // `capture_pageview: 'history_change'`. Development stays untracked.
 //
+// Session replay is on, but what fraction of sessions is recorded is set in
+// PostHog (Project settings > Replay > Sampling), not here. The recorder is a
+// separate script PostHog fetches after init, so it is off the critical path
+// too. Inputs are masked, and the admin area is wrapped in `ph-no-capture` so
+// inquiry details shown there are never recorded.
+//
 // Trade-off: exceptions thrown before init (the first idle period, at most
 // ~2 s) are not captured.
 
@@ -25,7 +31,8 @@ function startPosthog(posthogKey: string) {
           defaults: "2025-05-24",
           capture_pageview: "history_change",
           capture_exceptions: true,
-          disable_session_recording: true,
+          disable_session_recording: false,
+          session_recording: { maskAllInputs: true },
           disable_surveys: true,
           person_profiles: "always",
         })

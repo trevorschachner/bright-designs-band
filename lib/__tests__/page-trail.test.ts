@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+const trackClientEvent = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/observability/track', () => ({ trackClientEvent }))
+
 import { pageTrail, postContact, recordPage } from '../page-trail'
 
 function visit(path: string) {
@@ -50,6 +53,18 @@ describe('page trail', () => {
     const [url, init] = fetchSpy.mock.calls[0]
     expect(url).toBe('/api/contact')
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({ email: 'a@b.org', type: 'inquiry', pageUrl: '/shows/starlight' })
+    fetchSpy.mockRestore()
+  })
+
+  it('postContact records a conversion only when the submission succeeds', async () => {
+    trackClientEvent.mockClear()
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('{}', { status: 500 }))
+      .mockResolvedValueOnce(new Response('{}', { status: 200 }))
+    await postContact({ email: 'a@b.org', type: 'inquiry', source: 'contact' })
+    expect(trackClientEvent).not.toHaveBeenCalled()
+    await postContact({ email: 'a@b.org', type: 'inquiry', source: 'contact' })
+    expect(trackClientEvent).toHaveBeenCalledWith('contact.submitted', { type: 'inquiry', source: 'contact' })
     fetchSpy.mockRestore()
   })
 })

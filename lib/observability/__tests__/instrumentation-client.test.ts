@@ -18,7 +18,8 @@ const expectInitOnce = () => {
     expect.objectContaining({
       api_host: '/ingest',
       ui_host: 'https://us.posthog.com',
-      disable_session_recording: true,
+      disable_session_recording: false,
+      session_recording: { maskAllInputs: true },
       disable_surveys: true,
       capture_pageview: 'history_change',
       capture_exceptions: true,
