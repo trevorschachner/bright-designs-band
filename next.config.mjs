@@ -84,6 +84,9 @@ const nextConfig = {
             },
           ]
         : []),
+      // PostHog proxy fallback for `next start` outside Netlify. On Netlify the
+      // [[redirects]] in netlify.toml answer /ingest first: this rewrite
+      // corrupts posthog-js's gzipped event bodies there.
       {
         source: '/ingest/static/:path*',
         destination: 'https://us-assets.i.posthog.com/static/:path*',

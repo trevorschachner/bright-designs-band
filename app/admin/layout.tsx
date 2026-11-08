@@ -26,10 +26,13 @@ export default async function AdminLayout({
 }) {
   const { role } = await requireAdminPage('canAccessAdmin')
 
+  // ph-no-capture: session replay blanks this subtree and autocapture skips
+  // it, so contact details on admin screens never reach PostHog.
+  // `contents` keeps the wrapper out of layout.
   return (
-    <>
+    <div className="ph-no-capture contents">
       <AdminNav role={role} />
       {children}
-    </>
+    </div>
   )
 }

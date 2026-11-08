@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { getImageProps } from 'next/image'
+import { trackClientEvent, type AudioEventProperties } from '@/lib/observability/track'
 
 export interface AudioTrack {
   src: string
@@ -60,6 +61,10 @@ const TimeContext = createContext<TimeStore | null>(null)
 
 const TIME_EVENTS = ['timeupdate', 'durationchange', 'loadedmetadata', 'seeked', 'emptied', 'ended'] as const
 
+function audioEventProperties(track: AudioTrack): AudioEventProperties {
+  return { title: track.title, showTitle: track.showTitle ?? null, arrangementId: track.arrangementId ?? null }
+}
+
 const hasMediaSession = () => typeof navigator !== 'undefined' && 'mediaSession' in navigator
 
 /** Lock-screen / Control Center artwork, through the image optimizer: covers can be several MB. */
@@ -100,6 +105,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const queueRef = useRef<AudioTrack[]>([])
   const trackRef = useRef<AudioTrack | null>(null)
   const startedRef = useRef(false)
+  /** src of the last track counted as `audio.played`; resuming it is not a new play. */
+  const playedSrcRef = useRef<string | null>(null)
   const [track, setTrack] = useState<AudioTrack | null>(null)
   const [queue, setQueue] = useState<AudioTrack[]>([])
   const [playing, setPlaying] = useState(false)
@@ -204,6 +211,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     if (!audio) return
     const onPlay = () => {
       startedRef.current = true
+      const current = trackRef.current
+      if (current && playedSrcRef.current !== current.src) {
+        playedSrcRef.current = current.src
+        trackClientEvent('audio.played', audioEventProperties(current))
+      }
       setPlaying(true)
       setPlayId((n) => n + 1)
     }
@@ -211,6 +223,9 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const onTime = () => timeStore.emit()
     const onEnded = () => {
       setPlaying(false)
+      if (trackRef.current) trackClientEvent('audio.completed', audioEventProperties(trackRef.current))
+      // Replaying a finished track counts as a new play.
+      playedSrcRef.current = null
       const queue = queueRef.current
       const index = queue.findIndex((t) => t.src === audio.getAttribute('src'))
       const next = index >= 0 ? queue[index + 1] : undefined

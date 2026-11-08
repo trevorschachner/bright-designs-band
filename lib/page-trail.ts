@@ -12,7 +12,9 @@
  * form still submits without a trail.
  */
 
-const CURRENT_KEY = 'bd:page-trail:current';
+import { trackClientEvent } from '@/lib/observability/track';
+
+const CURRENT_KEY ='bd:page-trail:current';
 const PREVIOUS_KEY = 'bd:page-trail:previous';
 
 function storage(): Storage | null {
@@ -73,10 +75,19 @@ function externalReferrer(): string | undefined {
  * POSTs a contact-form payload with the page trail attached. Every form that
  * posts to /api/contact goes through here.
  */
-export function postContact(payload: Record<string, unknown>): Promise<Response> {
-  return fetch('/api/contact', {
+export async function postContact(payload: Record<string, unknown>): Promise<Response> {
+  const response = await fetch('/api/contact', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, ...pageTrail() }),
   });
+  // The conversion event for the inquiry funnel: fired in the browser so it
+  // carries the visitor's traffic source. Only on success.
+  if (response.ok) {
+    trackClientEvent('contact.submitted', {
+      type: typeof payload.type === 'string' ? payload.type : null,
+      source: typeof payload.source === 'string' ? payload.source : null,
+    });
+  }
+  return response;
 }
