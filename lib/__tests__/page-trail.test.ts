@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const trackClientEvent = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/observability/track', () => ({ trackClientEvent }))
 
-import { pageTrail, postContact, recordPage } from '../page-trail'
+import { firstTouch, pageTrail, postContact, recordPage } from '../page-trail'
 
 function visit(path: string) {
   window.history.pushState({}, '', path)
@@ -12,6 +12,7 @@ function visit(path: string) {
 
 beforeEach(() => {
   window.sessionStorage.clear()
+  window.localStorage.clear()
   window.history.pushState({}, '', '/')
 })
 
@@ -52,7 +53,12 @@ describe('page trail', () => {
     await postContact({ email: 'a@b.org', type: 'inquiry' })
     const [url, init] = fetchSpy.mock.calls[0]
     expect(url).toBe('/api/contact')
-    expect(JSON.parse(String((init as RequestInit).body))).toEqual({ email: 'a@b.org', type: 'inquiry', pageUrl: '/shows/starlight' })
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual({
+      email: 'a@b.org',
+      type: 'inquiry',
+      pageUrl: '/shows/starlight',
+      firstTouch: { landingUrl: '/shows/starlight' },
+    })
     fetchSpy.mockRestore()
   })
 
@@ -66,5 +72,28 @@ describe('page trail', () => {
     await postContact({ email: 'a@b.org', type: 'inquiry', source: 'contact' })
     expect(trackClientEvent).toHaveBeenCalledWith('contact.submitted', { type: 'inquiry', source: 'contact' })
     fetchSpy.mockRestore()
+  })
+
+  it('remembers the first visit, with its external referrer and UTM tags, and never overwrites it', () => {
+    vi.spyOn(document, 'referrer', 'get').mockReturnValue('https://www.instagram.com/')
+    visit('/shows/hive-mind?utm_source=instagram&utm_medium=social&utm_campaign=spring')
+    vi.restoreAllMocks()
+    visit('/contact')
+    window.sessionStorage.clear() // a later visit, in a new tab
+    vi.spyOn(document, 'referrer', 'get').mockReturnValue('https://www.google.com/')
+    visit('/about')
+    vi.restoreAllMocks()
+    expect(firstTouch()).toEqual({
+      landingUrl: '/shows/hive-mind?utm_source=instagram&utm_medium=social&utm_campaign=spring',
+      referrer: 'https://www.instagram.com/',
+      utmSource: 'instagram',
+      utmMedium: 'social',
+      utmCampaign: 'spring',
+    })
+  })
+
+  it('ignores a corrupt stored first touch', () => {
+    window.localStorage.setItem('bd:first-touch', '{not json')
+    expect(firstTouch()).toBeUndefined()
   })
 })

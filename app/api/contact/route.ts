@@ -179,6 +179,8 @@ export async function POST(request: NextRequest) {
       referralBandDirector: rest.referralBandDirector,
       pageUrl: rest.pageUrl,
       referrerUrl: rest.referrerUrl,
+      firstTouch: rest.firstTouch,
+      posthogId: rest.posthogId,
       submissionId,
       siteUrl: getPublicSiteUrl(),
     });

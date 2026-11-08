@@ -11,6 +11,9 @@
  *   Signed or Lost) gets the note on that deal instead of a second one.
  *   Otherwise a new deal "<School>: <Season>" at stage Lead, source
  *   "Website form", owned by `ownerEmail`. Guide downloads get no deal.
+ * - **Web attribution (new deals only):** where the visitor originally came
+ *   from (lib/attribution.ts): Web channel, Web referrer, Web campaign,
+ *   Landing page and a PostHog visitor link. An existing deal keeps its own.
  * - **Note:** every field of the submission, including the page it was sent
  *   from, on the deal (or on the person when there is no deal).
  *
@@ -18,6 +21,8 @@
  * the form never fails because Attio did. Attribute and option names match the
  * workspace set up on 2026-10-04 (_context/topics/sales-and-crm.md).
  */
+
+import { campaignLabel, posthogPersonUrl, referrerDomain, webChannel, type FirstTouch } from '@/lib/attribution';
 
 const API = 'https://api.attio.com/v2';
 const REQUEST_TIMEOUT_MS = 8000;
@@ -58,6 +63,10 @@ export type AttioSubmission = {
   pageUrl?: string;
   /** The page before that: an in-site path or an external URL. */
   referrerUrl?: string;
+  /** The visitor's first visit to the site (lib/page-trail.ts). */
+  firstTouch?: FirstTouch & { landingUrl?: string };
+  /** PostHog distinct id, for the PostHog visitor link. */
+  posthogId?: string;
   submissionId?: number;
   /** Absolute site URL, for the admin link in the note. */
   siteUrl?: string;
@@ -221,8 +230,26 @@ async function createDeal(
   if (services.length) values.services = services;
   if (s.showInterest?.startsWith('Show:')) values.deal_type = 'Resale';
   if (companyId) values.associated_company = [{ target_object: 'companies', target_record_id: companyId }];
+  Object.assign(values, webAttribution(s));
   const created = await call('POST', '/objects/deals/records', { data: { values } });
   return created.data as AttioRecord;
+}
+
+/**
+ * The deal's web-attribution fields. Web channel is always set for a website
+ * deal ("Direct" when nothing is known); the rest only when there is a value.
+ */
+export function webAttribution(s: AttioSubmission): Record<string, string> {
+  const touch = s.firstTouch ?? {};
+  const values: Record<string, string> = { web_channel: webChannel(touch) };
+  const domain = referrerDomain(touch.referrer);
+  const campaign = campaignLabel(touch);
+  const visitor = posthogPersonUrl(s.posthogId);
+  if (domain) values.web_referrer = domain;
+  if (campaign) values.web_campaign = campaign;
+  if (touch.landingUrl) values.web_landing_page = touch.landingUrl;
+  if (visitor) values.posthog_visitor = visitor;
+  return values;
 }
 
 async function hasOption(call: Call, attribute: string, title: string): Promise<boolean> {
@@ -249,6 +276,10 @@ function noteBody(s: AttioSubmission, companyMatches: number, dealNote: string):
     ['Referred by', s.referralBandDirector],
     ['Sent from page', s.pageUrl],
     ['Came from', s.referrerUrl],
+    ['First visit from', s.firstTouch ? `${webChannel(s.firstTouch)}${referrerDomain(s.firstTouch.referrer) ? ` (${referrerDomain(s.firstTouch.referrer)})` : ''}` : undefined],
+    ['First landing page', s.firstTouch?.landingUrl],
+    ['Campaign', s.firstTouch ? campaignLabel(s.firstTouch) : undefined],
+    ['PostHog visitor', posthogPersonUrl(s.posthogId)],
   ];
   const body = lines.filter(([, v]) => v && v.trim()).map(([k, v]) => `${k}: ${v!.trim()}`);
   if (s.school && companyMatches !== 1) {
