@@ -15,6 +15,24 @@
   # Allow NEXT_PUBLIC_ prefixed variables (these are meant to be public)
   SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,EMAIL_FROM,EMAIL_SERVICE"
 
+# PostHog reverse proxy, at Netlify's edge.
+# posthog-js gzips every event batch. Proxied through the Next.js rewrite in
+# next.config.mjs, those binary bodies arrived corrupted ("invalid GZIP data")
+# and PostHog dropped every browser event. Netlify's own proxy forwards the
+# body byte-for-byte and runs before the request reaches Next. Order matters:
+# the more specific /static rule first.
+[[redirects]]
+  from = "/ingest/static/*"
+  to = "https://us-assets.i.posthog.com/static/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ingest/*"
+  to = "https://us.i.posthog.com/:splat"
+  status = 200
+  force = true
+
 # Cache static assets
 [[headers]]
   for = "/_next/static/*"

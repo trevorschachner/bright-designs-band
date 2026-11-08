@@ -14,6 +14,9 @@ import type { ArrangementListItem } from '@/lib/services/arrangements';
 import { AudioPlayerComponent } from '@/components/features/audio-player';
 import { GlobalAudioPlayerBar } from '@/components/features/global-audio-player-bar';
 
+const trackClientEvent = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/observability/track', () => ({ trackClientEvent }));
+
 // jsdom has no media pipeline: model paused/currentTime/duration per element
 // and make play()/pause() fire the events a browser would.
 const media = new WeakMap<HTMLMediaElement, { paused: boolean; time: number; duration: number }>();
@@ -306,6 +309,22 @@ describe('AudioProvider', () => {
     expect(audioEl().currentTime).toBe(30);
     act(() => handlers.get('pause')!({}));
     expect(session.playbackState).toBe('paused');
+  });
+
+  it('reports a play once per track (not on resume) and a completion when it ends', () => {
+    trackClientEvent.mockClear();
+    render(<AudioProvider><Probe /></AudioProvider>);
+    act(() => api.play(intro, [intro, ballad]));
+    act(() => api.pause());
+    act(() => api.play());
+    expect(trackClientEvent.mock.calls).toEqual([
+      ['audio.played', { title: 'Intro', showTitle: 'True North', arrangementId: 1 }],
+    ]);
+    act(() => { audioEl().dispatchEvent(new Event('ended')); });
+    expect(trackClientEvent.mock.calls.slice(1)).toEqual([
+      ['audio.completed', { title: 'Intro', showTitle: 'True North', arrangementId: 1 }],
+      ['audio.played', { title: 'Ballad', showTitle: 'True North', arrangementId: 2 }],
+    ]);
   });
 
   it('throws a clear error outside the provider', () => {
