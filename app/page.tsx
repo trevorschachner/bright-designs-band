@@ -12,6 +12,7 @@ import { generateMetadata as buildMetadata, defaultSEOConfig } from "@/lib/seo/m
 import { marchingBandSchemas } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
 import { showArt } from "@/lib/media/show-art"
+import { leadSentences } from "@/lib/display"
 import { CatalogPlayButton } from "@/components/features/catalog/CatalogPlayButton"
 
 export const metadata: Metadata = buildMetadata({ ...defaultSEOConfig, path: "/" })
@@ -151,11 +152,12 @@ export default async function HomePage() {
                   <p className="plus-caption text-muted-foreground mt-1">
                     {[show.year, show.difficulty, show.duration].filter(Boolean).join(" · ")}
                   </p>
-                  {/* Two lines each, kept even when shorter, so every card has the same shape. */}
-                  <p className="plus-body-sm text-muted-foreground mt-3 line-clamp-2 min-h-[2lh]">{show.description}</p>
+                  {/* Whole opening sentence(s), not a clipped paragraph; four lines kept even when shorter, so every card has the same shape. */}
+                  <p className="mt-3 text-[0.9375rem] leading-6 text-foreground/80 line-clamp-4 min-h-[4lh]">{leadSentences(show.description)}</p>
                   {show.arrangements.length > 0 && (
                     <p className="mt-4 flex gap-2 text-sm font-medium text-foreground">
                       <Music className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      {/* Two lines kept even when shorter, so View show lines up. */}
                       <span className="line-clamp-2 min-h-[2lh]">
                         <span className="sr-only">Music: </span>
                         {show.arrangements.map((a) => a.title || "Untitled").join(" · ")}
