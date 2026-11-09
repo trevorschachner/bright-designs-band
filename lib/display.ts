@@ -44,3 +44,21 @@ export function ensembleLabel(size: string | null | undefined): string | null {
 export function difficultyLabel(difficulty: string | null | undefined): string {
   return difficulty || 'Not specified'
 }
+
+/**
+ * A card's lead: whole sentences from the start of a description until there
+ * are at least `minChars`, so a card never ends mid-thought or on a bare
+ * "Jump in!". Text with no sentence ending comes back whole (the card clamps).
+ */
+export function leadSentences(text: string | null | undefined, minChars = 80): string {
+  // Typed "--" or "---" reads as a dash.
+  const clean = (text ?? '').replace(/\s+/g, ' ').replace(/\s*-{2,3}\s*/g, ' — ').trim()
+  // Split after ., ! or ? (and any closing quote) followed by a space.
+  const sentences = clean ? clean.split(/(?<=[.!?]["'”’)]*)\s+/) : []
+  let lead = ''
+  for (const sentence of sentences) {
+    lead = lead ? `${lead} ${sentence}` : sentence
+    if (lead.length >= minChars) break
+  }
+  return lead
+}
