@@ -14,8 +14,33 @@
 
 import { trackClientEvent } from '@/lib/observability/track';
 
-const CURRENT_KEY ='bd:page-trail:current';
+const CURRENT_KEY = 'bd:page-trail:current';
 const PREVIOUS_KEY = 'bd:page-trail:previous';
+const FIRST_TOUCH_KEY = 'bd:first-touch';
+
+/**
+ * A visitor's first visit to the site, kept across visits (localStorage) so an
+ * inquiry weeks later still says what originally brought them. Written once,
+ * never overwritten. Sent with every contact submission and recorded on the
+ * Attio deal (lib/attribution.ts).
+ */
+export type StoredFirstTouch = {
+  /** External page that sent them; absent for a typed URL or bookmark. */
+  referrer?: string;
+  /** First page they landed on, path and query. */
+  landingUrl: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+};
+
+function persistent(): Storage | null {
+  try {
+    return typeof window === 'undefined' ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 function storage(): Storage | null {
   try {
@@ -31,6 +56,7 @@ function here(): string {
 
 /** Call on every navigation (PageTrailRecorder does). */
 export function recordPage(path: string = here()): void {
+  rememberFirstTouch();
   const store = storage();
   if (!store) return;
   try {
@@ -60,6 +86,51 @@ export function pageTrail(): { pageUrl?: string; referrerUrl?: string } {
   return { pageUrl, ...(referrerUrl ? { referrerUrl } : {}) };
 }
 
+function rememberFirstTouch(): void {
+  const store = persistent();
+  if (!store) return;
+  try {
+    if (store.getItem(FIRST_TOUCH_KEY)) return;
+    const params = new URLSearchParams(window.location.search);
+    const utm = (key: string) => params.get(key)?.slice(0, 200) || undefined;
+    const ref = externalReferrer();
+    const touch: StoredFirstTouch = {
+      landingUrl: here().slice(0, 1000),
+      // Only an off-site page counts; an in-site referrer means the trail
+      // started before storage was available.
+      ...(ref && !ref.startsWith('/') ? { referrer: ref.slice(0, 1000) } : {}),
+      ...(utm('utm_source') ? { utmSource: utm('utm_source') } : {}),
+      ...(utm('utm_medium') ? { utmMedium: utm('utm_medium') } : {}),
+      ...(utm('utm_campaign') ? { utmCampaign: utm('utm_campaign') } : {}),
+    };
+    store.setItem(FIRST_TOUCH_KEY, JSON.stringify(touch));
+  } catch {
+    // Blocked storage: attribution is best-effort.
+  }
+}
+
+/** The visitor's first visit, if this browser recorded one. */
+export function firstTouch(): StoredFirstTouch | undefined {
+  try {
+    const raw = persistent()?.getItem(FIRST_TOUCH_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as StoredFirstTouch;
+    return typeof parsed?.landingUrl === 'string' ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** PostHog's id for this visitor, when PostHog is running; links the deal to their history. */
+async function posthogId(): Promise<string | undefined> {
+  try {
+    const { default: posthog } = await import('posthog-js');
+    return posthog.__loaded ? posthog.get_distinct_id() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function externalReferrer(): string | undefined {
   const ref = document.referrer;
   if (!ref) return undefined;
@@ -72,14 +143,22 @@ function externalReferrer(): string | undefined {
 }
 
 /**
- * POSTs a contact-form payload with the page trail attached. Every form that
- * posts to /api/contact goes through here.
+ * POSTs a contact-form payload with the page trail, the visitor's first touch
+ * and their PostHog id attached. Every form that posts to /api/contact goes
+ * through here.
  */
 export async function postContact(payload: Record<string, unknown>): Promise<Response> {
+  const touch = firstTouch();
+  const visitorId = await posthogId();
   const response = await fetch('/api/contact', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, ...pageTrail() }),
+    body: JSON.stringify({
+      ...payload,
+      ...pageTrail(),
+      ...(touch ? { firstTouch: touch } : {}),
+      ...(visitorId ? { posthogId: visitorId } : {}),
+    }),
   });
   // The conversion event for the inquiry funnel: fired in the browser so it
   // carries the visitor's traffic source. Only on success.
