@@ -19,6 +19,10 @@ export const metadata: Metadata = buildMetadata({ ...defaultSEOConfig, path: "/"
 // Revalidate every hour - service layer also caches for 1 hour
 export const revalidate = 3600;
 
+/** Featured cards list this many parts and tags, so the cards stay one size. */
+const FEATURED_PARTS = 4
+const FEATURED_TAGS = 3
+
 export default async function HomePage() {
   // Fetch cached featured shows from the service layer
   const featuredShows = await getFeaturedShows();
@@ -121,7 +125,7 @@ export default async function HomePage() {
           {featuredShows.length > 0 ? (
             <div className="plus-grid-3">
               {featuredShows.map((show, index) => (
-              <Card key={show.id}>
+              <Card key={show.id} className="flex flex-col">
                 <div className="plus-divider mb-4 pb-4">
                   <div className="w-full aspect-video plus-border rounded-lg overflow-hidden bg-muted relative">
                     <Image
@@ -135,17 +139,19 @@ export default async function HomePage() {
                   </div>
                 </div>
                 <CardHeader>
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start gap-3 mb-2">
                     <CardTitle className="plus-h4">
                       {show.title}
                     </CardTitle>
-                    <span className="plus-surface px-2 py-1 plus-caption">
+                    <span className="plus-surface px-2 py-1 plus-caption shrink-0">
                       {show.year}
                     </span>
                   </div>
-                  <CardDescription className="plus-body-sm">{show.description}</CardDescription>
+                  {/* Three lines at most, so every card has the same shape; the full text is on the show page. */}
+                  <CardDescription className="plus-body-sm line-clamp-3 min-h-[3lh]">{show.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                {/* Grows to fill the card, so View Details sits at the same height in every card in a row. */}
+                <CardContent className="flex flex-1 flex-col">
                   <div className="flex justify-between items-center mb-4 plus-body-sm">
                     <span className="flex items-center">
                       <Users className="w-4 h-4 mr-2" />
@@ -153,14 +159,36 @@ export default async function HomePage() {
                     </span>
                     <span>{show.duration}</span>
                   </div>
+                  {show.arrangements.length > 0 && (
+                    <div className="mb-4">
+                      <p className="plus-caption text-muted-foreground mb-2">Arrangements</p>
+                      {/* Room for FEATURED_PARTS rows even when a show has fewer, so tags line up across cards. */}
+                      <ol className="space-y-1.5 min-h-[7.125rem]">
+                        {show.arrangements.slice(0, FEATURED_PARTS).map((a) => (
+                          <li key={a.id} className="flex h-6 items-baseline gap-2 plus-body-sm">
+                            <span className="plus-caption text-muted-foreground w-14 shrink-0">{a.scene}</span>
+                            <Link href={`/arrangements/${a.slug}`} className="truncate hover:underline" prefetch={false}>
+                              {a.title || "Untitled"}
+                            </Link>
+                          </li>
+                        ))}
+                      </ol>
+                      {show.arrangements.length > FEATURED_PARTS && (
+                        <p className="plus-caption text-muted-foreground mt-1">+{show.arrangements.length - FEATURED_PARTS} more</p>
+                      )}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2 mb-6">
-                    {show.showsToTags.map((st) => (
+                    {show.showsToTags.slice(0, FEATURED_TAGS).map((st) => (
                       <span key={st.tag.id} className="plus-surface px-2 py-1 plus-caption">
                         {displayTagName(st.tag.name)}
                       </span>
                     ))}
+                    {show.showsToTags.length > FEATURED_TAGS && (
+                      <span className="px-2 py-1 plus-caption text-muted-foreground">+{show.showsToTags.length - FEATURED_TAGS}</span>
+                    )}
                   </div>
-                  <Button className="w-full" asChild>
+                  <Button className="w-full mt-auto" asChild>
                     <Link href={`/shows/${show.slug}`}>View Details</Link>
                   </Button>
                 </CardContent>
