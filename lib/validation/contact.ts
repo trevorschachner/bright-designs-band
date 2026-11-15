@@ -75,6 +75,25 @@ export const contactSubmissionSchema = z.object({
   // The page the form was sent from and the one before it (lib/page-trail.ts).
   pageUrl: optionalTraceUrl,
   referrerUrl: optionalTraceUrl,
+  // The visitor's first visit (lib/page-trail.ts firstTouch), for the Attio
+  // deal's web-attribution fields. Malformed or oversized values are dropped
+  // rather than rejected: attribution must never 400 a genuine enquiry.
+  firstTouch: z
+    .object({
+      referrer: optionalTraceUrl,
+      landingUrl: optionalTraceUrl,
+      utmSource: optionalText(200),
+      utmMedium: optionalText(200),
+      utmCampaign: optionalText(200),
+    })
+    .optional()
+    .catch(undefined),
+  // PostHog distinct id: a UUID-like token. Anything else is dropped.
+  posthogId: z
+    .string()
+    .regex(/^[A-Za-z0-9_.:-]{1,200}$/)
+    .optional()
+    .catch(undefined),
   // Cloudflare Turnstile response from the widget. Required on every form
   // that posts here; verified server-side before anything is stored or sent.
   // Stripped by the handler before persistence or email.

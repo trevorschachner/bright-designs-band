@@ -109,6 +109,42 @@ describe('syncSubmissionToAttio', () => {
     expect(note.content).not.toContain('link one by hand')
   })
 
+  it('records where the visitor first came from on a new deal and in the note', async () => {
+    const attio = fakeAttio({})
+    await syncSubmissionToAttio(
+      {
+        ...inquiry,
+        firstTouch: {
+          referrer: 'https://www.instagram.com/',
+          landingUrl: '/shows/hive-mind',
+          utmSource: 'instagram',
+          utmCampaign: 'spring-2027',
+        },
+        posthogId: '0190-abc',
+      },
+      deps(attio.fetchImpl),
+    )
+    const deal = find(attio.calls, 'POST', '/objects/deals/records')!.body.data.values
+    expect(deal).toMatchObject({
+      web_channel: 'Social',
+      web_referrer: 'instagram.com',
+      web_campaign: 'instagram / spring-2027',
+      web_landing_page: '/shows/hive-mind',
+      posthog_visitor: 'https://us.posthog.com/project/261511/person/0190-abc',
+    })
+    const note = find(attio.calls, 'POST', '/notes')!.body.data.content
+    expect(note).toContain('First visit from: Social (instagram.com)')
+    expect(note).toContain('PostHog visitor: https://us.posthog.com/project/261511/person/0190-abc')
+  })
+
+  it('marks a website deal Direct when nothing is known about the first visit, and sets nothing else', async () => {
+    const attio = fakeAttio({})
+    await syncSubmissionToAttio(inquiry, deps(attio.fetchImpl))
+    const deal = find(attio.calls, 'POST', '/objects/deals/records')!.body.data.values
+    expect(deal.web_channel).toBe('Direct')
+    for (const key of ['web_referrer', 'web_campaign', 'web_landing_page', 'posthog_visitor']) expect(deal[key]).toBeUndefined()
+  })
+
   it('reuses an existing person without editing them, and adds to their open deal instead of opening another', async () => {
     const attio = fakeAttio({
       people: [{ id: { record_id: 'p1' }, web_url: 'https://app.attio.com/bright-designs/person/p1', values: {} }],

@@ -72,4 +72,26 @@ describe('scalar passthrough fields', () => {
     expect(contactSubmissionSchema.safeParse({ ...valid, services: 'drill' }).success).toBe(false)
     expect(contactSubmissionSchema.safeParse({ ...valid, services: ['drill'] }).success).toBe(true)
   })
+
+  it('keeps a clean first touch and PostHog id, trimming the referrer to origin and path', () => {
+    const parsed = contactSubmissionSchema.parse({
+      ...valid,
+      firstTouch: { referrer: 'https://www.google.com/search?q=secret', landingUrl: '/shows/x', utmSource: 'google' },
+      posthogId: '0190abcd-1234-7000-8000-abcdef012345',
+    })
+    expect(parsed.firstTouch).toEqual({ referrer: 'https://www.google.com/search', landingUrl: '/shows/x', utmSource: 'google' })
+    expect(parsed.posthogId).toBe('0190abcd-1234-7000-8000-abcdef012345')
+  })
+
+  it('drops malformed attribution instead of rejecting the enquiry', () => {
+    const parsed = contactSubmissionSchema.safeParse({
+      ...valid,
+      firstTouch: 'not an object',
+      posthogId: '<script>alert(1)</script>',
+    })
+    expect(parsed.success).toBe(true)
+    expect(parsed.success && parsed.data.firstTouch).toBeUndefined()
+    expect(parsed.success && parsed.data.posthogId).toBeUndefined()
+  })
 })
+
