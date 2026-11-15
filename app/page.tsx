@@ -1,6 +1,6 @@
-import { ArrowRight, Play, Users } from "lucide-react"
+import { ArrowRight, Music, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import ServicesGrid, { ServiceItem } from "@/components/features/services/services-grid"
 import Testimonials from "@/components/features/testimonials"
 import { JsonLd } from "@/components/features/seo/JsonLd"
@@ -12,7 +12,8 @@ import { generateMetadata as buildMetadata, defaultSEOConfig } from "@/lib/seo/m
 import { marchingBandSchemas } from "@/lib/seo/structured-data"
 import { getFeaturedShows } from "@/lib/services/shows"
 import { showArt } from "@/lib/media/show-art"
-import { displayTagName } from "@/lib/tags"
+import { leadSentences } from "@/lib/display"
+import { CatalogPlayButton } from "@/components/features/catalog/CatalogPlayButton"
 
 export const metadata: Metadata = buildMetadata({ ...defaultSEOConfig, path: "/" })
 
@@ -121,49 +122,53 @@ export default async function HomePage() {
           {featuredShows.length > 0 ? (
             <div className="plus-grid-3">
               {featuredShows.map((show, index) => (
-              <Card key={show.id}>
-                <div className="plus-divider mb-4 pb-4">
-                  <div className="w-full aspect-video plus-border rounded-lg overflow-hidden bg-muted relative">
-                    <Image
-                      src={showArt(show) ?? "/placeholder.svg"}
-                      alt={show.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      priority={index === 0}
-                    />
-                  </div>
+              <Card key={show.id} className="group relative flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
+                {/* The whole card opens the show; the play button and nothing else sits above this link. */}
+                <Link
+                  href={`/shows/${show.slug}`}
+                  aria-label={show.title}
+                  className="absolute inset-0 z-[1] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <div className="relative w-full aspect-video bg-muted">
+                  <Image
+                    src={showArt(show) ?? "/placeholder.svg"}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    priority={index === 0}
+                  />
+                  {show.preview && (
+                    <div className="absolute bottom-3 right-3 z-[2]">
+                      <CatalogPlayButton
+                        variant="poster"
+                        track={{ ...show.preview, showTitle: show.title, imageUrl: showArt(show) ?? undefined }}
+                      />
+                    </div>
+                  )}
                 </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="plus-h4">
-                      {show.title}
-                    </CardTitle>
-                    <span className="plus-surface px-2 py-1 plus-caption">
-                      {show.year}
-                    </span>
-                  </div>
-                  <CardDescription className="plus-body-sm">{show.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-4 plus-body-sm">
-                    <span className="flex items-center">
-                      <Users className="w-4 h-4 mr-2" />
-                      {show.difficulty}
-                    </span>
-                    <span>{show.duration}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {show.showsToTags.map((st) => (
-                      <span key={st.tag.id} className="plus-surface px-2 py-1 plus-caption">
-                        {displayTagName(st.tag.name)}
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="plus-h4">{show.title}</h3>
+                  <p className="plus-caption text-muted-foreground mt-1">
+                    {[show.year, show.difficulty, show.duration].filter(Boolean).join(" · ")}
+                  </p>
+                  {/* Whole opening sentence(s), not a clipped paragraph; four lines kept even when shorter, so every card has the same shape. */}
+                  <p className="mt-3 text-[0.9375rem] leading-6 text-foreground/80 line-clamp-4 min-h-[4lh]">{leadSentences(show.description)}</p>
+                  {show.arrangements.length > 0 && (
+                    <p className="mt-4 flex gap-2 text-sm font-medium text-foreground">
+                      <Music className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      {/* Two lines kept even when shorter, so View show lines up. */}
+                      <span className="line-clamp-2 min-h-[2lh]">
+                        <span className="sr-only">Music: </span>
+                        {show.arrangements.map((a) => a.title || "Untitled").join(" · ")}
                       </span>
-                    ))}
-                  </div>
-                  <Button className="w-full" asChild>
-                    <Link href={`/shows/${show.slug}`}>View Details</Link>
-                  </Button>
-                </CardContent>
+                    </p>
+                  )}
+                  <span className="mt-auto pt-6 inline-flex items-center text-sm font-medium text-foreground" aria-hidden="true">
+                    View show
+                    <ArrowRight className="ml-1.5 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
               </Card>
             ))}
           </div>
