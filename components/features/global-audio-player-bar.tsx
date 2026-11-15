@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 import { useAudioActions, useAudioState, useAudioTime } from "@/components/features/audio/AudioProvider"
 import { Button } from "@/components/ui/button"
@@ -99,9 +100,16 @@ export function GlobalAudioPlayerBar() {
     return () => clearTimeout(timer)
   }, [isPlaying, playId])
 
-  usePadBodyFor(barRef, track !== null)
+  // Admin has no audio of its own, and the editors' fixed Save row sits where
+  // the bar would: a track still loaded from the public site hid it (#93).
+  const onAdmin = usePathname()?.startsWith('/admin') ?? false
+  useEffect(() => {
+    if (onAdmin) audio.pause()
+  }, [onAdmin, audio])
 
-  if (!track) return null
+  usePadBodyFor(barRef, track !== null && !onAdmin)
+
+  if (!track || onAdmin) return null
 
   const trackImage = track.imageUrl?.trim() ? track.imageUrl : null
   const index = queue.findIndex((t) => t.src === track.src)

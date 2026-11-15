@@ -16,6 +16,8 @@ import { GlobalAudioPlayerBar } from '@/components/features/global-audio-player-
 
 const trackClientEvent = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/observability/track', () => ({ trackClientEvent }));
+const route = vi.hoisted(() => ({ pathname: '/' }));
+vi.mock('next/navigation', () => ({ usePathname: () => route.pathname }));
 
 // jsdom has no media pipeline: model paused/currentTime/duration per element
 // and make play()/pause() fire the events a browser would.
@@ -59,6 +61,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  route.pathname = '/';
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -384,5 +387,32 @@ describe('GlobalAudioPlayerBar on phones', () => {
     expect(state().src).toBe(ballad.src);
     fireEvent.click(within(bar).getByRole('button', { name: 'Previous track' }));
     expect(state().src).toBe(intro.src);
+  });
+});
+
+describe('GlobalAudioPlayerBar in admin', () => {
+  it('hides and pauses on /admin, so the editors\' fixed Save row stays clickable (#93)', () => {
+    // A fresh element each time, as a navigation would re-render the layout.
+    const tree = () => (
+      <AudioProvider>
+        <Probe />
+        <GlobalAudioPlayerBar />
+      </AudioProvider>
+    );
+    const { rerender } = render(tree());
+    act(() => api.play(intro));
+    expect(screen.getByTestId('audio-bar')).toBeInTheDocument();
+    expect(state().playing).toBe(true);
+
+    route.pathname = '/admin/shows/21';
+    rerender(tree());
+    expect(screen.queryByTestId('audio-bar')).not.toBeInTheDocument();
+    expect(state().playing).toBe(false);
+    expect(document.body.style.paddingBottom).toBe('');
+
+    // The track is still loaded: back on the public site the bar returns.
+    route.pathname = '/shows/true-north';
+    rerender(tree());
+    expect(screen.getByTestId('audio-bar')).toBeInTheDocument();
   });
 });
