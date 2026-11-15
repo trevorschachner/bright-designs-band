@@ -67,6 +67,27 @@ describe('getFeaturedShows', () => {
     expect(show).toMatchObject({ graphicUrl: null, thumbnailUrl: 'https://cdn.example/t.webp', imageUrl: 'https://cdn.example/f.webp' })
   })
 
+  it('previews the first part that has public audio, served from /media', async () => {
+    findMany.mockResolvedValue([
+      showRow(1, {
+        showArrangements: [
+          { arrangement: { id: 3, slug: 'opener', title: 'Opener', scene: 'Opener', files: [] } },
+          {
+            arrangement: {
+              id: 4, slug: 'ballad', title: 'Ballad', scene: 'Ballad',
+              files: [{ url: 'https://yibokqolsyxosftcupgz.supabase.co/storage/v1/object/public/Bright%20Designs/a.mp3' }],
+            },
+          },
+        ],
+      }),
+      showRow(2),
+    ])
+    const [withAudio, without] = await getFeaturedShows()
+    expect(withAudio.preview).toMatchObject({ title: 'Ballad', arrangementId: 4 })
+    expect(withAudio.preview?.src).toMatch(/a\.mp3$/)
+    expect(without.preview).toBeNull()
+  })
+
   it('returns an empty list when nothing is featured', async () => {
     findMany.mockResolvedValue([])
     expect(await getFeaturedShows()).toEqual([])

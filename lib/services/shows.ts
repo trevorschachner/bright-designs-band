@@ -185,24 +185,62 @@ export const getRelatedShows = cachedRead('related-shows-v3', fetchRelatedShows,
 // Home page and collections
 // ---------------------------------------------------------------------------
 
-async function fetchFeaturedShows(): Promise<ShowSummary[]> {
+/** A featured card: the summary plus the first part with public audio, for its play button. */
+export type FeaturedShow = ShowSummary & {
+  preview: { src: string; title: string; arrangementId: number } | null;
+};
+
+type FeaturedRow = Omit<SummaryRow, 'showArrangements'> & {
+  showArrangements: {
+    arrangement: (NonNullable<SummaryRow['showArrangements'][number]['arrangement']> & { files?: { url: string }[] }) | null;
+  }[];
+};
+
+async function fetchFeaturedShows(): Promise<FeaturedShow[]> {
+  const relations = summaryRelations();
   const rows = await db.query.shows.findMany({
     columns: SUMMARY_COLUMNS,
     where: eq(shows.featured, true),
     orderBy: [desc(shows.createdAt)],
     limit: 6,
-    with: summaryRelations(),
+    with: {
+      ...relations,
+      showArrangements: {
+        ...relations.showArrangements,
+        with: {
+          arrangement: {
+            columns: { id: true, slug: true, title: true, scene: true },
+            with: {
+              files: {
+                columns: { url: true },
+                where: and(eq(files.isPublic, true), eq(files.fileType, 'audio')),
+                orderBy: [files.displayOrder, files.createdAt],
+                limit: 1,
+              },
+            },
+          },
+        },
+      },
+    },
   });
-  return (rows as SummaryRow[]).map(toSummary);
+  return (rows as FeaturedRow[]).map((row) => {
+    const part = row.showArrangements.map((sa) => sa.arrangement).find((a) => a?.files?.[0]);
+    const audio = part?.files?.[0];
+    return {
+      ...toSummary(row),
+      // Audio plays from our own domain; see mediaProxyUrl.
+      preview: part && audio ? { src: mediaProxyUrl(audio.url), title: part.title || row.title, arrangementId: part.id } : null,
+    };
+  });
 }
 
 /**
  * Whatever is featured, newest first, at most six. An empty list is a real
  * answer (nothing featured), and the home page renders its fallback copy.
  */
-export const getFeaturedShows = cachedRead('featured-shows-v6', fetchFeaturedShows, {
+export const getFeaturedShows = cachedRead('featured-shows-v7', fetchFeaturedShows, {
   tags: LIST_TAGS,
-  atBuildWithoutDb: [] as ShowSummary[],
+  atBuildWithoutDb: [] as FeaturedShow[],
 });
 
 export type ShowFilter = { difficulty?: ShowDifficulty; tags?: string[]; yearMin?: number };
