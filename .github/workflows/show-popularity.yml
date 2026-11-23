@@ -1,0 +1,28 @@
+name: Sync show popularity
+
+# Copies visitors + listeners per show (last 90 days) from PostHog into
+# shows.popularity, which orders the catalog and the home page's featured shows.
+# See scripts/sync-show-popularity.ts.
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Mondays, 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/sync-show-popularity.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          NODE_ENV: production

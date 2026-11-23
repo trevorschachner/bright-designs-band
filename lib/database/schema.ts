@@ -27,6 +27,9 @@ export const shows = pgTable('shows', {
   year: smallint('year'),
   featured: boolean('featured').default(false).notNull(),
   displayOrder: integer('display_order').default(0).notNull(),
+  // Unique visitors + unique listeners over the last 90 days, from PostHog.
+  // Written weekly by scripts/sync-show-popularity.ts; never edited by hand.
+  popularity: integer('popularity').default(0).notNull(),
   commissioned: text('commissioned'),
   programCoordinator: text('program_coordinator'),
   percussionArranger: text('percussion_arranger'),
