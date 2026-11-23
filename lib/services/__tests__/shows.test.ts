@@ -177,3 +177,15 @@ describe('during a build without a database', () => {
     vi.doUnmock('@/lib/database')
   })
 })
+
+describe('SHOWS_DEFAULT_ORDER', () => {
+  it('sorts by year (newest first, no year last), then featured first within a year, then manual order, then popularity', async () => {
+    const { SHOWS_DEFAULT_ORDER } = await import('@/lib/services/shows')
+    const { PgDialect } = await import('drizzle-orm/pg-core')
+    const { sql } = await import('drizzle-orm')
+    const { sql: text } = new PgDialect().sqlToQuery(sql.join(SHOWS_DEFAULT_ORDER, sql`, `))
+    expect(text).toBe(
+      '"shows"."year" desc nulls last, "shows"."featured" desc, "shows"."display_order" asc, "shows"."popularity" desc, "shows"."created_at" desc, "shows"."id" desc',
+    )
+  })
+})
