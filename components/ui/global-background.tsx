@@ -1,5 +1,7 @@
-// Static field-grid backdrop. It used to wait for mount before rendering;
-// nothing in it depends on the client, so it is server-rendered.
+import { DrillField } from './drill-field';
+
+// Field-grid backdrop. The grid is server-rendered; the drill on it is a
+// client canvas (DrillField).
 export function GlobalBackground() {
   return (
     <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none select-none bg-background">
@@ -16,6 +18,8 @@ export function GlobalBackground() {
           color: 'var(--secondary)' /* Use Midnight Blue for grid lines instead of current text color */
         }}
       />
+      {/* 2. The drill on it */}
+      <DrillField />
     </div>
   );
 }
