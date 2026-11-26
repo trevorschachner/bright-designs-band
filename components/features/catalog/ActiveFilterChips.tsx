@@ -57,7 +57,7 @@ export function ActiveFilterChips({ filterFields, defaultLimit }: { filterFields
           className="h-8"
           onClick={() => set({ ...filterState, sort: filterState.sort.filter((_, i) => i !== index), page: 1 })}
         >
-          Sort: {sort.field} ({sort.direction})
+          {sort.field === 'popularity' ? 'Sort: Most popular' : `Sort: ${sort.field} (${sort.direction})`}
           <span className="ml-2">×</span>
         </Button>
       ))}

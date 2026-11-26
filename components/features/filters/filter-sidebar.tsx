@@ -232,6 +232,7 @@ export function FilterSidebar({
     filterState.sort.length;
 
   const getSortFieldLabel = (fieldKey: string) => {
+    if (fieldKey === 'popularity') return 'Most popular';
     const field = filterFields.find(f => f.key === fieldKey);
     return field?.label || fieldKey;
   };
@@ -448,6 +449,17 @@ export function FilterSidebar({
                            !['price', 'displayOrder'].includes(field.key);
                   })
                   .map(field => {
+                    // Popularity only makes sense one way round.
+                    if (field.key === 'popularity') {
+                      return (
+                        <SelectItem key={field.key} value="popularity-desc">
+                          <div className="flex items-center gap-2">
+                            <SortDesc className="w-4 h-4" />
+                            Most popular
+                          </div>
+                        </SelectItem>
+                      );
+                    }
                     // For number and date fields, use "Ascending/Descending"
                     // For text fields, use "A-Z/Z-A"
                     const isNumericOrDate = ['number', 'date'].includes(field.type);

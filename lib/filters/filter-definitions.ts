@@ -42,6 +42,12 @@ export const SHOWS_ADMIN_FILTER_FIELDS: FilterField[] = deriveFilterFields(shows
       min: 0,
     },
     {
+      key: 'popularity',
+      label: 'Popularity',
+      description: 'Visitors and listeners over the last 90 days (PostHog, refreshed weekly)',
+      min: 0,
+    },
+    {
       key: 'duration',
       description: 'The total duration or length of the show',
       placeholder: 'Filter by duration...',

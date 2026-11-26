@@ -201,7 +201,7 @@ async function fetchFeaturedShows(): Promise<FeaturedShow[]> {
   const rows = await db.query.shows.findMany({
     columns: SUMMARY_COLUMNS,
     where: eq(shows.featured, true),
-    orderBy: [desc(shows.createdAt)],
+    orderBy: [desc(shows.popularity), desc(shows.createdAt)],
     limit: 6,
     with: {
       ...relations,
@@ -235,10 +235,10 @@ async function fetchFeaturedShows(): Promise<FeaturedShow[]> {
 }
 
 /**
- * Whatever is featured, newest first, at most six. An empty list is a real
+ * Whatever is featured, most popular first (then newest), at most six. An empty list is a real
  * answer (nothing featured), and the home page renders its fallback copy.
  */
-export const getFeaturedShows = cachedRead('featured-shows-v7', fetchFeaturedShows, {
+export const getFeaturedShows = cachedRead('featured-shows-v8', fetchFeaturedShows, {
   tags: LIST_TAGS,
   atBuildWithoutDb: [] as FeaturedShow[],
 });
@@ -342,6 +342,21 @@ export type ShowListItem = {
 export type AdminShowListItem = ShowListItem & { price: number | null };
 
 /**
+ * The catalog's order when no sort is picked: newest year first, and within a
+ * year the featured shows lead. Shows without a year go last. Then the manual
+ * `displayOrder`, then `popularity` (most shows share displayOrder 0, so this
+ * is what usually decides), then `createdAt` and `id` so paging is stable.
+ */
+export const SHOWS_DEFAULT_ORDER: SQL[] = [
+  sql`${shows.year} desc nulls last`,
+  desc(shows.featured),
+  sql`${shows.displayOrder} asc`,
+  desc(shows.popularity),
+  desc(shows.createdAt),
+  desc(shows.id),
+];
+
+/**
  * One page of the catalog. Throws UnknownFilterFieldError for a filter naming
  * a field shows does not have; the route turns that into a 400. `price` is
  * selected only for the admin read: the public projection never contains it.
@@ -372,7 +387,7 @@ async function fetchShowsRows(
         ...(featured ? [eq(shows.featured, true)] : []),
         ...(titleQuery ? [ilike(shows.title, likePattern(titleQuery))] : []),
       ],
-      defaultOrderBy: [shows.displayOrder, desc(shows.createdAt)],
+      defaultOrderBy: SHOWS_DEFAULT_ORDER,
     }
   );
 
@@ -444,7 +459,7 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
  * page lives 5 minutes instead of an hour: free text is the one input with a
  * long tail of one-off values.
  */
-export const getShowsPage = cachedRead('shows-page-v4', fetchShowsPage, {
+export const getShowsPage = cachedRead('shows-page-v5', fetchShowsPage, {
   tags: LIST_TAGS,
   atBuildWithoutDb: { data: [] as ShowListItem[], total: 0 },
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),

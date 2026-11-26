@@ -98,6 +98,7 @@ describe('deriveFilterFields', () => {
       'year',
       'difficulty',
       'displayOrder',
+      'popularity',
       'duration',
       'price',
       'tags',
@@ -112,6 +113,7 @@ describe('deriveFilterFields', () => {
       'year',
       'difficulty',
       'displayOrder',
+      'popularity',
       'duration',
       'tags',
     ]);
