@@ -14,6 +14,7 @@ import {
   formatDate,
   type BlogPost,
 } from '@/lib/blog/posts'
+import { publishedArticles } from '@/lib/content/articles'
 import { absoluteUrl, createBreadcrumbSchema } from '@/lib/seo/structured-data'
 
 export const metadata: Metadata = buildMetadata({
@@ -33,6 +34,21 @@ export const metadata: Metadata = buildMetadata({
   path: '/blog',
 })
 
+/** Dated articles from content/articles, in the card shape the index renders. Drafts are not listed. */
+const ARTICLE_POSTS: BlogPost[] = publishedArticles().map((article) => ({
+  slug: article.slug,
+  title: article.title,
+  description: article.description,
+  excerpt: article.description,
+  author: article.author,
+  datePublished: article.datePublished ?? '',
+  dateModified: article.dateModified ?? undefined,
+  category: 'guide',
+  tags: [],
+  readingTime: article.readingTime,
+  href: article.href,
+}))
+
 const blogListSchema = {
   '@context': 'https://schema.org',
   '@type': 'Blog',
@@ -48,7 +64,7 @@ const blogListSchema = {
       url: absoluteUrl('/logos/brightdesignslogo-main.svg'),
     },
   },
-  blogPost: [...BLOG_POSTS, ...CASE_STUDIES].map((post) => ({
+  blogPost: [...ARTICLE_POSTS, ...BLOG_POSTS, ...CASE_STUDIES].map((post) => ({
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.description,
@@ -68,7 +84,7 @@ const breadcrumbSchema = createBreadcrumbSchema([
 ])
 
 const featuredPost = BLOG_POSTS.find((p) => p.featured) ?? BLOG_POSTS[0]
-const otherPosts = BLOG_POSTS.filter((p) => p.slug !== featuredPost.slug)
+const otherPosts = [...ARTICLE_POSTS, ...BLOG_POSTS.filter((p) => p.slug !== featuredPost.slug)]
 
 function PostCard({ post }: { post: BlogPost }) {
   return (
