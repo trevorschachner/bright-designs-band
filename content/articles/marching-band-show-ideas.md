@@ -1,46 +1,46 @@
 ---
 title: 51 marching band show ideas, with the music for each
 slug: marching-band-show-ideas
-description: Fifty-one marching band show ideas that have been on a field, grouped by the world they build, each with its music, level and length, plus how to tell whether an idea fits your band.
-author: Brighton Barrineau
-status: draft for owner edit (Claude, 2026-11-26)
+description: Fifty-one marching band show ideas that have been on a field, each with its music, level and length, and the one question we ask before any of them gets written.
+author: Trevor Schachner
+status: draft for owner edit (Claude, 2026-11-26, second pass in Trevor's voice)
 datePublished:
 targetQueries: marching band show ideas; marching band show themes; marching band show concepts; dark marching band show ideas; marching band show ideas for small bands
-relatedShows:
+relatedShows: second-nature, ignite
 relatedCollections: story-marching-band-shows, dark-marching-band-shows, space-marching-band-shows, rock-and-pop-marching-band-shows
 ---
 
-Every idea on this page has been a real show: written for a named band, performed for a season, and recorded. Each one lists its music, its level and its length, so you can hear whether the idea works and not only whether it sounds good in a sentence. Click any title to listen.
+I was at Grand Nationals this fall. Ask me today what the finalists played and I can't tell you. I do remember one band in yellow, head to toe, with gold and pink props across the back of the field, in a show that had something to do with clouds. They were one of the best bands in the country and they could have been playing Mozart for all I know.
 
-Before the list, the part that matters more than the list: how to tell whether an idea is right for your band.
+That's what a show idea is for. The audience won't remember the tunes, and they won't remember the drill or who caught the toss. They'll remember the world you put them in for eight minutes.
 
-## How directors actually choose
+So this page has 51 of them. Every one was a real show, written for a real band, and you can click any title and listen. First, though, the question that matters more than the list.
 
-Directors rarely pick the idea they like best. On our design calls, the idea that wins is the one that survives four questions, in this order.
+## Would you live in it for a year?
 
-**Who do I have?** Personnel rules ideas in and out before anything else. A witch show wants a sabre line and a soloist who can sell it. A winter show built around two twirlers exists because the band had two twirlers. A missing drumline rules out a rock show. Ask who is returning and how big each section will be before you fall in love with a title.
+A director said this to us last month and I've stolen it. He'd been looking at shows for two weeks and kept having the same reaction: I do not want to live in this for a year.
 
-**What does it cost to dress?** Pirates are cheap: everyone knows what a pirate looks like and the costumes are easy. A Victorian circus is not. Price the costumes, flags and props an idea needs before you commit.
+That's the test. You'll hear this show every day from July to November, and so will your kids. If the idea is already a little cheesy in the staff meeting, it'll be unbearable by October.
 
-**Will the eighth graders and the Friday night crowd get it?** A director with a mixed football crowd told us he wants every listener to recognise something. A show that needs a paragraph in the program to explain has already lost the home stands.
+Three more things I'd check, in this order.
 
-**Will my kids want to live in it for a year?** Directors call this the vibe. Students rehearse a show for five months. An idea they find cheesy in August is a hard sell by October.
+**Who do you have?** One of our directors wanted to do a pirate show as two crews fighting each other. Great idea. He also knew he didn't have the numbers to split the band in half without losing the sound, so the idea became a treasure hunt. Your roster picks your concept more than you do.
 
-## Four tensions worth settling early
+**Will the home crowd get it?** A director told us about watching the band that won his class and having no idea what the show was about. He's a band director, he watched the whole thing, and he didn't get it. Your football crowd won't either, and they're who you play for most weeks.
 
-**Fun or mature.** Fun shows with music the crowd knows build buy in and recruit. Mature shows ask more of the students' acting and of the audience's attention. Most programs should earn the second by doing the first well.
+**Does it have to be hard?** No. Last year a band asked us for a fireworks show and I loved it on the spot. We don't have to follow a storyline. We play cool music and build every effect around fireworks. Katy Perry for the big hit, streamers on tennis balls when the sound effect goes off. It writes itself. That show is [Ignite](/shows/ignite), and the kids bought in so hard that one movement turned into a stands tune.
 
-**A world or a plot.** A known story cannot be told in eight minutes. One staff pitched a show based on a video game and their designer's answer was that plots do not transfer to a field. Design a place and a mood, and let it change from start to finish.
+## Build a world, skip the plot
 
-**Recognisable or original.** If the title puns on a famous song, you have to play that song. And if you bury one melody the audience already knows through the whole show, in different voices and at the impact points, people will remember the show as that tune.
+You don't need a character. Nobody has to carry a suitcase from one side of the field to the other.
 
-**Dark or light.** Dark shows are harder for small bands, because the weight has to come from sound and 40 players cannot always supply it. One staff tried dark and then light in successive years and found the students tired of both, which says more about doing the same thing twice than about either one.
+What you need is a place with a look: the colours, the props, what the field feels like when the band walks on. Then give the students a simple story for each part, so they know what they're doing and why, and let the audience just enjoy being there.
 
-A common idea is not a problem. A judge we learned from said the show that gave him goosebumps one Saturday was the third ocean show he had seen that morning.
+[Second Nature](/shows/second-nature) is the one I'd point to. The idea is that we see the world through our phones now. It came out of a design call, and of everything on the table that winter it was the one that got me the most excited. There's no plot. It starts in balance, gets taken over, and finds its way back.
 
-## The ideas
+## The 51
 
-Level is the difficulty of the wind book. Length is the full show.
+Level is how hard the wind book is. Length is the whole show.
 
 ### Stories and places
 
@@ -114,43 +114,45 @@ Level is the difficulty of the wind book. Length is the full show.
 50. **[Make Some Noise](/shows/make-some-noise).** Sound itself, from clicks to explosions. Tank, Slow Dancing in the Dark. Intermediate, 7:30.
 51. **[In the Key of Cool](/shows/in-the-key-of-cool).** A jazz club, written for indoor winds. Moanin', House of the Rising Sun, Golden. Advanced, 5:00.
 
-## What the list shows
+## What I notice looking at all 51
 
-![Bars counting the 51 ideas by world: stories and places 13, art colour and light 8, nature and seasons 7, dark and haunted 7, rock pop and stage 6, the West and the road 5, space and sky 5](fig-ideas-by-world.svg "The 51 ideas by the world they build. Stories and places is the largest group.")
+![Bars counting the 51 ideas by world: stories and places 13, art colour and light 8, nature and seasons 7, dark and haunted 7, rock pop and stage 6, the West and the open road 5, space and sky 5](fig-ideas-by-world.svg "The 51 ideas by the world they build.")
 
-Three patterns are worth copying.
+**We keep pairing something the crowd knows with something it doesn't.** Mozart next to Test Drive. A Bach invention next to Let It Be. The tune people know gets them in the door, and the other one is where the band gets to play.
 
-**Most ideas pair one piece the crowd knows with one it does not.** Excalibur puts Mozart next to Test Drive. Hive Mind puts a Bach invention next to Let It Be. The known piece is the way in and the other one is where the band gets to play.
+**The pop song goes in the ballad.** Gravity, Iris, Let It Be, Faithfully, Wicked Game, Imagine. If the audience can hum the ballad, you don't need a plot.
 
-**The ballad is where the pop song goes.** Gravity, Iris, Let It Be, Faithfully, Wicked Game, Imagine. A ballad the audience can hum does the work of a plot.
+**Beginner doesn't mean generic.** Ride the Wave is a surf show. Hive Mind is about bees. Both are written for young bands, and you'd never mistake one for the other.
 
-**Beginner does not mean generic.** Ride the Wave, Hive Mind, Ignite, Feathered Flame and Pale Blue Dot are all written for developing bands, and each is a specific place.
+**Somebody else has done your idea, and that's fine.** A judge we learned from told us the show that gave him goosebumps one Saturday was the third ocean show he'd watched that morning.
 
-## Testing an idea before you commit
+## Before you commit
 
 1. Say it in one sentence.
 2. Name the ballad.
-3. Say how the show starts and how it ends. If the ending is not a clear change from the beginning, the audience will not read it.
-4. List the costumes, flags and props, and price them.
-5. Name the three or four pieces. Check that each can be licensed; music published before 1931 is in the public domain in the United States, and anything newer needs permission.
-6. Make a cut track: the recordings spliced to show length. If it is strong for a minute and vague for the rest, the idea is not ready.
-7. Play the cut track for five students the band respects. Buy in spreads from about five people, not one.
+3. Say how it starts and how it ends. If those two pictures look the same, the audience won't feel anything change.
+4. Price the costumes, flags and props.
+5. Check the music can be licensed. Anything published before 1931 is free to arrange in the US. Everything else needs permission.
+6. Make a cut track: the recordings spliced together at show length. If it's great for a minute and vague after that, keep working.
+7. Play it for five kids the band listens to. Buy in starts with about five people.
+
+Not the idea guy? A lot of directors tell us that. Pick two or three pieces your whole staff loves and send them over. The concept can usually be built around the music.
 
 ---faq---
 Q: What makes a good marching band show idea?
-A: One sentence, a world the students want to live in, a clear change from the first picture to the last, and music your band can play well.
+A: One sentence, a world your students want to live in for a year, a clear change from the first picture to the last, and music your band can play well.
 
 Q: What are good show ideas for a small band?
 A: Lighter worlds with familiar music and no single lead character. Hive Mind, Ignite, Pale Blue Dot, Lunch Atop a Skyscraper and Off the Rails were all written for small bands.
 
-Q: Can we use a show idea another band has done?
-A: Yes. Ideas are shared across the activity, and a common idea performed well still wins. The arrangements are a different matter: each band needs its own license for copyrighted music.
+Q: Can we use an idea another band has done?
+A: Yes. Ideas get shared all over the activity. The arrangements are different: each band needs its own license for copyrighted music.
 
 Q: Should the concept or the music come first?
-A: Either. If you have no concept, find two or three pieces your whole staff loves and build the idea around them.
+A: Either. If you have no concept, start with two or three pieces your staff loves.
 
-Q: Are dark show ideas a bad choice?
-A: Not for a band with the sound to carry them. They are harder for small bands, and they need a ballad that gives the audience relief.
+Q: Are dark shows a bad idea?
+A: Not for a band with the sound to carry one. They're harder for small bands, and they need a ballad that lets the audience breathe.
 
-Q: How do we know if students will buy in?
-A: Play them the cut track before you commit, starting with the handful of students the rest of the band follows.
+Q: How do we know the kids will buy in?
+A: Play them the cut track before you commit, starting with the handful of students everyone else follows.
