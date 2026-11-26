@@ -11,7 +11,7 @@ deleted in SP3 Task 3; the upload routes (`POST /api/files/sign`,
 | `resources.ts` | `createResource`, `updateResource`, `setResourceActive`, `deleteResource` | `canManageResources` | `invalidateResources()` |
 | `arrangements.ts` | `createArrangement`, `updateArrangement`, `deleteArrangement`, `reorderArrangements`, `setArrangementTags`, `setArrangementPieces` | `canCreateArrangements` / `canEditArrangements` / `canDeleteArrangements` | `invalidateArrangement(id, slug, showSlug, previousSlug?)`; reorder: `invalidateShow` |
 | `pieces.ts` | `listPieces`, `createPiece`, `updatePiece`, `deletePiece` | `canEditArrangements` | `invalidatePieces()` |
-| `files.ts` | `setShowThumbnail`, `attachYouTube`, `deleteFile` | `canManageShows` / `canCreateArrangements` / `canDeleteFiles` | `invalidateShow` / `invalidateFileOwner(file)` |
+| `files.ts` | `setShowThumbnail`, `attachYouTube`, `deleteFile`, `setPerusalScore` | `canManageShows` / `canCreateArrangements` / `canDeleteFiles` / `canUploadFiles` | `invalidateShow` / `invalidateFileOwner(file)` |
 | `uploads.ts` | `signUpload`, `completeUpload` | `canUploadFiles` | (sign: none) / `invalidateFileOwner(file)` |
 | `admin-users.ts` | `listAdminUsers`, `addAdminUser`, `setAdminUserRole`, `removeAdminUser` | `canManageUsers` | (none: not public) |
 

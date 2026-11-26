@@ -38,7 +38,6 @@ function defaults(arrangement: EditableArrangement | undefined, percussionArrang
     year: arrangement?.year != null ? String(arrangement.year) : '',
     duration: formatDuration(arrangement?.durationSeconds),
     youtubeUrl: arrangement?.youtubeUrl ?? '',
-    sampleScoreUrl: arrangement?.sampleScoreUrl ?? '',
     commissioned: arrangement?.commissioned ?? '',
     featured: arrangement?.featured ?? false,
     tags: arrangement?.tagIds ?? [],
@@ -144,7 +143,6 @@ export function ArrangementForm({ showId, arrangement, showPercussionArranger, a
         {text('year', 'Year')}
         {text('duration', 'Duration (mm:ss)', { placeholder: 'e.g. 4:30' })}
         {text('youtubeUrl', 'YouTube URL')}
-        {text('sampleScoreUrl', 'Sample Score URL')}
         {text('commissioned', 'Commissioned')}
         <Field id={id('description')} label="Description" error={errors.description?.message} className="md:col-span-2">
           <Textarea id={id('description')} rows={3} {...register('description')} />

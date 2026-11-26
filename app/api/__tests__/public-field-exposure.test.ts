@@ -91,7 +91,7 @@ const applyShowOpts = (opts: { columns?: Record<string, boolean> }) => ({
   files: [],
   showsToTags: [],
   showArrangements: [
-    { arrangement: { id: 1, title: 'Arr', scene: null, durationSeconds: 60, sampleScoreUrl: null } },
+    { arrangement: { id: 1, title: 'Arr', scene: null, durationSeconds: 60 } },
   ],
 })
 

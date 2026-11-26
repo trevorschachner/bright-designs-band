@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check, uuid, bigint } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, numeric, timestamp, pgEnum, boolean, primaryKey, index, smallint, check, uuid, bigint, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { ARRANGEMENT_SCENES, ENSEMBLE_SIZES, FILE_TYPES, GRADE_BANDS, SHOW_DIFFICULTIES, TAG_KINDS, type TagKind } from '../validation/enums';
 
@@ -63,7 +63,11 @@ export const arrangements = pgTable('arrangements', {
   scene: arrangementSceneEnum('scene'),
   youtubeUrl: text('youtube_url'),
   commissioned: text('commissioned'),
-  sampleScoreUrl: text('sample_score_url'),
+  // The part's private full score for perusal (#101): a `files` row that is
+  // kind `score`, private and on this part; set only by setPerusalScore
+  // (lib/actions/files.ts), read by getPerusalScore (lib/services/perusal-scores.ts).
+  // drizzle/migrations/2026-11-26_arrangements_perusal_score.sql.
+  perusalScoreFileId: integer('perusal_score_file_id').references((): AnyPgColumn => files.id, { onDelete: 'set null' }),
   // Set in the part form; the catalog's Featured sort reads it (#83).
   // drizzle/migrations/2026-11-01_search_foundation.sql.
   featured: boolean('featured').default(false).notNull(),

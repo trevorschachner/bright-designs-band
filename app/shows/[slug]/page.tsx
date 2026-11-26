@@ -9,7 +9,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
-import { Clock, Users, School, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, FileText, MessageSquare } from 'lucide-react'
+import { Clock, Users, School, Download, Play, Calendar, Music, Music2, Target, ArrowLeft, MessageSquare } from 'lucide-react'
 import { AudioPlayerComponent } from '@/components/features/audio-player'
 import { YouTubeFacade } from '@/components/features/youtube-facade'
 import Link from 'next/link'
@@ -488,14 +488,6 @@ export default async function ShowDetailBySlugPage({ params }: { params: Promise
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2 ml-12">
-                      {arrangement.sampleScoreUrl && (
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={arrangement.sampleScoreUrl} target="_blank" rel="noopener noreferrer" className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                            <FileText className="w-4 h-4 mr-2" aria-hidden="true" />
-                            Sample Score
-                          </Link>
-                        </Button>
-                      )}
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/arrangements/${arrangement.slug}`} className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                           View Details

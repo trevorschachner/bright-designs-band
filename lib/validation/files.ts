@@ -204,3 +204,13 @@ export const attachYouTubeSchema = z
 export type AttachYouTubeInput = z.input<typeof attachYouTubeSchema>;
 
 export const fileIdSchema = z.object({ id: fileRowId }).strict();
+
+/**
+ * `setPerusalScore`: point a part's Perusal score slot at one of its files (a
+ * private PDF score just uploaded). The previous slot file is removed.
+ */
+export const setPerusalScoreSchema = z.object({ arrangementId: fileRowId, fileId: fileRowId }).strict();
+export type SetPerusalScoreInput = z.input<typeof setPerusalScoreSchema>;
+
+/** The only MIME type a perusal score may have (the browser's PDF viewer opens it). */
+export const PERUSAL_SCORE_MIME = 'application/pdf';

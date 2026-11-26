@@ -20,7 +20,7 @@ const EXPORT_TAGS = () => [TAGS.shows, TAGS.arrangements, TAGS.tags, TAGS.pieces
 
 const EMPTY_TABLES: ShowSheetTables = { shows: [], parts: [], pieces: [], links: [] };
 
-const getTables = cachedRead('sheet-export-v2', () => readShowSheetTables(db, storageFromEnv()), {
+const getTables = cachedRead('sheet-export-v3', () => readShowSheetTables(db, storageFromEnv()), {
   tags: EXPORT_TAGS,
   atBuildWithoutDb: EMPTY_TABLES,
 });

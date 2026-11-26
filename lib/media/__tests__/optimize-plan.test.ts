@@ -93,7 +93,6 @@ describe('planUrlRewrites', () => {
       'shows.video_url',
       'resources.image_url',
       'resources.file_url',
-      'arrangements.sample_score_url',
     ])
     expect(rewrites[0].oldValue).toBe('https://x/a.png')
     expect(rewrites[0].newValue).toBe('https://x/a.webp')

@@ -27,6 +27,7 @@ import { formatDuration } from '@/lib/utils';
 import { ERROR_TEXT } from './action-errors';
 import { ArrangementForm } from './ArrangementForm';
 import { FilesPanel } from './FilesPanel';
+import { PerusalScoreSlot } from './PerusalScoreSlot';
 import { PiecesPanel } from './PiecesPanel';
 import type { TagOption } from './ShowFields';
 
@@ -214,6 +215,7 @@ export function ArrangementsPanel({ showId, showPercussionArranger, arrangements
                   </div>
 
                   <PiecesPanel arrangement={arrangement} allPieces={allPieces} />
+                  <PerusalScoreSlot showId={showId} arrangementId={arrangement.id} score={arrangement.perusalScore} />
                   <FilesPanel
                     showId={showId}
                     arrangementId={arrangement.id}
