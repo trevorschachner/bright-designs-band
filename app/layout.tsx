@@ -1,7 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
-import { Suspense } from "react"
 import "./globals.css"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
@@ -14,7 +13,6 @@ import { organizationSchema, localBusinessSchema } from "@/lib/seo/structured-da
 import { GlobalAudioPlayerBar } from "@/components/features/global-audio-player-bar"
 import { PageTrailRecorder } from "@/components/layout/page-trail-recorder"
 import { AudioProvider } from "@/components/features/audio/AudioProvider"
-import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton"
 
 import { GlobalSpotlight } from "@/components/ui/global-spotlight"
 import { GlobalBackground } from "@/components/ui/global-background"
@@ -72,9 +70,7 @@ export default function RootLayout({
           <PageTrailRecorder />
           <AudioProvider>
             <SiteHeader brand={brand} navigation={navigation} resources={resources} ctas={ctas} />
-            <Suspense fallback={<PageLoadingSkeleton />}>
-              <main>{children}</main>
-            </Suspense>
+            <main>{children}</main>
             <CTASection />
             <SiteFooter footer={footer} social={social} />
             <GlobalAudioPlayerBar />
