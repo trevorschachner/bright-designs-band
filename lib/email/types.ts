@@ -36,7 +36,6 @@ export interface ContactFormData {
   phone?: string;
   services: ServiceCategory[]; // Changed to array for multi-select
   message: string;
-  privacyAgreed: boolean;
   // Additional form fields
   school?: string;
   showInterest?: string;

@@ -140,6 +140,8 @@ describe('POST /api/contact', () => {
     expect(inserted).toHaveLength(1)
     const row = inserted[0]
     expect(row).not.toHaveProperty('turnstileToken')
+    // The form asks for no consent, so none is recorded (the column defaults to false).
+    expect(row).not.toHaveProperty('privacyAgreed')
     expect(JSON.stringify(row)).not.toContain('tok-123')
     expect(row.ipAddress).toBe('203.0.113.9')
     expect(row.message).toBe(MESSAGE)

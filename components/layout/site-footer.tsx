@@ -75,6 +75,14 @@ export function SiteFooter({ footer, social }: SiteFooterProps) {
 								hello@brightdesigns.band
 							</Link>
 						</div>
+						<nav aria-label="Legal" className="flex items-center gap-4">
+							<Link href="/privacy" className="plus-body-sm text-muted-foreground hover:text-foreground transition-colors">
+								Privacy Policy
+							</Link>
+							<Link href="/terms" className="plus-body-sm text-muted-foreground hover:text-foreground transition-colors">
+								Terms of Use
+							</Link>
+						</nav>
 					</div>
 					<div className="flex items-center gap-4">
 						<div className="flex items-center gap-2 text-muted-foreground">

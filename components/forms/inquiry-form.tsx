@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import {
@@ -381,6 +382,13 @@ export function InquiryForm({ showTitle, onSubmit, isLoading, isGeneralInquiry }
               "Submit Inquiry"
             )}
           </Button>
+          <p className="mt-3 text-center text-sm text-muted-foreground">
+            By sending this you agree to our{" "}
+            <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </div>
       </form>
     </Form>
