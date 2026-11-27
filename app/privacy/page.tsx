@@ -10,9 +10,10 @@ export const metadata: Metadata = buildMetadata({
   path: '/privacy',
 })
 
-// Every claim here is checked against the code (see the PR for issue #100).
-// When the site starts collecting something new, update this page and
-// LEGAL_LAST_UPDATED in lib/content/legal.ts.
+// Structure and clauses follow OpenMarch's privacy policy, cut down to what
+// this site does. Every claim is checked against the code (see the PR for
+// issue #100). When the site starts collecting something new, update this page
+// and LEGAL_LAST_UPDATED in lib/content/legal.ts.
 export default function PrivacyPolicyPage() {
   const mail = <a href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a>
 
@@ -24,196 +25,201 @@ export default function PrivacyPolicyPage() {
           Last updated: <time dateTime={LEGAL_LAST_UPDATED.iso}>{LEGAL_LAST_UPDATED.label}</time>
         </p>
 
+        <h2>1. Introduction</h2>
         <p>
-          This policy explains what {LEGAL_ENTITY} (“Bright Designs”, “we”) collects through brightdesigns.band, why we
-          collect it, who handles it for us, and what you can do about it. Questions go to {mail}.
+          This Privacy Policy (the “Policy”) explains how {LEGAL_ENTITY} (“Bright Designs”, “we”, “our”) collects, uses
+          and discloses personal information through brightdesigns.band (the “Site”).
         </p>
 
-        <h2>What you give us</h2>
+        <h2>2. Information we collect and how we use it</h2>
+        <p>
+          You give us some information when you fill in a form. We collect other information automatically when you
+          use the Site. This section lists both and says what we use each for.
+        </p>
+
+        <h3>2.1 Forms</h3>
         <ul>
           <li>
-            <strong>Inquiry and contact forms:</strong> your name, email, school or organization, band size, ability
+            <strong>Inquiry and contact forms.</strong> Your name, email, school or organization, band size, ability
             level, the services and show you’re asking about, your notes, how you heard about us and who referred you.
+            We use this to answer you and to follow up about our shows and services.
           </li>
           <li>
-            <strong>Free guide requests:</strong> your name, email, school or organization, and role.
+            <strong>Free guide requests.</strong> Your name, email, school and role. We use this to send you the guide
+            and to follow up.
           </li>
           <li>
-            <strong>Free show entries:</strong> your name, email, role, group or school, location, group size, your
-            answers about your program, and whether you’ve worked with a design group before.
+            <strong>Free show entries.</strong> Your name, email, role, group or school, location, group size, your
+            answers about your program, and whether you’ve worked with a design group before. We use this to review
+            entries and run the program.
           </li>
           <li>
-            <strong>Perusal score requests:</strong> your name, email, school or program, and role.
-          </li>
-          <li>
-            <strong>Email:</strong> anything you send us directly.
+            <strong>Perusal score requests.</strong> Your name, email, school or program, and role. Section 2.2 explains
+            how we use this.
           </li>
         </ul>
+        <p>If you email us, we also have whatever you send.</p>
 
-        <h2>What we collect automatically</h2>
-        <ul>
-          <li>
-            <strong>With every form:</strong> your IP address, your browser’s user agent, the page you sent the form
-            from and the page before it, and how you first found the site (the referring site, the first page you
-            landed on, and any campaign tags in that link). We also attach your analytics visitor ID so we can see
-            which pages you looked at before you got in touch.
-          </li>
-          <li>
-            <strong>Analytics:</strong> we use PostHog to record the pages you view, what you click, the audio previews
-            you play, the scores you open, the forms you send, errors, your browser and device type, the site that
-            referred you, and your approximate location based on your IP address.
-          </li>
-          <li>
-            <strong>Session recordings:</strong> PostHog records about 1 in 4 visits (25%). A recording shows the pages
-            as you saw them, with your mouse movement, clicks and scrolling, plus technical logs from your browser.
-            Text you type into form fields is masked and not recorded.
-          </li>
-          <li>
-            <strong>Hosting logs:</strong> our hosting provider keeps standard request logs, such as IP addresses and
-            pages requested.
-          </li>
-        </ul>
-
-        <h2>Perusal scores</h2>
+        <h3>2.2 Perusal scores</h3>
         <ul>
           <li>Sending the score request form once unlocks perusal scores in that browser for 30 days.</li>
           <li>
-            We record which scores you open and when. You can open up to 15 different scores a day, counted by email
-            address and by browser. If you reach the limit, our team gets an email with your name, school, email and
-            the scores you opened.
+            We log each score you open and when you opened it. You can open up to 15 different scores a day, counted by
+            email address and by browser. If you reach that limit, our team gets one email about it and your record is
+            tagged.
           </li>
           <li>
-            Every page of a perusal score is stamped with your name, your school and the date. Anyone who sees the file
-            will see that stamp.
+            Every page of a perusal score is watermarked “PERUSAL ONLY” with your name, your school and the date. Anyone
+            who sees the file sees that watermark.
           </li>
           <li>
-            You’re added to our customer records (in Attio) as a lead, along with the shows and arrangements you
-            opened. We may contact you about them.
+            You are added to our customer records as a lead, along with the scores you opened. We may contact you about
+            them.
           </li>
         </ul>
 
-        <h2>How we use it</h2>
-        <ul>
-          <li>To answer your inquiry and send you a confirmation email.</li>
-          <li>To run the free show program and review entries.</li>
-          <li>To give you perusal scores, stamp them, and enforce the daily limit.</li>
-          <li>To keep track of the programs we talk to and follow up about our shows and services.</li>
-          <li>To see which shows and pages people use, and to fix and improve the site.</li>
-          <li>To block spam and abuse.</li>
-        </ul>
+        <h3>2.3 Information sent with each form</h3>
         <p>
-          We don’t sell your personal information, and we don’t use advertising trackers or share your information
-          with advertisers.
+          When you send any form, we also record your IP address, your browser’s user agent, the page you sent the form
+          from and the page you were on before it, how you first reached the Site (the referring site, the first page
+          you landed on, and any campaign tags in that link), and your analytics visitor ID. We use this to block spam,
+          to learn which pages and referrals lead people to contact us, and to see what you looked at before you got in
+          touch. To limit spam, we also keep a count of form submissions from each IP address.
         </p>
 
-        <h2>Cookies and browser storage</h2>
-        <p>We don’t show a cookie banner. Here is everything the site stores in your browser:</p>
+        <h3>2.4 Analytics and session recordings</h3>
+        <p>
+          We use PostHog to see how the Site is used and to fix problems. PostHog records the pages you view, what you
+          click, the audio previews you play, the perusal scores you open, errors in the page, your browser and device
+          type, and the site that referred you. PostHog receives your IP address and derives an approximate location
+          from it. We do not send PostHog your name or email to identify you.
+        </p>
+        <p>
+          PostHog also records about 1 in 4 visits (25%) as a session recording. A recording replays the pages as you
+          saw them, with your mouse movement, clicks and scrolling. Anything you type into a form field is masked and
+          is not recorded.
+        </p>
+        <p>We do not use advertising trackers, and we do not sell your personal information.</p>
+
+        <h3>2.5 Cookies and browser storage</h3>
+        <p>
+          The Site does not show a cookie banner. “Cookies” are small text files stored by your browser. This is what
+          the Site stores there:
+        </p>
         <ul>
           <li>
-            <strong>PostHog analytics:</strong> a cookie and a local storage entry holding a random visitor ID and the
-            current session, so visits can be counted and linked together. The cookie lasts about a year.
+            <strong>Analytics.</strong> A PostHog cookie and local storage entry holding a random visitor ID and the
+            current session.
           </li>
           <li>
-            <strong>Perusal score pass:</strong> a cookie that remembers you’ve sent the score request form. It lasts
+            <strong>Perusal score access.</strong> A cookie that remembers you sent the score request form. It lasts
             30 days.
           </li>
           <li>
-            <strong>How you found us:</strong> a local storage entry with the referring site, landing page and campaign
-            tags from your first visit. It stays until you clear your browser storage. A second entry, which lasts only
-            while the tab is open, remembers the page you were on before the current one.
+            <strong>How you found us.</strong> A local storage entry with the referring site, landing page and campaign
+            tags from your first visit. It stays until you clear your browser storage. A second entry, kept only while
+            the tab is open, remembers the page you were on before the current one.
           </li>
           <li>
-            <strong>Display preference:</strong> whether you chose grid or list view for shows.
+            <strong>Display preference.</strong> Whether you chose grid or list view for shows.
           </li>
           <li>
-            <strong>Spam check:</strong> Cloudflare Turnstile runs on pages with a form and may use cookies or similar
-            signals to tell people from bots.
-          </li>
-          <li>
-            <strong>Staff sign-in:</strong> sign-in cookies, used only by our team in the admin area.
+            <strong>Staff sign-in.</strong> Sign-in cookies used only by our team.
           </li>
         </ul>
-        <p>
-          Videos load from YouTube’s privacy-enhanced domain (youtube-nocookie.com) only after you press play. The map on
-          our About page loads its tiles from OpenStreetMap. Once loaded, those services handle your data under their
-          own policies.
-        </p>
 
-        <h2>Who handles your information for us</h2>
-        <p>We use these service providers to run the site. Each gets only what it needs to do its job.</p>
+        <h2>3. Disclosure of information</h2>
+        <p>We disclose personal information to the categories of third parties listed in this section.</p>
+
+        <h3>3.1 Service providers</h3>
+        <p>We rely on other companies to run the Site. Each one receives the information it needs to do its job.</p>
         <ul>
           <li>
-            <strong>Netlify</strong> hosts the site and runs the code that receives forms.
+            <strong>Netlify</strong> hosts the Site and runs the code that receives forms. Like any host, it keeps
+            request logs.
           </li>
           <li>
-            <strong>Supabase</strong> stores our database (form submissions, score requests, show catalog) and files.
+            <strong>Supabase</strong> holds our database (form submissions, score requests, the show catalog), our
+            files and staff sign-in.
           </li>
           <li>
-            <strong>PostHog</strong> provides analytics and session recordings, stored in the United States.
+            <strong>PostHog</strong> provides the analytics and session recordings described in Section 2.4. It stores
+            them in the United States.
           </li>
           <li>
-            <strong>Attio</strong> is our customer records system. Inquiries, guide requests and score requests go there.
+            <strong>Attio</strong> is our customer records system. Inquiries, guide requests and score requests become
+            leads there.
           </li>
           <li>
-            <strong>Resend</strong> sends our emails, including form confirmations and notices to our team.
+            <strong>Resend</strong> sends our email, including form confirmations and notices to our team.
           </li>
           <li>
-            <strong>Cloudflare Turnstile</strong> checks that forms are sent by people, not bots.
-          </li>
-        </ul>
-        <p>
-          We may also share information if the law requires it, to protect our rights or the safety of others, or as
-          part of a sale or reorganization of our business.
-        </p>
-
-        <h2>How long we keep it</h2>
-        <ul>
-          <li>Session recordings are deleted after 30 days.</li>
-          <li>Other analytics data is kept for as long as our PostHog plan retains it.</li>
-          <li>
-            Form submissions, score requests, customer records and emails are kept for as long as they’re useful to our
-            working relationship with you and your program, or until you ask us to delete them.
-          </li>
-          <li>The perusal score pass expires in your browser after 30 days.</li>
-        </ul>
-
-        <h2>Your choices</h2>
-        <ul>
-          <li>
-            <strong>Opt out of analytics:</strong> block or clear cookies for brightdesigns.band, or use a browser or
-            extension that blocks trackers. The site works without analytics. It does not currently respond to Do Not
-            Track or Global Privacy Control signals.
-          </li>
-          <li>
-            <strong>See, correct or delete your information:</strong> email {mail}. We’ll delete what we hold about you
-            in our database, customer records and analytics, unless we need to keep something by law. We can’t recall
-            perusal score files you already downloaded.
-          </li>
-          <li>
-            <strong>Stop hearing from us:</strong> reply to any email from us or write to {mail} and we’ll stop.
+            <strong>Cloudflare Turnstile</strong> checks that forms are sent by people and not bots. It runs on pages
+            that have a form.
           </li>
         </ul>
 
-        <h2>Children</h2>
+        <h3>3.2 Embedded content</h3>
         <p>
-          The site is meant for band directors, staff and students. We don’t knowingly collect information from
-          children under 13. If you think a child under 13 has sent us information, email {mail} and we’ll delete it.
+          Videos load from YouTube’s youtube-nocookie.com domain, and only after you press play. The map on our About
+          page loads its tiles from OpenStreetMap. Those services receive your IP address when their content loads and
+          handle it under their own policies.
         </p>
 
-        <h2>Security</h2>
+        <h3>3.3 Business transfers</h3>
         <p>
-          We use encrypted connections, limit access to the people on our team who need it, and rely on providers with
-          established security practices. No system is perfectly secure, so we can’t guarantee your information will
-          never be exposed.
+          If we or our assets are acquired, or if we go out of business, enter bankruptcy or go through some other
+          change of control, personal information could be one of the assets transferred to or acquired by a third
+          party.
         </p>
 
-        <h2>Changes</h2>
+        <h3>3.4 Legal compliance</h3>
         <p>
-          When we change this policy we’ll update the date at the top of this page. Our <Link href="/terms">Terms of
-          Use</Link> cover your use of the site and perusal scores.
+          We may access, preserve and disclose information that we believe is necessary to comply with the law, a court
+          order or a government request, or to enforce our <Link href="/terms">Terms of Use</Link> and other agreements.
         </p>
 
-        <h2>Contact</h2>
+        <h2>4. Security</h2>
+        <p>
+          The Site is served over encrypted connections, and access to form submissions and customer records is limited
+          to our team. We cannot guarantee that these precautions will always work, or that your personal information
+          will never be accessed, disclosed, altered or destroyed by a breach of them.
+        </p>
+
+        <h2>5. Access, deletion and retention</h2>
+        <p>
+          To see, correct or delete the personal information we hold about you, email {mail}. We will delete it from
+          our database, customer records and analytics unless the law requires us to keep it. We cannot recall a
+          perusal score you have already downloaded. To stop hearing from us, reply to any of our emails or write to
+          the same address.
+        </p>
+        <p>
+          Session recordings are deleted after 30 days. Other analytics data is kept for as long as our PostHog plan
+          retains it. We have no set schedule for deleting form submissions, score requests or customer records, so we
+          keep them until you ask us to delete them.
+        </p>
+
+        <h2>6. How we respond to Do Not Track signals</h2>
+        <p>
+          The Site does not respond to “Do Not Track” or Global Privacy Control signals. To keep your visits out of our
+          analytics, block cookies and scripts for brightdesigns.band or use a browser or extension that blocks
+          trackers. The Site works without them.
+        </p>
+
+        <h2>7. Children</h2>
+        <p>
+          The Site is meant for band directors and staff. We do not knowingly collect personal information from children
+          under 13. If you think a child under 13 has sent us information, email {mail} and we will delete it.
+        </p>
+
+        <h2>8. Changes to this Policy</h2>
+        <p>
+          We may change this Policy from time to time. The date of the last change is posted at the top. Please check
+          back for updates. By continuing to use the Site after a change, you agree to the updated Policy.
+        </p>
+
+        <h2>9. Contact us</h2>
+        <p>If you have questions or concerns about this Policy, write to us and we will try to resolve them.</p>
         <p>
           {LEGAL_ENTITY}
           <br />

@@ -28,7 +28,7 @@ describe.each([
     render(<Page />)
     const time = screen.getByText(LEGAL_LAST_UPDATED.label)
     expect(time.tagName).toBe('TIME')
-    expect(time.getAttribute('datetime')).toBe('2026-11-26')
+    expect(time.getAttribute('datetime')).toBe('2026-11-27')
     expect(document.body.textContent).not.toContain('2031')
   })
 })
@@ -36,8 +36,12 @@ describe.each([
 describe('terms', () => {
   it('is governed by South Carolina law and covers perusal scores', () => {
     render(<TermsOfUsePage />)
-    expect(screen.getByRole('heading', { name: 'Perusal scores' })).toBeInTheDocument()
-    expect(document.body.textContent).toContain('State of South Carolina')
+    expect(screen.getByRole('heading', { name: /Perusal scores$/ })).toBeInTheDocument()
+    const text = document.body.textContent ?? ''
+    expect(text).toContain('State of South Carolina')
+    expect(text).toContain('PERUSAL ONLY')
+    expect(text).toContain('you must buy a license from Bright Designs')
+    expect(text).toContain('separate written agreement')
   })
 })
 
@@ -49,6 +53,7 @@ describe('privacy', () => {
       expect(text).toContain(name)
     }
     expect(text).toContain('25%')
+    expect(screen.getByRole('heading', { name: /Perusal scores$/ })).toBeInTheDocument()
   })
 })
 

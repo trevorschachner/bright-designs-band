@@ -10,6 +10,8 @@ export const metadata: Metadata = buildMetadata({
   path: '/terms',
 })
 
+// Structure and clauses follow OpenMarch's terms of service, minus accounts,
+// the desktop app, payments and arbitration, which this site does not have.
 // Change LEGAL_LAST_UPDATED in lib/content/legal.ts whenever this wording changes.
 export default function TermsOfUsePage() {
   const mail = <a href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a>
@@ -22,112 +24,218 @@ export default function TermsOfUsePage() {
           Last updated: <time dateTime={LEGAL_LAST_UPDATED.iso}>{LEGAL_LAST_UPDATED.label}</time>
         </p>
 
+        <h2>1. Agreement</h2>
         <p>
-          brightdesigns.band is run by {LEGAL_ENTITY} (“Bright Designs”, “we”). By using the site you agree to these
-          terms. If you don’t agree, please don’t use the site.
+          These Terms of Use (the “Terms”) are a binding agreement between you and {LEGAL_ENTITY} (“Bright Designs”,
+          “we”, “our”, “us”) about your use of brightdesigns.band (the “Site”). By using the Site in any way, you agree
+          to these Terms.
+        </p>
+        <p>
+          If you use the Site on behalf of a school, booster organization or other entity, “you” also means that
+          entity, and you confirm that you are authorized to act for it.
         </p>
 
-        <h2>What the site is for</h2>
+        <h2>2. Changes to these Terms</h2>
         <p>
-          The site lets you browse our marching band shows and arrangements, listen to previews, view perusal scores,
-          and get in touch with us. Buying or licensing a show, an arrangement or custom work is covered by a separate
-          written agreement with us. If that agreement conflicts with these terms, the agreement wins.
+          We may change these Terms at any time. The date of the last change is posted at the top. Please check back
+          for updates. By continuing to use the Site after a change, you agree to the updated Terms.
         </p>
 
-        <h2>Our content</h2>
+        <h2>3. Privacy</h2>
         <p>
-          The music, recordings, scores, show designs, text, images and logos on this site belong to Bright Designs or
-          to the people who licensed them to us, and are protected by copyright and other laws. You may view and listen
-          to them on the site to decide whether a show is right for your program. You may not download, copy, record,
-          republish or sell them except as these terms allow.
+          Our <Link href="/privacy">Privacy Policy</Link> explains what personal information we collect through the
+          Site and how we handle it.
         </p>
 
-        <h2>Perusal scores</h2>
+        <h2>4. The Site</h2>
         <p>
-          A perusal score is a watermarked copy of a full score that we provide so you can study the music while you
-          decide whether to license a show.
+          On the Site you can browse our marching band shows and arrangements, listen to previews, view perusal scores,
+          request our guides, and get in touch with us.
+        </p>
+
+        <h2>5. Licensing a show</h2>
+        <p>
+          You cannot buy or license anything through the Site. Licensing a show or an arrangement, or commissioning
+          custom work, is covered by a separate written agreement between you and Bright Designs. If that agreement
+          conflicts with these Terms, the agreement controls.
+        </p>
+
+        <h2>6. Acceptable use</h2>
+        <p>You may use the Site as long as you follow these Terms. In particular:</p>
+        <ul>
+          <li>You may use the Site only for lawful purposes.</li>
+          <li>
+            You may not send false information through our forms, send information you have no right to send, or
+            request scores in someone else’s name.
+          </li>
+          <li>You may not bulk copy or “scrape” any part of the Site with a bot or other tool.</li>
+          <li>
+            You may not defeat, avoid or bypass the daily score limit, the spam check, the watermark or any other
+            protection on the Site.
+          </li>
+          <li>You may not send viruses or other malicious code to or through the Site.</li>
+          <li>You may not interfere with the Site or try to reach parts of it that are not open to you.</li>
+        </ul>
+
+        <h2>7. Content</h2>
+        <h3>7.1 Bright Designs content</h3>
+        <p>
+          As between you and Bright Designs, we or our licensors own everything on the Site, including the music,
+          recordings, scores, show designs, text, images, videos and logos (the “Bright Designs Content”). Some of the
+          music is arranged from works owned by other composers and publishers, who keep their rights in it.
+        </p>
+        <p>
+          As long as you follow these Terms, you may view and listen to the Bright Designs Content on the Site to decide
+          whether a show suits your program. That permission is limited, non-exclusive and non-transferable. You may not
+          copy, record, adapt, distribute, sell, publicly display, perform or broadcast the Bright Designs Content
+          except as these Terms expressly allow. No other license or right is granted to you, by implication or
+          otherwise.
+        </p>
+        <h3>7.2 What you send us</h3>
+        <p>
+          You are responsible for the information you send through our forms. We use it as our{' '}
+          <Link href="/privacy">Privacy Policy</Link> describes.
+        </p>
+
+        <h2>8. Perusal scores</h2>
+        <p>
+          A perusal score is a watermarked copy of a score that we make available so you can study the music while you
+          decide whether to license it. Section 7 applies to perusal scores, and so do these rules:
         </p>
         <ul>
           <li>
-            <strong>Perusal only.</strong> You may read a perusal score and keep the copy you downloaded for your own
-            review. That is the only use allowed.
+            <strong>Perusal only.</strong> You may read a perusal score to evaluate the music for your own program. No
+            other use is allowed.
           </li>
           <li>
-            <strong>What you may not do.</strong> You may not perform any part of a perusal score, in rehearsal or in
-            public; copy, print for others, share, post, distribute or sell it; make an arrangement from it, adapt it,
-            or use it to create parts; or remove or cover the watermark.
+            <strong>No performing.</strong> You may not perform any part of a perusal score, in rehearsal or in public.
           </li>
           <li>
-            <strong>Performing needs a license.</strong> To rehearse or perform the music you must buy a license from
-            Bright Designs. A perusal score gives you no right to perform, record or broadcast the music.
+            <strong>No copying or sharing.</strong> You may not copy or distribute a perusal score, in print or as a
+            file.
           </li>
           <li>
-            <strong>Scores stay ours.</strong> Perusal scores remain the property of Bright Designs. The underlying music
-            may also belong to its composers and publishers. Viewing or downloading a score does not transfer any
-            ownership or license to you.
+            <strong>No arranging or adapting.</strong> You may not arrange from a perusal score, adapt it, or extract
+            parts from it.
+          </li>
+          <li>
+            <strong>Leave the watermark.</strong> Every page is watermarked “PERUSAL ONLY” with the name and school you
+            gave us and the date. You may not remove, cover or alter the watermark.
+          </li>
+          <li>
+            <strong>Performing requires a license.</strong> To rehearse or perform the music, you must buy a license
+            from Bright Designs. A perusal score gives you no right to perform, record or broadcast the music.
+          </li>
+          <li>
+            <strong>Scores stay ours.</strong> Perusal scores remain the property of Bright Designs. Opening or
+            downloading one transfers no ownership and no license beyond what this section allows.
           </li>
           <li>
             <strong>Accurate details.</strong> Give your real name, school or program, and role when you request
-            scores. Each copy is stamped with those details and is for the person named on it.
+            scores.
           </li>
           <li>
-            <strong>Limits and withdrawal.</strong> Access is limited to 15 scores a day. We may change the limit, or
-            withdraw your access to perusal scores, at any time and for any reason, including if we believe these terms
-            have been broken.
+            <strong>Limits and withdrawal.</strong> You can open up to 15 different scores a day. We may change that
+            limit or withdraw your access to perusal scores at any time, for any reason.
           </li>
         </ul>
 
-        <h2>Using the site</h2>
-        <p>You agree not to:</p>
-        <ul>
-          <li>use the site for anything unlawful;</li>
-          <li>send false information through our forms, or request scores in someone else’s name;</li>
-          <li>scrape the site, or use bots or scripts to download content in bulk;</li>
-          <li>get around the score limits, the spam check, or any other access control;</li>
-          <li>interfere with the site or try to reach parts of it you aren’t allowed to.</li>
-        </ul>
-        <p>We may suspend or end your access to the site if you break these terms.</p>
-
-        <h2>Your information</h2>
+        <h2>9. Feedback</h2>
         <p>
-          Our <Link href="/privacy">Privacy Policy</Link> explains what we collect when you use the site and how we use
-          it.
+          We welcome feedback and suggestions about the Site and our shows. If you send us any, we may use it without
+          owing you credit or payment.
         </p>
 
-        <h2>Other sites</h2>
+        <h2>10. Third-party services</h2>
         <p>
-          The site links to and embeds content from other services, such as YouTube. We don’t control them and aren’t
-          responsible for their content or practices.
+          The Site links to and embeds content from services we do not control, such as YouTube and OpenStreetMap. Your
+          use of them is subject to their own terms. We make no promises about their content or operation and are not
+          responsible for any harm that results from your use of them.
         </p>
 
-        <h2>No warranties</h2>
+        <h2>11. Changes to the Site</h2>
         <p>
-          The site and everything on it, including previews and perusal scores, are provided “as is” and “as
-          available”, without warranties of any kind, express or implied. Previews and perusal scores may differ from
-          the final music you license. We don’t promise the site will be error-free or always available.
+          We may change the Site, or remove shows, previews and perusal scores from it, at any time. We are not liable
+          for any consequences of those changes.
         </p>
 
-        <h2>Limitation of liability</h2>
+        <h2>12. Termination</h2>
         <p>
-          To the fullest extent the law allows, Bright Designs and its owners, employees and contractors are not liable
-          for any indirect, incidental, special, consequential or punitive damages, or for any lost profits or data,
-          arising from your use of the site or its content, even if we were told such damages were possible.
+          We may end these Terms and block your access to the Site immediately and without notice if we determine that
+          you have breached them. Provisions that by their nature should survive will survive, including the limits on
+          our liability, the terms on ownership and intellectual property, the restrictions on perusal scores, and the
+          terms on disputes between us.
         </p>
 
-        <h2>Changes</h2>
+        <h2>13. Disclaimer of warranties</h2>
         <p>
-          We may update these terms. When we do, we’ll change the date at the top of this page. Using the site after a
-          change means you accept the updated terms.
+          YOU USE THE SITE AT YOUR OWN RISK. THE SITE AND THE BRIGHT DESIGNS CONTENT, INCLUDING PREVIEWS AND PERUSAL
+          SCORES, ARE PROVIDED “AS IS”, AND BRIGHT DESIGNS DISCLAIMS ALL WARRANTIES, EXPRESS AND IMPLIED, INCLUDING ANY
+          WARRANTIES OF ACCURACY, RELIABILITY, MERCHANTABILITY, NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE.
+          WE DO NOT WARRANT THAT THE SITE WILL BE UNINTERRUPTED OR FREE OF ERRORS, OMISSIONS OR VIRUSES.
+        </p>
+        <p>
+          Previews and perusal scores may differ from the music we deliver under a license. Because some states do not
+          permit disclaimer of implied warranties, you may have additional rights under your local laws.
         </p>
 
-        <h2>Governing law</h2>
+        <h2>14. Limitation of liability</h2>
         <p>
-          These terms are governed by the laws of the State of South Carolina, without regard to its conflict of law
-          rules. Any dispute about the site or these terms will be heard in the state or federal courts located in South
-          Carolina.
+          TO THE FULLEST EXTENT ALLOWED BY APPLICABLE LAW, UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY (INCLUDING
+          TORT, CONTRACT, STRICT LIABILITY OR OTHERWISE) WILL BRIGHT DESIGNS BE LIABLE TO YOU OR TO ANY OTHER PERSON FOR
+          (A) ANY INDIRECT, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES OF ANY KIND, INCLUDING DAMAGES FOR LOST
+          PROFITS, LOSS OF GOODWILL, WORK STOPPAGE, OR COMPUTER FAILURE OR MALFUNCTION, (B) ANY AMOUNT, IN THE
+          AGGREGATE, IN EXCESS OF ONE HUNDRED U.S. DOLLARS (US$100), OR (C) ANY MATTER BEYOND OUR REASONABLE CONTROL.
+          SOME STATES DO NOT ALLOW THE EXCLUSION OR LIMITATION OF CERTAIN DAMAGES, SO THE ABOVE LIMITATION AND
+          EXCLUSIONS MAY NOT APPLY TO YOU.
+        </p>
+        <p>This section covers your use of the Site. A separate written agreement with us has its own terms.</p>
+
+        <h2>15. Notices</h2>
+        <p>
+          We will give any notice under these Terms in writing, either by email to the address you gave us or by posting
+          it on the Site.
         </p>
 
-        <h2>Contact</h2>
+        <h2>16. No waiver</h2>
+        <p>If we do not enforce a right or provision of these Terms, we have not waived our right to enforce it later.</p>
+
+        <h2>17. Assignment</h2>
+        <p>
+          You may not assign or transfer these Terms without our prior written consent, and any attempt to do so is
+          void. We may assign or transfer these Terms without restriction. These Terms bind and benefit the parties and
+          their successors and permitted assigns, and give no rights to anyone else.
+        </p>
+
+        <h2>18. Severability</h2>
+        <p>
+          If a court of competent jurisdiction finds any provision of these Terms invalid or unenforceable, that
+          provision will be enforced to the maximum extent permissible and the rest of these Terms will remain in full
+          force and effect.
+        </p>
+
+        <h2>19. Governing law and venue</h2>
+        <p>
+          These Terms are governed by and will be construed under the laws of the State of South Carolina, without
+          regard to its conflict of laws provisions. You and Bright Designs consent to the exclusive jurisdiction and
+          venue of the state and federal courts located in South Carolina for any dispute arising from these Terms or
+          your use of the Site.
+        </p>
+        <p>
+          A breach of Section 6 (Acceptable use), Section 7 (Content) or Section 8 (Perusal scores) would cause us harm
+          that money alone cannot repair. For such a breach we may seek an injunction or other equitable relief from
+          any court of competent jurisdiction.
+        </p>
+
+        <h2>20. Entire agreement</h2>
+        <p>
+          These Terms are the entire agreement between you and Bright Designs about your use of the Site and supersede
+          all prior written or oral agreements about it. They do not replace a separate written agreement described in
+          Section 5.
+        </p>
+
+        <h2>21. Contact us</h2>
+        <p>If you have questions about the Site or these Terms, contact us.</p>
         <p>
           {LEGAL_ENTITY}
           <br />
