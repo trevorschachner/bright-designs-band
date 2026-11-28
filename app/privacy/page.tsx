@@ -97,9 +97,12 @@ export default function PrivacyPolicyPage() {
         <p>
           PostHog also records about 1 in 4 visits (25%) as a session recording. A recording replays the pages as you
           saw them, with your mouse movement, clicks and scrolling. Anything you type into a form field is masked and
-          is not recorded.
+          is not recorded. By using the Site, you consent to these recordings. Section 6 explains how to opt out.
         </p>
-        <p>We do not use advertising trackers, and we do not sell your personal information.</p>
+        <p>
+          We do not use advertising trackers. We do not sell your personal information, and we do not share it for
+          targeted advertising.
+        </p>
 
         <h3>2.5 Cookies and browser storage</h3>
         <p>
@@ -183,13 +186,20 @@ export default function PrivacyPolicyPage() {
         <p>
           The Site is served over encrypted connections, and access to form submissions and customer records is limited
           to our team. We cannot guarantee that these precautions will always work, or that your personal information
-          will never be accessed, disclosed, altered or destroyed by a breach of them.
+          will never be accessed, disclosed, altered or destroyed by a breach of them. If a breach affects your
+          personal information, we will notify you as the law requires.
+        </p>
+        <p>
+          We and our service providers store and process your information in the United States. If you use the Site
+          from another country, your information will be transferred to the United States.
         </p>
 
         <h2>5. Access, deletion and retention</h2>
         <p>
-          To see, correct or delete the personal information we hold about you, email {mail}. We will delete it from
-          our database, customer records and analytics unless the law requires us to keep it. We cannot recall a
+          To see, correct or delete the personal information we hold about you, email {mail}. We may ask you to confirm
+          the request from the email address you gave us. We will respond within 30 days, and we will delete your
+          information from our database, customer records and analytics unless the law requires us to keep it. We
+          honor these requests no matter where you live. We cannot recall a
           perusal score you have already downloaded. To stop hearing from us, reply to any of our emails or write to
           the same address.
         </p>
@@ -208,8 +218,10 @@ export default function PrivacyPolicyPage() {
 
         <h2>7. Children</h2>
         <p>
-          The Site is meant for band directors and staff. We do not knowingly collect personal information from children
-          under 13. If you think a child under 13 has sent us information, email {mail} and we will delete it.
+          The Site is meant for band directors, staff and students who are at least 13 years old. If you are under 18,
+          please get permission from a parent, guardian or your band director before you send us a form. We do not
+          knowingly collect personal information from children under 13. If you think a child under 13 has sent us
+          information, email {mail} and we will delete it.
         </p>
 
         <h2>8. Changes to this Policy</h2>

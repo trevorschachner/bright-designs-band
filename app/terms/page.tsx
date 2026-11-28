@@ -28,11 +28,18 @@ export default function TermsOfUsePage() {
         <p>
           These Terms of Use (the “Terms”) are a binding agreement between you and {LEGAL_ENTITY} (“Bright Designs”,
           “we”, “our”, “us”) about your use of brightdesigns.band (the “Site”). By using the Site in any way, you agree
-          to these Terms.
+          to these Terms. If you do not agree, do not use the Site. Before you can open perusal scores, we also ask you
+          to agree to these Terms and our <Link href="/privacy">Privacy Policy</Link> on the request form.
+        </p>
+        <p>
+          You must be at least 13 years old to use the Site. If you are under 18, you may use it only with the
+          permission of a parent, guardian or your band director.
         </p>
         <p>
           If you use the Site on behalf of a school, booster organization or other entity, “you” also means that
-          entity, and you confirm that you are authorized to act for it.
+          entity, and you confirm that you are authorized to act for it. If you are a public school, school district or
+          other government body and the law that governs you does not allow you to agree to a term of these Terms, that
+          term applies to you only to the extent that law allows.
         </p>
 
         <h2>2. Changes to these Terms</h2>
@@ -91,6 +98,10 @@ export default function TermsOfUsePage() {
           except as these Terms expressly allow. No other license or right is granted to you, by implication or
           otherwise.
         </p>
+        <p>
+          “Bright Designs”, our logo and our show titles are our trademarks. You may not use them in a way that suggests
+          we sponsor or endorse you, or on anything you sell, without our written permission.
+        </p>
         <h3>7.2 What you send us</h3>
         <p>
           You are responsible for the information you send through our forms. We use it as our{' '}
@@ -104,15 +115,17 @@ export default function TermsOfUsePage() {
         </p>
         <ul>
           <li>
-            <strong>Perusal only.</strong> You may read a perusal score to evaluate the music for your own program. No
-            other use is allowed.
+            <strong>Perusal only.</strong> You may read, download and print a perusal score to evaluate the music for
+            your own program. No other use is allowed.
           </li>
           <li>
             <strong>No performing.</strong> You may not perform any part of a perusal score, in rehearsal or in public.
           </li>
           <li>
-            <strong>No copying or sharing.</strong> You may not copy or distribute a perusal score, in print or as a
-            file.
+            <strong>Keep it inside your program.</strong> You may share a perusal score with the directors and staff of
+            your own program who are helping you decide, and they must follow these rules too. You are responsible for
+            anyone you share it with. You may not post a perusal score online, or copy or distribute it to anyone outside
+            your program, in print or as a file.
           </li>
           <li>
             <strong>No arranging or adapting.</strong> You may not arrange from a perusal score, adapt it, or extract
@@ -194,7 +207,8 @@ export default function TermsOfUsePage() {
         <h2>15. Notices</h2>
         <p>
           We will give any notice under these Terms in writing, either by email to the address you gave us or by posting
-          it on the Site.
+          it on the Site. You agree that we may communicate with you electronically, and that electronic notices meet
+          any legal requirement that a notice be in writing.
         </p>
 
         <h2>16. No waiver</h2>
