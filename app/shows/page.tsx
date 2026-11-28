@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ShowCatalogHero } from '@/components/features/shows/ShowCatalogHero';
 import { FilterSidebar } from '@/components/features/filters/filter-sidebar';
@@ -5,11 +6,18 @@ import { ActiveFilterChips } from '@/components/features/catalog/ActiveFilterChi
 import { CatalogSkeleton } from '@/components/features/catalog/CatalogSkeleton';
 import { ShowsList, ShowsResultCount } from '@/components/features/catalog/ShowsList';
 import { SHOWS_FILTER_FIELDS } from '@/lib/filters/filter-definitions';
+import { catalogCanonical } from '@/lib/seo/metadata';
 import { parseShowsQuery, SHOWS_DEFAULT_LIMIT } from '@/lib/services/catalog';
 
 // Dynamic (it reads searchParams); the data itself is tag-cached in lib/services/catalog.ts.
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** Title and description come from the layout; only the canonical depends on the query. */
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const filters = parseShowsQuery(await searchParams);
+  return { alternates: { canonical: catalogCanonical('/shows', filters, SHOWS_DEFAULT_LIMIT) } };
+}
 
 /**
  * The show catalog, rendered on the server. The URL is the filter state:

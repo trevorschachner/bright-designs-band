@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { getOptionalPublicSiteUrl, sanitizePublicUrl } from '@/lib/env'
+import type { CatalogFilters } from '@/lib/filters/catalog-params'
 
 export interface SEOConfig {
   title: string
@@ -30,6 +31,23 @@ export function canonicalFor(path: string): string {
   const origin = (getOptionalPublicSiteUrl() || 'https://brightdesigns.band').replace(/\/+$/, '')
   const clean = path === '/' ? '' : '/' + path.replace(/^\/+/, '').replace(/\/+$/, '')
   return origin + clean
+}
+
+/**
+ * Canonical for a catalog URL (`/shows?…`, `/arrangements?…`). A later page of
+ * the unfiltered catalog is its own canonical: pointing it at page 1 marks it
+ * as a duplicate, and the items only linked from it stop being discovered
+ * through it. Filtered, searched, sorted and resized views are variants of the
+ * catalog and keep the bare path.
+ */
+export function catalogCanonical(basePath: string, filters: CatalogFilters, defaultLimit: number): string {
+  const plain =
+    !filters.search &&
+    !filters.featured &&
+    filters.conditions.length === 0 &&
+    filters.sort.length === 0 &&
+    filters.limit === defaultLimit
+  return canonicalFor(plain && filters.page > 1 ? `${basePath}?page=${filters.page}` : basePath)
 }
 
 export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
