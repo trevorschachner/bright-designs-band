@@ -13,7 +13,10 @@ import type { Faq } from '@/lib/content/faqs'
 import { getPublicSiteUrl } from '@/lib/env'
 import { llmsHeader } from './llms-header'
 
-type Options = { siteUrl?: string }
+/** A published article as the llms files need it: plain text, no markup. */
+export type LlmsArticle = { href: string; title: string; description: string; author: string; text: string; faq: Faq[] }
+
+type Options = { siteUrl?: string; articles?: LlmsArticle[] }
 
 const base = (opts?: Options) => (opts?.siteUrl ?? getPublicSiteUrl()).replace(/\/+$/, '')
 
@@ -53,10 +56,13 @@ export function buildLlmsTxt(shows: ShowIndexEntry[], collections: CollectionCon
     '## Collections',
     '',
     ...collections.map((c) => `- [${clean(c.h1)}](${root}/collections/${c.slug}) — ${clean(c.description)}`),
+    ...(opts?.articles?.length
+      ? ['', '## Articles', '', ...opts.articles.map((a) => `- [${clean(a.title)}](${root}${a.href}) — ${clean(a.description)}`)]
+      : []),
     '',
     '## More',
     '',
-    `- [Full catalog and FAQ text](${root}/llms-full.txt)`,
+    `- [Full catalog, article and FAQ text](${root}/llms-full.txt)`,
     '',
   ]
   return lines.join('\n')
@@ -73,12 +79,23 @@ export function buildLlmsFullTxt(shows: ShowIndexEntry[], faqs: Faq[], opts?: Op
     ].join('\n')
   })
   const faqBlocks = faqs.map((faq) => `### ${clean(faq.question)}\n\n${clean(faq.answer)}`)
+  const articleBlocks = (opts?.articles ?? []).map((a) =>
+    [
+      `### [${clean(a.title)}](${root}${a.href})`,
+      '',
+      `By ${clean(a.author)}. ${clean(a.description)}`,
+      '',
+      a.text.replace(/\$/g, '').trim(),
+      ...a.faq.flatMap((faq) => ['', `Q: ${clean(faq.question)}`, `A: ${clean(faq.answer)}`]),
+    ].join('\n'),
+  )
   return [
     llmsHeader(root).trimEnd(),
     '',
     '## Shows',
     '',
     showBlocks.join('\n\n'),
+    ...(articleBlocks.length ? ['', '## Articles', '', articleBlocks.join('\n\n')] : []),
     '',
     '## Frequently Asked Questions',
     '',

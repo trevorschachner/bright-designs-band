@@ -2,12 +2,14 @@ import type { MetadataRoute } from 'next'
 import { getSitemapEntries } from '@/lib/services/sitemap'
 import { publishedCollections } from '@/lib/services/collections'
 import { BLOG_POSTS, CASE_STUDIES } from '@/lib/blog/posts'
+import { publishedArticles } from '@/lib/content/articles'
 import { getPublicSiteUrl } from '@/lib/env'
 
 /**
  * /sitemap.xml. Shows and arrangements come from the cached sitemap read
  * (tags `shows` + `arrangements`, expired by every show/arrangement write via
- * lib/services/invalidate.ts); collections and blog posts are static config.
+ * lib/services/invalidate.ts); collections and blog posts are static config;
+ * articles are the dated files in content/articles (drafts are left out).
  */
 export const revalidate = 3600
 
@@ -59,6 +61,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: p.dateModified ?? p.datePublished,
       changeFrequency: 'monthly' as const,
       priority: 0.6,
+    })),
+    ...publishedArticles().map((article) => ({
+      url: url(article.href),
+      lastModified: article.dateModified ?? article.datePublished ?? undefined,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
     })),
   ]
 }

@@ -1,12 +1,13 @@
 import { getShowIndex } from '@/lib/services/shows'
 import { publishedCollections } from '@/lib/services/collections'
+import { articlesForLlms } from '@/lib/content/articles'
 import { buildLlmsTxt } from '@/lib/seo/llms'
 
 /** /llms.txt from the cached catalog (tag `shows`), refreshed by show writes. */
 export const revalidate = 3600
 
 export async function GET() {
-  const body = buildLlmsTxt(await getShowIndex(), await publishedCollections())
+  const body = buildLlmsTxt(await getShowIndex(), await publishedCollections(), { articles: articlesForLlms() })
   return new Response(body, {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { showTitle, arrangementTitle } from '@/lib/seo/titles'
+import { showTitle, arrangementTitle, articleTitle } from '@/lib/seo/titles'
 
 describe('showTitle', () => {
   it('carries difficulty and year', () => {
@@ -20,5 +20,13 @@ describe('arrangementTitle', () => {
     expect(arrangementTitle({ title: 'Pipeline', composer: 'The Chantays' }))
       .toBe('Pipeline (The Chantays) – Marching Band Arrangement | Bright Designs')
     expect(arrangementTitle({ title: 'Pipeline', composer: null })).toBe('Pipeline – Marching Band Arrangement | Bright Designs')
+  })
+})
+
+describe('articleTitle', () => {
+  it('keeps the brand on a short title and drops it past 60 characters', () => {
+    expect(articleTitle('How to design a marching band show')).toBe('How to design a marching band show | Bright Designs')
+    const long = 'When to start planning next season’s marching band show, month by month'
+    expect(articleTitle(long)).toBe(long)
   })
 })
