@@ -3,13 +3,15 @@ import type { PGlite } from '@electric-sql/pglite'
 import { createSearchDb, readMigration } from '@/lib/services/__tests__/search-db'
 
 /**
- * drizzle/migrations/2026-11-26_arrangements_perusal_score.sql and its
- * rollback on pglite, and getPerusalScore (lib/services/perusal-scores.ts)
+ * drizzle/migrations/2026-11-26_arrangements_perusal_score.sql,
+ * 2026-11-27_drop_sample_score_url.sql and their rollbacks on pglite, and getPerusalScore (lib/services/perusal-scores.ts)
  * against the migrated schema.
  */
 
 const MIGRATION = 'migrations/2026-11-26_arrangements_perusal_score.sql'
 const ROLLBACK = 'migrations/2026-11-26_arrangements_perusal_score.rollback.sql'
+const DROP = 'migrations/2026-11-27_drop_sample_score_url.sql'
+const DROP_ROLLBACK = 'migrations/2026-11-27_drop_sample_score_url.rollback.sql'
 
 const state = vi.hoisted(() => ({ db: null as unknown }))
 vi.mock('@/lib/database', () => ({
@@ -38,6 +40,7 @@ beforeEach(async () => {
   client = created.client
   state.db = created.db
   await client.exec(readMigration(MIGRATION))
+  await client.exec(readMigration(DROP))
   await client.exec(`insert into shows (id, title, slug) values (7, 'Show', 'show')`)
   await client.exec(`insert into arrangements (id, title, slug) values (9, 'Opener', 'opener')`)
 })
@@ -59,11 +62,28 @@ describe('perusal score migration', () => {
     await expect(client.exec(`update arrangements set perusal_score_file_id = 999 where id = 9`)).rejects.toThrow(/foreign key/)
   })
 
+  it('is additive on its own: sample_score_url stays until the held drop runs', async () => {
+    await client.exec(readMigration(DROP_ROLLBACK))
+    await client.exec(readMigration(ROLLBACK))
+    await client.exec(readMigration(MIGRATION))
+    expect((await client.query(columns)).rows).toEqual([
+      { column_name: 'perusal_score_file_id' },
+      { column_name: 'sample_score_url' },
+    ])
+  })
+
+  it('holds the drop back from a plain --apply', () => {
+    expect(readMigration(DROP)).toMatch(/^-- migrate: manual$/m)
+  })
+
   it('rolls back and applies again', async () => {
+    await client.exec(readMigration(DROP_ROLLBACK))
     await client.exec(readMigration(ROLLBACK))
     expect((await client.query(columns)).rows).toEqual([{ column_name: 'sample_score_url' }])
     await client.exec(readMigration(MIGRATION))
     await client.exec(readMigration(MIGRATION))
+    await client.exec(readMigration(DROP))
+    await client.exec(readMigration(DROP))
     expect((await client.query(columns)).rows).toEqual([{ column_name: 'perusal_score_file_id' }])
   })
 })
