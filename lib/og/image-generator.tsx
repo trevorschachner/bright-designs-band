@@ -43,6 +43,13 @@ function titleSize(length: number): number {
   return 54
 }
 
+// Satori has no text-wrap: balance, so a line that would wrap gets a width of
+// about half its length and breaks into two even lines, not one long and a stub.
+function balancedWidth(text: string): number {
+  const estimate = text.length * 15.6
+  return estimate <= 820 ? 840 : Math.round(estimate / 2 + 70)
+}
+
 /** The faint square grid behind the site's page headers. */
 export function OgGrid({ height }: { height: number }) {
   return (
@@ -107,7 +114,7 @@ export async function generateOGImage({ title, highlight, description, chips = [
               : null}
           </div>
           {description ? (
-            <div style={{ display: 'flex', marginTop: 22, maxWidth: 720, fontSize: 30, lineHeight: 1.4, color: OG.muted }}>{clip(description, 92)}</div>
+            <div style={{ display: 'flex', marginTop: 22, maxWidth: balancedWidth(clip(description, 92)), fontSize: 30, lineHeight: 1.4, color: OG.muted }}>{clip(description, 92)}</div>
           ) : null}
           {chips.length > 0 ? (
             <div style={{ display: 'flex', gap: 12, marginTop: 26 }}>
