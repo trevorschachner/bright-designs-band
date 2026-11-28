@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/blog/posts'
 import { getCollectionBySlug } from '@/lib/collections'
 import { getArticle, routableArticles } from '@/lib/content/articles'
 import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { articleTitle } from '@/lib/seo/titles'
 import { createArticleSchema, createBreadcrumbSchema, createFAQSchema } from '@/lib/seo/structured-data'
 import { getShowIndex } from '@/lib/services/shows'
 
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const article = getArticle(slug)
   if (!article) return buildMetadata({ title: 'Article not found', description: 'This article does not exist.', noindex: true })
   return buildMetadata({
-    title: `${article.title} | Bright Designs`,
+    title: articleTitle(article.title),
     description: article.description,
     path: article.href,
     noindex: article.isDraft,
@@ -53,6 +54,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             author: article.author,
             datePublished: article.datePublished,
             dateModified: article.dateModified ?? undefined,
+            image: `${article.href}/opengraph-image`,
           })}
         />
       ) : null}

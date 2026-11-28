@@ -1,7 +1,7 @@
 ---
 title: When to start planning next season's marching band show
 slug: when-to-start-planning-a-marching-band-show
-description: Start in November. Music in your hands by May 1, drill done by Labor Day. Here is why we hold those two dates, what happens when they slip, and what to do if you are already late.
+description: Start in November. Music in your hands by May 1, drill done by Labor Day. Why we hold those two dates, and what to do if you are already late.
 author: Trevor Schachner
 status: draft for owner edit (Claude, 2026-11-26, second pass in Trevor's voice)
 datePublished:
@@ -46,9 +46,9 @@ If you honestly don't know, tell us, and we'll write drill for the kids you're s
 
 **November.** Sit down with your staff the week after your last show and go caption by caption. What worked, what you'd change, which sections carried it. Then decide who's designing next year. December and January are quiet months for arrangers, so a show agreed before winter break gets started within a couple of weeks.
 
-**December.** Get a number to your boosters. Most boards set the budget in January or February and can't vote on "we're talking to some people." Ask for a quote with each piece of work on its own line and a draft contract you can carry into the meeting.
+**December.** Get a number to your boosters. Most boards set the budget in January or February and can't vote on "we're talking to some people." Ask for a quote with each piece of work on its own line and a draft contract you can carry into the meeting. If you need a starting figure tonight, [our prices are here](/blog/how-much-does-a-custom-marching-band-show-cost).
 
-**December and January.** Concept. One or two calls. You bring your roster and whatever ideas you've got, we bring a few of ours, and we build a cut track: the recordings spliced together at show length so everybody can hear the pacing before a note is written.
+**December and January.** Concept. One or two calls. You bring your roster and whatever ideas you've got, we bring a few of ours, and we build a cut track: the recordings spliced together at show length so everybody can hear the pacing before a note is written. If you're short on concepts, here are [51 that have been on a field](/blog/marching-band-show-ideas).
 
 **February.** Eighth-grade night. You won't know your roster until summer, but this is when you learn the most about it. Licensing requests go in the same week the music is picked. A lot of songs clear in a day. Some take weeks, and a few come back as a no.
 
@@ -78,7 +78,7 @@ Every one of those started with a date somebody let go by in the spring.
 
 **It's January or February.** You're fine. Sign with somebody this month.
 
-**It's March or April.** We can't write you a custom book by May 1, and nobody else can do it well either. We do push a few schools to June 1 every year because they called too late, and I'd rather not. Buy a finished show and have it re-scored for your band.
+**It's March or April.** We can't write you a custom book by May 1, and nobody else can do it well either. We do push a few schools to June 1 every year because they called too late, and I'd rather not. Buy a finished show and have it re-scored for your band. That's the middle option in [box show or custom](/blog/box-show-or-custom-marching-band-show).
 
 **It's May or later.** Buy a finished show as written, today, and call a drill writer tomorrow.
 

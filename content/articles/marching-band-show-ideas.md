@@ -1,7 +1,7 @@
 ---
 title: 51 marching band show ideas, with the music for each
 slug: marching-band-show-ideas
-description: Fifty-one marching band show ideas that have been on a field, each with its music, level and length, and the one question we ask before any of them gets written.
+description: Fifty-one marching band show ideas that have been on a field, each with its music, level and length, and the one question we ask before writing any.
 author: Trevor Schachner
 status: draft for owner edit (Claude, 2026-11-26, second pass in Trevor's voice)
 datePublished:
@@ -131,9 +131,9 @@ Level is how hard the wind book is. Length is the whole show.
 1. Say it in one sentence.
 2. Name the ballad.
 3. Say how it starts and how it ends. If those two pictures look the same, the audience won't feel anything change.
-4. Price the costumes, flags and props.
+4. Price the costumes, flags and props. The design side is in [what a show costs](/blog/how-much-does-a-custom-marching-band-show-cost).
 5. Check the music can be licensed. Anything published before 1931 is free to arrange in the US. Everything else needs permission.
-6. Make a cut track: the recordings spliced together at show length. If it's great for a minute and vague after that, keep working.
+6. Make a cut track: the recordings spliced together at show length. If it's great for a minute and vague after that, keep working. [How we design a show](/blog/how-to-design-a-marching-band-show) covers what goes in one.
 7. Play it for five kids the band listens to. Buy in starts with about five people.
 
 Not the idea guy? A lot of directors tell us that. Pick two or three pieces your whole staff loves and send them over. The concept can usually be built around the music.

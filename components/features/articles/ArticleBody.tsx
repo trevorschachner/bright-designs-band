@@ -18,7 +18,7 @@ function renderInline(nodes: Inline[]): ReactNode[] {
 /** An article's blocks as server-rendered HTML. No client JavaScript. */
 export function ArticleBody({ blocks }: { blocks: ArticleBlock[] }) {
   return (
-    <div className="prose prose-lg max-w-none prose-headings:scroll-mt-24 prose-a:text-primary">
+    <div className="prose prose-lg max-w-none prose-headings:scroll-mt-24 prose-a:font-medium prose-a:text-foreground prose-a:decoration-primary prose-a:decoration-2 prose-a:underline-offset-4">
       {blocks.map((block, i) => {
         switch (block.kind) {
           case 'heading':

@@ -1,7 +1,7 @@
 ---
 title: How to design a marching band show
 slug: how-to-design-a-marching-band-show
-description: The order we design a marching band show in, from the roster chart to the last drill file, with the rules of thumb we use for pacing, difficulty, staging and sound.
+description: The order we design a marching band show in, from roster chart to last drill file, with our rules of thumb for pacing, difficulty, staging and sound.
 author: Ryan Wilhite
 status: draft for owner edit (Claude, 2026-11-26)
 datePublished:
@@ -182,17 +182,17 @@ Visual judging is partly preference. We have seen one risky small-band show plac
 
 ## 10. The calendar
 
-Two dates hold the year up: all wind music by May 1, and drill by Labor Day.
+Two dates hold the year up: all wind music by May 1, and drill by Labor Day. The reasons for both are in [when to start planning](/blog/when-to-start-planning-a-marching-band-show).
 
 - **November.** Recap the season by caption with your staff while the tapes are fresh. Decide who is designing next year.
-- **December and January.** Concept, playlist, cut tracks, contract. These are an arranger's quiet months, so a show signed in December starts being written within two weeks. Your boosters will want a number before the February budget.
+- **December and January.** Concept, playlist, cut tracks, contract. These are an arranger's quiet months, so a show signed in December starts being written within two weeks. Your boosters will want a number before the February budget, and [what a show costs](/blog/how-much-does-a-custom-marching-band-show-cost) has ours.
 - **By early March.** Music chosen, licensing requests in. A request for an unlisted song goes in the day you choose it, because some publishers take weeks.
 - **March and April.** Winds written. Each approved movement goes to the percussion writer as it lands; April and May, after indoor season, is when percussion writers have time.
 - **May 1.** All wind music delivered, before spring camp. Read it down with the band, then send edits as one written list.
 - **July 1.** Numbers to the drill writer. Drill follows the roster, so it cannot start before you know who you have.
 - **Mid-July to Labor Day.** Drill arrives a movement at a time, about every two to three weeks, matched to your camp dates and how many sets a day your band learns. Choreography comes with it, as video.
 
-Choosing a show in March or April is late for custom. If that is where you are, buy a box show that already exists, or take two finished parts and have the rest written around them. Asking in April for music by June 1 cannot be served well by anyone.
+Choosing a show in March or April is late for custom. If that is where you are, [buy a box show](/blog/box-show-or-custom-marching-band-show) that already exists, or take two finished parts and have the rest written around them. Asking in April for music by June 1 cannot be served well by anyone.
 
 One process note. The directors who were unhappy at the end of a season were, almost every time, the ones who gave no feedback on drafts. Fill out the production sheet with your whole staff, and answer when your designer sends you something.
 

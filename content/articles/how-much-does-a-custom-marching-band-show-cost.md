@@ -1,9 +1,9 @@
 ---
 title: How much does a custom marching band show cost?
 slug: how-much-does-a-custom-marching-band-show-cost
-description: We don't post prices, and I know that's annoying. Here is what a custom marching band show is made of, where the money goes, and how to get a real number from us in one email.
+description: Our custom shows start at $5,000. High-tier arrangers charge $8,000 to $15,000. A finished show from us is around $2,500. Here is where the money goes.
 author: Trevor Schachner
-status: draft for owner edit (Claude, 2026-11-26, second pass in Trevor's voice). No dollar figures, by the no-prices rule; see the note to owners at the end.
+status: draft for owner edit (Claude, 2026-11-27, Trevor's voice, with the prices he gave on 2026-11-27)
 datePublished:
 targetQueries: how much does a custom marching band show cost; how much does a marching band show cost; custom marching band shows; affordable marching band shows
 relatedShows: aromatic
@@ -12,9 +12,17 @@ relatedCollections: easy-marching-band-shows, small-band-marching-band-shows
 
 On every first call there's a moment where the director takes a breath and says something like, "So, budget is always part of the equation." I call it the fun question.
 
-We don't post prices, and I know that's annoying when you're trying to put a number in front of a booster board. The reason is boring: two bands asking for "a custom show" almost never want the same amount of work. One wants a wind book and nothing else. One wants winds, percussion, sound design, drill and somebody to run the whole thing.
+Most designers won't answer it on a website. I think that's annoying when you're trying to put a number in front of a booster board, so here are ours.
 
-So here's the next best thing. This is what you're buying, where the money goes, and how to get a real number out of us fast.
+| What you're buying | What it costs |
+|---|---|
+| A custom show from us | Starts at $5,000 |
+| A custom show from a high-tier arranger | $8,000 to $15,000 |
+| A finished show from our shelf: winds, percussion and sound design | Around $2,500 |
+
+Our custom shows start at $5,000. Most of the high-tier arrangers in this activity charge $8,000 to $15,000. A finished show from our shelf varies with the show, but figure around $2,500 for winds, percussion and sound design.
+
+Those are starting points. Two bands asking for "a custom show" almost never want the same amount of work. One wants a wind book and nothing else. One wants winds, percussion, sound design, drill and somebody to run the whole thing. The rest of this page is what moves your number up or down from there.
 
 ## You're buying up to five things
 
@@ -44,11 +52,11 @@ When we're picking music with you, we'll tell you which tunes are going to be ex
 
 **How many of the five you need.** If you have a percussion writer who knows your kids, keep them. We'll send them each movement the day you approve it. Plenty of directors do this, and we'd rather work with someone you trust than replace them.
 
-**How much is new.** Four new arrangements cost more than two new ones built around two from our shelf. A finished show bought as written runs about half of what it cost to commission.
+**How much is new.** Four new arrangements cost more than two new ones built around two from our shelf. A finished show bought as written is around $2,500, about half of where custom starts.
 
 **How big and how hard.** More players is more parts. A grade 5 book takes longer to write and to check than a grade 2 book.
 
-**When you call.** December is easy. April means somebody is working nights, and you can guess how that goes.
+**When you call.** December is easy. April means somebody is working nights, and you can guess how that goes. The dates we hold are in [when to start planning](/blog/when-to-start-planning-a-marching-band-show).
 
 ## What we'll ask you
 
@@ -76,20 +84,23 @@ Price the props and costumes before you commit to a concept. A show you can affo
 - Build props that don't move.
 - Call in December.
 
-And if the whole thing is more than you have, say so. Sometimes the honest answer is that this is a box-show year. We've told bands that.
+And if the whole thing is more than you have, say so. Sometimes the honest answer is that this is a box-show year. We've told bands that, and here's [how we decide](/blog/box-show-or-custom-marching-band-show).
 
 ## The part directors don't expect
 
 When a director comes to us after a rough year with another designer, I always ask what went wrong. It's almost never the price. It's music that showed up in July, or three designers who never spoke to each other.
 
-We're not trying to break the bank. Brighton and I both have other jobs. We write shows because we love it, and that keeps us reasonable. The thing we're strict about is the calendar.
+We're not trying to break the bank. Brighton and I both have other jobs. We write shows because we love it, and that's why we start at $5,000 when a lot of people start at $8,000. The thing we're strict about is the calendar.
 
 ## How to get a number from us
 
-Send one email with five things: how many winds, your instrumentation, the level you want, which of the five pieces you need, and when your boosters vote. You'll get a range back, and a firm quote after one call.
+The numbers at the top get you in the right neighborhood. For yours, send one email with five things: how many winds, your instrumentation, the level you want, which of the five pieces you need, and when your boosters vote. You'll get a range back, and a firm quote after one call.
 
 ---faq---
-Q: Can I get a ballpark before a call?
+Q: How much does a custom marching band show cost?
+A: Ours start at $5,000. Most high-tier arrangers charge $8,000 to $15,000. Percussion, sound design, drill and licensing change the total.
+
+Q: Can I get a number for my band before a call?
 A: Yes. Email your band size, instrumentation, level and which pieces of work you need, and we'll reply with a range.
 
 Q: Is drill included?
@@ -99,7 +110,7 @@ Q: Who pays for licensing?
 A: Usually the school, straight to the licensing agent or publisher. It's separate from our fee.
 
 Q: Is a box show cheaper?
-A: Yes, about half, because the writing is done. Re-scoring one for your band or adding a new part lands in between.
+A: Yes. A finished show from us is around $2,500 for winds, percussion and sound design, against $5,000 and up for custom, because the writing is done. Re-scoring one for your band or adding a new part lands in between.
 
 Q: Why does percussion vary so much?
 A: Because the job does. A pulse book for a new bass line and a full competitive battery and front ensemble book are different amounts of work, and different writers.
@@ -108,9 +119,7 @@ Q: When should I ask for a quote?
 A: December, so the number is ready before your boosters set the budget.
 
 <!-- Note to owners, not for publication.
-The ranking study puts this search first and says the winning page needs a price table. This draft has no dollar figures, by the no-prices rule. Options, strongest first:
-1. Publish your own ranges per line.
-2. Publish a median and range of the Tresona license fees from your 200 past requests (anonymised).
-3. Cite other sellers' published box-show prices as market context.
-Check before publishing: "Brighton and I both have other jobs" and "about half" for a box show are both yours to keep or cut. The licensing "about a third more" is from a call (charts that were 300 now 400 to 450).
+Prices are the three Trevor gave on 2026-11-27: custom from $5,000, high-tier arrangers $8,000 to $15,000, a finished show around $2,500 for winds, percussion and sound design.
+Confirm before publishing: what the $5,000 starting point includes (wind book only, or more), and whether drill is priced separately on a finished show.
+Still yours to keep or cut: "Brighton and I both have other jobs". The licensing "about a third more" is from a call.
 -->

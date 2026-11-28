@@ -18,3 +18,7 @@ export function arrangementTitle(a: { title: string; composer: string | null }):
   const by = a.composer?.trim() ? ` (${a.composer.trim()})` : ''
   return withBrand(`${a.title}${by} – Marching Band Arrangement`)
 }
+
+export function articleTitle(title: string): string {
+  return withBrand(title)
+}

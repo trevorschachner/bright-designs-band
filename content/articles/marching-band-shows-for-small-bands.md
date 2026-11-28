@@ -146,7 +146,7 @@ The whole list is in the [small band collection](/collections/small-band-marchin
 6. How long is it, and can the closer be cut without a rewrite?
 7. Will the seller re-score it for the instruments you have?
 
-If the answer to the last one is no, keep looking. A box show that is re-scored to your numbers, with one piece swapped for something your kids love, is most of the way to a custom show at a fraction of the wait.
+If the answer to the last one is no, keep looking. A box show that is re-scored to your numbers, with one piece swapped for something your kids love, is most of the way to a custom show at a fraction of the wait. We compare the two in [box show or custom](/blog/box-show-or-custom-marching-band-show), and [51 show ideas](/blog/marching-band-show-ideas) marks which ones were written for small bands.
 
 ---faq---
 Q: How many members is a small marching band?

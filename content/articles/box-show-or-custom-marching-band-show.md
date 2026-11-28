@@ -1,5 +1,5 @@
 ---
-title: Box show or custom show: which should your band march?
+title: Box show or custom marching band show: which should you buy?
 slug: box-show-or-custom-marching-band-show
 description: Some bands that call us should buy a box show, and we tell them so. Here is how we decide which bands those are, and what we do for the ones in between.
 author: Trevor Schachner
@@ -64,7 +64,7 @@ There's a lot of room between a box and a blank page.
 
 ![A line from box show to full custom with three stops between: as written, re-scored with one piece swapped, and two existing parts plus new ones, showing what changes at each stop](fig-box-to-custom.svg "Five ways to buy a show. Every step to the right adds fit and adds time.")
 
-When a band tells us they're leaning box show, here's what we usually offer. We pull a show off our shelf, re-score it for their instrumentation, and swap out a piece so it isn't completely recycled. They get something that fits and that no one else has, without starting from zero.
+When a band tells us they're leaning box show, here's what we usually offer. We pull a show off our shelf, re-score it for their instrumentation, and swap out a piece so it isn't completely recycled. They get something that fits and that no one else has, without starting from zero. On price it lands in between: a finished show from us is around $2,500, and custom starts at $5,000. The [cost breakdown](/blog/how-much-does-a-custom-marching-band-show-cost) has the rest.
 
 Aromatic is one of these. We wrote it for Gilbert High School in 2025. The opener came from Spices, Perfumes & Toxins, which we'd written for Alpharetta two years earlier, and the ballad and closer were new.
 
@@ -72,7 +72,7 @@ One thing that's true for every option on that line: an arrangement of a copyrig
 
 ## How I'd decide
 
-**What month is it?** Before January, everything's open. After March, we can't get you custom music by May 1 and I won't pretend we can. Buy something that exists.
+**What month is it?** Before January, everything's open. After March, we can't get you custom music by May 1 and I won't pretend we can. Buy something that exists. The whole calendar is in [when to start planning](/blog/when-to-start-planning-a-marching-band-show).
 
 **Did last year's show take every rehearsal you had?** Then buy a finished show, get it in January, and spend the difference on clinicians and instruments. You'll be a better band next fall, and then call us.
 
@@ -80,7 +80,7 @@ One thing that's true for every option on that line: an arrangement of a copyrig
 
 **Do you have an idea you can't find anywhere?** That's the best reason to go custom.
 
-**Is your band an odd shape?** No drumline, six brass, a guard bigger than the wind section. The further you are from a standard band, the less a box will fit.
+**Is your band an odd shape?** No drumline, six brass, a guard bigger than the wind section. The further you are from a standard band, the less a box will fit. We wrote up what works for [small bands](/blog/marching-band-shows-for-small-bands) separately.
 
 Either way you still need drill written for your numbers, a license for every copyrighted tune, and music in the kids' hands before spring camp. A box show doesn't get you out of any of that. And one bought in June is later than a custom show started in December.
 
@@ -96,6 +96,9 @@ A: Often. Ask whether the seller will re-score it for your instrumentation or sw
 
 Q: Will another band near me march the same show?
 A: Ask before you buy. We sell each show to one band per circuit per season. Not everyone does.
+
+Q: What does a box show cost next to a custom show?
+A: A finished show from us is around $2,500 for winds, percussion and sound design. Our custom shows start at $5,000, and most high-tier arrangers charge $8,000 to $15,000.
 
 Q: Does a box show come with drill?
 A: Usually not. Drill has to be written for your numbers and your field.
