@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { getShowBySlug, getPublicShowFiles } from '@/lib/services/shows'
 import { showArt } from '@/lib/media/show-art'
 import sharp from 'sharp'
-import { OG, clip, generateOGImage, ogFonts, ogLogo } from '@/lib/og/image-generator'
+import { OG, OgGrid, OgHeader, clip, generateOGImage, ogFonts, ogLogo } from '@/lib/og/image-generator'
 
 export const runtime = 'nodejs'
 
@@ -14,8 +14,8 @@ export const alt = 'Bright Designs Show'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-// 16:9, the shape show art is made in. It sits flush in the corner beside a brand panel.
-const ART = { width: 928, height: 522 }
+// 16:9, the shape show art is made in.
+const ART = { width: 660, height: 371 }
 
 /**
  * The show's art as a card-sized JPEG data URL, or null. Satori can't decode
@@ -30,7 +30,7 @@ async function artDataUrl(url: string): Promise<string | null> {
     const res = await fetch(url, { next: { revalidate } })
     if (!res.ok) return null
     const jpeg = await sharp(Buffer.from(await res.arrayBuffer()))
-      .resize(ART.width, ART.height, { fit: 'contain', background: OG.yellow })
+      .resize(ART.width, ART.height, { fit: 'contain', background: '#FFFFFF' })
       .jpeg({ quality: 85 })
       .toBuffer()
     return `data:image/jpeg;base64,${jpeg.toString('base64')}`
@@ -56,34 +56,32 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!art) {
     return generateOGImage({
-      subtitle: 'Marching band show',
       title,
+      description: show?.description || 'Marching band show',
       chips: facts,
     })
   }
 
+  // Laid out like the show page: art on the left with the site's soft shadow,
+  // badges, title and description on the right.
   return new ImageResponse(
     (
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: OG.yellow, color: OG.midnight, fontFamily: 'Poppins' }}>
-        <div style={{ display: 'flex', height: ART.height }}>
-          {/* The art is shown whole, flush to the corner, and keeps its own lettering. */}
-          <img src={art} alt="" width={ART.width} height={ART.height} />
-          <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'space-between', borderLeft: `6px solid ${OG.midnight}`, padding: '34px 28px 26px' }}>
-            <div style={{ display: 'flex', alignSelf: 'flex-start', backgroundColor: 'white', padding: '8px 14px' }}>
-              <img src={ogLogo()} alt="" width={126} height={66} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', fontSize: 17, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Marching band show</div>
-              {facts.map((fact) => (
-                <div key={fact} style={{ display: 'flex', marginTop: 10, paddingTop: 10, borderTop: `3px solid ${OG.midnight}`, fontSize: 30, fontWeight: 700, textTransform: 'capitalize' }}>{fact}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: 'white', color: OG.charcoal, position: 'relative', fontFamily: 'Poppins' }}>
+        <OgGrid height={630} />
+        <OgHeader />
+        <div style={{ display: 'flex', flex: 1, alignItems: 'center', padding: '0 48px', gap: 40 }}>
+          <img src={art} alt="" width={ART.width} height={ART.height} style={{ borderRadius: 10, boxShadow: '0 10px 28px rgba(0,0,0,0.18)' }} />
+          <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {facts.map((fact, i) => (
+                <div key={fact} style={{ display: 'flex', borderRadius: 999, padding: '4px 18px', fontSize: 22, fontWeight: 700, textTransform: 'capitalize', ...(i === 0 ? { border: `1px solid ${OG.line}`, backgroundColor: 'white' } : { backgroundColor: OG.midnight, color: 'white' }) }}>{fact}</div>
               ))}
             </div>
+            <div style={{ display: 'flex', marginTop: 16, fontSize: title.length > 22 ? 44 : 58, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em' }}>{clip(title, 44)}</div>
+            {show?.description ? <div style={{ display: 'flex', marginTop: 16, fontSize: 23, lineHeight: 1.45, color: OG.muted }}>{clip(show.description, 120)}</div> : null}
           </div>
         </div>
-        <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'space-between', borderTop: `6px solid ${OG.midnight}`, padding: '0 36px 0 40px', gap: 24 }}>
-          <div style={{ display: 'flex', fontSize: title.length > 30 ? 42 : 56, fontWeight: 700, letterSpacing: '-0.035em' }}>{clip(title, 40)}</div>
-          <div style={{ display: 'flex', fontSize: 22, fontWeight: 700 }}>brightdesigns.band</div>
-        </div>
+        <div style={{ display: 'flex', height: 10, backgroundColor: OG.yellow }} />
       </div>
     ),
     { ...size, fonts: ogFonts() }

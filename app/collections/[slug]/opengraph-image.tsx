@@ -14,7 +14,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const { slug } = await params
   const collection = getCollectionBySlug(slug)
   return generateOGImage({
-    subtitle: 'Show collection',
     title: collection?.h1 || 'Marching Band Show Collections',
+    description: collection?.description,
   })
 }

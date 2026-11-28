@@ -11,7 +11,8 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   return generateOGImage({
-    subtitle: 'Marching band show design',
-    title: 'Custom shows, and shows for sale',
+    title: 'Student centered marching band design.',
+    highlight: 'marching band design.',
+    description: 'We design marching band shows that help students shine.',
   })
 }

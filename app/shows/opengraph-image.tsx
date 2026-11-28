@@ -6,7 +6,8 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   return generateOGImage({
-    title: 'Marching band shows',
+    title: 'Show Catalog',
+    description: 'Marching band shows for sale, and custom shows written for your band.',
   })
 }
 

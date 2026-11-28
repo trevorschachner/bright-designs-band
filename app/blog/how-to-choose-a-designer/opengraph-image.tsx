@@ -6,6 +6,7 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   return generateOGImage({
-    title: 'How to choose a show designer',
+    title: 'How to Choose a Marching Band Show Designer',
+    description: 'Avoid ghosting, missed deadlines, and unplayable parts.',
   })
 }

@@ -20,8 +20,8 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const grade = gradeLabel(arr?.grade)
 
   return generateOGImage({
-    subtitle: 'Marching band arrangement',
     title: arr?.title || 'Custom Arrangement',
-    chips: [arr?.composer ?? null, grade, arr?.ensembleSize ? `${arr.ensembleSize} ensemble` : null].filter((chip): chip is string => Boolean(chip)),
+    description: arr?.composer ? `${arr.composer}, arranged for marching band` : 'Marching band arrangement',
+    chips: [grade, arr?.ensembleSize ? `${arr.ensembleSize} ensemble` : null].filter((chip): chip is string => Boolean(chip)),
   })
 }

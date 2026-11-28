@@ -2,13 +2,16 @@ import { ImageResponse } from 'next/og'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-/** Brand palette, the same names as app/globals.css. */
+/** Brand palette, the same names and values as app/globals.css. */
 export const OG = {
   midnight: '#1A244D',
   yellow: '#FFD230',
   lampshade: '#F2E9D0',
   sky: '#45D4FF',
   charcoal: '#242323',
+  muted: '#6E6E6E',
+  cream: '#FAF7EE',
+  line: '#E5E5E5',
   size: { width: 1200, height: 630 },
 } as const
 
@@ -34,82 +37,87 @@ export function clip(text: string, max: number): string {
 }
 
 function titleSize(length: number): number {
-  if (length <= 16) return 104
-  if (length <= 28) return 84
-  if (length <= 44) return 68
-  if (length <= 64) return 56
-  return 46
+  if (length <= 20) return 96
+  if (length <= 34) return 80
+  if (length <= 50) return 66
+  return 54
 }
 
-// A page of drill chart, the thing we hand a band: 8 steps to 5 yards, a yard
-// line every 8 columns, winds as dots and the battery as squares. It runs off
-// the right and bottom edges like a sheet on a desk.
-const STEP = 20
-const PAPER = { left: 748, top: 104, cols: 23, rows: 27 }
-const YARD_LINES = [3, 11, 19]
-const YARD_NUMBERS = ['45', '50', '45']
-// Two arcs opening toward the front sideline, on the half step where it falls.
-const WINDS = [
-  ...Array.from({ length: 13 }, (_, i) => ({ col: 2 + i * 1.5, row: 9 - 4.5 * Math.sin((i / 12) * Math.PI) })),
-  ...Array.from({ length: 9 }, (_, i) => ({ col: 5 + i * 1.5, row: 13 - 3 * Math.sin((i / 8) * Math.PI) })),
-]
-const BATTERY = Array.from({ length: 10 }, (_, i) => ({ col: 7 + (i % 5) * 2, row: 17 + Math.floor(i / 5) * 2 }))
-
-function DrillSheet() {
-  const width = PAPER.cols * STEP
-  const height = PAPER.rows * STEP
+/** The faint square grid behind the site's page headers. */
+export function OgGrid({ height }: { height: number }) {
   return (
-    <div style={{ position: 'absolute', left: PAPER.left, top: PAPER.top, width: width + 6, height: height + 6, display: 'flex', backgroundColor: 'white', borderLeft: `6px solid ${OG.midnight}`, borderTop: `6px solid ${OG.midnight}` }}>
-      {Array.from({ length: PAPER.cols }, (_, c) => c + 1).map((c) => {
-        const yard = YARD_LINES.includes(c)
-        return <div key={`c${c}`} style={{ position: 'absolute', left: c * STEP - (yard ? 1 : 0), top: 0, width: yard ? 3 : 1, height, backgroundColor: yard ? OG.midnight : '#D9DCE6' }} />
-      })}
-      {Array.from({ length: PAPER.rows }, (_, r) => r + 1).map((r) => (
-        <div key={`r${r}`} style={{ position: 'absolute', top: r * STEP, left: 0, height: 1, width, backgroundColor: r % 4 ? '#D9DCE6' : '#9AA1B9' }} />
+    <div style={{ position: 'absolute', top: 0, left: 0, width: 1200, height, display: 'flex' }}>
+      {Array.from({ length: 29 }, (_, i) => (i + 1) * 40).map((x) => (
+        <div key={`x${x}`} style={{ position: 'absolute', left: x, top: 0, width: 1, height, backgroundColor: '#F1F1F3' }} />
       ))}
-      {YARD_LINES.map((c, i) => (
-        <div key={`n${c}`} style={{ position: 'absolute', left: c * STEP + 8, top: 10, display: 'flex', backgroundColor: 'white', padding: '0 4px', fontSize: 22, fontWeight: 700, color: OG.midnight }}>{YARD_NUMBERS[i]}</div>
-      ))}
-      {WINDS.map(({ col, row }, i) => (
-        <div key={`w${i}`} style={{ position: 'absolute', left: col * STEP - 8, top: row * STEP - 8, width: 16, height: 16, borderRadius: 8, backgroundColor: OG.midnight }} />
-      ))}
-      {BATTERY.map(({ col, row }, i) => (
-        <div key={`b${i}`} style={{ position: 'absolute', left: col * STEP - 7, top: row * STEP - 7, width: 14, height: 14, backgroundColor: OG.sky, border: `2px solid ${OG.midnight}` }} />
+      {Array.from({ length: Math.floor(height / 40) }, (_, i) => (i + 1) * 40).map((y) => (
+        <div key={`y${y}`} style={{ position: 'absolute', top: y, left: 0, height: 1, width: 1200, backgroundColor: '#F1F1F3' }} />
       ))}
     </div>
   )
 }
 
+/** The site's header bar: logo left, address right, a hairline under it. */
+export function OgHeader() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 108, padding: '0 56px', backgroundColor: 'white', borderBottom: `1px solid ${OG.line}` }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={ogLogo()} alt="" width={145} height={76} />
+      <div style={{ display: 'flex', fontSize: 24, fontWeight: 400, color: OG.charcoal }}>brightdesigns.band</div>
+    </div>
+  )
+}
+
 interface GenerateOGImageOptions {
+  /** The page's own headline. */
   title: string
-  /** Small caps line above the title: what kind of page this is. */
-  subtitle?: string
-  /** Short facts under the title: composer, year, level. Set as plain text. */
+  /** Part of the title to set in Clear Sky, as the home page does. */
+  highlight?: string
+  /** The page's own line under the headline. */
+  description?: string
+  /** Facts shown as the site's badges: the first outlined, the rest filled. */
   chips?: string[]
+  /** Kept so callers can label a card; shown as a small line above the title. */
+  subtitle?: string
 }
 
 /**
- * The text card. Flat Electric Yellow, Midnight type set left, and a sheet of
- * drill chart: no gradients, glows, shadows or rounded pills.
+ * The text card, laid out like the site's page header: white with the faint
+ * grid, the logo bar, a centred Poppins headline and the grey line under it.
  */
-export async function generateOGImage({ title, subtitle = 'Bright Designs', chips = [] }: GenerateOGImageOptions) {
-  const shown = clip(title, 80)
+export async function generateOGImage({ title, highlight, description, chips = [], subtitle }: GenerateOGImageOptions) {
+  const shown = clip(title, 70)
+  const lead = highlight && shown.endsWith(highlight) ? shown.slice(0, -highlight.length) : shown
+  const size = titleSize(shown.length)
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', backgroundColor: OG.yellow, color: OG.midnight, position: 'relative', fontFamily: 'Poppins' }}>
-        <DrillSheet />
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: 748, padding: '48px 44px 44px 56px' }}>
-          <div style={{ display: 'flex', alignSelf: 'flex-start', backgroundColor: 'white', padding: '10px 16px' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ogLogo()} alt="" width={134} height={70} />
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'white', color: OG.charcoal, position: 'relative', fontFamily: 'Poppins' }}>
+        <OgGrid height={630} />
+        <OgHeader />
+        <div style={{ display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 70px 12px', textAlign: 'center' }}>
+          {subtitle ? <div style={{ display: 'flex', marginBottom: 14, fontSize: 24, color: OG.muted }}>{subtitle}</div> : null}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', fontSize: size, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.035em', color: highlight ? OG.charcoal : OG.midnight }}>
+            {lead.trim().split(' ').map((word, i) => (
+              <span key={`l${i}`} style={{ marginRight: size * 0.24 }}>{word}</span>
+            ))}
+            {lead !== shown
+              ? highlight!.split(' ').map((word, i) => (
+                  <span key={`h${i}`} style={{ marginRight: size * 0.24, color: OG.sky }}>{word}</span>
+                ))
+              : null}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', fontSize: 21, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{subtitle}</div>
-            <div style={{ display: 'flex', marginTop: 12, fontSize: titleSize(shown.length), fontWeight: 700, lineHeight: 1.02, letterSpacing: '-0.035em' }}>{shown}</div>
-            {chips.length > 0 ? <div style={{ display: 'flex', marginTop: 18, fontSize: 28 }}>{chips.join('  /  ')}</div> : null}
-            <div style={{ display: 'flex', marginTop: 28, paddingTop: 14, borderTop: `4px solid ${OG.midnight}`, fontSize: 22, fontWeight: 700 }}>brightdesigns.band</div>
-          </div>
+          {description ? (
+            <div style={{ display: 'flex', marginTop: 22, maxWidth: 720, fontSize: 30, lineHeight: 1.4, color: OG.muted }}>{clip(description, 92)}</div>
+          ) : null}
+          {chips.length > 0 ? (
+            <div style={{ display: 'flex', gap: 12, marginTop: 26 }}>
+              {chips.map((chip, i) => (
+                <div key={chip} style={{ display: 'flex', borderRadius: 999, padding: '6px 22px', fontSize: 24, fontWeight: 700, ...(i === 0 ? { border: `1px solid ${OG.line}`, backgroundColor: 'white', color: OG.charcoal } : { backgroundColor: OG.midnight, color: 'white' }) }}>{chip}</div>
+              ))}
+            </div>
+          ) : null}
         </div>
+        <div style={{ display: 'flex', height: 10, backgroundColor: OG.yellow }} />
       </div>
     ),
     { ...OG.size, fonts: ogFonts() }
