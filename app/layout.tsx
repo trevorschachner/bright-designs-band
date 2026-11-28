@@ -49,9 +49,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Additional SEO meta tags */}
-        <meta name="robots" content="index,follow" />
-        <meta name="googlebot" content="index,follow,max-video-preview:-1,max-image-preview:large,max-snippet:-1" />
+        {/* Robots tags come from each page's metadata (lib/seo/metadata.ts), never from here:
+            a hardcoded index,follow would sit beside a page's noindex. */}
         <meta name="theme-color" content="#2563eb" />
         <meta name="msapplication-TileColor" content="#2563eb" />
         

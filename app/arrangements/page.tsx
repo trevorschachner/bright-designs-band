@@ -1,14 +1,22 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { FilterBar } from '@/components/features/filters/filter-bar';
 import { ResaleCallout } from '@/components/features/resale-callout';
 import { ArrangementsSkeleton } from '@/components/features/catalog/CatalogSkeleton';
 import { ArrangementsList, ArrangementsResultCount } from '@/components/features/catalog/ArrangementsList';
 import { ARRANGEMENTS_FILTER_FIELDS } from '@/lib/filters/filter-definitions';
+import { catalogCanonical } from '@/lib/seo/metadata';
 import { ARRANGEMENTS_DEFAULT_LIMIT, parseArrangementsQuery } from '@/lib/services/catalog';
 
 // Dynamic (it reads searchParams); the data itself is tag-cached in lib/services/catalog.ts.
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** Title and description come from the layout; only the canonical depends on the query. */
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const filters = parseArrangementsQuery(await searchParams);
+  return { alternates: { canonical: catalogCanonical('/arrangements', filters, ARRANGEMENTS_DEFAULT_LIMIT) } };
+}
 
 /**
  * The arrangements catalog, rendered on the server from the URL
