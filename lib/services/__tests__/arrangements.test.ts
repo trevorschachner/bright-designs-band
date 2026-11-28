@@ -35,7 +35,6 @@ const row = {
   scene: 'Opener',
   ensembleSize: 'medium',
   commissioned: null,
-  sampleScoreUrl: null,
   showArrangements: [
     {
       show: {
@@ -93,7 +92,7 @@ describe('getArrangementBySlug', () => {
     findFirst.mockResolvedValue(row)
     await getArrangementBySlug('pipeline')
     const [, key, options] = unstableCache.mock.calls[0]
-    expect(key).toEqual(['arrangement-detail-v2'])
+    expect(key).toEqual(['arrangement-detail-v3'])
     expect(options.tags).toEqual(['arrangements', 'shows', 'pieces'])
     expect(options.revalidate).toBe(3600)
   })

@@ -4,7 +4,7 @@ const redirect = vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`) })
 vi.mock('next/navigation', () => ({ permanentRedirect: redirect, notFound: () => { throw new Error('NOT_FOUND') } }))
 const state = { description: null as string | null }
 vi.mock('@/lib/services/arrangements', () => ({
-  getArrangementBySlug: vi.fn(async (slug: string) => (slug === 'pipeline' ? { id: 2, slug: 'pipeline', title: 'Pipeline', composer: 'The Chantays', description: state.description, files: [], pieces: [], show: null, grade: null, ensembleSize: null, durationSeconds: null, year: null, arranger: null, percussionArranger: null, scene: null, youtubeUrl: null, sampleScoreUrl: null } : null)),
+  getArrangementBySlug: vi.fn(async (slug: string) => (slug === 'pipeline' ? { id: 2, slug: 'pipeline', title: 'Pipeline', composer: 'The Chantays', description: state.description, files: [], pieces: [], show: null, grade: null, ensembleSize: null, durationSeconds: null, year: null, arranger: null, percussionArranger: null, scene: null, youtubeUrl: null } : null)),
   getArrangementSlugById: vi.fn(async (id: number) => (id === 2 ? 'pipeline' : null)),
 }))
 

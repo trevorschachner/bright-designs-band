@@ -54,3 +54,15 @@ describe('static routes', () => {
     })
   }
 })
+
+describe('generateMetadata metadataBase', () => {
+  // Next builds each route's opengraph-image URL as metadataBase + route path.
+  // A base that already carries the path doubles it and the image 404s.
+  it('is the bare origin, with or without NEXT_PUBLIC_SITE_URL', async () => {
+    const { generateMetadata } = await import('@/lib/seo/metadata')
+    expect(generateMetadata({ title: 't', description: 'd', path: '/shows/aromatic' }).metadataBase?.toString()).toBe('https://brightdesigns.band/')
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', '')
+    expect(generateMetadata({ title: 't', description: 'd', path: '/shows/aromatic' }).metadataBase?.toString()).toBe('https://brightdesigns.band/')
+    expect(generateMetadata({ title: 't', description: 'd' }).metadataBase?.toString()).toBe('https://brightdesigns.band/')
+  })
+})

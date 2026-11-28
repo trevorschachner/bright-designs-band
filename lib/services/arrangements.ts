@@ -32,7 +32,6 @@ export const ARRANGEMENT_PUBLIC_COLUMNS = {
   ensembleSize: true,
   youtubeUrl: true,
   commissioned: true,
-  sampleScoreUrl: true,
   displayOrder: true,
 } as const;
 
@@ -51,7 +50,6 @@ export type ArrangementListItem = {
   title: string;
   composer: string | null;
   durationSeconds: number | null;
-  sampleScoreUrl: string | null;
   files: { id: number; fileType: string; url: string }[];
   showArrangements: { show: { id: number; title: string; slug: string } | null }[];
 };
@@ -104,8 +102,7 @@ async function fetchArrangementsPage(
         title: true,
         composer: true,
         durationSeconds: true,
-        sampleScoreUrl: true,
-      },
+            },
       with: {
         // One audio file per row, not every public file the arrangement has.
         files: {
@@ -134,7 +131,7 @@ async function fetchArrangementsPage(
 }
 
 /** Cached per serialised filter; call it through `queryArrangements` (./catalog.ts). */
-export const getArrangementsPage = cachedRead('arrangements-page-v4', fetchArrangementsPage, {
+export const getArrangementsPage = cachedRead('arrangements-page-v5', fetchArrangementsPage, {
   tags: () => [TAGS.arrangements, TAGS.shows, TAGS.tags],
   atBuildWithoutDb: { data: [] as ArrangementListItem[], total: 0 },
   revalidate: (filterState) => (filterState.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
@@ -182,7 +179,7 @@ async function fetchArrangementForApi(id: number) {
 
 export type ArrangementApiDetail = NonNullable<Awaited<ReturnType<typeof fetchArrangementForApi>>>;
 
-export const getArrangementForApi = cachedRead('arrangement-api-v3', fetchArrangementForApi, {
+export const getArrangementForApi = cachedRead('arrangement-api-v4', fetchArrangementForApi, {
   tags: (id) => [TAGS.arrangements, TAGS.arrangement(id), TAGS.shows, TAGS.tags],
   atBuildWithoutDb: null as ArrangementApiDetail | null,
 });
@@ -216,7 +213,6 @@ export type ArrangementDetail = {
   scene: string | null;
   ensembleSize: string | null;
   commissioned: string | null;
-  sampleScoreUrl: string | null;
   /** The first show (by order index) the arrangement belongs to, or null. */
   show: ArrangementDetailShow | null;
   /** Public files only, in display order. */
@@ -247,8 +243,7 @@ async function fetchArrangementDetail(slug: string): Promise<ArrangementDetail |
       scene: true,
       ensembleSize: true,
       commissioned: true,
-      sampleScoreUrl: true,
-    },
+        },
     with: {
       showArrangements: {
         columns: {},
@@ -319,7 +314,7 @@ async function fetchArrangementDetail(slug: string): Promise<ArrangementDetail |
  * (and that show's art files, which invalidate through `invalidateShow`), and
  * its pieces.
  */
-export const getArrangementBySlug = cachedRead('arrangement-detail-v2', fetchArrangementDetail, {
+export const getArrangementBySlug = cachedRead('arrangement-detail-v3', fetchArrangementDetail, {
   tags: () => [TAGS.arrangements, TAGS.shows, TAGS.pieces],
   atBuildWithoutDb: null as ArrangementDetail | null,
 });

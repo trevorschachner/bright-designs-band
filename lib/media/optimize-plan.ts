@@ -49,7 +49,6 @@ export const REFERENCING_COLUMNS: { table: string; column: string }[] = [
   { table: 'shows', column: 'video_url' },
   { table: 'resources', column: 'image_url' },
   { table: 'resources', column: 'file_url' },
-  { table: 'arrangements', column: 'sample_score_url' },
 ]
 
 export type FilePlan = {

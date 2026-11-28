@@ -23,12 +23,12 @@ const PART: EditableArrangement = {
   durationSeconds: 270,
   youtubeUrl: null,
   commissioned: null,
-  sampleScoreUrl: null,
   featured: false,
   orderIndex: 1,
   updatedAt: LOADED,
   tagIds: [],
   pieces: [],
+  perusalScore: null,
 }
 const TAGS = [{ id: 2, name: 'Small Band' }]
 

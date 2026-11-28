@@ -1,0 +1,11 @@
+-- migrate: manual
+-- Drop arrangements.sample_score_url (#101). The code stopped reading it in the
+-- same change, but the code still running in production selects it, so apply
+-- this only after that change has been released to production:
+--   npx tsx scripts/apply-sql-migrations.ts --apply --only 2026-11-27_drop_sample_score_url.sql
+--
+-- 0 of 211 arrangements had a value (2026-11-26). Check before applying:
+--   select count(*) from arrangements where sample_score_url is not null;
+--
+-- Rollback: 2026-11-27_drop_sample_score_url.rollback.sql.
+ALTER TABLE arrangements DROP COLUMN IF EXISTS sample_score_url;

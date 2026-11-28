@@ -333,7 +333,6 @@ export type ShowListItem = {
     title: string;
     scene: string | null;
     durationSeconds: number | null;
-    sampleScoreUrl: string | null;
   }[];
   showsToTags: { tag: TagRef }[];
 };
@@ -412,7 +411,7 @@ async function fetchShowsRows(
           orderBy: [showArrangements.orderIndex],
           with: {
             arrangement: {
-              columns: { id: true, slug: true, title: true, scene: true, durationSeconds: true, sampleScoreUrl: true },
+              columns: { id: true, slug: true, title: true, scene: true, durationSeconds: true },
             },
           },
         },
@@ -459,7 +458,7 @@ async function fetchShowsPage(params: ShowsPageParams): Promise<{ data: ShowList
  * page lives 5 minutes instead of an hour: free text is the one input with a
  * long tail of one-off values.
  */
-export const getShowsPage = cachedRead('shows-page-v5', fetchShowsPage, {
+export const getShowsPage = cachedRead('shows-page-v6', fetchShowsPage, {
   tags: LIST_TAGS,
   atBuildWithoutDb: { data: [] as ShowListItem[], total: 0 },
   revalidate: (params) => (params.search ? SEARCH_REVALIDATE_SECONDS : REVALIDATE_SECONDS),
@@ -607,7 +606,6 @@ export type ShowArrangement = {
   ensembleSize: string | null;
   youtubeUrl: string | null;
   commissioned: string | null;
-  sampleScoreUrl: string | null;
   orderIndex: number;
   files: ShowArrangementFile[];
   audioUrl: string | null;
@@ -631,7 +629,6 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
       a.ensemble_size,
       a.youtube_url as arrangement_youtube_url,
       a.commissioned as arrangement_commissioned,
-      a.sample_score_url,
       sa.order_index,
       f.id as file_id,
       f.file_name,
@@ -673,7 +670,6 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
         ensembleSize: row.ensemble_size ?? null,
         youtubeUrl: row.arrangement_youtube_url ?? null,
         commissioned: row.arrangement_commissioned ?? null,
-        sampleScoreUrl: row.sample_score_url ?? null,
         orderIndex: row.order_index ?? 0,
         files: [],
         audioUrl: null,
@@ -706,7 +702,7 @@ async function fetchShowArrangements(showId: number): Promise<ShowArrangement[]>
   }));
 }
 
-export const getShowArrangements = cachedRead('show-arrangements-v3', fetchShowArrangements, {
+export const getShowArrangements = cachedRead('show-arrangements-v4', fetchShowArrangements, {
   tags: (showId) => [TAGS.shows, TAGS.show(showId), TAGS.arrangements],
   atBuildWithoutDb: [] as ShowArrangement[],
 });
@@ -822,7 +818,7 @@ async function fetchShowForApi(id: string): Promise<ShowApiDetail | null> {
             columns: {
               id: true, title: true, composer: true, arranger: true, percussionArranger: true,
               description: true, grade: true, year: true, durationSeconds: true, scene: true,
-              ensembleSize: true, youtubeUrl: true, commissioned: true, sampleScoreUrl: true,
+              ensembleSize: true, youtubeUrl: true, commissioned: true,
               displayOrder: true,
             },
             with: { arrangementsToTags: withTags },
@@ -849,7 +845,7 @@ async function fetchShowForApi(id: string): Promise<ShowApiDetail | null> {
   };
 }
 
-export const getShowForApi = cachedRead('show-api-v3', fetchShowForApi, {
+export const getShowForApi = cachedRead('show-api-v4', fetchShowForApi, {
   tags: (id) => [TAGS.shows, TAGS.arrangements, TAGS.tags, ...(/^\d+$/.test(id) ? [TAGS.show(id)] : [])],
   atBuildWithoutDb: null as ShowApiDetail | null,
 });
