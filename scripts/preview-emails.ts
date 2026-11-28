@@ -40,7 +40,6 @@ const fullSampleData: ContactFormData = {
   phone: '(555) 123-4567',
   services: ['drill', 'choreography', 'copyright', 'percussion'],
   message: 'We are interested in creating a custom show for our marching band this fall. We have a strong flute section with about 75 members total. Our band typically performs at Grade 3-4 level. We would love to discuss options for drill design and choreography. Please let us know what information you need from us to get started.',
-  privacyAgreed: true,
   school: 'Riverside High School',
   showInterest: 'Custom Fall Show 2024',
   bandSize: '51-100',
@@ -55,7 +54,6 @@ const minimalSampleData: ContactFormData = {
   email: 'john.doe@example.com',
   services: ['other'],
   message: 'General inquiry about your services.',
-  privacyAgreed: true,
 };
 
 // Inquiry with all ensemble details
@@ -66,7 +64,6 @@ const inquirySampleData: ContactFormData = {
   phone: '(555) 987-6543',
   services: ['drill', 'solos'],
   message: 'We are planning our spring show and would like to discuss drill design options.',
-  privacyAgreed: true,
   school: 'Mountain View High School',
   showInterest: 'Spring Competition Show',
   bandSize: '101-150',

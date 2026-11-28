@@ -1,74 +1,86 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { generateMetadata as buildMetadata } from '@/lib/seo/metadata';
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { LEGAL_CONTACT_EMAIL, LEGAL_ENTITY, LEGAL_LAST_UPDATED } from '@/lib/content/legal'
 
 export const metadata: Metadata = buildMetadata({
   title: 'Privacy Policy | Bright Designs',
-  description: 'How Bright Designs collects, uses, and protects information gathered through this website.',
+  description: 'What Bright Designs collects on brightdesigns.band, why, and how to ask us to delete it.',
   path: '/privacy',
-});
+})
 
+// Kept deliberately short. Every claim matches what the site does (see the PR
+// for issue #100). When the site starts collecting something new, update this
+// page and LEGAL_LAST_UPDATED in lib/content/legal.ts.
 export default function PrivacyPolicyPage() {
+  const mail = <a href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a>
+
   return (
     <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
       <div className="max-w-3xl mx-auto prose lg:prose-xl dark:prose-invert">
         <h1>Privacy Policy</h1>
-        <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-
-        <h2>Introduction</h2>
-        <p>
-          Bright Designs (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
+        <p className="text-muted-foreground">
+          Last updated: <time dateTime={LEGAL_LAST_UPDATED.iso}>{LEGAL_LAST_UPDATED.label}</time>
         </p>
 
-        <h2>Collection of Your Information</h2>
         <p>
-          We may collect information about you in a variety of ways. The information we may collect on the Site includes:
+          This policy covers brightdesigns.band, run by {LEGAL_ENTITY} (“we”). Questions go to {mail}.
         </p>
+
+        <h2>What we collect</h2>
         <ul>
           <li>
-            <strong>Personal Data:</strong> Personally identifiable information, such as your name, school or organization, email address, and telephone number, that you voluntarily give to us when you fill out an inquiry form.
+            <strong>What you put in our forms:</strong> your name, email, school or program, role, and anything else
+            you tell us about your band or the show you’re interested in.
           </li>
           <li>
-            <strong>Derivative Data:</strong> Information our servers automatically collect when you access the Site, such as your IP address, your browser type, your operating system, your access times, and the pages you have viewed directly before and after accessing the Site.
+            <strong>Sent along with a form:</strong> your IP address, browser, and the pages you visited before you got
+            in touch, so we can stop spam and see how people find us.
+          </li>
+          <li>
+            <strong>Analytics:</strong> we use PostHog to see which pages people visit, what they click and which
+            tracks they play. PostHog also records about 25% of visits so we can see how the site is used. Anything
+            typed into a form is hidden from those recordings.
           </li>
         </ul>
 
-        <h2>Use of Your Information</h2>
+        <h2>Perusal scores</h2>
         <p>
-          Having accurate information about you permits us to provide you with a smooth, efficient, and customized experience. Specifically, we may use information collected about you via the Site to:
-        </p>
-        <ul>
-          <li>Respond to your inquiries and provide you with information about our services.</li>
-          <li>Send you administrative information, such as information regarding the site and changes to our terms, conditions, and policies.</li>
-          <li>Monitor and analyze usage and trends to improve your experience with the Site.</li>
-          <li>Prevent fraudulent transactions, monitor against theft, and protect against criminal activity.</li>
-        </ul>
-
-        <h2>Disclosure of Your Information</h2>
-        <p>
-          We do not sell, trade, or otherwise transfer your personally identifiable information to outside parties. This does not include trusted third parties who assist us in operating our website, conducting our business, or servicing you, so long as those parties agree to keep this information confidential.
+          When you request perusal scores, we keep your details and a record of which scores you open, and we stamp
+          your name and school on each one. We remember your request in your browser for 30 days, so you don’t have to
+          fill in the form again.
         </p>
 
-        <h2>Security of Your Information</h2>
+        <h2>How we use it</h2>
         <p>
-          We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
-        </p>
-        
-        <h2>Policy for Children</h2>
-        <p>
-          We do not knowingly solicit information from or market to children under the age of 13. If you become aware of any data we have collected from children under age 13, please contact us using the contact information provided below.
+          To answer you, follow up about our shows, run the free show program, provide perusal scores, and improve the
+          site. We don’t sell your information or use it for advertising.
         </p>
 
-        <h2>Contact Us</h2>
+        <h2>Who helps us run the site</h2>
         <p>
-          If you have questions or comments about this Privacy Policy, please contact us at:
+          Netlify (hosting), Supabase (database and files), PostHog (analytics), Attio (our customer records), Resend
+          (email) and Cloudflare Turnstile (spam protection). Videos are played through YouTube. They only get what
+          they need to do that job.
         </p>
+
+        <h2>Your choices</h2>
         <p>
-          Bright Designs<br />
-          [Your Contact Email]<br />
-          [Your Contact Phone Number]
+          Email {mail} to see or delete what we have about you, or to stop hearing from us. To keep out of our
+          analytics, block cookies or use a tracker blocker; the site still works.
+        </p>
+
+        <h2>Children</h2>
+        <p>
+          The site is for band directors, staff and students. We don’t knowingly collect information from anyone under
+          13. If you think a child has sent us something, email us and we’ll delete it.
+        </p>
+
+        <h2>Changes</h2>
+        <p>
+          If we change this policy we’ll update the date above. See also our <Link href="/terms">Terms of Use</Link>.
         </p>
       </div>
     </div>
-  );
+  )
 }

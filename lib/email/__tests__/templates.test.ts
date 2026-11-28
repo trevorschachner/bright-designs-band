@@ -18,7 +18,6 @@ describe('Email Templates', () => {
         email: 'john.doe@example.com',
         services: ['drill-design'],
         message: 'Test message',
-        privacyAgreed: true,
       };
 
       const result = generateContactEmailTemplate(data);
@@ -40,7 +39,6 @@ describe('Email Templates', () => {
         email: 'jane@example.com',
         services: ['drill-design'],
         message: 'Test',
-        privacyAgreed: true,
       };
 
       const result = generateContactEmailTemplate(data);
@@ -60,7 +58,6 @@ describe('Email Templates', () => {
         email: 'minimal@example.com',
         services: ['other'],
         message: '',
-        privacyAgreed: true,
       };
 
       const result = generateContactEmailTemplate(data);
@@ -83,7 +80,6 @@ describe('Email Templates', () => {
         email: 'jane@example.com',
         services: ['drill-design'],
         message: 'Thank you message',
-        privacyAgreed: true,
       };
 
       const result = generateCustomerConfirmationTemplate(data);
@@ -105,7 +101,6 @@ describe('Email Templates', () => {
         email: 'john@example.com',
         services: ['drill-design'],
         message: 'Test',
-        privacyAgreed: true,
       };
 
       const result = generateCustomerConfirmationTemplate(data);
@@ -131,7 +126,6 @@ describe('Email Templates', () => {
         bandSize: 'BANDSIZE-SPAM-PAYLOAD',
         abilityLevel: 'ABILITY-SPAM-PAYLOAD',
         showInterest: 'TOPIC-SPAM-PAYLOAD',
-        privacyAgreed: true,
       };
 
       const result = generateCustomerConfirmationTemplate(data, 'inquiry');
@@ -156,7 +150,6 @@ describe('Email Templates', () => {
         services: [],
         message: '',
         showInterest: '<strong>Claim your prize at evil.example/x</strong>',
-        privacyAgreed: true,
       };
 
       for (const kind of ['inquiry', 'contact', 'resource_download'] as const) {
@@ -171,7 +164,7 @@ describe('Email Templates', () => {
     it('names the submission with a fixed phrase per kind', () => {
       const data: ContactFormData = {
         firstName: 'Jane', lastName: '', email: 'jane@example.com',
-        services: [], message: '', privacyAgreed: true,
+        services: [], message: '',
       };
       expect(generateCustomerConfirmationTemplate(data, 'inquiry').text).toContain("We've received your show inquiry")
       expect(generateCustomerConfirmationTemplate(data, 'contact').text).toContain("We've received your message")
@@ -182,7 +175,7 @@ describe('Email Templates', () => {
     it('strips the first name to letters, spaces, apostrophes and hyphens', () => {
       const base: ContactFormData = {
         firstName: '', lastName: '', email: 'jane@example.com',
-        services: [], message: '', privacyAgreed: true,
+        services: [], message: '',
       };
       const greet = (firstName: string) =>
         generateCustomerConfirmationTemplate({ ...base, firstName }).text
@@ -200,7 +193,7 @@ describe('Email Templates', () => {
     it('drops service values that are not known categories', () => {
       const data = {
         firstName: 'Jane', lastName: '', email: 'jane@example.com',
-        services: ['drill-design', 'visit evil.example'], message: '', privacyAgreed: true,
+        services: ['drill-design', 'visit evil.example'], message: '',
       } as unknown as ContactFormData;
       const result = generateCustomerConfirmationTemplate(data);
       expect(result.html).toContain('Drill Design');
@@ -215,7 +208,6 @@ describe('Email Templates', () => {
         email: 'test@example.com',
         services: ['drill-design'],
         message: '',
-        privacyAgreed: true,
       };
 
       const result = generateCustomerConfirmationTemplate(data);

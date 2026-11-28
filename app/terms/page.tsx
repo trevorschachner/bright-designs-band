@@ -1,64 +1,72 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { generateMetadata as buildMetadata } from '@/lib/seo/metadata';
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { generateMetadata as buildMetadata } from '@/lib/seo/metadata'
+import { LEGAL_CONTACT_EMAIL, LEGAL_ENTITY, LEGAL_LAST_UPDATED } from '@/lib/content/legal'
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Terms of Service | Bright Designs',
-  description: 'The terms that govern use of the Bright Designs website and inquiries about our services.',
+  title: 'Terms of Use | Bright Designs',
+  description: 'The terms for using brightdesigns.band, including how you may use Bright Designs perusal scores.',
   path: '/terms',
-});
+})
 
-export default function TermsOfServicePage() {
+// Kept deliberately short. Change LEGAL_LAST_UPDATED in lib/content/legal.ts
+// whenever this wording changes.
+export default function TermsOfUsePage() {
+  const mail = <a href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a>
+
   return (
     <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
       <div className="max-w-3xl mx-auto prose lg:prose-xl dark:prose-invert">
-        <h1>Terms of Service</h1>
-        <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-
-        <h2>1. Agreement to Terms</h2>
-        <p>
-          By using our website, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the site. We may revise and update these Terms of Service from time to time in our sole discretion. All changes are effective immediately when we post them.
+        <h1>Terms of Use</h1>
+        <p className="text-muted-foreground">
+          Last updated: <time dateTime={LEGAL_LAST_UPDATED.iso}>{LEGAL_LAST_UPDATED.label}</time>
         </p>
 
-        <h2>2. Our Services</h2>
         <p>
-          Bright Designs provides custom marching band show design, music arrangement, and consultation services. Our website is a platform for you to inquire about these services. All services are subject to a separate contractual agreement.
+          brightdesigns.band is run by {LEGAL_ENTITY} (“we”). By using the site you agree to these terms and our{' '}
+          <Link href="/privacy">Privacy Policy</Link>.
         </p>
 
-        <h2>3. Intellectual Property</h2>
+        <h2>Our content</h2>
         <p>
-          The Site and its entire contents, features, and functionality (including but not limited to all information, software, text, displays, images, video, and audio, and the design, selection, and arrangement thereof) are owned by Bright Designs, its licensors, or other providers of such material and are protected by United States and international copyright, trademark, patent, trade secret, and other intellectual property or proprietary rights laws.
+          The music, recordings, scores, designs and images on this site belong to us or the people we license them
+          from. You’re welcome to browse and listen to decide whether a show is right for your program. Please don’t
+          copy, record, share or reuse them otherwise.
         </p>
 
-        <h2>4. Prohibited Uses</h2>
+        <h2>Perusal scores</h2>
         <p>
-          You may use the Site only for lawful purposes and in accordance with these Terms of Service. You agree not to use the Site in any way that violates any applicable federal, state, local, or international law or regulation.
+          Perusal scores are stamped “PERUSAL ONLY” and are for reviewing the music. You may download and print them,
+          and share them with the staff of your own program. Please don’t perform from them, arrange from them, post
+          them online, share them outside your program or remove the stamp. To rehearse or perform a show, you must buy
+          a license from Bright Designs. We may limit or stop access to perusal scores at any time.
         </p>
 
-        <h2>5. Disclaimer of Warranties</h2>
+        <h2>Licensing a show</h2>
         <p>
-          Your use of the site, its content, and any services or items obtained through the website is at your own risk. The site, its content, and any services or items obtained through the website are provided on an &quot;as is&quot; and &quot;as available&quot; basis, without any warranties of any kind, either express or implied.
+          Buying or licensing a show is covered by a separate written agreement with us. If it conflicts with these
+          terms, the agreement wins.
         </p>
 
-        <h2>6. Limitation on Liability</h2>
+        <h2>No guarantees</h2>
         <p>
-          To the fullest extent provided by law, in no event will Bright Designs, its affiliates, or their licensors, service providers, employees, agents, officers, or directors be liable for damages of any kind, under any legal theory, arising out of or in connection with your use, or inability to use, the website, any websites linked to it, any content on the website or such other websites, including any direct, indirect, special, incidental, consequential, or punitive damages.
+          The site is provided as is. Previews and perusal scores may differ from the final music. As far as the law
+          allows, we aren’t liable for any loss from using the site, and never for more than $100.
         </p>
 
-        <h2>7. Governing Law</h2>
+        <h2>Changes and governing law</h2>
         <p>
-          All matters relating to the Site and these Terms of Service, and any dispute or claim arising therefrom or related thereto, shall be governed by and construed in accordance with the internal laws of the State of [Your State] without giving effect to any choice or conflict of law provision or rule.
+          We may update these terms; the date above shows the latest version. These terms are governed by the laws of
+          the State of South Carolina.
         </p>
 
-        <h2>8. Contact Us</h2>
+        <h2>Contact</h2>
         <p>
-          If you have questions or comments about these Terms of Service, please contact us at:
-        </p>
-        <p>
-          Bright Designs<br />
-          [Your Contact Email]
+          {LEGAL_ENTITY}
+          <br />
+          {mail}
         </p>
       </div>
     </div>
-  );
+  )
 }

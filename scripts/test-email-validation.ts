@@ -100,7 +100,6 @@ function runValidation(): void {
     phone: '555-1234',
     services: ['drill-design', 'choreography', 'other'],
     message: 'This is a test message to validate the email template.',
-    privacyAgreed: true,
     school: 'Test High School',
     showInterest: 'Custom Show Title',
     bandSize: '51-100',
