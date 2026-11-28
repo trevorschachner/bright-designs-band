@@ -6,7 +6,7 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   return generateOGImage({
-    title: 'How to Choose a Show Designer',
-    description: 'The 2025 guide for band directors — avoid ghosting, missed deadlines, and unplayable parts.',
+    title: 'How to Choose a Marching Band Show Designer',
+    description: 'Avoid ghosting, missed deadlines, and unplayable parts.',
   })
 }
