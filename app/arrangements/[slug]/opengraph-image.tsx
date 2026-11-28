@@ -1,22 +1,14 @@
-import { ImageResponse } from 'next/og'
 import { getArrangementBySlug } from '@/lib/services/arrangements'
-import { readFileSync } from 'fs'
-import { join } from 'path'
 import { gradeLabel } from '@/lib/display'
+import { generateOGImage } from '@/lib/og/image-generator'
 
 export const runtime = 'nodejs'
 
-// Cache the rendered OG image for a week. Without this every crawler, social
-// unfurl, and link preview re-renders it and re-fetches the source art from
-// Supabase Storage, which was a large share of our cached egress.
+// Cache the rendered OG image for a week so crawlers and link unfurls do not
+// re-render it on every request.
 export const revalidate = 604800
-
 export const alt = 'Bright Designs Arrangement'
-export const size = {
-  width: 1200,
-  height: 630,
-}
-
+export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
@@ -25,154 +17,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   // The page's own cached read: a card render costs no query when the page
   // (or another card) has already loaded this arrangement.
   const arr = /^\d+$/.test(slug) ? null : await getArrangementBySlug(slug)
+  const grade = gradeLabel(arr?.grade)
 
-  // Fallback values
-  const title = arr?.title || 'Custom Arrangement'
-  const composer = arr?.composer || 'Bright Designs'
-  const grade = gradeLabel(arr?.grade) ?? ''
-  const ensemble = arr?.ensembleSize || ''
-
-  // Load logo
-  const logoPath = join(process.cwd(), 'public/logos/brightdesignslogo-main.png')
-  const logoData = readFileSync(logoPath)
-  const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
-
-  // Brand colors
-  const bgGradient = 'linear-gradient(to bottom right, #0f172a, #1e293b)'
-  const accentColor = '#3b82f6' // Blue-500
-
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          height: '100%',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: bgGradient,
-          color: 'white',
-          padding: '40px',
-          position: 'relative',
-        }}
-      >
-        {/* Background Pattern */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.1,
-            backgroundImage: 'radial-gradient(circle at 25px 25px, white 2%, transparent 0%), radial-gradient(circle at 75px 75px, white 2%, transparent 0%)',
-            backgroundSize: '100px 100px',
-          }}
-        />
-
-        {/* Logo/Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '30px' }}>
-          <img 
-            src={logoBase64}
-            alt="Bright Designs Logo"
-            width="80"
-            height="80"
-            style={{ marginRight: '16px' }}
-          />
-          <div
-            style={{
-              fontSize: 24,
-              fontWeight: 600,
-              color: accentColor,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Bright Designs Arrangement
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            maxWidth: '900px',
-          }}
-        >
-          <div
-            style={{
-              fontSize: 70,
-              fontWeight: 800,
-              lineHeight: 1.1,
-              marginBottom: '20px',
-              background: 'linear-gradient(to bottom, #ffffff, #cbd5e1)',
-              backgroundClip: 'text',
-              color: 'transparent',
-              textShadow: '0 4px 8px rgba(0,0,0,0.3)',
-            }}
-          >
-            {title}
-          </div>
-
-          <div
-            style={{
-              fontSize: 32,
-              color: '#94a3b8',
-              marginBottom: '40px',
-            }}
-          >
-            by {composer}
-          </div>
-        </div>
-
-        {/* Badges/Info */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '20px',
-          }}
-        >
-          {grade && (
-            <div
-              style={{
-                background: 'rgba(59, 130, 246, 0.2)',
-                border: '1px solid rgba(59, 130, 246, 0.4)',
-                borderRadius: '8px',
-                padding: '8px 20px',
-                fontSize: 24,
-                color: '#60a5fa',
-                textTransform: 'capitalize',
-              }}
-            >
-              {grade}
-            </div>
-          )}
-          {ensemble && (
-            <div
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '8px',
-                padding: '8px 20px',
-                fontSize: 24,
-                color: '#e2e8f0',
-                textTransform: 'capitalize',
-              }}
-            >
-              {ensemble} Ensemble
-            </div>
-          )}
-        </div>
-      </div>
-    ),
-    {
-      ...size,
-    }
-  )
+  return generateOGImage({
+    subtitle: 'Marching band arrangement',
+    title: arr?.title || 'Custom Arrangement',
+    description: arr?.composer ? `by ${arr.composer}` : undefined,
+    chips: [grade, arr?.ensembleSize ? `${arr.ensembleSize} ensemble` : null].filter((chip): chip is string => Boolean(chip)),
+  })
 }
-

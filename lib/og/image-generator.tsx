@@ -2,119 +2,99 @@ import { ImageResponse } from 'next/og'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
+/** Brand palette, the same names as app/globals.css. */
+export const OG = {
+  midnight: '#1A244D',
+  yellow: '#FFD230',
+  lampshade: '#F2E9D0',
+  sky: '#45D4FF',
+  size: { width: 1200, height: 630 },
+} as const
+
+const file = (path: string) => readFileSync(join(process.cwd(), path))
+
+export function ogLogo(): string {
+  return `data:image/png;base64,${file('public/logos/brightdesignslogo-main.png').toString('base64')}`
+}
+
+/** Poppins for Satori, which cannot use the site's next/font. */
+export function ogFonts() {
+  return [
+    { name: 'Poppins', data: file('assets/fonts/Poppins-Regular.ttf'), weight: 400 as const, style: 'normal' as const },
+    { name: 'Poppins', data: file('assets/fonts/Poppins-Bold.ttf'), weight: 700 as const, style: 'normal' as const },
+  ]
+}
+
+/** Cut at a word so a long title or description ends cleanly. */
+export function clip(text: string, max: number): string {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  return cut.slice(0, Math.max(cut.lastIndexOf(' '), max - 20)).replace(/[\s,;:.—–-]+$/, '') + '…'
+}
+
+function titleSize(length: number): number {
+  if (length <= 22) return 84
+  if (length <= 40) return 70
+  if (length <= 64) return 58
+  return 48
+}
+
+// A drill form in the corner: three arcs of dots, the way a set looks on a chart.
+const ARCS = [
+  { radius: 150, count: 7, color: OG.yellow, opacity: 1 },
+  { radius: 235, count: 10, color: OG.sky, opacity: 0.9 },
+  { radius: 320, count: 13, color: OG.yellow, opacity: 0.45 },
+]
+const DOTS = ARCS.flatMap(({ radius, count, color, opacity }) =>
+  Array.from({ length: count }, (_, i) => {
+    const angle = Math.PI + (Math.PI / 2) * (i / (count - 1))
+    return { x: 1150 + radius * Math.cos(angle), y: 590 + radius * Math.sin(angle), color, opacity }
+  })
+)
+
 interface GenerateOGImageOptions {
   title: string
   description?: string
+  /** Small yellow line above the title. */
   subtitle?: string
+  /** Short facts under the title: year, level, grade. */
+  chips?: string[]
 }
 
-export async function generateOGImage({ title, description, subtitle = 'Bright Designs' }: GenerateOGImageOptions) {
-  const logoPath = join(process.cwd(), 'public/logos/brightdesignslogo-main.png')
-  const logoData = readFileSync(logoPath)
-  const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
-
-  // Brand colors
-  const bgGradient = 'linear-gradient(to bottom right, #1e293b, #0f172a)'
-  const accentColor = '#3b82f6' // Blue-500
-
+export async function generateOGImage({ title, description, subtitle = 'Bright Designs', chips = [] }: GenerateOGImageOptions) {
+  const shown = clip(title, 90)
   return new ImageResponse(
     (
-      <div
-        style={{
-          height: '100%',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: bgGradient,
-          color: 'white',
-          padding: '40px',
-          position: 'relative',
-        }}
-      >
-        {/* Background Pattern */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.1,
-            backgroundImage: 'radial-gradient(circle at 25px 25px, white 2%, transparent 0%), radial-gradient(circle at 75px 75px, white 2%, transparent 0%)',
-            backgroundSize: '100px 100px',
-          }}
-        />
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: OG.midnight, color: 'white', padding: '52px 60px 66px', position: 'relative', fontFamily: 'Poppins' }}>
+        {DOTS.map((dot, i) => (
+          <div key={i} style={{ position: 'absolute', left: dot.x - 9, top: dot.y - 9, width: 18, height: 18, borderRadius: 9, background: dot.color, opacity: dot.opacity }} />
+        ))}
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 14, background: OG.yellow }} />
 
-        {/* Logo/Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={logoBase64}
-            alt="Bright Designs Logo"
-            width="100"
-            height="100"
-            style={{ marginRight: '20px' }}
-          />
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 600,
-              color: accentColor,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {subtitle}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', background: 'white', borderRadius: 16, padding: '10px 18px' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={ogLogo()} alt="" width={134} height={70} />
           </div>
+          <div style={{ fontSize: 22, color: OG.lampshade, opacity: 0.8 }}>brightdesigns.band</div>
         </div>
 
-        {/* Main Content */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            maxWidth: '1000px',
-          }}
-        >
-          <div
-            style={{
-              fontSize: 72,
-              fontWeight: 800,
-              lineHeight: 1.1,
-              marginBottom: '24px',
-              background: 'linear-gradient(to bottom, #ffffff, #cbd5e1)',
-              backgroundClip: 'text',
-              color: 'transparent',
-              textShadow: '0 4px 8px rgba(0,0,0,0.3)',
-            }}
-          >
-            {title}
-          </div>
-
-          {description && (
-            <div
-              style={{
-                fontSize: 32,
-                color: '#94a3b8',
-                lineHeight: 1.4,
-                maxWidth: '900px',
-              }}
-            >
-              {description}
+        <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 760 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: OG.yellow }}>{subtitle}</div>
+          <div style={{ marginTop: 14, fontSize: titleSize(shown.length), fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.02em' }}>{shown}</div>
+          {description ? (
+            <div style={{ marginTop: 20, fontSize: 27, lineHeight: 1.35, color: '#D1D5DB' }}>{clip(description, 110)}</div>
+          ) : null}
+          {chips.length > 0 ? (
+            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+              {chips.map((chip) => (
+                <div key={chip} style={{ display: 'flex', border: `2px solid ${OG.yellow}`, borderRadius: 999, padding: '6px 20px', fontSize: 22, color: OG.yellow }}>{chip}</div>
+              ))}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    { ...OG.size, fonts: ogFonts() }
   )
 }
-
