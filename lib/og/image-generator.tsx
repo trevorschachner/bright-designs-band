@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { COVER, featuredCovers } from '@/lib/og/covers'
 
 /** Brand palette, the same names and values as app/globals.css. */
 export const OG = {
@@ -36,7 +37,13 @@ export function clip(text: string, max: number): string {
   return cut.slice(0, Math.max(cut.lastIndexOf(' '), max - 20)).replace(/[\s,;:.—–-]+$/, '') + '…'
 }
 
-function titleSize(length: number): number {
+function titleSize(length: number, narrow: boolean): number {
+  if (narrow) {
+    if (length <= 14) return 88
+    if (length <= 26) return 70
+    if (length <= 44) return 58
+    return 48
+  }
   if (length <= 20) return 96
   if (length <= 34) return 80
   if (length <= 50) return 66
@@ -75,6 +82,31 @@ export function OgHeader() {
   )
 }
 
+// Two staggered columns of covers down the right side, running off the bottom
+// and under the header the way the catalog scrolls.
+const WALL = { left: 612, width: 588, top: 109, height: 511 }
+const TILE_GAP = 18
+function CoverWall({ covers }: { covers: string[] }) {
+  const columns = [covers.filter((_, i) => i % 2 === 0), covers.filter((_, i) => i % 2 === 1)]
+  return (
+    <div style={{ position: 'absolute', left: WALL.left, top: WALL.top, width: WALL.width, height: WALL.height, display: 'flex', overflow: 'hidden' }}>
+      {columns.map((column, c) =>
+        column.map((src, r) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={`${c}-${r}`}
+            src={src}
+            alt=""
+            width={COVER.width}
+            height={COVER.height}
+            style={{ position: 'absolute', left: 12 + c * (COVER.width + TILE_GAP), top: (c === 0 ? 34 : -58) + r * (COVER.height + TILE_GAP), borderRadius: 10, boxShadow: '0 8px 22px rgba(0,0,0,0.16)' }}
+          />
+        ))
+      )}
+    </div>
+  )
+}
+
 interface GenerateOGImageOptions {
   /** The page's own headline. */
   title: string
@@ -84,26 +116,33 @@ interface GenerateOGImageOptions {
   description?: string
   /** Facts shown as the site's badges: the first outlined, the rest filled. */
   chips?: string[]
-  /** Kept so callers can label a card; shown as a small line above the title. */
+  /** A small line above the title. */
   subtitle?: string
+  /** Show covers for the right side, as data URLs. Defaults to the featured shows. */
+  covers?: string[]
 }
 
 /**
- * The text card, laid out like the site's page header: white with the faint
- * grid, the logo bar, a centred Poppins headline and the grey line under it.
+ * The text card, in the site's own look: white with the faint grid, the logo
+ * bar, a Poppins headline with the grey line under it, and real show covers
+ * down the right. With no covers to show, the text is centred like a page header.
  */
-export async function generateOGImage({ title, highlight, description, chips = [], subtitle }: GenerateOGImageOptions) {
+export async function generateOGImage({ title, highlight, description, chips = [], subtitle, covers }: GenerateOGImageOptions) {
+  const tiles = covers ?? (await featuredCovers())
+  const wall = tiles.length >= 3
   const shown = clip(title, 70)
   const lead = highlight && shown.endsWith(highlight) ? shown.slice(0, -highlight.length) : shown
-  const size = titleSize(shown.length)
+  const size = titleSize(shown.length, wall)
+  const blurb = description ? clip(description, wall ? 84 : 92) : null
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'white', color: OG.charcoal, position: 'relative', fontFamily: 'Poppins' }}>
         <OgGrid height={630} />
+        {wall ? <CoverWall covers={tiles} /> : null}
         <OgHeader />
-        <div style={{ display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 70px 12px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center', ...(wall ? { width: WALL.left, padding: '0 28px 8px 56px' } : { alignItems: 'center', padding: '0 70px 12px', textAlign: 'center' }) }}>
           {subtitle ? <div style={{ display: 'flex', marginBottom: 14, fontSize: 24, color: OG.muted }}>{subtitle}</div> : null}
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', fontSize: size, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.035em', color: highlight ? OG.charcoal : OG.midnight }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: wall ? 'flex-start' : 'center', fontSize: size, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.035em', color: highlight ? OG.charcoal : OG.midnight }}>
             {lead.trim().split(' ').map((word, i) => (
               <span key={`l${i}`} style={{ marginRight: size * 0.24 }}>{word}</span>
             ))}
@@ -113,8 +152,8 @@ export async function generateOGImage({ title, highlight, description, chips = [
                 ))
               : null}
           </div>
-          {description ? (
-            <div style={{ display: 'flex', marginTop: 22, maxWidth: balancedWidth(clip(description, 92)), fontSize: 30, lineHeight: 1.4, color: OG.muted }}>{clip(description, 92)}</div>
+          {blurb ? (
+            <div style={{ display: 'flex', marginTop: 20, maxWidth: wall ? 500 : balancedWidth(blurb), fontSize: wall ? 27 : 30, lineHeight: 1.4, color: OG.muted }}>{blurb}</div>
           ) : null}
           {chips.length > 0 ? (
             <div style={{ display: 'flex', gap: 12, marginTop: 26 }}>

@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { getShowBySlug, getPublicShowFiles } from '@/lib/services/shows'
 import { showArt } from '@/lib/media/show-art'
-import sharp from 'sharp'
+import { artDataUrl } from '@/lib/og/covers'
 import { OG, OgGrid, OgHeader, clip, generateOGImage, ogFonts, ogLogo } from '@/lib/og/image-generator'
 
 export const runtime = 'nodejs'
@@ -15,29 +15,7 @@ export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 // 16:9, the shape show art is made in.
-const ART = { width: 660, height: 371 }
-
-/**
- * The show's art as a card-sized JPEG data URL, or null. Satori can't decode
- * WebP (all show art is WebP post-migration), and its decode failure surfaces
- * mid-stream, so the art is converted before Satori ever sees it.
- */
-async function artDataUrl(url: string): Promise<string | null> {
-  try {
-    // Next's data cache silently declines entries over 2MB, so this caching
-    // only holds while show art stays small (~200-500KB WebP). The route-level
-    // `revalidate` above is the real protection.
-    const res = await fetch(url, { next: { revalidate } })
-    if (!res.ok) return null
-    const jpeg = await sharp(Buffer.from(await res.arrayBuffer()))
-      .resize(ART.width, ART.height, { fit: 'contain', background: '#FFFFFF' })
-      .jpeg({ quality: 85 })
-      .toBuffer()
-    return `data:image/jpeg;base64,${jpeg.toString('base64')}`
-  } catch {
-    return null
-  }
-}
+const ART = { width: 688, height: 387 }
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -48,11 +26,14 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const difficulty = show?.difficulty?.replace('_', ' ').replace('plus', '+') ?? null
   const facts = [show?.year ? String(show.year) : null, difficulty].filter((fact): fact is string => Boolean(fact))
 
+  // The page's own facts line: runtime, and who it was written for.
+  const meta = [show?.duration ? `${show.duration} runtime` : null, show?.commissioned ? `Written for ${show.commissioned}` : null].filter((line): line is string => Boolean(line))
+
   // The same art as the page: its first image file is the fallback, from the
   // same cached files read.
   const showFiles = show ? await getPublicShowFiles(show.id) : []
   const graphicUrl = showArt({ ...show, imageUrl: showFiles.find((f) => f.fileType === 'image')?.url })
-  const art = graphicUrl ? await artDataUrl(graphicUrl) : null
+  const art = graphicUrl ? await artDataUrl(graphicUrl, ART, revalidate) : null
 
   if (!art) {
     return generateOGImage({
@@ -69,7 +50,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: 'white', color: OG.charcoal, position: 'relative', fontFamily: 'Poppins' }}>
         <OgGrid height={630} />
         <OgHeader />
-        <div style={{ display: 'flex', flex: 1, alignItems: 'center', padding: '0 48px', gap: 40 }}>
+        <div style={{ display: 'flex', flex: 1, alignItems: 'center', padding: '0 44px', gap: 36 }}>
           <img src={art} alt="" width={ART.width} height={ART.height} style={{ borderRadius: 10, boxShadow: '0 10px 28px rgba(0,0,0,0.18)' }} />
           <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -78,7 +59,14 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               ))}
             </div>
             <div style={{ display: 'flex', marginTop: 16, fontSize: title.length > 22 ? 44 : 58, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em' }}>{clip(title, 44)}</div>
-            {show?.description ? <div style={{ display: 'flex', marginTop: 16, fontSize: 23, lineHeight: 1.45, color: OG.muted }}>{clip(show.description, 120)}</div> : null}
+            {show?.description ? <div style={{ display: 'flex', marginTop: 14, fontSize: 22, lineHeight: 1.45, color: OG.muted }}>{clip(show.description, 96)}</div> : null}
+            {meta.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 18, paddingTop: 16, borderTop: `1px solid ${OG.line}`, fontSize: 21 }}>
+                {meta.map((line) => (
+                  <div key={line} style={{ display: 'flex', marginTop: 2 }}>{line}</div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
         <div style={{ display: 'flex', height: 10, backgroundColor: OG.yellow }} />
