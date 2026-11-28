@@ -38,7 +38,10 @@ export function generateMetadata(seoConfig: Partial<SEOConfig> = {}): Metadata {
   // Set metadataBase to resolve social open graph and twitter images
   const siteUrl = getOptionalPublicSiteUrl()
   const canonical = sanitizePublicUrl(config.canonical) ?? (config.path ? canonicalFor(config.path) : undefined)
-  const baseUrl = siteUrl || canonical || 'https://brightdesigns.band'
+  // Origin only. Next resolves a route's opengraph-image against metadataBase,
+  // so a base that carried the page path doubled it
+  // (/about/about/opengraph-image) and every social image 404ed.
+  const baseUrl = new URL(siteUrl || canonical || 'https://brightdesigns.band').origin
   
   const metadata: Metadata = {
     metadataBase: new URL(baseUrl),

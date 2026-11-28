@@ -7,7 +7,7 @@ export const contentType = 'image/png'
 export default async function Image() {
   return generateOGImage({
     title: 'About Bright Designs',
-    description: 'Expert Marching Band Designers Serving Southeast BOA Bands',
+    description: 'Serving the marching band community since 2017.',
   })
 }
 
