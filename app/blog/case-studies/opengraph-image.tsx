@@ -6,7 +6,6 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   return generateOGImage({
-    title: 'Success Stories',
-    description: 'Travelers Rest, Dorman & Alpharetta — from State Medalist to BOA Finalist.',
+    title: 'Case studies',
   })
 }

@@ -12,7 +12,6 @@ export const contentType = 'image/png'
 export default async function Image() {
   return generateOGImage({
     subtitle: 'Marching band show design',
-    title: 'Custom shows and shows for sale',
-    description: 'Wind books, percussion, sound design, drill and program coordination.',
+    title: 'Custom shows, and shows for sale',
   })
 }

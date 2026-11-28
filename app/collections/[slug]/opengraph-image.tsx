@@ -16,6 +16,5 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   return generateOGImage({
     subtitle: 'Show collection',
     title: collection?.h1 || 'Marching Band Show Collections',
-    description: collection?.description || 'Curated collections of marching band shows.',
   })
 }

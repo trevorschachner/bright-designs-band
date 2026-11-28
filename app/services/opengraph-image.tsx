@@ -6,8 +6,7 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   return generateOGImage({
-    title: 'Professional Design Services',
-    description: 'Custom Show Design, Arrangements, Drill Writing & Consultation',
+    title: 'Design services',
   })
 }
 
