@@ -41,7 +41,6 @@ const fields = {
   durationSeconds: z.number().int().min(0, 'Duration cannot be negative').max(60 * 60, 'Duration is over an hour').nullable(),
   youtubeUrl: optionalText(500),
   commissioned: optionalText(300),
-  sampleScoreUrl: optionalText(1000),
   featured: z.boolean(),
   /** Tag ids. When present they replace the part's tags; when absent tags are untouched. */
   tags: z.array(rowId).max(200),
@@ -119,7 +118,6 @@ export const arrangementFormSchema = z.object({
     .string()
     .refine((value) => value.trim() === '' || parseDuration(value) !== null, 'Duration must be mm:ss, e.g. 4:30'),
   youtubeUrl: z.string(),
-  sampleScoreUrl: z.string(),
   commissioned: z.string(),
   featured: z.boolean(),
   tags: z.array(z.number()),
@@ -144,7 +142,6 @@ export function arrangementFormToInput(values: ArrangementFormValues) {
     year: values.year.trim() ? Number(values.year) : null,
     durationSeconds: values.duration.trim() ? parseDuration(values.duration) : null,
     youtubeUrl: blankToNull(values.youtubeUrl),
-    sampleScoreUrl: blankToNull(values.sampleScoreUrl),
     commissioned: blankToNull(values.commissioned),
     featured: values.featured,
     tags: values.tags,

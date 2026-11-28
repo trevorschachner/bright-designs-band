@@ -26,7 +26,7 @@ These come from the site on every refresh. Order is the CSV order.
 
 **Shows** (`SHOW_COLUMNS`): `id`, `title`, `slug`, `description`, `duration`, `difficulty`, `thumbnail_url`, `graphic_url`, `youtube_url`, `video_url`, `year`, `commissioned`, `program_coordinator`, `percussion_arranger`, `sound_designer`, `wind_arranger`, `drill_writer`, `ensemble_size`, `includes`, `tags`, `featured`, `display_order`.
 
-**Parts** (`PART_COLUMNS`): `id`, `show`, `part`, `title`, `scene`, `duration_seconds`, `grade`, `ensemble_size`, `arranger`, `percussion_arranger`, `year`, `commissioned`, `youtube_url`, `sample_score_url`, `audio`, `pieces`.
+**Parts** (`PART_COLUMNS`): `id`, `show`, `part`, `title`, `scene`, `duration_seconds`, `grade`, `ensemble_size`, `arranger`, `percussion_arranger`, `year`, `commissioned`, `youtube_url`, `audio`, `pieces`.
 
 **Pieces** (public): `id`, `title`, `composer`.
 

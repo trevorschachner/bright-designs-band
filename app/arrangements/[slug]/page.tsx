@@ -280,14 +280,6 @@ export default async function ArrangementDetailPage({ params }: { params: Promis
                   </Link>
                 </Button>
               )}
-              {arr.sampleScoreUrl && (
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href={arr.sampleScoreUrl} target="_blank" rel="noopener noreferrer">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Download Sample Materials
-                  </Link>
-                </Button>
-              )}
               {parentShow && (
                 <Button variant="ghost" className="w-full" asChild>
                   <Link href={`/shows/${parentShow.slug}`}>

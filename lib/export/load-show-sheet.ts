@@ -38,7 +38,6 @@ export const ARRANGEMENT_EXPORT_COLUMNS = {
   year: arrangements.year,
   commissioned: arrangements.commissioned,
   youtubeUrl: arrangements.youtubeUrl,
-  sampleScoreUrl: arrangements.sampleScoreUrl,
 }
 
 export const LINK_COLUMNS = ['show_id', 'arrangement_id', 'order_index'] as const
@@ -148,7 +147,6 @@ export async function readShowSheetTables(
     year: a.year,
     commissioned: a.commissioned,
     youtubeUrl: a.youtubeUrl,
-    sampleScoreUrl: a.sampleScoreUrl,
     audioUrl: audioByArrangement.get(a.id) ?? null,
     pieceTitles: piecesByArrangement.get(a.id) ?? [],
   })

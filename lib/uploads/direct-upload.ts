@@ -1,6 +1,7 @@
+import { deleteFile, setPerusalScore, type PerusalScoreResult } from '@/lib/actions/files'
 import { completeUpload, signUpload } from '@/lib/actions/uploads'
 import type { ActionResult } from '@/lib/actions/result'
-import type { UploadKind } from '@/lib/validation/files'
+import { PERUSAL_SCORE_MIME, type UploadKind } from '@/lib/validation/files'
 
 /**
  * Browser-side direct upload: signUpload → PUT to Storage → completeUpload.
@@ -101,4 +102,37 @@ export async function uploadFileDirect({
   const recorded = unwrap(await completeUpload({ pendingId: signed.pendingId }), 'Failed to record file upload')
   onProgress?.(100)
   return recorded
+}
+
+export type PerusalScoreUploadOptions = {
+  file: File
+  showId: number
+  arrangementId: number
+  onProgress?: (percent: number) => void
+}
+
+/**
+ * Uploads a part's perusal score and points its Perusal score slot at it:
+ * a private `score` upload (private bucket), then `setPerusalScore`, which
+ * removes the file the slot held before. If the slot cannot be set, the new
+ * upload is deleted again so it does not linger as a stray part file.
+ */
+export async function uploadPerusalScore({ file, showId, arrangementId, onProgress }: PerusalScoreUploadOptions): Promise<PerusalScoreResult> {
+  if (file.type !== PERUSAL_SCORE_MIME) throw new Error('A perusal score must be a PDF')
+  const uploaded = await uploadFileDirect({
+    file,
+    fileType: 'score',
+    showId,
+    arrangementId,
+    isPublic: false,
+    description: 'Perusal score',
+    onProgress: (percent) => onProgress?.(Math.min(percent, 90)),
+  })
+  const result = await setPerusalScore({ arrangementId, fileId: uploaded.id })
+  if (!result.ok) {
+    await deleteFile({ id: uploaded.id }).catch(() => undefined)
+    throw new Error(result.issues?.[0]?.message ?? MESSAGES[result.error] ?? 'Failed to set the perusal score')
+  }
+  onProgress?.(100)
+  return result.data
 }

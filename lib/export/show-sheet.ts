@@ -52,7 +52,6 @@ export const PART_COLUMNS = [
   'year',
   'commissioned',
   'youtube_url',
-  'sample_score_url',
   'audio',
   'pieces',
 ] as const;
@@ -103,7 +102,6 @@ export type PartRecord = {
   year: number | null;
   commissioned: string | null;
   youtubeUrl: string | null;
-  sampleScoreUrl: string | null;
   audioUrl: string | null;
   pieceTitles: string[];
 };
@@ -162,7 +160,6 @@ export function partRow(p: PartRecord): Row<typeof PART_COLUMNS> {
     year: p.year,
     commissioned: p.commissioned,
     youtube_url: p.youtubeUrl,
-    sample_score_url: p.sampleScoreUrl,
     audio: p.audioUrl,
     pieces: list(p.pieceTitles),
   };

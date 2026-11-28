@@ -54,13 +54,17 @@ export type EditableArrangement = {
   durationSeconds: number | null;
   youtubeUrl: string | null;
   commissioned: string | null;
-  sampleScoreUrl: string | null;
   featured: boolean;
   orderIndex: number;
   updatedAt: string;
   tagIds: number[];
   pieces: EditablePiece[];
+  /** The Perusal score slot's file (always private). Null when empty, and on the standalone part page, which loads no files. */
+  perusalScore: PerusalScoreFile | null;
 };
+
+/** What the Perusal score slot shows: the file's name and when it was uploaded. */
+export type PerusalScoreFile = { id: number; originalName: string; createdAt: string };
 
 export type EditableShow = {
   id: number;
@@ -91,7 +95,7 @@ export type EditableShow = {
 export type ShowForEdit = {
   show: EditableShow;
   arrangements: EditableArrangement[];
-  /** Files on the show or on any of its parts. */
+  /** Files on the show or on any of its parts, except the parts' perusal scores (`arrangements[].perusalScore`). */
   files: GalleryFile[];
   allTags: AdminTagRow[];
   allPieces: PieceSummary[];
@@ -103,7 +107,7 @@ type ArrangementWithLinks = typeof arrangements.$inferSelect & {
 };
 
 /** A part row with its tag ids and ordered pieces, as the part form edits it. */
-function toEditableArrangement(a: ArrangementWithLinks, orderIndex: number): EditableArrangement {
+function toEditableArrangement(a: ArrangementWithLinks, orderIndex: number, perusalScore: PerusalScoreFile | null = null): EditableArrangement {
   return {
     id: a.id,
     title: a.title,
@@ -118,7 +122,6 @@ function toEditableArrangement(a: ArrangementWithLinks, orderIndex: number): Edi
     durationSeconds: a.durationSeconds,
     youtubeUrl: a.youtubeUrl,
     commissioned: a.commissioned,
-    sampleScoreUrl: a.sampleScoreUrl,
     featured: a.featured,
     orderIndex,
     updatedAt: toIso(a.updatedAt) ?? '',
@@ -131,6 +134,7 @@ function toEditableArrangement(a: ArrangementWithLinks, orderIndex: number): Edi
       licensingStatus: piece.licensingStatus,
       orderIndex: pieceOrder,
     })),
+    perusalScore,
   };
 }
 
@@ -197,11 +201,8 @@ export async function getShowForEdit(idOrSlug: string): Promise<ShowForEdit | nu
   });
   if (!row) return null;
 
-  const arrangementsList: EditableArrangement[] = row.showArrangements
-    .filter((link) => Boolean(link.arrangement))
-    .map(({ orderIndex, arrangement }) => toEditableArrangement(arrangement, orderIndex));
-
-  const arrangementIds = arrangementsList.map((a) => a.id);
+  const links = row.showArrangements.filter((link) => Boolean(link.arrangement));
+  const arrangementIds = links.map((link) => link.arrangement.id);
   const [fileRows, allTags, pieceRows] = await Promise.all([
     db
       .select()
@@ -210,6 +211,17 @@ export async function getShowForEdit(idOrSlug: string): Promise<ShowForEdit | nu
     getTagsForAdmin(),
     piecePicker(),
   ]);
+
+  // The slot's file is one of the part's own files, already loaded above.
+  const fileById = new Map(fileRows.map((f) => [f.id, f]));
+  const slotFile = (fileId: number | null): PerusalScoreFile | null => {
+    const f = fileId === null ? undefined : fileById.get(fileId);
+    return f ? { id: f.id, originalName: f.originalName, createdAt: toIso(f.createdAt) ?? '' } : null;
+  };
+  const arrangementsList: EditableArrangement[] = links.map(({ orderIndex, arrangement }) =>
+    toEditableArrangement(arrangement, orderIndex, slotFile(arrangement.perusalScoreFileId))
+  );
+  const slotIds = new Set(arrangementsList.flatMap((a) => (a.perusalScore ? [a.perusalScore.id] : [])));
 
   return {
     show: {
@@ -238,7 +250,8 @@ export async function getShowForEdit(idOrSlug: string): Promise<ShowForEdit | nu
       tagIds: row.showsToTags.map((t) => t.tagId),
     },
     arrangements: arrangementsList,
-    files: fileRows.map((f) => ({ ...f, createdAt: toIso(f.createdAt) ?? '', updatedAt: toIso(f.updatedAt) ?? '' })),
+    // A perusal score is shown, and replaced, in its part's slot, not in the galleries.
+    files: fileRows.filter((f) => !slotIds.has(f.id)).map((f) => ({ ...f, createdAt: toIso(f.createdAt) ?? '', updatedAt: toIso(f.updatedAt) ?? '' })),
     allTags,
     allPieces: pieceRows,
   };

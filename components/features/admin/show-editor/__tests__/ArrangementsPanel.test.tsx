@@ -32,12 +32,12 @@ const part = (id: number, title: string, orderIndex: number): EditableArrangemen
   durationSeconds: null,
   youtubeUrl: null,
   commissioned: null,
-  sampleScoreUrl: null,
   featured: false,
   orderIndex,
   updatedAt: '2026-10-07T12:00:00.000Z',
   tagIds: [],
   pieces: [],
+  perusalScore: null,
 })
 
 beforeEach(() => {

@@ -1,17 +1,21 @@
 'use server'
 
 import { eq } from 'drizzle-orm'
-import { files, shows } from '@/lib/database/schema'
+import { arrangements, files, shows } from '@/lib/database/schema'
 import { invalidateFileOwner } from '@/lib/services/files'
 import { invalidateShow } from '@/lib/services/invalidate'
 import { toIso } from '@/lib/services/cache'
 import { REMOVABLE_FILE_COLUMNS, removeFile } from '@/lib/services/file-removal'
+import { isDownloadRoute } from '@/lib/storage'
 import { createClient } from '@/lib/utils/supabase/server'
 import {
   attachYouTubeSchema,
   fileIdSchema,
+  PERUSAL_SCORE_MIME,
+  setPerusalScoreSchema,
   setShowThumbnailSchema,
   type AttachYouTubeInput,
+  type SetPerusalScoreInput,
   type SetShowThumbnailInput,
 } from '@/lib/validation/files'
 import { youTubeVideoId, isValidYouTubeUrl } from '@/lib/youtube'
@@ -162,4 +166,90 @@ const runDeleteFile = guarded(
  */
 export async function deleteFile(input: { id: number }): Promise<ActionResult<DeletedFile>> {
   return runDeleteFile(input)
+}
+
+// ---------------------------------------------------------------------------
+
+export type PerusalScoreResult = {
+  arrangementId: number
+  file: { id: number; originalName: string; createdAt: string }
+  /** False when the previous slot file could not be removed: it stays in the part's files for staff to delete. */
+  previousRemoved: boolean
+}
+
+const runSetPerusalScore = guarded(
+  'canUploadFiles',
+  setPerusalScoreSchema,
+  async ({ arrangementId, fileId }, { db }) => {
+    const outcome = await db.transaction(async (tx) => {
+      const [file] = await tx
+        .select({
+          id: files.id,
+          arrangementId: files.arrangementId,
+          fileType: files.fileType,
+          mimeType: files.mimeType,
+          isPublic: files.isPublic,
+          url: files.url,
+          originalName: files.originalName,
+          createdAt: files.createdAt,
+        })
+        .from(files)
+        .where(eq(files.id, fileId))
+        .limit(1)
+      if (!file || file.arrangementId !== arrangementId) throw new NotFoundError('file')
+      // Private bucket only: a private row is in the private bucket exactly when its url is the download route.
+      if (file.fileType !== 'score' || file.mimeType !== PERUSAL_SCORE_MIME || file.isPublic || !isDownloadRoute(file.url)) {
+        throw new InvalidError([{ path: 'fileId', message: 'A perusal score must be a private PDF score' }])
+      }
+
+      // Locked so two replacements in a row each see the other's file as the previous one.
+      const [current] = await tx
+        .select({ perusalScoreFileId: arrangements.perusalScoreFileId })
+        .from(arrangements)
+        .where(eq(arrangements.id, arrangementId))
+        .limit(1)
+        .for('update')
+      if (!current) throw new NotFoundError('arrangement')
+
+      // updated_at is left alone: the slot is not a form field, so setting it
+      // must not make an open part form stale.
+      await tx.update(arrangements).set({ perusalScoreFileId: fileId }).where(eq(arrangements.id, arrangementId))
+      const previousId = current.perusalScoreFileId !== fileId ? current.perusalScoreFileId : null
+      return { file, previousId }
+    })
+
+    // The slot already points at the new file; removing the old one is cleanup.
+    // If Storage refuses, the old row stays as an ordinary part file.
+    let previousRemoved = true
+    if (outcome.previousId !== null) {
+      const [previous] = await db.select(REMOVABLE_FILE_COLUMNS).from(files).where(eq(files.id, outcome.previousId)).limit(1)
+      if (previous && previous.arrangementId === arrangementId) {
+        const removed = await removeFile(db, previous, await createClient())
+        if (!removed.ok) {
+          previousRemoved = false
+          console.error(`Removing the previous perusal score (file ${previous.id}) failed: ${removed.error}`)
+        }
+      }
+    }
+
+    const { file } = outcome
+    return {
+      data: {
+        arrangementId,
+        file: { id: file.id, originalName: file.originalName, createdAt: toIso(file.createdAt) ?? '' },
+        previousRemoved,
+      },
+      invalidate: () => invalidateFileOwner({ arrangementId }),
+    }
+  },
+  'setPerusalScore'
+)
+
+/**
+ * Points a part's Perusal score slot at `fileId`, a private PDF score on that
+ * part (upload it first with kind `score`, isPublic false), then removes the
+ * file the slot held before. Does not bump the part's `updated_at`.
+ */
+export async function setPerusalScore(input: SetPerusalScoreInput): Promise<ActionResult<PerusalScoreResult>> {
+  return runSetPerusalScore(input)
 }

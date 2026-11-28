@@ -13,6 +13,7 @@ Defined in `lib/database/schema.ts`.
 - A part with no `show_arrangements` row is a standalone part, edited at `/admin/arrangements/<id>`.
 - `arrangement_search` and `show_search`: materialized views behind catalog search (`lib/services/search.ts`), rebuilt after every catalog write.
 - `files` (audio, images, documents) and `resources` (downloadable and educational items).
+- Each part has one **Perusal score** slot, `arrangements.perusal_score_file_id`: its full score PDF, always a private `files` row. Set in the show editor (`setPerusalScore`), read by `getPerusalScore` (`lib/services/perusal-scores.ts`).
 - `contact_submissions` (inquiries) and `contact_rate_limits` (Postgres-backed limiter for `/api/contact`).
 
 ## Where things live

@@ -28,7 +28,7 @@ describe('column order matches the sheet', () => {
   it('parts', () => {
     expect([...PART_COLUMNS]).toEqual([
       'id', 'show', 'part', 'title', 'scene', 'duration_seconds', 'grade', 'ensemble_size', 'arranger',
-      'percussion_arranger', 'year', 'commissioned', 'youtube_url', 'sample_score_url', 'audio', 'pieces',
+      'percussion_arranger', 'year', 'commissioned', 'youtube_url', 'audio', 'pieces',
     ])
   })
 
@@ -48,7 +48,7 @@ const show: ShowRecord = {
 const part: PartRecord = {
   id: 17, showTitle: 'Gold Rush', orderIndex: 1, title: 'Gold Rush + American Faces', scene: 'Opener',
   durationSeconds: 166, grade: '3_4', ensembleSize: 'small', arranger: 'A, B', percussionArranger: null,
-  year: 2023, commissioned: null, youtubeUrl: null, sampleScoreUrl: null, audioUrl: 'https://x/a.mp3',
+  year: 2023, commissioned: null, youtubeUrl: null, audioUrl: 'https://x/a.mp3',
   pieceTitles: ['Libertango', 'Redline Tango'],
 }
 

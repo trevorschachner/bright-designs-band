@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Music, FileText, ExternalLink, MessageSquare } from "lucide-react";
+import { Music, ExternalLink, MessageSquare } from "lucide-react";
 import { arrangementContactHref } from "@/lib/contact-link";
 import type { ArrangementListItem } from "@/lib/services/arrangements";
 import { CatalogPlayButton } from "./CatalogPlayButton";
@@ -50,7 +50,6 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
               const duration = arrangement.durationSeconds;
               const files = arrangement.files || [];
               const audio = files.find(f => f.fileType === 'audio');
-              const sampleScore = arrangement.sampleScoreUrl;
 
               const associatedShow = arrangement.showArrangements?.[0]?.show;
 
@@ -95,14 +94,6 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {sampleScore && (
-                        <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                          <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score">
-                            <FileText className="w-4 h-4" />
-                            <span className="sr-only">Sample Score</span>
-                          </Link>
-                        </Button>
-                      )}
                       <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
                         <Link href={arrangementContactHref(title)} title="Ask about this arrangement">
                           <MessageSquare className="w-4 h-4" />
@@ -132,7 +123,6 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
         const duration = arrangement.durationSeconds;
         const files = arrangement.files || [];
         const audio = files.find(f => f.fileType === 'audio');
-        const sampleScore = arrangement.sampleScoreUrl;
         const associatedShow = arrangement.showArrangements?.[0]?.show;
 
         return (
@@ -171,14 +161,6 @@ export function ArrangementResults({ items }: { items: ArrangementListItem[] }) 
 
               {/* Actions */}
               <div className="flex items-center gap-1 shrink-0">
-                {sampleScore && (
-                  <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                    <Link href={sampleScore} target="_blank" rel="noopener noreferrer" title="Sample Score">
-                      <FileText className="w-4 h-4" />
-                      <span className="sr-only">Sample Score</span>
-                    </Link>
-                  </Button>
-                )}
                 <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
                   <Link href={arrangementContactHref(title)} title="Ask about this arrangement">
                     <MessageSquare className="w-4 h-4" />
